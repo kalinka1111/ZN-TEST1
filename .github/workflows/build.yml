@@ -160,6 +160,11 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
+          # R2 ne supporte pas le checksum CRC32 que les versions récentes
+          # d'AWS CLI activent par défaut — ça cause un faux "SignatureDoesNotMatch".
+          # Voir : https://developers.cloudflare.com/r2/examples/aws/
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
         run: |
           aws s3 cp latest-mac.json s3://znk-archives/latest-mac.json --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
           aws s3 cp latest-win.json s3://znk-archives/latest-win.json --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
