@@ -1,0 +1,60 @@
+{
+  "name": "znk237-app",
+  "version": "2.0.0",
+  "description": "znk237-app - Build avec adaptateur",
+  "main": "main-build.js",
+  "author": "ZNK Team",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "build-dmg": "electron-builder --mac dmg",
+    "build-exe": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.znk.znk237app",
+    "productName": "znk237-app",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules",
+      "!dist",
+      "!build-files",
+      "!main.js",
+      "main-build.js"
+    ],
+    "extraFiles": [
+      {
+        "from": "icons",
+        "to": "icons",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "assets/icons",
+        "to": "assets/icons",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
+  }
+}

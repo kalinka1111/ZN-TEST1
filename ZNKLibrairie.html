@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>ZNK Librairie</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#c9a24b; --gold-soft:#e4c887;
+    --paper:#FBF6EC; --paper-shade:#F1E8D4; --ink:#23241F; --ink-soft:#5B584E;
+    --accent:#E0556F;
+    --font-hand:'Caveat',cursive;
+    --font-body:'Lora',Georgia,'Times New Roman',serif;
+    --font-ui:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; min-height:100vh;
+    font-family: Montserrat, sans-serif;
+    background:linear-gradient(135deg, #0a0f14 0%, #16222A 55%, #1F2E3D 100%);
+    color:#fff;
+    overflow-x:hidden;
+  }
+
+  /* ===== En-tête ===== */
+  .gallery-hero{ text-align:center; padding:34px 20px 6px; }
+  .gallery-hero h1{
+    font-family: "Trebuchet MS", sans-serif; font-weight:700;
+    font-size:3.2em; margin:0 0 4px; color:var(--paper);
+    text-shadow:0 0 18px rgba(201,162,75,0.3);
+  }
+  .gallery-hero p{ margin:0; font-size:0.85em; letter-spacing:0.5px; color:#a9b2ba; }
+
+  .central-screen{
+    width:90%; max-width:1200px; margin:20px auto;
+    background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px; padding:12px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .count-indicator{ font-size:13px; display:flex; align-items:center; gap:8px; color:#ddd; }
+  .refresh-btn{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
+    color:#fff; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:12px;
+    letter-spacing:0.5px; transition:all .2s ease;
+  }
+  .refresh-btn:hover{ background:var(--accent); color:#fff; }
+
+  /* ===== Grille des livres ===== */
+  .books-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:26px; width:90%; max-width:1200px; margin:10px auto 60px;
+  }
+  .book-card{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:16px; overflow:hidden; cursor:pointer;
+    transition:all .35s ease; animation:fadeInUp .6s ease forwards; opacity:0;
+    position:relative;
+  }
+  .book-card:nth-child(1){ animation-delay:.05s; } .book-card:nth-child(2){ animation-delay:.1s; }
+  .book-card:nth-child(3){ animation-delay:.15s; } .book-card:nth-child(4){ animation-delay:.2s; }
+  .book-card:nth-child(5){ animation-delay:.25s; } .book-card:nth-child(6){ animation-delay:.3s; }
+  @keyframes fadeInUp{ from{ opacity:0; transform:translateY(24px);} to{ opacity:1; transform:translateY(0);} }
+  .book-card:hover{ transform:translateY(-8px); border-color:var(--gold); box-shadow:0 18px 36px rgba(0,0,0,0.5); }
+
+  .book-cover{
+    width:100%; padding-bottom:130%; position:relative; overflow:hidden;
+  }
+  .book-cover .cover-inner{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:flex-start; text-align:center; padding:20px 14px 0;
+  }
+  .book-cover .cover-title{
+    font-family:var(--font-hand); font-weight:700; font-size:1.5em; color:var(--paper);
+    line-height:1.15; text-shadow:0 1px 4px rgba(0,0,0,0.3);
+  }
+  .book-cover .cover-author{ font-size:11px; color:rgba(255,255,255,0.85); margin-top:6px; }
+  .book-cover .cover-image-area{
+    position:absolute; inset:0; background-size:cover; background-position:center; background-repeat:no-repeat;
+  }
+  .cover-play-overlay{
+    position:absolute; inset:0; background:rgba(10,10,15,0.0);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:all .25s ease; color:var(--gold-soft); font-size:1em; letter-spacing:1px;
+  }
+  .book-card:hover .cover-play-overlay{ opacity:1; background:rgba(10,10,15,0.45); }
+
+  .pages-badge{
+    position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); color:var(--gold-soft);
+    font-size:11px; font-weight:bold; padding:4px 10px; border-radius:12px;
+    border:1px solid rgba(201,162,75,0.5); z-index:5;
+  }
+
+  .book-info{ padding:14px 16px 18px; text-align:center; }
+  .book-name{ font-weight:600; font-size:1em; color:#fff; margin-bottom:4px; }
+  .book-meta{ font-size:11px; color:#999; }
+
+  .empty-state, .loading-indicator{
+    text-align:center; padding:80px 20px; color:#8a939b;
+    width:90%; max-width:1200px; margin:0 auto;
+  }
+  .empty-icon{ font-size:70px; margin-bottom:18px; opacity:0.5; }
+  .empty-state .empty-title{ font-size:1.4em; color:#ccc; margin-bottom:8px; }
+  .empty-state .empty-sub{ font-size:0.85em; max-width:420px; margin:0 auto; line-height:1.6; }
+
+  /* ===== Visionneuse (livre en lecture seule, même mécanique que ZNK-LIVREmoi) ===== */
+  .viewer-overlay{
+    display:none; position:fixed; inset:0; z-index:900;
+    background:rgba(5,5,10,0.88); backdrop-filter:blur(6px);
+    align-items:center; justify-content:center; flex-direction:column; padding:20px;
+  }
+  .viewer-overlay.open{ display:flex; }
+  .viewer-topbar{
+    width:100%; max-width:520px; display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:10px; gap:10px;
+  }
+  .viewer-name{ font-family:var(--font-hand); font-size:1.4em; color:var(--gold-soft); }
+  .viewer-close{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
+    color:#fff; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:16px;
+  }
+  .viewer-close:hover{ background:#ef4444; color:#fff; }
+
+  .flip-wrap{ display:flex; flex-direction:column; align-items:center; gap:16px; width:100%; max-width:520px; }
+  #flipStage{
+    width:100%; min-height:440px; background:#fff; border:1px solid var(--line, #DDD3BC); border-radius:6px;
+    box-shadow:0 24px 50px rgba(0,0,0,0.5); padding:0; display:flex; flex-direction:column; overflow:hidden;
+  }
+  #flipStage .flip-page-num{ font-size:11px; color:var(--ink-soft); text-align:center; margin-top:auto; padding-top:10px; }
+  #flipStage .flip-text{ white-space:pre-wrap; font-family:var(--font-body); }
+  #flipStage .flip-pad{ padding:26px; display:flex; flex-direction:column; flex:1; }
+  #flipStage .flip-cover-header{ padding:22px 26px 16px; flex:none; }
+  #flipStage .flip-image-area{ flex:1; background-size:cover; background-position:center; background-repeat:no-repeat; }
+  .flip-controls{ display:flex; align-items:center; gap:14px; }
+  .flip-controls span{ font-size:13px; color:#ddd; }
+  .btn{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25); color:#fff;
+    font-family:var(--font-ui); font-size:13px; padding:8px 16px; border-radius:20px;
+    cursor:pointer; transition:all .15s;
+  }
+  .btn:hover{ background:var(--gold); color:#241a14; border-color:var(--gold); }
+  .btn:disabled{ opacity:0.35; cursor:not-allowed; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap"></head>
+<body>
+
+  <div class="gallery-hero">
+    <h1>ZNK Librairie</h1>
+    <p>Les livres publiés depuis ZNK-LIVREmoi</p>
+  </div>
+
+  <div class="central-screen">
+    <div class="count-indicator">📚 <span id="bookCount">0</span> livre(s) publié(s)</div>
+    <button class="refresh-btn" onclick="loadLibrary()">🔄 Actualiser</button>
+  </div>
+
+  <div class="books-grid" id="booksGrid">
+    <div class="loading-indicator">📡 Chargement de la librairie...</div>
+  </div>
+
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="empty-icon">📖</div>
+    <div class="empty-title">Aucun livre publié pour l'instant</div>
+    <div class="empty-sub">
+      Un livre apparaît ici dès qu'il est publié depuis ZNK-LIVREmoi via le bouton
+      <strong>« Publier dans ZNK Librairie »</strong>, dans l'onglet Export.
+    </div>
+  </div>
+
+  <!-- Visionneuse (livre en lecture seule) -->
+  <div class="viewer-overlay" id="viewerOverlay">
+    <div class="viewer-topbar">
+      <div class="viewer-name" id="viewerName">Livre</div>
+      <button class="viewer-close" onclick="closeViewer()">✕</button>
+    </div>
+    <div class="flip-wrap">
+      <div id="flipStage"></div>
+      <div class="flip-controls">
+        <button class="btn" id="flipPrev">← Page précédente</button>
+        <span id="flipPos">—</span>
+        <button class="btn" id="flipNext">Page suivante →</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ===================================================================
+  // ===== ZNK LIBRAIRIE — agrège les livres publiés depuis ZNK-LIVREmoi
+  // ===== (clés localStorage znk_livre_<id>) et affiche une galerie de
+  // ===== couvertures, avec la même mécanique de lecture (renderFlip)
+  // ===== que ZNK-LIVREmoi.html / le .html autonome qu'il génère.
+  // ===================================================================
+
+  /* ==================== BACKEND ZNK ====================
+     Les routes /api/books doivent être vues par TOUS les utilisateurs, pas
+     seulement l'auteur — donc, contrairement aux fonctions locales de l'app
+     (OCR, ZNKOMia...), elles doivent pointer vers un server.py hébergé sur
+     un VPS partagé, pas vers le server.py local de chaque utilisateur.
+     Tant qu'aucun VPS n'est configuré, on retombe sur le chemin relatif
+     local (comportement actuel). Voir ZNK-LIVREmoi.html pour le même
+     mécanisme côté publication — les deux doivent pointer au même endroit. */
+  const ZNK_CLOUD_URL = (function(){
+    try{ return localStorage.getItem('znk_cloud_url') || ''; }catch(e){ return ''; }
+  })();
+  function znkCloudPath(path){ return (ZNK_CLOUD_URL || '') + path; }
+
+  function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+  async function discoverBooks(){
+    try{
+      const response=await fetch(znkCloudPath('/api/books'));
+      if(!response.ok) throw new Error('HTTP '+response.status);
+      const data=await response.json();
+      return data.books||[];
+    }catch(e){
+      console.warn('⚠️ Serveur ZNK injoignable pour la librairie:', e);
+      return null; // distingue "serveur injoignable" de "aucun livre publié"
+    }
+  }
+
+  function bookCardHTML(book){
+    const bg=book.cover && book.cover.bgColor ? book.cover.bgColor : '#1F2E3D';
+    const coverImg=book.cover && book.cover.coverImage;
+    const imgStyle=coverImg
+      ? `background-image:url(${coverImg});background-size:${(book.cover.imgScale||100)}%;`
+      : '';
+    const pagesCount = (typeof book.pagesCount==='number') ? book.pagesCount : ((book.pages&&book.pages.length)||0);
+    return `
+      <div class="book-card" onclick="openViewer('${book.id}')">
+        <div class="book-cover" style="background:${bg};">
+          <div class="pages-badge">${pagesCount} page${pagesCount>1?'s':''}</div>
+          ${coverImg ? `<div class="cover-image-area" style="${imgStyle}"></div>` : ''}
+          <div class="cover-inner">
+            <div class="cover-title">${escapeHtml(book.title||'Mon histoire')}</div>
+            <div class="cover-author">${escapeHtml(book.author||'')}</div>
+          </div>
+          <div class="cover-play-overlay">Feuilleter ▶</div>
+        </div>
+        <div class="book-info">
+          <div class="book-name">${escapeHtml(book.title||'Mon histoire')}</div>
+          <div class="book-meta">${escapeHtml(book.author||'Auteur inconnu')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  let currentBooks=[];
+
+  async function loadLibrary(){
+    const grid=document.getElementById('booksGrid');
+    const emptyState=document.getElementById('emptyState');
+    grid.innerHTML=`<div class="loading-indicator">📡 Chargement de la librairie...</div>`;
+    emptyState.style.display='none';
+
+    const books=await discoverBooks();
+
+    if(books===null){
+      grid.innerHTML=`<div class="loading-indicator">⚠️ Serveur ZNK injoignable.<br>${ZNK_CLOUD_URL ? 'Vérifie la connexion au serveur partagé ('+escapeHtml(ZNK_CLOUD_URL)+').' : "Vérifie que server.py est bien démarré en local (aucun serveur partagé n'est configuré pour l'instant)."}</div>`;
+      document.getElementById('bookCount').textContent='0';
+      return;
+    }
+
+    currentBooks=books;
+    document.getElementById('bookCount').textContent=currentBooks.length;
+
+    if(currentBooks.length===0){
+      grid.innerHTML='';
+      emptyState.style.display='block';
+      return;
+    }
+    grid.innerHTML=currentBooks.map(bookCardHTML).join('');
+  }
+  window.loadLibrary=loadLibrary;
+
+  // ===== Visionneuse : réutilise la mécanique de ZNK-LIVREmoi (flipPagesData / renderFlip) =====
+
+  let viewerBook=null;
+  let flipIndex=0;
+
+  function flipPagesData(){
+    const arr=[{type:'cover'}];
+    viewerBook.pages.forEach((p,i)=>arr.push({type:'page',data:p,num:i+1}));
+    arr.push({type:'back'});
+    return arr;
+  }
+
+  function renderFlip(){
+    const arr=flipPagesData();
+    if(flipIndex<0) flipIndex=0;
+    if(flipIndex>arr.length-1) flipIndex=arr.length-1;
+    const item=arr[flipIndex];
+    const stage=document.getElementById('flipStage');
+    const book=viewerBook;
+    stage.style.fontFamily=(book.layout&&book.layout.font||'Lora')+', serif';
+    stage.style.fontSize=(book.layout&&book.layout.fontSize||16)+'px';
+
+    document.getElementById('flipPrev').disabled = flipIndex<=0;
+    document.getElementById('flipNext').disabled = flipIndex>=arr.length-1;
+
+    if(item.type==='cover'){
+      stage.style.background=book.cover.bgColor;
+      stage.style.backgroundImage='none';
+      const bg=book.cover.bgColor;
+      const imgAreaStyle=book.cover.coverImage
+        ? `background-image:url(${book.cover.coverImage});background-size:${book.cover.imgScale||100}%;background-position:center;background-repeat:no-repeat;`
+        : `background:${bg};`;
+      stage.innerHTML=`
+        <div class="flip-cover-header" style="background:${bg};text-align:center;">
+          <div class="flip-text" style="font-family:'Caveat',cursive;font-size:32px;color:#fff;">${escapeHtml(book.title||'Mon histoire')}</div>
+          <div style="font-size:13px;opacity:0.85;margin-top:6px;color:#fff;">${escapeHtml(book.author||'')}</div>
+        </div>
+        <div class="flip-image-area" style="${imgAreaStyle}"></div>`;
+    } else if(item.type==='back'){
+      stage.style.background=book.cover.bgColor;
+      stage.style.backgroundImage='none';
+      stage.style.color='#fff';
+      stage.innerHTML=`<div class="flip-pad" style="height:100%;"><div style="margin:auto;text-align:center;font-size:13px;">${escapeHtml(book.cover.backText||'')}</div><div style="text-align:center;font-size:11px;opacity:0.7;padding-top:14px;">ZNK Editions</div></div>`;
+    } else {
+      stage.style.background='#fff';
+      stage.style.backgroundImage='none';
+      stage.style.color='#23241F';
+      const authorPhotoHtml=(item.num===1 && book.authorPhoto)
+        ? `<img src="${book.authorPhoto}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;float:right;margin:0 0 10px 12px;">`
+        : '';
+      const imgs=(item.data.images||[]).map(src=>`<img src="${src}" style="width:100%;border-radius:4px;margin-top:10px;">`).join('');
+      stage.innerHTML=`<div class="flip-pad">${authorPhotoHtml}<div class="flip-text">${escapeHtml(item.data.corrected||'(page vide)')}</div>${imgs}<div class="flip-page-num">— ${item.num} —</div></div>`;
+    }
+    document.getElementById('flipPos').textContent=(flipIndex+1)+' / '+arr.length;
+  }
+
+  document.getElementById('flipPrev').addEventListener('click',()=>{ flipIndex--; renderFlip(); });
+  document.getElementById('flipNext').addEventListener('click',()=>{ flipIndex++; renderFlip(); });
+
+  async function openViewer(id){
+    const listed=currentBooks.find(b=>b.id===id);
+    document.getElementById('viewerName').textContent=(listed&&listed.title)||'Chargement…';
+    document.getElementById('viewerOverlay').classList.add('open');
+    document.getElementById('flipStage').innerHTML='<div class="flip-pad" style="align-items:center;justify-content:center;color:#888;">Chargement du livre…</div>';
+
+    try{
+      const response=await fetch(znkCloudPath(`/api/books/${id}`));
+      if(!response.ok) throw new Error('HTTP '+response.status);
+      const data=await response.json();
+      viewerBook=data.book;
+      flipIndex=0;
+      document.getElementById('viewerName').textContent=viewerBook.title||'Mon histoire';
+      renderFlip();
+    }catch(e){
+      console.warn('⚠️ Impossible de charger ce livre:', e);
+      document.getElementById('flipStage').innerHTML='<div class="flip-pad" style="align-items:center;justify-content:center;color:#c0392b;text-align:center;">⚠️ Impossible de charger ce livre.<br>Serveur injoignable.</div>';
+    }
+  }
+  window.openViewer=openViewer;
+
+  function closeViewer(){
+    document.getElementById('viewerOverlay').classList.remove('open');
+  }
+  window.closeViewer=closeViewer;
+
+  document.addEventListener('keydown',(e)=>{
+    if(!document.getElementById('viewerOverlay').classList.contains('open')) return;
+    if(e.key==='ArrowRight'){ flipIndex++; renderFlip(); }
+    if(e.key==='ArrowLeft'){ flipIndex--; renderFlip(); }
+    if(e.key==='Escape') closeViewer();
+  });
+
+  document.getElementById('viewerOverlay').addEventListener('click',(e)=>{
+    if(e.target===document.getElementById('viewerOverlay')) closeViewer();
+  });
+
+  // Rafraîchit la galerie quand on revient sur cet onglet, et périodiquement
+  // pour voir apparaître les nouveaux livres publiés par d'autres visiteurs.
+  window.addEventListener('focus', loadLibrary);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState==='visible') loadLibrary();
+  });
+  setInterval(loadLibrary, 20000);
+
+  loadLibrary();
+</script>
+</body>
+</html>

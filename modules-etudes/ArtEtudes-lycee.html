@@ -1,0 +1,3002 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>ZNK Beti Fondation - Art Études Lycée</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <!-- Scripts optionnels - ne bloquent pas le chargement -->
+  <script src="/assets/js/znk-header-system.js" onerror="console.warn('⚠️ znk-header-system.js non disponible')"></script>
+  <script src="znk-eleves-dashboard-modules.js" onerror="console.warn('⚠️ znk-eleves-dashboard-modules.js non disponible')"></script>
+  <script src="znk-etudes-manifest.js" onerror="console.error('❌ znk-etudes-manifest.js non chargé!')"></script>
+  <!-- Sync VPS (leçons) : laisser apiBase vide tant que le VPS n'est pas branché,
+       ZNKSync se désactive alors tout seul sans rien casser. -->
+  <script>
+    window.ZNK_SYNC_CONFIG = {
+      apiBase: '',   // ex: 'https://ton-vps.example.com'
+      apiKey: ''
+    };
+  </script>
+  <script src="znk-sync-client.js" onerror="console.warn('⚠️ znk-sync-client.js non disponible — sync VPS désactivée')"></script>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #919191 0%, #232323 100%);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #fff;
+      min-height: 100vh;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .main, .side {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .main {
+      flex: 2.5;
+    }
+    
+    .side {
+      flex: 1;
+    }
+    
+    h1 {
+      color: #9aa60e;
+      font-size: 2em;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      background: linear-gradient(45deg, #553d00, #feca57);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    h2, h3, h4 {
+      color: #d29d00;
+      margin-bottom: 10px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    }
+    
+    .student-profile {
+      padding: 20px;
+      text-align: center;
+      background: linear-gradient(135deg, #e1a863 0%, #514430 100%);
+      color: white;
+      position: relative;
+    }
+
+    .art-etudes-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px;
+      padding: 8px 22px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 1.4em;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: linear-gradient(45deg, #feca57, #ffd32a, #feca57);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35));
+      animation: art-etudes-shine 4s linear infinite;
+    }
+
+    .art-etudes-title::before,
+    .art-etudes-title::after {
+      content: "⭐";
+      -webkit-text-fill-color: initial;
+      color: #ffd32a;
+      font-size: 0.65em;
+      opacity: 0.9;
+    }
+
+    @keyframes art-etudes-shine {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+    
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 0 auto 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .student-info h3 {
+      margin: 8px 0;
+      color: white;
+      font-size: 1.3em;
+    }
+    
+    .student-info p {
+      margin: 5px 0;
+      opacity: 0.9;
+      font-size: 0.95em;
+    }
+    
+    .section-filter {
+      margin-bottom: 20px;
+      text-align: center;
+      padding: 15px;
+    }
+    
+    .level-btn {
+      padding: 10px 20px;
+      margin: 0 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 25px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      backdrop-filter: blur(10px);
+    }
+    
+    .level-btn.active {
+      background: linear-gradient(45deg, #d29d00, #a96800);
+      transform: scale(1.05);
+    }
+    
+    .level-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .video-lesson {
+      padding: 20px;
+    }
+    
+    .video-container {
+      position: relative;
+      background: linear-gradient(45deg, #060108f1, #2a0f34);
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 250px;
+    }
+    
+    .video-lesson video {
+      width: 100%;
+      max-height: 400px;
+      background: transparent;
+      border-radius: 12px;
+    }
+    
+    .lesson-content-display {
+      padding: 20px;
+      color: white;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    .lesson-content-display h3 {
+      color: #feca57;
+      margin-bottom: 15px;
+      font-size: 1.5em;
+    }
+    
+    .lesson-objectives {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px 0;
+    }
+    
+    .lesson-objectives h4 {
+      color: #ffd32a;
+      margin-bottom: 10px;
+    }
+    
+    .lesson-objectives ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .lesson-objectives li {
+      padding: 5px 0;
+      padding-left: 25px;
+      position: relative;
+      line-height: 1.5;
+    }
+    
+    .lesson-objectives li:before {
+      content: "🎯";
+      position: absolute;
+      left: 0;
+    }
+    
+    .lesson-meta {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin: 15px 0;
+      font-size: 0.9em;
+    }
+    
+    .lesson-meta-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 5px 12px;
+      border-radius: 15px;
+    }
+    
+    .media-display {
+      margin: 15px 0;
+    }
+    
+    .media-display audio,
+    .media-display video,
+    .media-display img {
+      width: 100%;
+      border-radius: 10px;
+      margin: 10px 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .live-indicator {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #e74c3c;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 0.8em;
+      font-weight: bold;
+      display: none;
+    }
+    
+    .live-indicator.active {
+      display: block;
+      animation: pulse 2s infinite;
+    }
+    
+    .art-classes {
+      padding: 20px;
+    }
+    
+    .art-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .time-status {
+      background: linear-gradient(45deg, #feca57, #ff9ff3);
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: bold;
+      color: #2d3436;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 30px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.3);
+      transition: .4s;
+      border-radius: 30px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background: linear-gradient(45deg, #55efc4, #00b894);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(30px);
+    }
+    
+    .studios {
+      display: none;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 15px;
+    }
+    
+    .studio-btn {
+      padding: 18px;
+      background: linear-gradient(135deg, #ffaa00 0%, #514430  100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      font-size: 1em;
+    }
+    
+    .studio-btn:hover {
+      transform: scale(1.08) translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .ia-chatbot {
+      padding: 20px;
+      min-height: 200px;
+    }
+    
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .chat-mode {
+      background: linear-gradient(45deg, #d29d00, #a96800);
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+    
+    .professor-live {
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    }
+    
+    .chat-history {
+      max-height: 120px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .chat-msg {
+      padding: 10px 15px;
+      margin: 8px 0;
+      border-radius: 18px;
+      max-width: 80%;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .chat-msg.eleve { 
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+      margin-left: auto;
+      text-align: right;
+    }
+    
+    .chat-msg.ia { 
+      background: linear-gradient(45deg, #d29d00, #a96800);
+      color: #fff;
+    }
+    
+    .chat-msg.prof { 
+      background: linear-gradient(45deg, #feca57, #ff9ff3);
+      color: #2d3436;
+    }
+    
+    .typing-indicator {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 10px 15px;
+      border-radius: 18px;
+      max-width: 60px;
+      margin: 8px 0;
+    }
+    
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .typing-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d29d00;
+      animation: typing 1.4s infinite;
+    }
+    
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .chat-input {
+      flex: 1;
+      padding: 12px 20px;
+      border-radius: 25px;
+      border: none;
+      background: rgba(255, 255, 255, 0.9);
+      color: #2d3436;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    
+    .chat-input:focus {
+      background: white;
+      transform: scale(1.02);
+    }
+    
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(45deg, #d29d00, #a96800);
+      color: #fff;
+    }
+    
+    .btn-secondary {
+      background: linear-gradient(45deg, #feca57, #ff9ff3);
+      color: #2d3436;
+    }
+    
+    .btn-success {
+      background: linear-gradient(45deg, #55efc4, #00b894);
+      color: #fff;
+    }
+    
+    .btn-danger {
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+      color: #fff;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .ia-study {
+      padding: 20px;
+    }
+    
+    .homework-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+    
+    .homework-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 4px solid #e74c3c;
+      transition: all 0.3s ease;
+    }
+    
+    .homework-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateX(5px);
+    }
+    
+    .homework-item.completed {
+      border-left-color: #27ae60;
+      opacity: 0.7;
+      background: rgba(39, 174, 96, 0.1);
+    }
+    
+    .homework-status {
+      background: #e74c3c;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+    
+    .homework-status.completed {
+      background: #27ae60;
+    }
+    
+    .quiz-alert {
+      background: linear-gradient(45deg, #feca57, #ff9ff3);
+      color: #2d3436;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+    
+    .weekly-schedule {
+      padding: 20px;
+    }
+    
+    .schedule-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .week-nav {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .week-nav button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .week-nav button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .day-column {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 12px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .day-header {
+      font-weight: bold;
+      color: #d29d00;
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 1.1em;
+    }
+    
+    .time-slot {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 8px;
+      margin: 5px 0;
+      font-size: 0.85em;
+      text-align: center;
+      transition: all 0.3s ease;
+      border-left: 3px solid transparent;
+    }
+    
+    .time-slot:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.02);
+    }
+    
+    .time-slot.math { border-left-color: #3498db; }
+    .time-slot.french { border-left-color: #e74c3c; }
+    .time-slot.science { border-left-color: #27ae60; }
+    .time-slot.art { border-left-color: #ffb43f; }
+    .time-slot.sport { border-left-color: #9b59b6; }
+    
+    .whats-znk {
+      padding: 20px;
+    }
+    
+    .quota-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    
+    .quota-bar {
+      background: rgba(255, 255, 255, 0.2);
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    
+    .quota-fill {
+      background: linear-gradient(90deg, #27ae60 0%, #55efc4 100%);
+      height: 100%;
+      width: 70%;
+      border-radius: 5px;
+      transition: width 0.3s ease;
+    }
+    
+    .quota-warning {
+      background: linear-gradient(90deg, #ffb43f 0%, #feca57 100%);
+    }
+    
+    .quota-danger {
+      background: linear-gradient(90deg, #e74c3c 0%, #ff6b6b 100%);
+    }
+    
+    .actv-access {
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .actv-btn {
+      background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+      color: white;
+      padding: 18px 35px;
+      border: none;
+      border-radius: 30px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 10px;
+    }
+    
+    .actv-btn:hover {
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .parental-control {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 15px;
+      border-radius: 15px;
+      font-size: 0.8em;
+      margin-top: 10px;
+    }
+    
+    .side-section {
+      padding: 18px;
+    }
+    
+    .user-list, .course-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .user-list li, .course-list li {
+      background: rgba(255, 255, 255, 0.1);
+      margin-bottom: 8px;
+      border-radius: 10px;
+      padding: 12px;
+      border-left: 4px solid #d29d00;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+    
+    .user-list li:hover, .course-list li:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(5px);
+      border-left-color: #ff6b6b;
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 10px;
+      animation: statusPulse 2s infinite;
+    }
+    
+    .online { background: #55efc4; }
+    .busy { background: #feca57; }
+    .offline { 
+      background: #a96800; 
+      animation: none;
+    }
+    
+    .lessons-list {
+      max-height: 500px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+    
+    .lesson-card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-left: 4px solid #feca57;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .lesson-card:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(5px);
+      border-left-color: #ff6b6b;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .lesson-card.active {
+      background: linear-gradient(135deg, #ff4013, rgba(255, 159, 243, 0.2));
+      border-left-color: #d29d00;
+      border-width: 3px;
+    }
+    
+    .lesson-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .lesson-card-icon {
+      font-size: 1.5em;
+    }
+    
+    .lesson-card-title {
+      font-weight: bold;
+      font-size: 1em;
+      color: #feca57;
+      flex: 1;
+    }
+    
+    .lesson-card-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      font-size: 0.75em;
+    }
+    
+    .lesson-card-badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 8px;
+      border-radius: 10px;
+      whitespace: nowrap;
+    }
+    
+    .lesson-card-description {
+      font-size: 0.85em;
+      color: rgba(255, 255, 255, 0.8);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+    
+    .lesson-card-status {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.7em;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+    
+    .lesson-card-status.published {
+      background: rgba(39, 174, 96, 0.3);
+      color: #55efc4;
+    }
+    
+    .lesson-card-status.draft {
+      background: #9aa60e;
+      color: #feca57;
+    }
+    
+    .empty-lessons {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .empty-lessons-icon {
+      font-size: 3em;
+      margin-bottom: 15px;
+      opacity: 0.3;
+    }
+
+    .lesson-card.quiz-item {
+      border-left-color: #a78bfa;
+    }
+    .lesson-card.quiz-item:hover {
+      border-left-color: #8b5cf6;
+    }
+    
+    .footer-report {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .report-textarea {
+      width: 100%;
+      height: 80px;
+      border-radius: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      padding: 15px;
+      resize: vertical;
+      outline: none;
+      background: rgba(255, 255, 255, 0.9);
+      color: #2d3436;
+      font-family: inherit;
+      transition: all 0.3s ease;
+    }
+    
+    .report-textarea:focus {
+      border-color: #d29d00;
+      background: white;
+      transform: scale(1.01);
+    }
+    
+    .report-controls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .timer-display {
+      background: linear-gradient(45deg, #ff6b6b, #feca57);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      min-width: 120px;
+      text-align: center;
+    }
+    
+    .lessons-list::-webkit-scrollbar,
+    .chat-history::-webkit-scrollbar,
+    .lesson-content-display::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .lessons-list::-webkit-scrollbar-track,
+    .chat-history::-webkit-scrollbar-track,
+    .lesson-content-display::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+    
+    .lessons-list::-webkit-scrollbar-thumb,
+    .chat-history::-webkit-scrollbar-thumb,
+    .lesson-content-display::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+    }
+    
+    .lessons-list::-webkit-scrollbar-thumb:hover,
+    .chat-history::-webkit-scrollbar-thumb:hover,
+    .lesson-content-display::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-10px); }
+    }
+    
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    @media (max-width: 900px) {
+      .container { 
+        flex-direction: column; 
+        padding: 15px;
+        gap: 15px;
+      }
+      .main, .side { 
+        flex: 1; 
+      }
+      .schedule-grid {
+        grid-template-columns: 1fr;
+      }
+      .studios {
+        grid-template-columns: 1fr;
+      }
+      .report-controls {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5em; }
+      .video-container { min-height: 180px; }
+      .video-lesson, .ia-chatbot, .ia-study, .art-classes, .weekly-schedule,
+      .whats-znk, .actv-access, .footer-report, .side-section, .student-profile {
+        padding: 14px;
+      }
+      .quiz-timer-row, .report-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .quiz-timer-row .timer-display, .report-controls .timer-display {
+        text-align: center;
+      }
+      .week-plan-grid {
+        grid-template-columns: 1fr;
+      }
+      .download-lesson-item {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
+      .lessons-modal-filters {
+        flex-direction: column;
+      }
+    }
+
+    /* ===== Modules rétractables ===== */
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card-header-row h3,
+    .card-header-row h4 {
+      margin-bottom: 0;
+      flex: 1;
+    }
+
+    .card-header-extra {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .collapse-toggle {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #fff;
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.85em;
+      transition: transform 0.3s ease, background 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .collapse-toggle:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .collapsed .collapse-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .card-body {
+      max-height: 3000px;
+      opacity: 1;
+      overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.25s ease, margin-top 0.35s ease;
+      margin-top: 15px;
+    }
+
+    .collapsed .card-body {
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0;
+      pointer-events: none;
+    }
+
+    /* ===== Popup "Toutes les leçons" ===== */
+    .lessons-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 5, 20, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .lessons-modal-overlay.active {
+      display: flex;
+    }
+
+    .lessons-modal {
+      background: linear-gradient(135deg, #919191 0%, #232323 100%);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 920px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: modalPop 0.25s ease;
+    }
+
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .lessons-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 25px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .lessons-modal-header h3 {
+      margin: 0;
+      color: #feca57;
+    }
+
+    .lessons-modal-close {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #fff;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.1em;
+      transition: all 0.2s ease;
+    }
+
+    .lessons-modal-close:hover {
+      background: #ff6b6b;
+      transform: rotate(90deg);
+    }
+
+    .lessons-modal-filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 15px 25px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .lessons-modal-filters input,
+    .lessons-modal-filters select {
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.9);
+      color: #2d3436;
+      font-size: 0.9em;
+      outline: none;
+    }
+
+    .lessons-modal-filters input {
+      flex: 2;
+      min-width: 160px;
+    }
+
+    .lessons-modal-filters select {
+      flex: 1;
+      min-width: 130px;
+    }
+
+    .lessons-modal-count {
+      padding: 10px 25px 0;
+      font-size: 0.8em;
+      opacity: 0.7;
+    }
+
+    .lessons-modal-body {
+      padding: 15px 25px 25px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+      align-content: start;
+    }
+
+    .lessons-modal-body::-webkit-scrollbar { width: 8px; }
+    .lessons-modal-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+    }
+
+    .lessons-modal-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .see-all-btn {
+      background: linear-gradient(45deg, #a78bfa, #8b5cf6);
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 15px;
+      font-size: 0.75em;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+    }
+
+    .see-all-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(139, 92, 246, 0.4);
+    }
+
+    /* ===== Photo de profil + inscription ===== */
+    .avatar {
+      position: relative;
+      cursor: pointer;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .avatar:hover { transform: scale(1.05); }
+
+    .avatar-camera-badge {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      background: linear-gradient(45deg, #d29d00, #a96800);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9em;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .registration-info {
+      margin-top: 15px;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 12px 15px;
+      font-size: 0.85em;
+    }
+
+    .registration-info .reg-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .registration-info .reg-row:last-child { border-bottom: none; }
+    .registration-info .reg-label { opacity: 0.75; }
+    .registration-info .reg-value { font-weight: bold; text-align: right; }
+
+    /* ===== 1/ Bloc ID élève compact ===== */
+    .id-toggle-btn {
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 15px;
+      font-size: 0.78em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .id-toggle-btn:hover { background: rgba(255, 255, 255, 0.3); }
+    .registration-info {
+      display: none;
+      max-height: 0;
+      overflow: hidden;
+      padding: 0 15px;
+      margin-top: 0;
+      transition: max-height 0.3s ease, padding 0.3s ease, margin-top 0.3s ease;
+    }
+    .registration-info.expanded {
+      display: block;
+      max-height: 400px;
+      padding: 12px 15px;
+      margin-top: 12px;
+    }
+    .student-info-summary {
+      font-size: 0.8em;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    /* ===== 3-4/ Zone interrogation (ex Assistant IA) ===== */
+    .quiz-answer-zone { display: none; }
+    .quiz-answer-zone.active { display: block; }
+    .quiz-answer-zone .quiz-answer-title {
+      color: #feca57;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .quiz-question-block {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px 15px;
+      margin-bottom: 10px;
+      border-left: 3px solid #a78bfa;
+    }
+    .quiz-question-text { font-weight: bold; margin-bottom: 8px; }
+    .quiz-options { display: flex; flex-direction: column; gap: 6px; }
+    .quiz-option-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .quiz-option-label:hover { background: rgba(255,255,255,0.18); }
+    .quiz-option-label input[type="radio"] { accent-color: #a78bfa; }
+    .quiz-text-answer {
+      width: 100%;
+      min-height: 60px;
+      border-radius: 8px;
+      border: none;
+      padding: 10px;
+      background: rgba(255,255,255,0.9);
+      color: #2d3436;
+      font-family: inherit;
+      resize: vertical;
+    }
+    .quiz-locked .quiz-option-label,
+    .quiz-locked .quiz-text-answer,
+    .quiz-locked input { opacity: 0.6; pointer-events: none; }
+    .quiz-submitted-banner {
+      background: linear-gradient(45deg, #55efc4, #00b894);
+      color: #073b2c;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      text-align: center;
+      margin: 10px 0;
+    }
+    .quiz-timer-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 10px;
+    }
+    .quiz-timer-row .timer-display { min-width: 100px; font-size: 0.85em; }
+
+    /* ===== 5/ Télécharger cours, leçons ===== */
+    .download-lessons-list { display: flex; flex-direction: column; gap: 10px; }
+    .download-lesson-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px 14px;
+      border-left: 4px solid #d29d00;
+    }
+    .download-lesson-info { flex: 1; }
+    .download-lesson-info strong { color: #feca57; }
+    .download-lesson-info small { display: block; opacity: 0.75; margin-top: 2px; }
+    .download-btn {
+      background: linear-gradient(45deg, #d29d00, #a96800);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 15px;
+      font-size: 0.8em;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.25s ease;
+    }
+    .download-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(72,219,251,0.4); }
+
+    /* ===== 7/ Programme de la semaine → planning à remplir ===== */
+    .week-plan-intro {
+      font-size: 0.85em;
+      opacity: 0.85;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .week-plan-progress {
+      background: rgba(255,255,255,0.15);
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+    .week-plan-progress-fill {
+      background: linear-gradient(90deg, #55efc4 0%, #00b894 100%);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .week-plan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+    .week-plan-item {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border-left: 4px solid #ffb43f;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .week-plan-item:hover { background: rgba(255,255,255,0.2); }
+    .week-plan-item.learned {
+      border-left-color: #55efc4;
+      background: rgba(85, 239, 196, 0.15);
+      opacity: 0.85;
+    }
+    .week-plan-item.validated {
+      border-left-color: #feca57;
+      background: linear-gradient(135deg, #ff4013, rgba(139, 92, 246, 0.2));
+      opacity: 1;
+    }
+    .lesson-card.validated {
+      border-left-color: #feca57;
+      background: linear-gradient(135deg, #ff4013, rgba(139, 92, 246, 0.14));
+    }
+    .lesson-card.validated .lesson-card-status.published {
+      background: #ff4013;
+      color: #feca57;
+    }
+    .lesson-actions .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    .week-plan-item .wp-title { font-weight: bold; font-size: 0.9em; }
+    .week-plan-item .wp-order { display: flex; gap: 6px; margin-top: 6px; }
+    .week-plan-item .wp-order button {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      font-size: 0.75em;
+    }
+    .week-plan-item .wp-status { font-size: 0.75em; margin-top: 6px; opacity: 0.85; }
+    .week-plan-empty { text-align: center; padding: 30px 20px; opacity: 0.6; grid-column: 1/-1; }
+
+    /* ===== N° commun + navigation par semaine ===== */
+    .wp-number, .lc-number {
+      display: inline-block;
+      background: linear-gradient(135deg, #d95000, #831100);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.75em;
+      padding: 1px 7px;
+      border-radius: 8px;
+      margin-right: 5px;
+    }
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .week-nav button {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      font-size: 0.85em;
+    }
+    .week-nav button:hover { background: rgba(255,255,255,0.3); }
+    .week-nav-label {
+      font-size: 0.78em;
+      background: rgba(255,255,255,0.12);
+      padding: 4px 10px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+
+    /* ===== 8/ Notes dans le compte rendu ===== */
+    .report-notes-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .report-note-box {
+      flex: 1;
+      min-width: 160px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 10px 14px;
+      text-align: center;
+    }
+    .report-note-box .note-label { font-size: 0.75em; opacity: 0.8; }
+    .report-note-box .note-value { font-size: 1.4em; font-weight: bold; color: #feca57; margin-top: 4px; }
+
+    /* ===== 9/ What©ZNK lié aux utilisateurs connectés ===== */
+    .whatsznk-contacts { list-style: none; padding: 0; margin: 12px 0; }
+    .whatsznk-contacts li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      border-left: 4px solid #d29d00;
+    }
+    .whatsznk-contacts li:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateX(5px);
+      border-left-color: #ff6b6b;
+    }
+  </style>
+  <script src="znk-professeur-manifest.js"></script>
+</head>
+<body>
+  <script>
+    // Résout dynamiquement une image de leçon quand son chemin d'origine
+    // (figé au moment de la création, potentiellement sur une autre machine
+    // ou un ancien dossier userData) ne charge pas — appelé via onerror.
+    window.__resolveMaterialImg = async function(imgEl, fileName, titleHint) {
+        imgEl.onerror = null;
+        if (!window.electronAPI || !window.electronAPI.getMaterialUrl) return;
+        try {
+            const resolved = await window.electronAPI.getMaterialUrl({ fileName, titleHint });
+            if (resolved && resolved.success && resolved.url) {
+                imgEl.src = resolved.url;
+            }
+        } catch (e) {
+            console.warn('⚠️ getMaterialUrl:', e);
+        }
+    };
+
+    // Même correctif que pour les images, mais pour les vidéos : si le
+    // chemin d'origine (figé au moment de la création, potentiellement sur
+    // une autre machine/école ou un ancien dossier userData) ne charge pas,
+    // on retrouve le fichier dynamiquement via getMaterialUrl et on relance
+    // la lecture. Appelé via onerror sur la <video> elle-même (l'erreur du
+    // <source> enfant remonte à l'élément <video> parent).
+    window.__resolveMaterialVideo = async function(videoEl, fileName, titleHint) {
+        videoEl.onerror = null;
+        if (!window.electronAPI || !window.electronAPI.getVideoUrl) return;
+        try {
+            const resolved = await window.electronAPI.getVideoUrl({ fileName, titleHint });
+            if (resolved && resolved.success && resolved.url) {
+                const sourceEl = videoEl.querySelector('source');
+                if (sourceEl) sourceEl.src = resolved.url;
+                videoEl.src = resolved.url;
+                videoEl.load();
+            } else {
+                console.warn('⚠️ Vidéo introuvable (fileName manquant ou fichier déplacé) :', fileName, titleHint);
+            }
+        } catch (e) {
+            console.warn('⚠️ getVideoUrl (vidéo) :', e);
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof showEleveModule === 'function') {
+        showEleveModule('Bienvenue Élève !');
+      }
+    });
+  </script>
+  <header class="znk-unified-header" id="znkHeader"></header>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.ZNK && window.ZNK.Header) {
+        window.ZNK.Header.init({
+          title: "Art Études Lycée",
+          subtitle: "Espace élève - disponible à tout moment",
+          context: "eleves",
+          showBackBtn: true
+        });
+      }
+    });
+  </script>
+  
+  <div class="container">
+    <div class="main">
+      <div class="card student-profile">
+        <div class="art-etudes-title">Art Études</div>
+        <div class="avatar" id="avatarDisplay" onclick="document.getElementById('avatarUploadInput').click()">
+          <span id="avatarEmoji">🧑</span>
+          <div class="avatar-camera-badge">📷</div>
+        </div>
+        <input type="file" id="avatarUploadInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+        <div class="student-info">
+          <h3 id="studentNameDisplay">Anji Kaya</h3>
+          <p><strong id="studentClassDisplay">CE1</strong> - <span id="studentSchoolDisplay">SBH</span> <span id="studentFlagDisplay">🇫🇷</span></p>
+          <button class="id-toggle-btn" type="button" onclick="toggleRegistrationInfo()" id="idToggleBtn">🆔 Voir mes infos de compte ▾</button>
+          <div class="registration-info" id="registrationInfo">
+            <div class="reg-row"><span class="reg-label">🆔 N° élève</span><span class="reg-value" id="regUserId">ZNK-123456</span></div>
+            <div class="reg-row"><span class="reg-label">📧 Email</span><span class="reg-value" id="regEmail">anji.kaya@znkids.cm</span></div>
+            <div class="reg-row"><span class="reg-label">📅 Inscrit(e) le</span><span class="reg-value" id="regDate">03/09/2025</span></div>
+            <div class="reg-row"><span class="reg-label">🎭 Type de compte</span><span class="reg-value" id="regType">Études</span></div>
+            <div class="reg-row"><span class="reg-label">✅ Statut</span><span class="reg-value" id="regStatut" style="color:#55efc4;">Actif</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card section-filter">
+        <div class="card-body" style="margin-top:0;">
+          <span class="level-btn active" style="cursor:default;">🏆 Art Études - Lycée</span>
+        </div>
+      </div>
+
+      <div class="card video-lesson">
+        <div class="card-header-row" onclick="toggleCard(this)">
+          <h3>🎹 Leçon en cours</h3>
+          <button class="collapse-toggle" type="button">▼</button>
+        </div>
+        <div class="card-body">
+          <div class="video-container" id="videoContainer">
+            <video id="lessonVideo" controls style="display: none;">
+              <source src="" type="video/mp4">
+              Votre navigateur ne supporte pas la vidéo.
+            </video>
+            <div class="lesson-content-display" id="lessonContentDisplay">
+              <p style="text-align: center; color: rgba(255,255,255,0.5); padding: 60px 20px;">
+                📚 Sélectionnez une leçon dans la colonne de droite pour commencer
+              </p>
+            </div>
+            <div class="live-indicator" id="liveIndicator">🔴 EN DIRECT</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card ia-chatbot">
+        <div class="chat-header" onclick="toggleCard(this)" style="cursor:pointer;">
+          <h3>📝 Zone interrogation</h3>
+          <div class="card-header-extra">
+            <button class="collapse-toggle" type="button">▼</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <p id="quizZonePlaceholder" style="text-align:center; color:rgba(255,255,255,0.6); padding:15px 10px;">
+            📚 Ouvre une leçon puis clique sur « 🧪 Commencer l'interrogation » pour voir le quiz ici.
+          </p>
+
+          <!-- Zone d'écriture et de remplissage de l'interrogation liée à la leçon ouverte -->
+          <div class="quiz-answer-zone" id="quizAnswerZone">
+            <div class="quiz-answer-title" id="quizAnswerTitle">🧪 Interrogation</div>
+            <div class="quiz-timer-row">
+              <button class="btn btn-success" onclick="event.stopPropagation(); startQuizTimer()" id="quizStartBtn">▶️ Démarrer</button>
+              <button class="btn btn-danger" onclick="event.stopPropagation(); stopQuizTimer()" id="quizStopBtn" disabled>⏸️ Arrêter</button>
+              <div class="timer-display" id="quizTimerDisplay">Temps: 0m 0s</div>
+            </div>
+            <div id="quizQuestionsContainer"></div>
+            <div class="report-controls" style="margin-top:10px;">
+              <button class="btn btn-primary" onclick="event.stopPropagation(); submitQuizAnswers()" id="quizSubmitBtn">📤 Envoyer</button>
+              <button class="btn btn-secondary" onclick="event.stopPropagation(); closeQuizAnswerZone()">↩️ Retour à la leçon</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card weekly-schedule">
+        <div class="schedule-header" onclick="toggleCard(this)" style="cursor:pointer;">
+          <h3>📅 Programme de la semaine</h3>
+          <div class="card-header-extra">
+            <span class="week-nav-label" id="weekNavLabel">Semaine…</span>
+            <div class="week-nav">
+              <button type="button" onclick="event.stopPropagation(); changeWeek(-1)">◀</button>
+              <button type="button" onclick="event.stopPropagation(); changeWeek(1)">▶</button>
+            </div>
+            <button class="collapse-toggle" type="button">▼</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="week-plan-intro">🗓️ Voici les leçons programmées pour cette semaine (le numéro et la semaine sont fixés par ton professeur). Clique sur une leçon pour l'ouvrir ; une fois ton interrogation et ton dessin terminés, valide-la pour qu'elle s'affiche ici dans un bloc doré ! Utilise ◀ ▶ pour revoir une semaine passée ou avancer sur la suivante.</p>
+          <div class="week-plan-progress"><div class="week-plan-progress-fill" id="weekPlanProgressFill"></div></div>
+          <div class="week-plan-grid" id="weekPlanGrid">
+            <div class="week-plan-empty">Chargement du programme de la semaine...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-report">
+        <div class="card-header-row" onclick="toggleCard(this)">
+          <h4>📝 Compte rendu hebdomadaire</h4>
+          <button class="collapse-toggle" type="button">▼</button>
+        </div>
+        <div class="card-body">
+          <textarea class="report-textarea" id="reportText" placeholder="Décris ce que tu as appris cette semaine... ✨" oninput="if(!timerRunning) startTimer();"></textarea>
+          <div class="report-controls" style="margin-top:12px;">
+            <button class="btn btn-success" onclick="event.stopPropagation(); startTimer()" id="startBtn">▶️ Démarrer</button>
+            <button class="btn btn-danger" onclick="event.stopPropagation(); stopTimer()" id="stopBtn" disabled>⏸️ Arrêter</button>
+            <div class="timer-display" id="timerDisplay">Temps: 0m 0s</div>
+            <button class="btn btn-primary" onclick="event.stopPropagation(); submitReport()">📤 Soumettre</button>
+          </div>
+          <div class="report-notes-row">
+            <div class="report-note-box">
+              <div class="note-label">🧪 Note des interrogations</div>
+              <div class="note-value" id="quizAverageNote">--/20</div>
+            </div>
+            <div class="report-note-box">
+              <div class="note-label">🏆 Note globale</div>
+              <div class="note-value" id="globalNote">--/20</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card side-section">
+        <div class="card-header-row" onclick="toggleCard(this)">
+          <h3>📚 Leçons de la semaine</h3>
+          <div class="card-header-extra">
+            <button class="see-all-btn" type="button" onclick="event.stopPropagation(); openLessonsModal()">🔎 Voir tout</button>
+            <button class="collapse-toggle" type="button">▼</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="lessons-list" id="lessonsList">
+            <div class="empty-lessons">
+              <div class="empty-lessons-icon">📖</div>
+              <p>Chargement des leçons...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Popup : toutes les leçons disponibles ===== -->
+  <div class="lessons-modal-overlay" id="lessonsModalOverlay" onclick="if(event.target===this) closeLessonsModal()">
+    <div class="lessons-modal">
+      <div class="lessons-modal-header">
+        <h3>📚 Toutes les leçons disponibles</h3>
+        <button class="lessons-modal-close" onclick="closeLessonsModal()">✕</button>
+      </div>
+      <div class="lessons-modal-filters">
+        <input type="text" id="modalSearchInput" placeholder="🔍 Rechercher une leçon..." oninput="renderModalLessons()">
+        <select id="modalLevelFilter" onchange="renderModalLessons()">
+          <option value="">Tous les niveaux</option>
+          <option value="maternelle">🧸 Maternelle</option>
+          <option value="primaire">📚 Primaire</option>
+          <option value="college">🎓 Collège</option>
+          <option value="lycee">🏆 Lycée</option>
+        </select>
+        <select id="modalCategoryFilter" onchange="renderModalLessons()">
+          <option value="">Toutes les matières</option>
+        </select>
+      </div>
+      <div class="lessons-modal-count" id="modalLessonsCount"></div>
+      <div class="lessons-modal-body" id="modalLessonsBody"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentActiveLesson = null;
+    const LAST_LESSON_STORAGE_KEY = 'znk_last_lesson_lycee';
+    let hasAutoResumedLesson = false;
+
+    // Rouvre automatiquement la dernière leçon consultée (ex: l'élève est
+    // parti sur l'onglet "Dessin" du dashboard puis est revenu ici) au lieu
+    // de laisser l'élève retomber sur la liste et devoir la resélectionner.
+    // Ne s'exécute qu'une seule fois par chargement de page.
+    function autoResumeLastLesson() {
+      if (hasAutoResumedLesson) return;
+      try {
+        const lastId = localStorage.getItem(LAST_LESSON_STORAGE_KEY);
+        if (lastId && getLessonMerged(lastId)) {
+          hasAutoResumedLesson = true;
+          openLesson(lastId);
+        }
+      } catch (e) {
+        console.warn('Impossible de restaurer la dernière leçon:', e);
+      }
+    }
+    // Ce fichier est dédié à un seul niveau scolaire (ArtEtudes-lycee.html) :
+    // le niveau n'est plus filtrable, il est fixé une fois pour toutes.
+    const FIXED_LEVEL = 'lycee';
+    let currentLevelFilter = FIXED_LEVEL;
+
+    // ===== Données d'inscription réelles (venant de inscription.html) =====
+    // inscription.html enregistre le compte créé dans localStorage sous la clé 'znk_account' :
+    // { idZNK, email, prenom, nom, code, role, createdAt, niveau, balance, betis }
+    const NIVEAU_INFO = {
+      ps: { label: 'Petite Section (PS)', level: 'maternelle' },
+      ms: { label: 'Moyenne Section (MS)', level: 'maternelle' },
+      gs: { label: 'Grande Section (GS)', level: 'maternelle' },
+      cp: { label: 'CP', level: 'primaire' },
+      ce1: { label: 'CE1', level: 'primaire' },
+      ce2: { label: 'CE2', level: 'primaire' },
+      cm1: { label: 'CM1', level: 'primaire' },
+      cm2: { label: 'CM2', level: 'primaire' },
+      '6eme': { label: '6ème', level: 'college' },
+      '5eme': { label: '5ème', level: 'college' },
+      '4eme': { label: '4ème', level: 'college' },
+      '3eme': { label: '3ème', level: 'college' },
+      seconde: { label: 'Seconde', level: 'lycee' },
+      premiere: { label: 'Première', level: 'lycee' },
+      terminale: { label: 'Terminale', level: 'lycee' },
+      bts1: { label: 'BTS 1ère année', level: 'lycee' },
+      bts2: { label: 'BTS 2ème année', level: 'lycee' },
+      licence1: { label: 'Licence 1 (L1)', level: 'lycee' },
+      licence2: { label: 'Licence 2 (L2)', level: 'lycee' },
+      licence3: { label: 'Licence 3 (L3)', level: 'lycee' },
+      master1: { label: 'Master 1 (M1)', level: 'lycee' },
+      master2: { label: 'Master 2 (M2)', level: 'lycee' },
+      doctorat: { label: 'Doctorat', level: 'lycee' },
+      formation: { label: 'Formation professionnelle', level: 'lycee' },
+      autre: { label: 'Niveau non précisé', level: 'lycee' }
+    };
+
+    const ROLE_LABELS = {
+      ecole: 'Études',
+      visitor: 'Visiteur'
+    };
+
+    function formatFrenchDate(isoString) {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '---';
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function getStoredAccount() {
+      try {
+        const raw = localStorage.getItem('znk_account');
+        return raw ? JSON.parse(raw) : null;
+      } catch (err) {
+        console.warn('⚠️ Compte znk_account illisible dans localStorage:', err);
+        return null;
+      }
+    }
+
+    function loadAccountData() {
+      const account = getStoredAccount();
+      if (!account) {
+        console.log('ℹ️ Aucun compte trouvé (znk_account) — affichage des données de démonstration');
+        return;
+      }
+
+      console.log('✅ Compte chargé depuis inscription.html:', account.idZNK);
+
+      const fullName = `${account.prenom || ''} ${account.nom || ''}`.trim();
+      if (fullName) document.getElementById('studentNameDisplay').textContent = fullName;
+
+      const niveauInfo = account.niveau ? NIVEAU_INFO[account.niveau] : null;
+      if (niveauInfo) {
+        document.getElementById('studentClassDisplay').textContent = niveauInfo.label;
+        document.getElementById('studentSchoolDisplay').textContent = account.ecole || account.etablissement || 'SBH';
+        document.getElementById('studentFlagDisplay').textContent = account.paysFlag || '🇫🇷';
+        // Le niveau affiché reflète le compte, mais le niveau des leçons/quiz
+        // reste celui de ce fichier Art Études (FIXED_LEVEL).
+      } else if (account.role === 'visitor') {
+        document.getElementById('studentClassDisplay').textContent = 'Compte Visiteur';
+        document.getElementById('studentSchoolDisplay').textContent = 'Accès découverte ZNK';
+      }
+
+      document.getElementById('regUserId').textContent = account.idZNK || '---';
+      document.getElementById('regEmail').textContent = account.email || '---';
+      document.getElementById('regDate').textContent = account.createdAt ? formatFrenchDate(account.createdAt) : '---';
+      document.getElementById('regType').textContent = ROLE_LABELS[account.role] || account.role || '---';
+      document.getElementById('regStatut').textContent = 'Actif';
+
+      // Photo de profil propre à ce compte
+      if (account.idZNK) {
+        avatarStorageKey = `znk_avatar_photo_${account.idZNK}`;
+        const savedPhoto = localStorage.getItem(avatarStorageKey);
+        if (savedPhoto) applyAvatarPhoto(savedPhoto);
+      }
+    }
+
+    let avatarStorageKey = 'znk_avatar_photo';
+
+    // ===== 1/ Bloc ID élève compact =====
+    function toggleRegistrationInfo() {
+      const info = document.getElementById('registrationInfo');
+      const btn = document.getElementById('idToggleBtn');
+      const expanded = info.classList.toggle('expanded');
+      btn.textContent = expanded ? '🆔 Masquer mes infos de compte ▴' : '🆔 Voir mes infos de compte ▾';
+    }
+
+    // ===== Modules rétractables =====
+    function toggleCard(headerEl) {
+      const container = headerEl.parentElement;
+      container.classList.toggle('collapsed');
+      const btn = headerEl.querySelector('.collapse-toggle');
+      if (btn) {
+        const collapsed = container.classList.contains('collapsed');
+        btn.setAttribute('aria-expanded', String(!collapsed));
+      }
+    }
+
+    // ===== Photo de profil =====
+    function handleAvatarUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('⚠️ Merci de choisir un fichier image.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        applyAvatarPhoto(e.target.result);
+        try {
+          localStorage.setItem(avatarStorageKey, e.target.result);
+        } catch (err) {
+          console.warn('Impossible de sauvegarder la photo localement:', err);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function applyAvatarPhoto(dataUrl) {
+      const avatarDisplay = document.getElementById('avatarDisplay');
+      const avatarEmoji = document.getElementById('avatarEmoji');
+      avatarDisplay.style.backgroundImage = `url('${dataUrl}')`;
+      if (avatarEmoji) avatarEmoji.style.display = 'none';
+    }
+
+    // ===== Popup : toutes les leçons disponibles =====
+    function openLessonsModal() {
+      const overlay = document.getElementById('lessonsModalOverlay');
+      overlay.classList.add('active');
+      document.getElementById('modalSearchInput').value = '';
+      document.getElementById('modalLevelFilter').value = currentLevelFilter || '';
+      populateModalCategoryFilter();
+      document.getElementById('modalCategoryFilter').value = '';
+      renderModalLessons();
+    }
+
+    // Peuple le select des matières à partir des vraies catégories du manifest
+    function populateModalCategoryFilter() {
+      const select = document.getElementById('modalCategoryFilter');
+      if (!window.ZNK_ETUDES_MANIFEST || select.dataset.populated) return;
+      const categories = ZNK_ETUDES_MANIFEST.getCategories();
+      select.innerHTML = '<option value="">Toutes les matières</option>' +
+        categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+      select.dataset.populated = 'true';
+    }
+
+    function closeLessonsModal() {
+      document.getElementById('lessonsModalOverlay').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLessonsModal();
+    });
+
+    function renderModalLessons() {
+      const body = document.getElementById('modalLessonsBody');
+      const countEl = document.getElementById('modalLessonsCount');
+      if (!window.ZNK_ETUDES_MANIFEST) {
+        body.innerHTML = `
+          <div class="lessons-modal-empty">
+            <div class="empty-lessons-icon">⚠️</div>
+            <p style="color:#ff6b6b;">Manifest non chargé</p>
+          </div>`;
+        countEl.textContent = '';
+        return;
+      }
+
+      const search = (document.getElementById('modalSearchInput').value || '').toLowerCase().trim();
+      const level = document.getElementById('modalLevelFilter').value;
+      const categoryId = document.getElementById('modalCategoryFilter').value;
+
+      const filters = { published: true };
+      if (level) filters.level = level;
+      if (categoryId) filters.categoryId = categoryId;
+
+      let lessons = getAllLessonsMerged(filters);
+      if (search) {
+        lessons = lessons.filter(l =>
+          (l.title || '').toLowerCase().includes(search) ||
+          (l.description || '').toLowerCase().includes(search)
+        );
+      }
+
+      countEl.textContent = `${lessons.length} leçon(s) trouvée(s)`;
+
+      if (lessons.length === 0) {
+        body.innerHTML = `
+          <div class="lessons-modal-empty">
+            <div class="empty-lessons-icon">📖</div>
+            <p>Aucune leçon ne correspond à ta recherche.</p>
+          </div>`;
+        return;
+      }
+
+      body.innerHTML = lessons.map(lesson => createLessonCard(lesson)).join('');
+    }
+
+    function openLessonFromModal(lessonId) {
+      closeLessonsModal();
+      openLesson(lessonId);
+    }
+
+    // ===== Lien Leçon <-> Interrogation =====
+    // Même règle que dans terminal-lecons.html (renderLessonList) : on vérifie
+    // d'abord lesson.quizId (choisi explicitement par le prof), puis on se
+    // rabat sur un quiz publié dont quiz.lessonId pointe vers cette leçon.
+    function findQuizForLesson(lesson) {
+      if (!lesson || !window.ZNKManifest || !ZNKManifest.quiz) return null;
+      const quizzes = ZNKManifest.quiz.list().filter(q =>
+        q.status === 'publie' && (!q.audience || q.audience.eleves !== false)
+      );
+      const quiz = lesson.quizId
+        ? quizzes.find(q => q.id === lesson.quizId)
+        : quizzes.find(q => q.lessonId === lesson.id);
+      return quiz || null;
+    }
+
+    // ===== Zone de réponse aux interrogations (liée à la leçon ouverte) =====
+    let currentQuiz = null;
+    let currentQuizLessonId = null;
+    let quizAnswers = {}; // { [questionId]: selectedIndex }
+    let quizTimerRunning = false;
+    let quizStartTime = null;
+    let quizTimerInterval = null;
+    let quizElapsedSeconds = 0;
+    // Historique local (pratique pour l'affichage immédiat côté élève) ; la source
+    // de vérité "officielle" reste ZNKManifest.quiz.attemptsForStudent(...) et le
+    // dépôt dans 'znk_quiz_results' pour professeur.html.
+    let quizScoresHistory = JSON.parse(localStorage.getItem('znk_quiz_scores_' + FIXED_LEVEL) || '[]');
+
+    function openQuizForLesson(lessonId) {
+      const lesson = getLessonMerged(lessonId);
+      const quiz = findQuizForLesson(lesson);
+      if (!quiz) {
+        alert("🧪 Aucune interrogation n'est disponible pour cette leçon pour le moment.");
+        return;
+      }
+      const already = quizScoresHistory.filter(s => s.lessonId === lessonId).pop();
+      if (already) {
+        alert(`✅ Tu as déjà répondu à cette interrogation (note : ${already.score}/20). Clique sur « Valider et soumettre mon résultat » pour terminer la leçon.`);
+        return;
+      }
+      openQuizInAnswerZone(quiz.id, lessonId);
+    }
+
+    function openQuizInAnswerZone(quizId, lessonId) {
+      if (!window.ZNKManifest || !ZNKManifest.quiz) return;
+      const quiz = ZNKManifest.quiz.get(quizId);
+      if (!quiz) {
+        alert('❌ Interrogation introuvable');
+        return;
+      }
+      currentQuiz = quiz;
+      currentQuizLessonId = lessonId || null;
+      quizAnswers = {};
+      quizElapsedSeconds = 0;
+      quizTimerRunning = false;
+      document.getElementById('quizTimerDisplay').textContent = 'Temps: 0m 0s';
+      document.getElementById('quizStartBtn').disabled = false;
+      document.getElementById('quizStopBtn').disabled = true;
+
+      const placeholder = document.getElementById('quizZonePlaceholder');
+      if (placeholder) placeholder.style.display = 'none';
+      const zone = document.getElementById('quizAnswerZone');
+      zone.classList.add('active');
+      zone.classList.remove('quiz-locked');
+      document.getElementById('quizAnswerTitle').textContent = `🧪 ${quiz.title}`;
+      document.getElementById('quizSubmitBtn').disabled = false;
+      document.getElementById('quizSubmitBtn').textContent = '📤 Envoyer';
+      renderQuizQuestions(quiz);
+      startQuizTimer(); // ⏱️ Le chrono démarre automatiquement dès que l'élève ouvre l'interrogation
+
+      // Ouvrir également la carte "Zone interrogation" si elle est repliée
+      const card = zone.closest('.card');
+      if (card && card.classList.contains('collapsed')) {
+        card.classList.remove('collapsed');
+      }
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeQuizAnswerZone() {
+      currentQuiz = null;
+      currentQuizLessonId = null;
+      stopQuizTimer();
+      document.getElementById('quizAnswerZone').classList.remove('active');
+      const placeholder = document.getElementById('quizZonePlaceholder');
+      if (placeholder) placeholder.style.display = '';
+    }
+
+    // Questions toujours QCM ou Vrai/Faux, corrigées automatiquement par
+    // ZNKManifest.quiz.submitAttempt() (voir znk-professeur-manifest.js).
+    // On ne montre jamais correctIndex à l'élève.
+    function renderQuizQuestions(quiz) {
+      const container = document.getElementById('quizQuestionsContainer');
+      container.innerHTML = (quiz.questions || []).map((q, idx) => {
+        const options = (q.options || []).map((opt, oIdx) => `
+          <label class="quiz-option-label">
+            <input type="radio" name="quizQ${q.id}" value="${oIdx}" onchange="quizAnswers['${q.id}']=${oIdx}">
+            <span>${opt}</span>
+          </label>`).join('');
+        return `
+          <div class="quiz-question-block">
+            <div class="quiz-question-text">${idx + 1}. ${q.text || ''}</div>
+            <div class="quiz-options">${options}</div>
+          </div>`;
+      }).join('') || '<p style="opacity:0.7;">Aucune question dans cette interrogation.</p>';
+    }
+
+    function startQuizTimer() {
+      if (!quizTimerRunning) {
+        quizTimerRunning = true;
+        quizStartTime = Date.now() - quizElapsedSeconds * 1000;
+        document.getElementById('quizStartBtn').disabled = true;
+        document.getElementById('quizStopBtn').disabled = false;
+        quizTimerInterval = setInterval(updateQuizTimer, 1000);
+      }
+    }
+
+    function stopQuizTimer() {
+      if (quizTimerRunning) {
+        quizTimerRunning = false;
+        document.getElementById('quizStartBtn').disabled = false;
+        document.getElementById('quizStopBtn').disabled = true;
+        clearInterval(quizTimerInterval);
+      }
+    }
+
+    function updateQuizTimer() {
+      if (quizTimerRunning && quizStartTime) {
+        quizElapsedSeconds = Math.floor((Date.now() - quizStartTime) / 1000);
+        const minutes = Math.floor(quizElapsedSeconds / 60);
+        const seconds = quizElapsedSeconds % 60;
+        document.getElementById('quizTimerDisplay').textContent = `Temps: ${minutes}m ${seconds}s`;
+      }
+    }
+
+    function currentStudentName() {
+      const account = getStoredAccount();
+      if (account) return `${account.prenom || ''} ${account.nom || ''}`.trim() || 'Élève';
+      const el = document.getElementById('studentNameDisplay');
+      return (el && el.textContent.trim()) || 'Élève';
+    }
+
+    function submitQuizAnswers() {
+      if (!currentQuiz) return;
+      const totalQuestions = (currentQuiz.questions || []).length;
+      const answered = Object.keys(quizAnswers).length;
+      if (totalQuestions > 0 && answered === 0) {
+        alert('⚠️ Réponds à au moins une question avant d\'envoyer !');
+        return;
+      }
+      stopQuizTimer();
+
+      // Correction automatique réelle via znk-professeur-manifest.js
+      const answersPayload = (currentQuiz.questions || []).map(q => ({
+        questionId: q.id,
+        selectedIndex: (q.id in quizAnswers) ? quizAnswers[q.id] : null
+      }));
+      const attempt = ZNKManifest.quiz.submitAttempt(currentQuiz.id, currentStudentName(), answersPayload);
+      const gradeOn20 = (attempt && attempt.total > 0) ? Math.round((attempt.score / attempt.total) * 20) : 0;
+      const correctCount = attempt ? attempt.answers.filter(a => a.isCorrect).length : 0;
+      const gradableCount = attempt ? attempt.answers.length : totalQuestions;
+
+      // Rendu de l'interrogation : verrouillage, impossible à modifier ensuite
+      const zone = document.getElementById('quizAnswerZone');
+      zone.classList.add('quiz-locked');
+      document.getElementById('quizSubmitBtn').disabled = true;
+      document.getElementById('quizSubmitBtn').textContent = '✅ Rendu envoyé';
+
+      const banner = document.createElement('div');
+      banner.className = 'quiz-submitted-banner';
+      banner.textContent = `✅ Interrogation corrigée : ${correctCount}/${gradableCount} bonne(s) réponse(s) — note : ${gradeOn20}/20`;
+      document.getElementById('quizQuestionsContainer').appendChild(banner);
+
+      quizScoresHistory.push({
+        quizId: currentQuiz.id,
+        attemptId: attempt ? attempt.id : null,
+        title: currentQuiz.title,
+        score: gradeOn20,
+        correctCount,
+        gradableCount,
+        date: new Date().toISOString(),
+        lessonId: currentQuizLessonId
+      });
+      localStorage.setItem('znk_quiz_scores_' + FIXED_LEVEL, JSON.stringify(quizScoresHistory));
+      computeNotes();
+
+      // Rafraîchir la leçon ouverte pour débloquer le bouton "Valider ma leçon"
+      if (currentQuizLessonId && currentActiveLesson === currentQuizLessonId) {
+        openLesson(currentQuizLessonId);
+      }
+    }
+
+    // ===== Suivi des leçons terminées/validées (une leçon ne peut être refaite) =====
+    function completedLessonsStorageKey() {
+      const account = getStoredAccount();
+      const studentId = (account && account.idZNK) || 'demo';
+      return `znk_completed_lessons_${studentId}_${currentLevelFilter}`;
+    }
+
+    function getCompletedLessons() {
+      try {
+        return JSON.parse(localStorage.getItem(completedLessonsStorageKey()) || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function getCompletedLesson(lessonId) {
+      return getCompletedLessons().find(c => c.lessonId === lessonId) || null;
+    }
+
+    function isLessonCompleted(lessonId) {
+      return !!getCompletedLesson(lessonId);
+    }
+
+    // ===== Programme de la semaine — basé sur lesson.week (champ du prof,
+    // synchronisé avec la leçon comme le reste, PAS un réglage local). Le
+    // curseur "quelle semaine je regarde" est, lui, purement local/pratique :
+    // il ne fait que mémoriser la position de navigation de cet élève sur cet
+    // appareil. Rien n'est jamais caché définitivement — on peut toujours
+    // naviguer vers une semaine passée ou future. =====
+    const UNASSIGNED_WEEK = '__non_planifiees__';
+
+    function weekCursorStorageKey() {
+      return `znk_week_cursor_${currentLevelFilter}`;
+    }
+
+    function getAvailableWeeks(lessons) {
+      const weeks = Array.from(new Set(
+        lessons.filter(l => typeof l.week === 'number').map(l => l.week)
+      )).sort((a, b) => a - b);
+      const hasUnassigned = lessons.some(l => typeof l.week !== 'number');
+      return hasUnassigned ? weeks.concat([UNASSIGNED_WEEK]) : weeks;
+    }
+
+    function defaultWeekCursor(lessons, availableWeeks) {
+      // Par défaut, on ouvre sur la première semaine qui contient encore une
+      // leçon non validée — sinon la dernière semaine planifiée.
+      for (const w of availableWeeks) {
+        if (w === UNASSIGNED_WEEK) continue;
+        const weekLessons = lessons.filter(l => l.week === w);
+        if (weekLessons.some(l => !isLessonCompleted(l.id))) return w;
+      }
+      return availableWeeks.length ? availableWeeks[availableWeeks.length - 1] : null;
+    }
+
+    function getCurrentWeekCursor(lessons, availableWeeks) {
+      const stored = localStorage.getItem(weekCursorStorageKey());
+      let cursor = stored === UNASSIGNED_WEEK ? UNASSIGNED_WEEK : (stored ? parseInt(stored, 10) : null);
+      if (cursor === null || !availableWeeks.includes(cursor)) {
+        cursor = defaultWeekCursor(lessons, availableWeeks);
+        if (cursor !== null) localStorage.setItem(weekCursorStorageKey(), String(cursor));
+      }
+      return cursor;
+    }
+
+    function changeWeek(direction) {
+      const lessons = getAllLessonsMerged({ published: true, level: currentLevelFilter });
+      const availableWeeks = getAvailableWeeks(lessons);
+      if (availableWeeks.length === 0) return;
+      const current = getCurrentWeekCursor(lessons, availableWeeks);
+      const idx = availableWeeks.indexOf(current);
+      const nextIdx = Math.min(availableWeeks.length - 1, Math.max(0, idx + direction));
+      localStorage.setItem(weekCursorStorageKey(), String(availableWeeks[nextIdx]));
+      renderWeekPlan();
+    }
+
+    function renderWeekPlan() {
+      const grid = document.getElementById('weekPlanGrid');
+      const progressFill = document.getElementById('weekPlanProgressFill');
+      const label = document.getElementById('weekNavLabel');
+      if (!grid || !window.ZNK_ETUDES_MANIFEST) return;
+
+      const lessons = getAllLessonsMerged({ published: true, level: currentLevelFilter });
+      if (lessons.length === 0) {
+        grid.innerHTML = '<div class="week-plan-empty">📖 Aucune leçon à programmer cette semaine pour ce niveau.</div>';
+        progressFill.style.width = '0%';
+        if (label) label.textContent = '';
+        return;
+      }
+
+      const availableWeeks = getAvailableWeeks(lessons);
+      const cursor = getCurrentWeekCursor(lessons, availableWeeks);
+      const weekLessons = (cursor === UNASSIGNED_WEEK)
+        ? lessons.filter(l => typeof l.week !== 'number')
+        : lessons.filter(l => l.week === cursor);
+      const sorted = weekLessons.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+      const completed = getCompletedLessons();
+
+      if (label) {
+        const idx = availableWeeks.indexOf(cursor);
+        const totalNumbered = availableWeeks.filter(w => w !== UNASSIGNED_WEEK).length;
+        label.textContent = (cursor === UNASSIGNED_WEEK)
+          ? '📦 Leçons sans semaine assignée'
+          : `📅 Semaine ${cursor} (${idx + 1}/${totalNumbered})`;
+      }
+
+      grid.innerHTML = sorted.map(lesson => {
+        const done = completed.find(c => c.lessonId === lesson.id);
+        const numberBadge = typeof lesson.order === 'number' ? `<span class="wp-number">🔢 N°${lesson.order}</span> ` : '';
+        return `
+          <div class="week-plan-item ${done ? 'validated' : ''}" onclick="openLesson('${lesson.id}')">
+            <div class="wp-title">${done ? '🏆' : '📘'} ${numberBadge}${lesson.title}</div>
+            <div class="wp-status">${done ? `Terminée${done.score !== null ? ' - Note: ' + done.score + '/20' : ''}` : 'À apprendre'}</div>
+          </div>`;
+      }).join('') || '<div class="week-plan-empty">📖 Aucune leçon pour cette semaine.</div>';
+
+      const doneCount = sorted.filter(l => isLessonCompleted(l.id)).length;
+      const percentage = sorted.length > 0 ? Math.round((doneCount / sorted.length) * 100) : 0;
+      progressFill.style.width = `${Math.min(percentage, 100)}%`;
+      computeNotes();
+    }
+
+    // ===== Notes du compte rendu hebdomadaire =====
+    function computeNotes() {
+      const quizNoteEl = document.getElementById('quizAverageNote');
+      const globalNoteEl = document.getElementById('globalNote');
+      if (!quizNoteEl || !globalNoteEl) return;
+
+      let quizAverage = null;
+      if (quizScoresHistory.length > 0) {
+        quizAverage = quizScoresHistory.reduce((sum, s) => sum + s.score, 0) / quizScoresHistory.length;
+        quizNoteEl.textContent = `${quizAverage.toFixed(1)}/20`;
+      } else {
+        quizNoteEl.textContent = '--/20';
+      }
+
+      const lessons = getAllLessonsMerged({ published: true, level: currentLevelFilter });
+      const completed = getCompletedLessons();
+      const progressRatio = lessons.length > 0 ? (completed.length / lessons.length) : 0;
+      const progressNote = Math.min(progressRatio, 1) * 20;
+
+      if (quizAverage !== null) {
+        const globalNote = (quizAverage * 0.6 + progressNote * 0.4);
+        globalNoteEl.textContent = `${globalNote.toFixed(1)}/20`;
+      } else if (lessons.length > 0) {
+        globalNoteEl.textContent = `${progressNote.toFixed(1)}/20`;
+      } else {
+        globalNoteEl.textContent = '--/20';
+      }
+    }
+
+    // ===== Envoi du résultat au professeur =====
+    // professeur.html lit 'znk_quiz_results' (voir getQuizResults()/renderQuizResults())
+    // et attend exactement ces champs : studentName, lessonTitle, niveauLevel, niveauLabel,
+    // quizTitle, correctCount, gradableCount, date, score, maxScore, drawingDataUrl.
+    function sendResultToProfessor(record) {
+      const key = 'znk_quiz_results';
+      let list = [];
+      try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { list = []; }
+      list.push(record);
+      localStorage.setItem(key, JSON.stringify(list));
+    }
+
+    // ===== Validation finale d'une leçon : quiz + dessin + verrouillage =====
+    function validateLessonFinal(lessonId) {
+      const lesson = getLessonMerged(lessonId);
+      if (!lesson) return;
+      if (isLessonCompleted(lessonId)) {
+        alert('✅ Cette leçon a déjà été validée. Impossible de la refaire.');
+        return;
+      }
+
+      const quiz = findQuizForLesson(lesson);
+      const lastAttempt = quizScoresHistory.filter(s => s.lessonId === lessonId).pop() || null;
+      if (quiz && !lastAttempt) {
+        alert("⚠️ Termine d'abord l'interrogation de cette leçon avant de valider.");
+        return;
+      }
+
+      if (!confirm('✅ Valider et soumettre définitivement cette leçon ? Tu ne pourras plus la refaire ensuite.')) {
+        return;
+      }
+
+      const drawingDataUrl = localStorage.getItem(artResultStorageKey(lessonId)) || null;
+      const record = {
+        lessonId: lesson.id,
+        lessonTitle: lesson.title,
+        score: lastAttempt ? lastAttempt.score : null,
+        quizTitle: lastAttempt ? lastAttempt.title : null,
+        drawingDataUrl,
+        date: new Date().toISOString()
+      };
+
+      const completed = getCompletedLessons();
+      completed.push(record);
+      localStorage.setItem(completedLessonsStorageKey(), JSON.stringify(completed));
+
+      sendResultToProfessor({
+        studentName: currentStudentName(),
+        lessonTitle: lesson.title,
+        niveauLevel: FIXED_LEVEL,
+        niveauLabel: 'Lycée',
+        quizTitle: record.quizTitle,
+        correctCount: lastAttempt ? lastAttempt.correctCount : null,
+        gradableCount: lastAttempt ? lastAttempt.gradableCount : null,
+        date: record.date,
+        score: record.score,
+        maxScore: 20,
+        drawingDataUrl
+      });
+
+      renderWeekPlan();
+      loadLessons();
+      openLesson(lessonId); // ré-affiche la leçon en mode "terminée"
+    }
+
+    // Rattachement élève -> prof : chaque élève est créé par un seul prof (via le module
+    // "Mes élèves" ou historiquement inscription.html), et son compte (znk_account) porte
+    // ce profId depuis la connexion (auth-hub.html : { ..., profId: foundEleve.profId }).
+    // Un élève ne doit voir QUE : les leçons "communes" (seed, admin/build — pas de profId,
+    // donc automatiquement communes à tous) + les leçons créées par SON PROPRE prof.
+    // Jamais les leçons créées par d'autres profs.
+    function getStudentProfId() {
+      const account = getStoredAccount();
+      return (account && account.profId) ? account.profId : null;
+    }
+
+    // ==== Sync VPS (pull) : fusionne les leçons reçues du VPS dans le stockage ====
+    // ==== local (znk_lessons_v1), avec le même principe merge-by-id/updatedAt  ====
+    // ==== que le reste de l'app. Si le VPS n'est pas configuré, ZNKSync ne     ====
+    // ==== renvoie simplement rien — aucun risque de casser le mode local.      ====
+    function mergeVPSLessonsIntoLocal(lessons) {
+      if (!lessons || lessons.length === 0) return;
+      try {
+        const raw = localStorage.getItem('znk_lessons_v1');
+        const all = raw ? JSON.parse(raw) : [];
+        lessons.forEach(lesson => {
+          const idx = all.findIndex(l => l.id === lesson.id);
+          if (idx === -1) {
+            all.push(lesson);
+          } else if ((lesson.updatedAt || 0) >= (all[idx].updatedAt || 0)) {
+            all[idx] = lesson;
+          }
+        });
+        localStorage.setItem('znk_lessons_v1', JSON.stringify(all));
+      } catch (e) {
+        console.warn('Impossible de fusionner les leçons reçues du VPS:', e);
+      }
+    }
+
+    // ===== Fusion des leçons "seed" (znk-etudes-manifest.js, statique) =====
+    // ===== et des leçons créées via terminal-lecons.html (ZNKManifest.lessons, dynamique) =====
+    // Le niveau scolaire n'est pas stocké sur les leçons créées via l'outil : on le
+    // déduit de leur catégorie exactement comme pour les leçons seed, pour rester cohérent.
+    function enrichManifestLesson(lesson) {
+      const cat = window.ZNK_ETUDES_MANIFEST ? ZNK_ETUDES_MANIFEST.categoryById(lesson.categoryId) : null;
+      const autoLevel = (cat && window.ZNK_ETUDES_MANIFEST) ? ZNK_ETUDES_MANIFEST.schoolLevelFromTargetAge(cat.targetAge) : 'tous';
+      const schoolLevel = lesson.targetLevel || autoLevel; // niveau choisi explicitement dans terminal-lecons.html, sinon déduit de la catégorie
+      return Object.assign({}, lesson, {
+        categoryInfo: cat,
+        schoolLevel,
+        isPublished: lesson.status === 'publie'
+      });
+    }
+
+    function getAllLessonsMerged(filters) {
+      filters = filters || {};
+      const seed = window.ZNK_ETUDES_MANIFEST ? ZNK_ETUDES_MANIFEST.getAllLessons(filters) : [];
+      let created = (window.ZNKManifest && ZNKManifest.lessons) ? ZNKManifest.lessons.list().map(enrichManifestLesson) : [];
+      // Isolement par prof : on ne garde que les leçons créées par le prof de CET élève.
+      // Si aucun profId n'est connu (pas de compte / mode démo), on n'affiche aucune
+      // leçon "créée par un prof" — seules les leçons communes (seed) restent visibles,
+      // par sécurité (mieux vaut trop peu que trop, en cas de doute sur le rattachement).
+      const studentProfId = getStudentProfId();
+      // Une leçon "created" est visible si : elle est marquée isGlobal (compte admin,
+      // ou prof ayant utilisé "Marquer TOUTES mes leçons comme communes") — visible par
+      // TOUS les élèves, tous profs confondus — OU si elle appartient au prof de CET élève.
+      created = created.filter(l => l.isGlobal || (studentProfId && l.profId === studentProfId));
+      if (filters.published) created = created.filter(l => l.isPublished);
+      if (filters.level && filters.level !== 'tous') {
+        created = created.filter(l => l.schoolLevel === 'tous' || l.schoolLevel === filters.level);
+      }
+      if (filters.categoryId) created = created.filter(l => l.categoryId === filters.categoryId);
+      let merged = seed.concat(created);
+      // Filtre défensif final : ne pas se fier uniquement au filtrage interne de
+      // ZNK_ETUDES_MANIFEST.getAllLessons() pour le niveau — un élève de ce niveau
+      // ne doit voir QUE ses leçons (ou celles marquées "tous niveaux"), jamais
+      // celles d'un autre niveau, même si le module "seed" filtre mal.
+      if (filters.level && filters.level !== 'tous') {
+        merged = merged.filter(l => {
+          const lvl = l.schoolLevel || l.level || l.niveau || l.targetLevel || 'tous';
+          return lvl === 'tous' || lvl === filters.level;
+        });
+      }
+      if (filters.published) {
+        merged = merged.filter(l => (typeof l.isPublished === 'boolean') ? l.isPublished : (l.status ? l.status === 'publie' : true));
+      }
+      return merged.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+
+    function getLessonMerged(id) {
+      const seedLesson = window.ZNK_ETUDES_MANIFEST ? ZNK_ETUDES_MANIFEST.getLesson(id) : null;
+      if (seedLesson) return seedLesson;
+      if (window.ZNKManifest && ZNKManifest.lessons) {
+        const created = ZNKManifest.lessons.get(id);
+        // Même isolement par prof que dans getAllLessonsMerged : on refuse d'ouvrir
+        // directement (par id) une leçon créée par un autre prof que celui de l'élève.
+        if (created) {
+          if (created.isGlobal) return enrichManifestLesson(created);
+          const studentProfId = getStudentProfId();
+          if (studentProfId && created.profId === studentProfId) return enrichManifestLesson(created);
+          return null;
+        }
+      }
+      return null;
+    }
+
+    function loadLessons() {
+      console.log('🔄 Tentative de chargement des leçons...');
+      
+      if (!window.ZNK_ETUDES_MANIFEST) {
+        console.error('❌ Manifest non chargé! Affichage du message d\'erreur.');
+        const lessonsList = document.getElementById('lessonsList');
+        lessonsList.innerHTML = `
+          <div class="empty-lessons">
+            <div class="empty-lessons-icon">⚠️</div>
+            <p style="color: #ff6b6b;">Manifest non chargé</p>
+            <p style="font-size: 0.85em; margin-top: 10px; opacity: 0.7;">
+              Le fichier znk-etudes-manifest.js est requis
+            </p>
+            <button class="btn btn-primary" onclick="loadLessons()" style="margin-top: 15px; font-size: 0.8em;">
+              🔄 Réessayer
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      console.log('✅ Manifest détecté');
+      const filters = { 
+        published: true,
+        level: currentLevelFilter
+      };
+      
+      try {
+        const lessons = getAllLessonsMerged(filters);
+        const lessonsList = document.getElementById('lessonsList');
+        
+        console.log(`📚 ${lessons.length} leçon(s) chargée(s) pour le niveau ${currentLevelFilter}`);
+        
+        if (lessons.length === 0) {
+          lessonsList.innerHTML = `
+            <div class="empty-lessons">
+              <div class="empty-lessons-icon">📖</div>
+              <p>Aucune leçon disponible</p>
+              <p style="font-size: 0.85em; margin-top: 10px; opacity: 0.7;">
+                pour le niveau ${currentLevelFilter}
+              </p>
+            </div>
+          `;
+        } else {
+          lessonsList.innerHTML = lessons.map(lesson => createLessonCard(lesson)).join('');
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement des leçons:', error);
+        const lessonsList = document.getElementById('lessonsList');
+        lessonsList.innerHTML = `
+          <div class="empty-lessons">
+            <div class="empty-lessons-icon">❌</div>
+            <p style="color: #ff6b6b;">Erreur de chargement</p>
+            <p style="font-size: 0.85em; margin-top: 10px; opacity: 0.7;">
+              ${error.message}
+            </p>
+          </div>
+        `;
+      }
+    }
+    
+    function createLessonCard(lesson) {
+      const cat = lesson.categoryInfo || { icon: '📚', name: lesson.categoryId };
+      const hasAudio = (lesson.materials || []).some(m => m.type === 'audio');
+      const hasDoc = (lesson.materials || []).some(m => m.type === 'document');
+      const hasVideo = (lesson.materials || []).some(m => m.type === 'video');
+      const hasImage = (lesson.materials || []).some(m => m.type === 'image');
+      const done = getCompletedLesson(lesson.id);
+
+      return `
+        <div class="lesson-card ${currentActiveLesson === lesson.id ? 'active' : ''} ${done ? 'validated' : ''}" 
+             onclick="openLesson('${lesson.id}')"
+             data-lesson-id="${lesson.id}">
+          <div class="lesson-card-header">
+            <span class="lesson-card-icon">${done ? '🏆' : cat.icon}</span>
+            <span class="lesson-card-title">${typeof lesson.order === 'number' ? `<span class="lc-number">🔢 N°${lesson.order}</span> ` : ''}${lesson.title}</span>
+          </div>
+          ${lesson.description ? `<div class="lesson-card-description">${lesson.description}</div>` : ''}
+          <div class="lesson-card-meta">
+            <span class="lesson-card-badge">${cat.icon} ${cat.name || ''}</span>
+            ${typeof lesson.week === 'number' ? `<span class="lesson-card-badge">📅 Semaine ${lesson.week}</span>` : ''}
+            <span class="lesson-card-badge">⏱️ ${lesson.duration}</span>
+            ${hasVideo ? `<span class="lesson-card-badge">🎬 Vidéo</span>` : ''}
+            ${hasAudio ? `<span class="lesson-card-badge">🔊 Audio</span>` : ''}
+            ${hasImage ? `<span class="lesson-card-badge">🖼️ Image</span>` : ''}
+            ${hasDoc ? `<span class="lesson-card-badge">📄 Fiche</span>` : ''}
+          </div>
+          <span class="lesson-card-status published">${done ? `🏆 Terminée${done.score !== null ? ' - ' + done.score + '/20' : ''}` : '✓ Publiée'}</span>
+        </div>
+      `;
+    }
+    
+    function openLesson(lessonId) {
+      const lesson = getLessonMerged(lessonId);
+      if (!lesson) {
+        alert('❌ Leçon introuvable');
+        return;
+      }
+
+      const overlay = document.getElementById('lessonsModalOverlay');
+      if (overlay && overlay.classList.contains('active')) {
+        closeLessonsModal();
+      }
+
+      currentActiveLesson = lessonId;
+      try {
+        // Le dashboard recrée entièrement cette page (iframe/webview) à chaque
+        // fois qu'on change d'onglet (ex: pour aller sur "Dessin" puis
+        // revenir) : tout l'état JS est perdu. On mémorise donc la dernière
+        // leçon ouverte pour la rouvrir automatiquement au prochain
+        // chargement, au lieu de retomber sur la liste.
+        localStorage.setItem(LAST_LESSON_STORAGE_KEY, lessonId);
+      } catch (e) {
+        console.warn('Impossible de mémoriser la leçon active:', e);
+      }
+      const lessonVideo = document.getElementById('lessonVideo');
+      const contentDisplay = document.getElementById('lessonContentDisplay');
+      
+      document.querySelectorAll('.lesson-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      const activeCard = document.querySelector(`[data-lesson-id="${lessonId}"]`);
+      if (activeCard) activeCard.classList.add('active');
+      
+      // La vidéo (comme l'audio, l'image, le document) est un matériel parmi
+      // d'autres et s'affiche EN LIGNE dans le contenu de la leçon, via
+      // generateLessonHTML — elle ne remplace plus jamais tout l'écran.
+      if (lessonVideo) {
+        lessonVideo.pause();
+        lessonVideo.style.display = 'none';
+      }
+      contentDisplay.style.display = 'block';
+      contentDisplay.innerHTML = generateLessonHTML(lesson);
+      
+      document.querySelector('.video-lesson').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      console.log('📖 Leçon ouverte:', lesson.title);
+    }
+    
+    function generateLessonHTML(lesson) {
+      const cat = lesson.categoryInfo || { icon: '📚', name: lesson.categoryId };
+
+      let html = `<h3>${cat.icon} ${typeof lesson.order === 'number' ? `<span class="lc-number">🔢 N°${lesson.order}</span> ` : ''}${lesson.title}</h3>`;
+      
+      if (lesson.description) {
+        html += `<p style="color: rgba(255,255,255,0.8); margin: 10px 0; line-height: 1.5;">${lesson.description}</p>`;
+      }
+      
+      html += `
+        <div class="lesson-meta">
+          <span class="lesson-meta-item">${cat.icon} ${cat.name || ''}</span>
+          ${typeof lesson.week === 'number' ? `<span class="lesson-meta-item">📅 Semaine ${lesson.week}</span>` : ''}
+          <span class="lesson-meta-item">⏱️ ${lesson.duration}</span>
+          ${lesson.instructor ? `<span class="lesson-meta-item">🧑‍🏫 ${lesson.instructor}</span>` : ''}
+        </div>
+      `;
+      
+      if (lesson.content) {
+        html += `
+          <div style="margin-top: 20px; line-height: 1.7; white-space: pre-wrap;">
+            ${lesson.content}
+          </div>
+        `;
+      }
+      
+      const done = getCompletedLesson(lesson.id);
+
+      const materials = lesson.materials || [];
+      if (materials.length > 0) {
+        html += `<div class="media-display">`;
+        
+        materials.forEach(file => {
+          // Une fois la leçon validée avec un dessin final, on n'affiche plus
+          // l'image d'origine ici : elle est remplacée par le dessin final,
+          // montré plus bas dans le bloc "leçon terminée".
+          if (file.type === 'image' && done && done.drawingDataUrl) {
+            return;
+          }
+          if (file.type === 'audio') {
+            html += `
+              <div style="margin: 20px 0;">
+                <p style="font-size: 0.9em; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
+                  🎵 ${file.title || file.filename}
+                </p>
+                <audio controls style="width: 100%; border-radius: 10px;">
+                  <source src="${file.url}" type="audio/mpeg">
+                </audio>
+              </div>
+            `;
+          } else if (file.type === 'document') {
+            html += `
+              <div style="margin: 20px 0;">
+                <a href="${file.url}" target="_blank" style="display:inline-flex; align-items:center; gap:8px; color:#fff; text-decoration:none; background: rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 10px;">
+                  📄 ${file.title || file.filename}
+                </a>
+              </div>
+            `;
+          } else if (file.type === 'image') {
+            // Si l'élève a déjà dessiné (mais pas encore validé la leçon),
+            // on affiche son dessin en cours à la place du visuel d'origine.
+            const isDoneAlready = isLessonCompleted(lesson.id);
+            const savedArtResult = !isDoneAlready ? localStorage.getItem(artResultStorageKey(lesson.id)) : null;
+            const displayUrl = savedArtResult || file.url;
+            const clickable = !isDoneAlready;
+            html += `
+              <div style="margin: 20px 0;">
+                <p style="font-size: 0.9em; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
+                  ${savedArtResult ? '🎨 Ton dessin en cours (clique pour continuer)' : `🖼️ ${file.title || file.filename}`}
+                </p>
+                <img src="${displayUrl}" alt="${file.title || ''}"
+                  data-material-filename="${(file.filename || '').replace(/"/g, '&quot;')}"
+                  data-material-title="${(file.title || '').replace(/"/g, '&quot;')}"
+                  onerror="window.__resolveMaterialImg && window.__resolveMaterialImg(this, this.dataset.materialFilename, this.dataset.materialTitle)"
+                  style="width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+                ${clickable ? `
+                <div style="margin-top:10px; padding:10px 12px; background:rgba(46,204,113,0.15); border:1px solid rgba(46,204,113,0.4); border-radius:10px; display:flex; align-items:center; gap:10px;">
+                  <img src="../icons/dessin.svg" alt="Dessin" style="width:28px; height:28px; flex-shrink:0;" onerror="this.outerHTML='<span style=font-size:24px>🎨</span>'">
+                  <p style="font-size:0.85em; color:rgba(255,255,255,0.9); margin:0;">
+                    ${savedArtResult ? 'Ton dessin est en cours !' : 'Pour colorier ce dessin :'} clique sur le bouton
+                    <strong>🎨 Art-Classe</strong> ci-dessous, puis sur l'onglet
+                    <strong>"Dessin" (le panda qui dessine 🐼)</strong> dans la colonne de ton bureau.
+                    Reviens ensuite sur cette leçon pour voir ton dessin ici !
+                  </p>
+                </div>` : ''}
+              </div>
+            `;
+          } else if (file.type === 'video') {
+            html += `
+              <div style="margin: 20px 0;">
+                <p style="font-size: 0.9em; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
+                  🎬 ${file.title || file.filename}
+                </p>
+                <video controls
+                     data-material-filename="${(file.filename || '').replace(/"/g, '&quot;')}"
+                     data-material-title="${(file.title || '').replace(/"/g, '&quot;')}"
+                     onerror="window.__resolveMaterialVideo && window.__resolveMaterialVideo(this, this.dataset.materialFilename, this.dataset.materialTitle)"
+                     style="width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+                  <source src="${file.url}">
+                </video>
+              </div>
+            `;
+          }
+        });
+        
+        html += `</div>`;
+      }
+      
+      if (lesson.tags && lesson.tags.length > 0) {
+        html += `
+          <div style="margin-top: 20px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 0.85em;">
+            🏷️ ${lesson.tags.join(', ')}
+          </div>
+        `;
+      }
+
+      const quiz = findQuizForLesson(lesson);
+      const quizDone = quizScoresHistory.some(s => s.lessonId === lesson.id);
+      const hasImageMaterial = (lesson.materials || []).some(m => m.type === 'image');
+
+      if (done) {
+        // ----- Leçon déjà validée : récapitulatif en lecture seule -----
+        html += `
+          <div class="quiz-submitted-banner" style="margin-top:20px;">
+            🏆 Leçon terminée le ${new Date(done.date).toLocaleDateString('fr-FR')}
+            ${done.score !== null ? ` — Note de l'interrogation : ${done.score}/20` : ''}
+          </div>
+        `;
+        if (done.drawingDataUrl) {
+          html += `
+            <div style="margin-top:15px;">
+              <p style="font-size:0.9em; color:rgba(255,255,255,0.7); margin-bottom:8px;">🎨 Ton dessin réalisé pour cette leçon :</p>
+              <img src="${done.drawingDataUrl}" alt="Dessin de la leçon" style="width:100%; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.4);">
+            </div>
+          `;
+        }
+        html += `<p style="margin-top:15px; opacity:0.7; font-size:0.85em;">ℹ️ Cette leçon est terminée et ne peut pas être refaite.</p>`;
+        return html;
+      }
+
+      // ----- Leçon en cours : boutons d'action -----
+      html += `<div class="lesson-actions" style="margin-top:25px; display:flex; flex-wrap:wrap; gap:10px;">`;
+      html += `<button class="btn btn-secondary" onclick="openArtClasse('${lesson.id}')">🎨 Art-Classe</button>`;
+      if (quiz) {
+        html += `<button class="btn btn-primary" onclick="openQuizForLesson('${lesson.id}')">🧪 ${quizDone ? 'Interrogation envoyée ✓' : "Commencer l'interrogation"}</button>`;
+      } else {
+        html += `<span class="lesson-card-badge" style="align-self:center;">🧪 Pas d'interrogation pour cette leçon</span>`;
+      }
+      html += `<button class="btn btn-success" onclick="validateLessonFinal('${lesson.id}')" ${quiz && !quizDone ? 'disabled title="Termine d\'abord l\'interrogation"' : ''}>✅ Valider et soumettre mon résultat</button>`;
+      html += `</div>`;
+
+      if (!hasImageMaterial) {
+        html += `<p id="artClasseNoVisual-${lesson.id}" style="margin-top:10px; opacity:0.6; font-size:0.85em; display:none;">🖼️ Pas de visuel pour cette leçon.</p>`;
+      }
+
+      return html;
+    }
+
+    // ===== Art-Classe : ouvre dessin-kids.html avec le visuel de la leçon =====
+    function artResultStorageKey(lessonId) {
+      return `znk_art_result_${lessonId}`;
+    }
+
+    async function openArtClasse(lessonId) {
+      const lesson = getLessonMerged(lessonId);
+      if (!lesson) return;
+      const imageMaterial = (lesson.materials || []).find(m => m.type === 'image');
+      if (!imageMaterial) {
+        alert('🖼️ Pas de visuel disponible pour cette leçon.');
+        const note = document.getElementById(`artClasseNoVisual-${lessonId}`);
+        if (note) note.style.display = 'block';
+        return;
+      }
+
+      // Même correctif que pour l'affichage : l'URL stockée dans imageMaterial
+      // peut être figée sur une autre machine/ancien dossier userData — on la
+      // résout dynamiquement avant de la transmettre à Dessin.
+      let resolvedUrl = imageMaterial.url;
+      if (window.electronAPI && window.electronAPI.getMaterialUrl) {
+        try {
+          const resolved = await window.electronAPI.getMaterialUrl({
+            fileName: imageMaterial.filename,
+            titleHint: imageMaterial.title
+          });
+          if (resolved && resolved.success && resolved.url) {
+            resolvedUrl = resolved.url;
+          }
+        } catch (e) {
+          console.warn('⚠️ getMaterialUrl (Art-Classe):', e);
+        }
+      }
+
+      try {
+        localStorage.setItem('znk_art_classe_handoff', JSON.stringify({
+          lessonId,
+          url: resolvedUrl,
+          title: lesson.title,
+          resultKey: artResultStorageKey(lessonId)
+        }));
+      } catch (e) {
+        console.warn('Impossible de préparer le visuel pour Art-Classe:', e);
+      }
+      alert(
+        '🎨 C\'est prêt !\n\n' +
+        '1️⃣ Clique sur l\'onglet "Dessin" (le panda qui dessine 🐼) dans la colonne de ton bureau.\n' +
+        '2️⃣ Colorie le dessin, puis clique sur "Enregistrer".\n' +
+        '3️⃣ Reviens sur cet onglet "' + lesson.title + '" : ton dessin colorié apparaîtra automatiquement ici !'
+      );
+    }
+
+    // Si l'élève revient sur cet onglet après avoir dessiné dans Art-Classe,
+    // on rafraîchit la leçon ouverte pour refléter un éventuel dessin enregistré.
+    function refreshCurrentLessonIfAny() {
+      if (currentActiveLesson) openLesson(currentActiveLesson);
+    }
+    window.addEventListener('focus', refreshCurrentLessonIfAny);
+    window.addEventListener('pageshow', refreshCurrentLessonIfAny);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshCurrentLessonIfAny();
+    });
+    
+    let timerRunning = false;
+    let startTime = null;
+    let timerInterval = null;
+
+    function startTimer() {
+      if (!timerRunning) {
+        timerRunning = true;
+        startTime = Date.now();
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+        
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+    }
+
+    function stopTimer() {
+      if (timerRunning) {
+        timerRunning = false;
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        clearInterval(timerInterval);
+      }
+    }
+
+    function updateTimer() {
+      if (timerRunning && startTime) {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        document.getElementById('timerDisplay').textContent = `Temps: ${minutes}m ${seconds}s`;
+      }
+    }
+
+    function submitReport() {
+      const report = document.getElementById('reportText').value.trim();
+      if (!report) {
+        alert("⚠️ Écris ton compte rendu avant de l'envoyer !");
+        return;
+      }
+      
+      if (timerRunning) stopTimer();
+      
+      const btn = event.target;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = "✅ Envoyé !";
+      btn.style.background = "linear-gradient(45deg, #55efc4, #00b894)";
+      
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.background = "linear-gradient(45deg, #d29d00, #a96800)";
+        document.getElementById('reportText').value = '';
+        alert("📝 Compte rendu envoyé avec succès !");
+      }, 2000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Art Études Lycée - Initialisation...');
+      console.log('📍 État du manifest:', window.ZNK_ETUDES_MANIFEST ? '✅ Chargé' : '❌ Non chargé');
+
+      loadAccountData();
+
+      // Attendre un peu pour laisser les scripts externes se charger, avec
+      // repli en cas de démarrage lent (premier lancement Electron à froid).
+      function attemptInitialLoad(retriesLeft) {
+        if (!window.ZNK_ETUDES_MANIFEST && retriesLeft > 0) {
+          console.log(`⏳ znk-etudes-manifest.js pas encore prêt, nouvel essai dans 500ms (${retriesLeft} restants)...`);
+          setTimeout(() => attemptInitialLoad(retriesLeft - 1), 500);
+          return;
+        }
+        console.log('⏰ Démarrage du chargement des leçons...');
+        loadLessons();
+        renderWeekPlan();
+        computeNotes();
+        autoResumeLastLesson();
+      }
+      setTimeout(() => attemptInitialLoad(6), 500); // jusqu'à ~3.5s au total avant d'abandonner
+
+      if (window.ZNKManifest) {
+        const refreshAfterSync = () => {
+          loadLessons();
+          renderWeekPlan();
+          computeNotes();
+          autoResumeLastLesson();
+        };
+        // 'znk-data-synced' + la résolution de electron.sync() sont les VRAIS signaux
+        // que les données sont prêtes — contrairement au setTimeout(500ms) ci-dessus,
+        // qui est juste un pari. Sur un premier lancement lent (Electron qui démarre,
+        // backend qui se lève), 500ms peut ne pas suffire : ce ré-affichage rattrape
+        // le coup dès que la synchro est vraiment terminée, au lieu de rester vide.
+        window.addEventListener('znk-data-synced', refreshAfterSync);
+        ZNKManifest.electron.sync().then(refreshAfterSync);
+      }
+
+      // ==== Sync VPS (pull) : récupère les leçons de MON prof depuis le VPS, ====
+      // ==== en plus de la sync locale ci-dessus (utile quand élève et prof   ====
+      // ==== ne sont pas sur le même réseau, ex: France <-> USA). Ne fait     ====
+      // ==== rien si le VPS n'est pas configuré (ZNK_SYNC_CONFIG.apiBase vide) ====
+      // ==== ou si znk-sync-client.js n'a pas pu se charger.                  ====
+      if (typeof ZNKSync !== 'undefined') {
+        const studentProfId = getStudentProfId();
+        if (studentProfId) {
+          ZNKSync.pullLecons(studentProfId, mergeVPSLessonsIntoLocal).then(() => {
+            loadLessons();
+            renderWeekPlan();
+            computeNotes();
+            autoResumeLastLesson();
+          });
+        }
+      }
+      
+      console.log('✅ Art Études initialisé avec succès');
+    });
+
+    setInterval(() => {
+      if (window.ZNK_ETUDES_MANIFEST) {
+        const currentCount = document.querySelectorAll('.lesson-card').length;
+        const filters = { 
+          published: true,
+          level: currentLevelFilter
+        };
+        const newCount = getAllLessonsMerged(filters).length;
+        
+        if (newCount !== currentCount) {
+          console.log('🔄 Nouvelles leçons détectées, rechargement...');
+          loadLessons();
+        }
+      }
+    }, 30000);
+  </script>
+</body>
+</html>

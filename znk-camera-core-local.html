@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>🎥 ZNK Camera Core - Mode Local (Effets + Export + Timeline)</title>
+    <style>
+        /* Styles (hérités + ajouts pour timeline / export) */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+               background: linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);
+               color: white; min-height:100vh; }
+        .container { max-width:1400px; margin:0 auto; padding:20px; }
+        .header { background: linear-gradient(135deg,#1e1b4b,#312e81,#1e40af);
+                 padding:20px; border-radius:12px; margin-bottom:18px; text-align:center; }
+        .main-grid { display:grid; grid-template-columns:300px 1fr 360px; gap:16px; }
+        .panel { background: linear-gradient(145deg,#1f2937,#111827); padding:14px; border-radius:10px; border:1px solid rgba(59,130,246,0.06); }
+        .camera-viewer { position:relative; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+        .virtual-camera { width:100%; height:100%; display:block; }
+        .camera-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; }
+        .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600; margin:4px; }
+        .btn-primary { background:linear-gradient(45deg,#3b82f6,#2563eb); color:#fff; }
+        .btn-secondary { background:rgba(75,85,99,0.8); color:#fff; }
+        .btn-success { background:linear-gradient(45deg,#10b981,#059669); color:#fff; }
+        .btn-danger { background:linear-gradient(45deg,#ef4444,#dc2626); color:#fff; }
+        .input-group { margin-bottom:10px; }
+        input[type="range"] { width:100%; }
+        .timeline { margin-top:10px; display:flex; gap:8px; align-items:center; }
+        .timeline input[type="range"] { flex:1; }
+        .small { font-size:0.85rem; color:#93c5fd; }
+        .code-sample { background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:12px; font-family:monospace; font-size:0.85rem; color:#c9d1d9; overflow-x:auto; }
+        .file-actions { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 ZNK Camera Core - Mode Local (Effets, Timeline, Export)</h1>
+            <p>Editez effets par clip, timeline avec scrubbing & easing, export WebM local ou MP4 via Electron/ffmpeg</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- Left: Sources -->
+            <div class="panel">
+                <h3>📹 Sources</h3>
+                <div style="border:2px dashed #3b82f6; padding:12px; border-radius:8px; text-align:center; cursor:pointer;" id="uploadZone">
+                    <input type="file" id="mediaInput" accept="video/*,image/*" multiple style="display:none" />
+                    <div style="font-size:1.8rem;">📤</div>
+                    <div><strong>Glisser / Déposer</strong> ou cliquer</div>
+                </div>
+
+                <div id="sourcesList" style="margin-top:12px; max-height:420px; overflow:auto;"></div>
+
+                <div style="margin-top:10px;">
+                    <button class="btn btn-primary" onclick="addVirtualSource()">➕ Créer Source</button>
+                    <button class="btn btn-secondary" id="saveJsonBtn">💾 Sauvegarder Presets (JSON)</button>
+                    <input type="file" id="loadJsonInput" accept="application/json" style="display:none" />
+                    <button class="btn btn-secondary" id="loadJsonBtn">📂 Charger Presets (JSON)</button>
+                </div>
+            </div>
+
+            <!-- Center: Viewer + Timeline -->
+            <div class="panel">
+                <h3>🖥️ Visionneuse & Timeline</h3>
+                <div class="camera-viewer" style="height:420px;">
+                    <canvas id="virtualCamera" width="1280" height="720" class="virtual-camera"></canvas>
+                    <div class="camera-overlay" id="cameraOverlay">📹 Sélectionnez une source</div>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button class="btn btn-success" id="startBtn">⏺️ Démarrer</button>
+                    <button class="btn btn-danger" id="stopBtn" disabled>⏹️ Arrêter</button>
+                    <button class="btn btn-primary" id="screenshotBtn">📸 Capture</button>
+
+                    <div style="margin-left:auto" class="file-actions">
+                        <button class="btn btn-secondary" id="exportWebmBtn">⬇️ Exporter WebM</button>
+                        <button class="btn btn-primary" id="exportMp4Btn">⬇️ Exporter MP4 (ffmpeg)</button>
+                    </div>
+                </div>
+
+                <!-- Timeline controls (visible when selected source is a video) -->
+                <div id="timelinePanel" style="margin-top:12px; display:none;">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <div class="small">Temps:</div>
+                        <input type="range" id="timeline" min="0" max="1" step="0.001" value="0" />
+                        <div id="timeLabel" class="small" style="width:90px; text-align:right;">00:00 / 00:00</div>
+                    </div>
+
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <div style="flex:1">
+                            <label class="small">Fade in (s) handle</label>
+                            <input type="range" id="tl_fade_in_handle" min="0" max="1" step="0.001" value="0.1" />
+                        </div>
+                        <div style="flex:1">
+                            <label class="small">Fade out (s) handle</label>
+                            <input type="range" id="tl_fade_out_handle" min="0" max="1" step="0.001" value="0.1" />
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:8px; margin-top:6px;">
+                        <div style="flex:1">
+                            <label class="small">Overlay entry start (s)</label>
+                            <input type="range" id="tl_ov_entry_start" min="0" max="1" step="0.001" value="0" />
+                        </div>
+                        <div style="flex:1">
+                            <label class="small">Overlay entry dur (s)</label>
+                            <input type="range" id="tl_ov_entry_dur" min="0" max="1" step="0.001" value="0.2" />
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:8px; margin-top:6px;">
+                        <div style="flex:1">
+                            <label class="small">Overlay exit start (s)</label>
+                            <input type="range" id="tl_ov_exit_start" min="0" max="1" step="0.001" value="0.7" />
+                        </div>
+                        <div style="flex:1">
+                            <label class="small">Overlay exit dur (s)</label>
+                            <input type="range" id="tl_ov_exit_dur" min="0" max="1" step="0.001" value="0.2" />
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                        <label class="small">Easing</label>
+                        <select id="tl_easing">
+                            <option value="linear">linear</option>
+                            <option value="easeInQuad">easeIn</option>
+                            <option value="easeOutQuad">easeOut</option>
+                            <option value="easeInOutQuad" selected>easeInOut</option>
+                        </select>
+                        <div style="margin-left:auto;" class="small">Les sliders ci-dessus sont relatifs à la durée (0..1) ; utilisez "Appliquer timeline" pour enregistrer.</div>
+                        <button class="btn btn-primary" id="applyTimelineBtn" style="margin-left:8px;">Appliquer timeline</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Settings & Per-clip effects -->
+            <div class="panel">
+                <h3>⚙️ Paramètres & Effets</h3>
+
+                <div class="input-group">
+                    <label>Résolution</label>
+                    <select id="resolution">
+                        <option value="1280x720">1280x720</option>
+                        <option value="1920x1080">1920x1080</option>
+                        <option value="854x480">854x480</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>FPS</label>
+                    <select id="fps">
+                        <option>60</option><option selected>30</option><option>24</option>
+                    </select>
+                </div>
+
+                <hr style="border-color:rgba(255,255,255,0.04); margin:12px 0;" />
+
+                <h4 class="small">🎛️ Effets par Clip (source sélectionnée)</h4>
+
+                <div class="input-group"><label>Rotation (°)</label><input id="ef_rotate" type="number" step="1" value="0" /></div>
+                <div class="input-group"><label>Fade in (s)</label><input id="ef_fade_in" type="number" step="0.05" value="0.3" /></div>
+                <div class="input-group"><label>Fade out (s)</label><input id="ef_fade_out" type="number" step="0.05" value="0.3" /></div>
+                <div class="input-group"><label>Light leak (image)</label><input id="ef_light_input" type="file" accept="image/*" /></div>
+                <div class="input-group"><label>Leak opacity (0-1)</label><input id="ef_leak_opacity" type="number" step="0.05" min="0" max="1" value="0.6" /></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-primary" id="applyEfBtn">Appliquer</button>
+                    <button class="btn btn-secondary" id="applyAllEfBtn">Appliquer à toutes</button>
+                    <button class="btn btn-secondary" id="resetEfBtn">Réinitialiser</button>
+                </div>
+
+                <div style="margin-top:12px;">
+                    <strong class="small">Export permanent</strong>
+                    <div class="small" style="margin-top:6px;">Exporter MP4 via ffmpeg (Electron) nécessite que les fichiers vidéo & overlay aient des chemins locaux (file.path) — sinon export WebM fallback.</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top:12px;" class="panel">
+            <h3 class="small">🔧 Debug / Sauvegarde</h3>
+            <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary" id="downloadStateBtn">Télécharger État (JSON)</button>
+                <button class="btn btn-secondary" id="loadStateBtn">Charger État (JSON)</button>
+            </div>
+            <div style="margin-top:8px;" id="debugLog" class="small"></div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        // Core references
+        const canvas = document.getElementById('virtualCamera');
+        const ctx = canvas.getContext('2d');
+
+        const cameraCore = {
+            canvas, ctx,
+            sources: new Map(), // id -> { id, type, name, element, render, effects, localPath (optional), overlayLocalPath (optional) }
+            currentSource: null,
+            globalEffects: { brightness:100, contrast:100, saturation:100 },
+            isRecording: false,
+            recorder: null
+        };
+
+        // UI refs
+        const uploadZone = document.getElementById('uploadZone');
+        const mediaInput = document.getElementById('mediaInput');
+        const sourcesList = document.getElementById('sourcesList');
+        const cameraOverlay = document.getElementById('cameraOverlay');
+        const timelinePanel = document.getElementById('timelinePanel');
+        const timeline = document.getElementById('timeline');
+        const timeLabel = document.getElementById('timeLabel');
+
+        // clip effect inputs
+        const ef_rotate = document.getElementById('ef_rotate');
+        const ef_fade_in = document.getElementById('ef_fade_in');
+        const ef_fade_out = document.getElementById('ef_fade_out');
+        const ef_light_input = document.getElementById('ef_light_input');
+        const ef_leak_opacity = document.getElementById('ef_leak_opacity');
+
+        // timeline handles
+        const tl_fade_in_handle = document.getElementById('tl_fade_in_handle');
+        const tl_fade_out_handle = document.getElementById('tl_fade_out_handle');
+        const tl_ov_entry_start = document.getElementById('tl_ov_entry_start');
+        const tl_ov_entry_dur = document.getElementById('tl_ov_entry_dur');
+        const tl_ov_exit_start = document.getElementById('tl_ov_exit_start');
+        const tl_ov_exit_dur = document.getElementById('tl_ov_exit_dur');
+        const tl_easing = document.getElementById('tl_easing');
+
+        // helper uid
+        function uid(p='s'){ return p + '_' + Math.floor(Math.random()*1e9).toString(36); }
+
+        // default effects for a source
+        function defaultEffects(){
+            return {
+                rotate:0,
+                fade_in:0.3,
+                fade_out:0.3,
+                leak_opacity:0.6,
+                lightImg: null,      // Image object for canvas overlay
+                lightSrc: null,      // dataURL for UI
+                overlayLocalPath: null, // if available (for ffmpeg)
+                ov_entry_start:-1,
+                ov_entry_dur:0,
+                ov_exit_start:-1,
+                ov_exit_dur:0,
+                easing: 'easeInOutQuad'
+            };
+        }
+
+        // Easing functions
+        const EASINGS = {
+            linear: t => t,
+            easeInQuad: t => t*t,
+            easeOutQuad: t => t*(2-t),
+            easeInOutQuad: t => t<0.5 ? 2*t*t : -1+(4-2*t)*t
+        };
+
+        // compute alpha with easing applied on fade segments
+        function computeAlpha(timeSec, duration, fadeIn, fadeOut, easingName){
+            duration = Math.max(0.0001, duration||0.0001);
+            fadeIn = Math.max(0, fadeIn||0);
+            fadeOut = Math.max(0, fadeOut||0);
+            // clamp total fades
+            let total = fadeIn + fadeOut;
+            if(total > duration && total>0){
+                const scale = duration/total;
+                fadeIn *= scale; fadeOut *= scale;
+            }
+            let alpha = 1.0;
+            const ease = EASINGS[easingName] || EASINGS.linear;
+            if(fadeIn>0 && timeSec < fadeIn){
+                const t = Math.max(0, Math.min(1, timeSec / fadeIn));
+                alpha *= ease(t);
+            }
+            if(fadeOut>0 && timeSec > (duration - fadeOut)){
+                const t = Math.max(0, Math.min(1, (duration - timeSec) / fadeOut));
+                alpha *= ease(t);
+            }
+            return Math.max(0, Math.min(1, alpha));
+        }
+
+        // draw overlay with easing ramps
+        function drawOverlayIfNeeded(ctx, w, h, effects, currentTime, duration){
+            if(!effects || !effects.lightImg) return;
+            const img = effects.lightImg;
+            // enabled logic
+            let enabled = false;
+            if((effects.ov_entry_start === -1 || effects.ov_entry_start === undefined) &&
+               (effects.ov_exit_start === -1 || effects.ov_exit_start === undefined)) {
+                enabled = true;
+            } else {
+                if(effects.ov_entry_start >= 0 && effects.ov_entry_dur > 0){
+                    if(currentTime >= effects.ov_entry_start && currentTime <= (effects.ov_entry_start + effects.ov_entry_dur)) enabled = true;
+                }
+                if(effects.ov_exit_start >= 0 && effects.ov_exit_dur > 0){
+                    if(currentTime >= effects.ov_exit_start && currentTime <= (effects.ov_exit_start + effects.ov_exit_dur)) enabled = true;
+                }
+            }
+            if(!enabled) return;
+            ctx.save();
+            // compute ramp alpha using easing
+            let overlayAlpha = (typeof effects.leak_opacity === 'number') ? effects.leak_opacity : 0.6;
+            if(effects.ov_entry_start >= 0 && effects.ov_entry_dur > 0 &&
+               currentTime >= effects.ov_entry_start && currentTime <= effects.ov_entry_start + effects.ov_entry_dur){
+                const t = (currentTime - effects.ov_entry_start) / effects.ov_entry_dur;
+                overlayAlpha *= (EASINGS[effects.easing] || EASINGS.linear)(Math.max(0, Math.min(1, t)));
+            }
+            if(effects.ov_exit_start >= 0 && effects.ov_exit_dur > 0 &&
+               currentTime >= effects.ov_exit_start && currentTime <= effects.ov_exit_start + effects.ov_exit_dur){
+                const t = (currentTime - effects.ov_exit_start) / effects.ov_exit_dur;
+                overlayAlpha *= (1 - (EASINGS[effects.easing] || EASINGS.linear)(Math.max(0, Math.min(1, t))));
+            }
+            ctx.globalAlpha = overlayAlpha;
+            const iw = img.width, ih = img.height;
+            const scale = Math.max(canvas.width / iw, canvas.height / ih);
+            const dw = iw*scale, dh = ih*scale;
+            ctx.drawImage(img, (canvas.width - dw)/2, (canvas.height - dh)/2, dw, dh);
+            ctx.restore();
+        }
+
+        // draw element with rotation & alpha
+        function drawWithRotationAndAlpha(ctx, element, w, h, rotateDeg, alpha){
+            ctx.save();
+            // background clear to avoid ghosting
+            ctx.fillStyle = '#000'; ctx.fillRect(0,0,w,h);
+            const rad = (rotateDeg||0) * Math.PI / 180;
+            const mw = element.videoWidth || element.naturalWidth || w;
+            const mh = element.videoHeight || element.naturalHeight || h;
+            const scale = Math.max(w/mw, h/mh);
+            const dw = mw*scale, dh = mh*scale;
+            ctx.translate(w/2, h/2);
+            ctx.rotate(rad);
+            ctx.globalAlpha = (typeof alpha === 'number') ? alpha : 1.0;
+            ctx.drawImage(element, -dw/2, -dh/2, dw, dh);
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
+        }
+
+        // create default procedural sources
+        function createDefaultSources(){
+            const gradId = 'gradient';
+            cameraCore.sources.set(gradId, {
+                id:gradId, type:'pattern', name:'Dégradé Animé',
+                render: (ctx,w,h,t)=>{
+                    const grad = ctx.createLinearGradient(0,0,w,h);
+                    const hue = (t*0.03)%360;
+                    grad.addColorStop(0, `hsl(${hue},70%,50%)`);
+                    grad.addColorStop(1, `hsl(${(hue+60)%360},70%,50%)`);
+                    ctx.fillStyle = grad; ctx.fillRect(0,0,w,h);
+                    ctx.font='30px Arial'; ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.textAlign='center';
+                    ctx.fillText('🎬 ZNK Studio', w/2, h/2);
+                },
+                effects: defaultEffects()
+            });
+
+            const noiseId = 'noise';
+            cameraCore.sources.set(noiseId, {
+                id:noiseId, type:'pattern', name:'Bruit Coloré',
+                render: (ctx,w,h,t)=>{
+                    const img = ctx.createImageData(w,h); const d=img.data;
+                    for(let i=0;i<d.length;i+=4){
+                        const v = Math.floor(Math.random()*255);
+                        d[i]=v; d[i+1]=v; d[i+2]=v; d[i+3]=255;
+                    }
+                    ctx.putImageData(img,0,0);
+                },
+                effects: defaultEffects()
+            });
+        }
+
+        // add media from file input / drag-drop
+        function addMediaFile(file){
+            const isVideo = file.type.startsWith('video/');
+            const isImage = file.type.startsWith('image/');
+            const id = uid('media');
+            const url = URL.createObjectURL(file);
+            if(isVideo){
+                const video = document.createElement('video');
+                video.src = url; video.loop = true; video.muted = true; video.playsInline = true; video.preload = 'auto';
+                const srcObj = {
+                    id, type:'video', name:file.name, element:video,
+                    localPath: file.path || null, // electron provides file.path
+                    render: function(ctx,w,h,t){
+                        try{
+                            if(video.readyState >= 2){
+                                const dur = video.duration || 0.0001;
+                                const ct = video.currentTime || 0;
+                                const eff = this.effects || defaultEffects();
+                                const alpha = computeAlpha(ct, dur, eff.fade_in, eff.fade_out, eff.easing);
+                                drawWithRotationAndAlpha(ctx, video, w, h, eff.rotate, alpha);
+                                drawOverlayIfNeeded(ctx, w, h, eff, ct, dur);
+                                // small label
+                                ctx.save();
+                                ctx.globalAlpha = 0.9;
+                                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                                ctx.fillRect(0,0, Math.min(360,w), 28);
+                                ctx.fillStyle = 'white'; ctx.font='14px Arial'; ctx.textAlign='left';
+                                ctx.fillText('📹 ' + (this.name||''), 8, 18);
+                                ctx.restore();
+                            }
+                        }catch(e){ console.warn(e); }
+                    },
+                    effects: defaultEffects()
+                };
+                cameraCore.sources.set(id, srcObj);
+                video.addEventListener('loadeddata', ()=> { video.play().catch(()=>{}); });
+                addSourceToUI(id, file.name, 'video', url);
+                showDebug('Vidéo ajoutée: ' + file.name);
+            } else if(isImage){
+                const img = new Image();
+                img.src = url;
+                const srcObj = {
+                    id, type:'image', name:file.name, element:img,
+                    localPath: file.path || null,
+                    render: function(ctx,w,h,t){
+                        if(img.complete){
+                            const eff = this.effects || defaultEffects();
+                            // for static image we treat time as 0
+                            drawWithRotationAndAlpha(ctx, img, w, h, eff.rotate, 1.0);
+                            drawOverlayIfNeeded(ctx, w, h, eff, 0, 1);
+                        }
+                    },
+                    effects: defaultEffects()
+                };
+                cameraCore.sources.set(id, srcObj);
+                addSourceToUI(id, file.name, 'image', url);
+                showDebug('Image ajoutée: ' + file.name);
+            }
+            updateSourceCount();
+        }
+
+        // UI helpers
+        function addSourceToUI(id, name, type, thumbUrl){
+            const div = document.createElement('div');
+            div.className = 'source-item';
+            div.dataset.source = id;
+            div.style.padding='10px'; div.style.marginBottom='8px'; div.style.borderRadius='8px';
+            div.innerHTML = `<div style="background:url('${thumbUrl}') center/cover; height:60px; border-radius:6px; margin-bottom:8px;"></div>
+                             <strong>${name}</strong><div style="font-size:0.8rem; color:#9ca3af">${type}</div>`;
+            div.addEventListener('click', ()=> selectSource(id));
+            const rm = document.createElement('button');
+            rm.textContent='×'; rm.style.cssText='position:absolute;right:8px;top:8px;background:#ef4444;border:none;border-radius:50%;width:22px;height:22px;color:#fff;cursor:pointer;';
+            rm.addEventListener('click',(ev)=>{ ev.stopPropagation(); removeSource(id); });
+            div.style.position='relative';
+            div.appendChild(rm);
+            sourcesList.appendChild(div);
+        }
+
+        function removeSource(id){
+            const el = document.querySelector(`[data-source="${id}"]`);
+            if(el) el.remove();
+            cameraCore.sources.delete(id);
+            if(cameraCore.currentSource === id){
+                cameraCore.currentSource = null;
+                cameraOverlay.style.display = 'flex';
+                timelinePanel.style.display = 'none';
+            }
+            updateSourceCount();
+        }
+
+        function selectSource(id){
+            // toggle UI active
+            document.querySelectorAll('.source-item').forEach(s=>s.style.borderColor='transparent');
+            const el = document.querySelector(`[data-source="${id}"]`);
+            if(el) el.style.borderColor = '#3b82f6';
+            if(!cameraCore.sources.has(id)) return;
+            cameraCore.currentSource = id;
+            cameraOverlay.style.display = 'none';
+            const src = cameraCore.sources.get(id);
+            // load effects into UI
+            loadEffectsToUI(src.effects);
+            // if video, show timeline
+            if(src.type === 'video'){
+                timelinePanel.style.display = 'block';
+                setupTimelineForSource(src);
+            } else {
+                timelinePanel.style.display = 'none';
+            }
+        }
+
+        // update source count
+        function updateSourceCount(){ document.getElementById('sourceCount') && (document.getElementById('sourceCount').textContent = cameraCore.sources.size); }
+
+        // load effects to UI
+        function loadEffectsToUI(eff){
+            if(!eff) eff = defaultEffects();
+            ef_rotate.value = eff.rotate || 0;
+            ef_fade_in.value = eff.fade_in || 0;
+            ef_fade_out.value = eff.fade_out || 0;
+            ef_leak_opacity.value = eff.leak_opacity || 0.6;
+            // timeline handles (normalized)
+            tl_fade_in_handle.value = (eff.fade_in || 0);
+            tl_fade_out_handle.value = (eff.fade_out || 0);
+            tl_ov_entry_start.value = (eff.ov_entry_start>=0? eff.ov_entry_start:0);
+            tl_ov_entry_dur.value = eff.ov_entry_dur || 0;
+            tl_ov_exit_start.value = (eff.ov_exit_start>=0? eff.ov_exit_start:0.7);
+            tl_ov_exit_dur.value = eff.ov_exit_dur || 0.2;
+            tl_easing.value = eff.easing || 'easeInOutQuad';
+            // indicator for loaded overlay
+            if(eff.lightSrc){
+                ef_light_input.previousName && ef_light_input.previousName.remove();
+                const info = document.createElement('div'); info.textContent = 'Overlay chargé'; info.style.fontSize='0.85rem'; info.style.color='#9ca3af';
+                ef_light_input.parentNode.appendChild(info); ef_light_input.previousName = info;
+            } else {
+                ef_light_input.previousName && ef_light_input.previousName.remove();
+            }
+        }
+
+        // apply UI values to current source
+        function applyUIToCurrentSource(){
+            if(!cameraCore.currentSource) return;
+            const src = cameraCore.sources.get(cameraCore.currentSource);
+            src.effects = src.effects || defaultEffects();
+            src.effects.rotate = Number(ef_rotate.value) || 0;
+            src.effects.fade_in = Number(ef_fade_in.value) || 0;
+            src.effects.fade_out = Number(ef_fade_out.value) || 0;
+            src.effects.leak_opacity = Number(ef_leak_opacity.value) || 0.6;
+            src.effects.easing = tl_easing.value;
+            // timeline values normalized are seconds, but for timeline we used 0..1 relative values; for video we will convert applying duration in setupTimelineForSource
+            showDebug('Effets appliqués à la source');
+        }
+
+        // apply to all sources
+        function applyToAllSources(){
+            for(const [id, src] of cameraCore.sources.entries()){
+                src.effects = src.effects || defaultEffects();
+                src.effects.rotate = Number(ef_rotate.value) || 0;
+                src.effects.fade_in = Number(ef_fade_in.value) || 0;
+                src.effects.fade_out = Number(ef_fade_out.value) || 0;
+                src.effects.leak_opacity = Number(ef_leak_opacity.value) || 0.6;
+                src.effects.easing = tl_easing.value;
+            }
+            showDebug('Effets appliqués à toutes les sources');
+        }
+
+        // reset current source effects
+        function resetCurrentEffects(){
+            if(!cameraCore.currentSource) return;
+            const src = cameraCore.sources.get(cameraCore.currentSource);
+            src.effects = defaultEffects();
+            loadEffectsToUI(src.effects);
+            showDebug('Effets réinitialisés pour source');
+        }
+
+        // handle ef_light_input change (load image in effects.lightImg)
+        ef_light_input.addEventListener('change', ev=>{
+            const f = ev.target.files && ev.target.files[0];
+            if(!f) return;
+            const reader = new FileReader();
+            reader.onload = e=>{
+                const img = new Image();
+                img.onload = ()=> {
+                    if(!cameraCore.currentSource) return;
+                    const src = cameraCore.sources.get(cameraCore.currentSource);
+                    src.effects = src.effects || defaultEffects();
+                    src.effects.lightImg = img;
+                    src.effects.lightSrc = e.target.result;
+                    // if local path available, store overlayLocalPath (Electron case)
+                    if(f.path) src.effects.overlayLocalPath = f.path;
+                    loadEffectsToUI(src.effects);
+                    showDebug('Overlay chargé pour la source');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(f);
+        });
+
+        // Timeline setup for a video source
+        function setupTimelineForSource(src){
+            const video = src.element;
+            if(!video || !video.duration){ // may not be ready, try again later
+                video.addEventListener('loadedmetadata', ()=> setupTimelineForSource(src), {once:true});
+                return;
+            }
+            const dur = video.duration;
+            // interpret timeline sliders (0..1) as seconds by multiplying by dur
+            const clampTimeToSeconds = v => Math.max(0, Math.min(dur, Number(v)));
+            // initialize timeline positions from src.effects
+            timeline.max = dur; timeline.min = 0;
+            timeline.step = Math.max(0.001, dur/1000);
+            timeline.value = video.currentTime || 0;
+            timeLabel.textContent = formatTime(0) + ' / ' + formatTime(dur);
+            // set handles in seconds: if stored as normalized, keep as is; else keep
+            tl_fade_in_handle.max = dur; tl_fade_out_handle.max = dur;
+            tl_ov_entry_start.max = dur; tl_ov_entry_dur.max = dur;
+            tl_ov_exit_start.max = dur; tl_ov_exit_dur.max = dur;
+
+            // populate handles from src.effects (if the values are <=1 treat as normalized fraction)
+            const eff = src.effects || defaultEffects();
+            function normToSec(x){ return (x>0 && x<=1) ? x*dur : x; }
+            tl_fade_in_handle.value = normToSec(eff.fade_in || 0.3);
+            tl_fade_out_handle.value = normToSec(eff.fade_out || 0.3);
+            tl_ov_entry_start.value = (eff.ov_entry_start>=0) ? normToSec(eff.ov_entry_start) : 0;
+            tl_ov_entry_dur.value = normToSec(eff.ov_entry_dur || 0);
+            tl_ov_exit_start.value = (eff.ov_exit_start>=0) ? normToSec(eff.ov_exit_start) : Math.max(0, dur - (eff.ov_exit_dur || 0.2));
+            tl_ov_exit_dur.value = normToSec(eff.ov_exit_dur || 0.2);
+            tl_easing.value = eff.easing || 'easeInOutQuad';
+
+            // wire timeline scrub update to video currentTime if user moves it
+            timeline.oninput = ()=> {
+                video.currentTime = Number(timeline.value);
+                timeLabel.textContent = formatTime(video.currentTime) + ' / ' + formatTime(dur);
+            };
+
+            // update display periodically to reflect video
+            const updater = ()=>{
+                if(cameraCore.currentSource !== src.id) return; // stop when deselected
+                try {
+                    timeline.value = video.currentTime || 0;
+                    timeLabel.textContent = formatTime(video.currentTime || 0) + ' / ' + formatTime(dur);
+                    requestAnimationFrame(updater);
+                } catch(e){ }
+            };
+            requestAnimationFrame(updater);
+        }
+
+        // Apply timeline controls to the source effects (convert seconds -> store)
+        function applyTimelineToSource(){
+            if(!cameraCore.currentSource) return;
+            const src = cameraCore.sources.get(cameraCore.currentSource);
+            const dur = (src.element && src.element.duration) ? src.element.duration : 1.0;
+            // store seconds directly (integrate_effects.py expects seconds)
+            src.effects.ov_entry_start = Number(tl_ov_entry_start.value);
+            src.effects.ov_entry_dur = Number(tl_ov_entry_dur.value);
+            src.effects.ov_exit_start = Number(tl_ov_exit_start.value);
+            src.effects.ov_exit_dur = Number(tl_ov_exit_dur.value);
+            src.effects.fade_in = Number(tl_fade_in_handle.value);
+            src.effects.fade_out = Number(tl_fade_out_handle.value);
+            src.effects.easing = tl_easing.value;
+            // also update the simpler numeric inputs
+            ef_fade_in.value = src.effects.fade_in;
+            ef_fade_out.value = src.effects.fade_out;
+            showDebug('Timeline appliquée à la source');
+        }
+
+        // format time
+        function formatTime(s){
+            s = isNaN(s) ? 0 : Math.floor(s);
+            const mm = Math.floor(s/60).toString().padStart(2,'0');
+            const ss = (s%60).toString().padStart(2,'0');
+            return `${mm}:${ss}`;
+        }
+
+        // Render loop draws current source
+        function renderLoop(){
+            const w = canvas.width, h = canvas.height;
+            const now = Date.now();
+            ctx.clearRect(0,0,w,h);
+            if(cameraCore.currentSource && cameraCore.sources.has(cameraCore.currentSource)){
+                const src = cameraCore.sources.get(cameraCore.currentSource);
+                try { src.render(ctx, w, h, now); } catch(e){ console.warn(e); }
+            } else {
+                // default screen
+                ctx.fillStyle = '#0b1220'; ctx.fillRect(0,0,w,h);
+                ctx.fillStyle = '#fff'; ctx.font='36px Arial'; ctx.textAlign='center';
+                ctx.fillText('🎥 ZNK Camera Core', w/2, h/2 - 10);
+                ctx.font='16px Arial'; ctx.fillStyle = '#9ca3af';
+                ctx.fillText('Sélectionnez une source', w/2, h/2 + 20);
+            }
+            // apply global css filters
+            canvas.style.filter = `brightness(${cameraCore.globalEffects.brightness}%) contrast(${cameraCore.globalEffects.contrast}%) saturate(${cameraCore.globalEffects.saturation}%)`;
+            requestAnimationFrame(renderLoop);
+        }
+
+        // File handlers
+        uploadZone.onclick = ()=> mediaInput.click();
+        uploadZone.addEventListener('dragover', e=>{ e.preventDefault(); uploadZone.style.background='rgba(59,130,246,0.04)'; });
+        uploadZone.addEventListener('dragleave', ()=> uploadZone.style.background='transparent');
+        uploadZone.addEventListener('drop', e=>{ e.preventDefault(); uploadZone.style.background='transparent'; handleFileList(e.dataTransfer.files); });
+        mediaInput.addEventListener('change', e=> handleFileList(e.target.files));
+
+        function handleFileList(list){
+            Array.from(list).forEach(f => {
+                if(f.type.startsWith('video/') || f.type.startsWith('image/')) addMediaFile(f);
+            });
+        }
+
+        // UI buttons
+        document.getElementById('applyEfBtn').addEventListener('click', ()=> {
+            applyUIToCurrentSource();
+            showMessage('✅ Effets appliqués');
+        });
+        document.getElementById('applyAllEfBtn').addEventListener('click', ()=> { applyToAllSources(); showMessage('✅ Effets appliqués à toutes'); });
+        document.getElementById('resetEfBtn').addEventListener('click', ()=> { resetCurrentEffects(); showMessage('🔄 Réinitialisé'); });
+
+        // timeline apply button
+        document.getElementById('applyTimelineBtn').addEventListener('click', ()=> { applyTimelineToSource(); showMessage('✅ Timeline appliquée'); });
+
+        // Export WebM using MediaRecorder (client-only)
+        document.getElementById('exportWebmBtn').addEventListener('click', async ()=>{
+            const fps = Number(document.getElementById('fps').value) || 30;
+            const mime = 'video/webm;codecs=vp9';
+            try{
+                const stream = canvas.captureStream(fps);
+                const rec = new MediaRecorder(stream, { mimeType: mime });
+                const chunks = [];
+                rec.ondataavailable = e=> { if(e.data && e.data.size) chunks.push(e.data); };
+                rec.onstop = ()=> {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = `znk-export-${Date.now()}.webm`; a.click();
+                    URL.revokeObjectURL(url);
+                    showMessage('⬇️ Export WebM prêt');
+                };
+                rec.start();
+                showMessage('⏺️ Enregistrement WebM en cours (appuyez à nouveau pour arrêter)');
+                // simple stop after X seconds? Let user stop via stop button
+                setTimeout(()=> rec.stop(), 4000); // auto-stop after 4s if user doesn't
+            }catch(e){ console.error(e); showMessage('❌ Export WebM impossible: ' + e.message, 'error'); }
+        });
+
+        // Export MP4 via Electron / ffmpeg (if available)
+        document.getElementById('exportMp4Btn').addEventListener('click', async ()=>{
+            // We will attempt to export the currently selected source if it has a localPath (Electron path).
+            if(!cameraCore.currentSource){
+                showMessage('Sélectionnez une source pour l\'export MP4', 'error'); return;
+            }
+            const src = cameraCore.sources.get(cameraCore.currentSource);
+            // Export full clip with effects: integrate_effects.py expects input path + effect params
+            if(typeof window.api === 'object' && typeof window.api.runGenerate === 'function'){
+                if(!src.localPath){
+                    showMessage('Le fichier source doit être un fichier local (ouvrir via dialogue Electron) pour exporter MP4', 'error'); return;
+                }
+                // prepare params for integrate_effects.py
+                const out = `outputs/${src.name.replace(/[^\w\d\-_.]/g,'_')}_${Date.now()}.mp4`;
+                const eff = src.effects || defaultEffects();
+                const params = {
+                    input: src.localPath,
+                    output: out,
+                    rotate: eff.rotate || 0,
+                    fade_in: eff.fade_in || 0,
+                    fade_out: eff.fade_out || 0,
+                    leak_opacity: eff.leak_opacity || 0.6,
+                    overlay_entry_start: eff.ov_entry_start >=0 ? eff.ov_entry_start : -1,
+                    overlay_entry_dur: eff.ov_entry_dur || 0,
+                    overlay_exit_start: eff.ov_exit_start >=0 ? eff.ov_exit_start : -1,
+                    overlay_exit_dur: eff.ov_exit_dur || 0,
+                    // if overlayLocalPath present use that
+                    light_leak: eff.overlayLocalPath || eff.lightSrc || null,
+                    preview: false
+                };
+                showDebug('Appel export ffmpeg avec params: ' + JSON.stringify(params));
+                try{
+                    const res = await window.api.runGenerate(params);
+                    if(res && res.ok){
+                        showMessage('✅ Export MP4 terminé: ' + res.output);
+                    } else {
+                        console.error(res); showMessage('❌ Erreur export MP4: voir debug', 'error'); showDebug(JSON.stringify(res));
+                    }
+                }catch(err){
+                    console.error(err); showMessage('❌ Export MP4 échoué', 'error');
+                }
+            } else {
+                showMessage('Export MP4 non disponible (nécessite Electron/ffmpeg backend). Utilisez Export WebM.', 'error');
+            }
+        });
+
+        // Save presets JSON (download)
+        document.getElementById('saveJsonBtn').addEventListener('click', ()=>{
+            const obj = serializeState();
+            const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `znk_presets_${Date.now()}.json`; a.click();
+            URL.revokeObjectURL(url);
+            showMessage('💾 Presets téléchargés (JSON)');
+        });
+
+        // Load presets JSON
+        document.getElementById('loadJsonBtn').addEventListener('click', ()=> document.getElementById('loadJsonInput').click());
+        document.getElementById('loadJsonInput').addEventListener('change', ev=>{
+            const f = ev.target.files && ev.target.files[0];
+            if(!f) return;
+            const reader = new FileReader();
+            reader.onload = e=>{
+                try{
+                    const data = JSON.parse(e.target.result);
+                    restoreState(data);
+                    showMessage('📂 Presets chargés');
+                }catch(err){ showMessage('❌ JSON invalide', 'error'); }
+            };
+            reader.readAsText(f);
+        });
+
+        // Download full state JSON
+        document.getElementById('downloadStateBtn').addEventListener('click', ()=>{
+            const obj = serializeState(true);
+            const blob = new Blob([JSON.stringify(obj,null,2)], { type:'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `znk_state_${Date.now()}.json`; a.click();
+            URL.revokeObjectURL(url);
+            showMessage('🔧 État téléchargé');
+        });
+
+        // Load state JSON via the other button
+        document.getElementById('loadStateBtn').addEventListener('click', ()=> document.getElementById('loadJsonInput').click());
+
+        // serialize state (optionally full: includes sources but not binary data)
+        function serializeState(full=false){
+            const arr = [];
+            for(const [id, s] of cameraCore.sources.entries()){
+                arr.push({
+                    id: s.id, name: s.name, type: s.type,
+                    localPath: s.localPath || null,
+                    effects: {
+                        rotate: s.effects.rotate, fade_in: s.effects.fade_in, fade_out: s.effects.fade_out,
+                        leak_opacity: s.effects.leak_opacity,
+                        overlayLocalPath: s.effects.overlayLocalPath || null,
+                        ov_entry_start: s.effects.ov_entry_start,
+                        ov_entry_dur: s.effects.ov_entry_dur,
+                        ov_exit_start: s.effects.ov_exit_start,
+                        ov_exit_dur: s.effects.ov_exit_dur,
+                        easing: s.effects.easing,
+                        lightSrc: full ? (s.effects.lightSrc || null) : null
+                    }
+                });
+            }
+            return { createdAt: Date.now(), resolution: [canvas.width, canvas.height], fps: Number(document.getElementById('fps').value), sources: arr };
+        }
+
+        // restore state (lightweight: will only set effects and not automatically repopulate media)
+        function restoreState(state){
+            if(!state || !state.sources) return;
+            // update existing sources' effects by matching name or id
+            for(const seed of state.sources){
+                // find by id or name
+                let found = null;
+                if(seed.id && cameraCore.sources.has(seed.id)) found = cameraCore.sources.get(seed.id);
+                else {
+                    for(const [id, s] of cameraCore.sources.entries()){
+                        if(s.name === seed.name){ found = s; break; }
+                    }
+                }
+                if(found){
+                    found.effects = Object.assign(found.effects || defaultEffects(), seed.effects || {});
+                    // if seed.effects.lightSrc present and we have it as dataURL, set it
+                    if(seed.effects && seed.effects.lightSrc){
+                        const img = new Image();
+                        img.src = seed.effects.lightSrc;
+                        img.onload = ()=> { found.effects.lightImg = img; };
+                    }
+                }
+            }
+        }
+
+        // small debug log
+        function showDebug(txt){
+            const el = document.getElementById('debugLog'); el.textContent = typeof txt === 'string' ? txt : JSON.stringify(txt);
+            console.debug(txt);
+        }
+
+        // small toast
+        function showMessage(msg, type='info'){
+            const colors = { info:'#3b82f6', success:'#10b981', error:'#ef4444' };
+            const n = document.createElement('div'); n.textContent = msg;
+            n.style.cssText = `position:fixed;right:24px;top:24px;background:${colors[type]||colors.info};color:white;padding:10px 14px;border-radius:8px;z-index:9999;box-shadow:0 8px 20px rgba(0,0,0,0.4);font-weight:600;`;
+            document.body.appendChild(n); setTimeout(()=>{ n.style.opacity=0; setTimeout(()=>n.remove(),300); },2400);
+        }
+
+        // basic start/stop recording tied to UI
+        document.getElementById('startBtn').addEventListener('click', ()=>{
+            // start MediaRecorder capturing canvas for local quick recordings
+            const fps = Number(document.getElementById('fps').value) || 30;
+            try{
+                const stream = canvas.captureStream(fps);
+                const rec = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+                const chunks = [];
+                rec.ondataavailable = e=> { if(e.data && e.data.size) chunks.push(e.data) };
+                rec.onstop = ()=> {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = `znk_recording_${Date.now()}.webm`; a.click(); URL.revokeObjectURL(url);
+                    document.getElementById('startBtn').disabled = false; document.getElementById('stopBtn').disabled = true;
+                    showMessage('📥 Enregistrement téléchargé');
+                };
+                rec.start();
+                cameraCore.recorder = rec; cameraCore.isRecording = true;
+                document.getElementById('startBtn').disabled = true; document.getElementById('stopBtn').disabled = false;
+                showMessage('⏺️ Enregistrement démarré (local)');
+            }catch(e){ showMessage('Erreur enregistrement: ' + e.message, 'error'); }
+        });
+        document.getElementById('stopBtn').addEventListener('click', ()=>{
+            if(cameraCore.recorder && cameraCore.isRecording){ cameraCore.recorder.stop(); cameraCore.isRecording = false; }
+        });
+
+        // screenshot
+        document.getElementById('screenshotBtn').addEventListener('click', ()=>{
+            const data = canvas.toDataURL('image/png');
+            const a = document.createElement('a'); a.href = data; a.download = `znk_screenshot_${Date.now()}.png`; a.click();
+            showMessage('📸 Capture sauvegardée');
+        });
+
+        // expose small API funcs
+        window.znkCamera = { core: cameraCore, selectSource: id => selectSource(id) };
+
+        // init
+        createDefaultSources();
+        renderLoop();
+        updateSourceCount();
+
+        // auto-select first after small delay
+        setTimeout(()=> {
+            const k = cameraCore.sources.keys().next().value;
+            if(k) selectSource(k);
+        }, 400);
+
+    })();
+    </script>
+</body>
+</html>

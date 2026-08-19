@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK Galerie - Selected Artists Collection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 30%, #ffffff 100%);
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
+            color: #1a1a1a;
+            overflow-x: hidden;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        /* Effet de vagues discret inspiré du style japonais */
+        .ambient-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.02;
+            z-index: -1;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(139, 69, 19, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(210, 180, 140, 0.1) 0%, transparent 50%);
+            animation: ambientFlow 25s linear infinite;
+        }
+
+        @keyframes ambientFlow {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        .main-container {
+            width: 100vw;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Navigation NYC Showroom style */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 85px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(30px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 80px;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            transition: all 0.4s ease;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .znk-logo {
+            font-size: 42px;
+            font-weight: 100;
+            background: linear-gradient(135deg, #2c2c2c, #8b4513, #1a1a1a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 8px;
+            position: relative;
+        }
+
+        .znk-logo::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #8b4513, transparent);
+            opacity: 0.4;
+        }
+
+        .galerie-subtitle {
+            font-size: 11px;
+            color: #666;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-left: 20px;
+            border-left: 1px solid #ddd;
+            padding-left: 20px;
+        }
+
+        .nav-section {
+            display: flex;
+            gap: 50px;
+            align-items: center;
+        }
+
+        .nav-item {
+            padding: 12px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #8b4513, #cd853f);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item:hover::before {
+            width: 100%;
+        }
+
+        .nav-item:hover {
+            color: #8b4513;
+            transform: translateY(-2px);
+        }
+
+        .nav-item.premium {
+            background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 0;
+        }
+
+        .nav-item.premium:hover {
+            background: linear-gradient(135deg, #8b4513, #a0522d);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        /* Hero section showroom NYC */
+        .hero-section {
+            width: 100%;
+            height: 70vh;
+            background: linear-gradient(135deg, 
+                rgba(255,255,255,0.95) 0%, 
+                rgba(250,250,250,0.98) 100%);
+            margin-top: 85px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+            max-width: 800px;
+            padding: 0 40px;
+        }
+
+        .hero-title {
+            font-size: 64px;
+            font-weight: 100;
+            color: #1a1a1a;
+            margin-bottom: 30px;
+            letter-spacing: 4px;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: #666;
+            font-weight: 300;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+
+        .hero-cta {
+            background: transparent;
+            border: 2px solid #1a1a1a;
+            color: #1a1a1a;
+            padding: 15px 40px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+
+        .hero-cta:hover {
+            background: #1a1a1a;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Section artistes */
+        .artists-section {
+            width: 90%;
+            max-width: 1600px;
+            margin: 80px auto;
+            padding: 0 40px;
+        }
+
+        .section-header {
+            margin-bottom: 80px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 48px;
+            font-weight: 100;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .section-description {
+            font-size: 16px;
+            color: #666;
+            max-width: 600px;
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        /* Grille showroom */
+        .showroom-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 60px;
+            margin-top: 80px;
+        }
+
+        .artwork-showcase {
+            background: white;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.08),
+                0 5px 20px rgba(0, 0, 0, 0.04);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .artwork-showcase:hover {
+            transform: translateY(-15px);
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.12),
+                0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .artwork-visual {
+            width: 100%;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+            background: #f8f8f8;
+        }
+
+        .artwork-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 72px;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        /* Overlay effet NYC gallery */
+        .artwork-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                180deg, 
+                rgba(0, 0, 0, 0) 0%, 
+                rgba(0, 0, 0, 0.8) 100%
+            );
+            opacity: 0;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 30px;
+        }
+
+        .artwork-showcase:hover .artwork-overlay {
+            opacity: 1;
+        }
+
+        .overlay-info {
+            color: white;
+            font-size: 16px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .overlay-price {
+            color: #f5f5f5;
+            font-size: 24px;
+            font-weight: 100;
+            font-family: 'Courier New', monospace;
+        }
+
+        .artwork-details {
+            padding: 40px 35px;
+            background: white;
+        }
+
+        .artwork-title {
+            font-size: 24px;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .artist-name {
+            font-size: 16px;
+            color: #8b4513;
+            font-style: italic;
+            margin-bottom: 8px;
+            font-weight: 300;
+        }
+
+        .artwork-medium {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .artwork-price {
+            font-size: 28px;
+            color: #1a1a1a;
+            font-weight: 100;
+            margin-bottom: 30px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .inquire-button {
+            background: transparent;
+            color: #1a1a1a;
+            border: 1px solid #1a1a1a;
+            padding: 12px 35px;
+            border-radius: 0;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 300;
+            width: 100%;
+        }
+
+        .inquire-button:hover {
+            background: #1a1a1a;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        /* Section curator's note */
+        .curator-section {
+            background: linear-gradient(135deg, #fafafa 0%, #f8f8f8 100%);
+            padding: 80px 0;
+            margin: 100px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .curator-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 60px;
+            text-align: center;
+        }
+
+        .curator-title {
+            font-size: 32px;
+            font-weight: 100;
+            color: #1a1a1a;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .curator-text {
+            font-size: 18px;
+            color: #555;
+            line-height: 1.8;
+            font-weight: 300;
+            max-width: 800px;
+            margin: 0 auto;
+            font-style: italic;
+        }
+
+        .curator-signature {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #8b4513;
+            letter-spacing: 1px;
+        }
+
+        /* Footer minimal */
+        .gallery-footer {
+            background: white;
+            padding: 60px 0;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: #999;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 0 30px;
+                height: 75px;
+            }
+            
+            .znk-logo {
+                font-size: 32px;
+                letter-spacing: 4px;
+            }
+            
+            .nav-section {
+                gap: 25px;
+            }
+            
+            .nav-item {
+                font-size: 11px;
+            }
+            
+            .hero-section {
+                height: 60vh;
+                margin-top: 75px;
+            }
+            
+            .hero-title {
+                font-size: 42px;
+            }
+            
+            .showroom-grid {
+                grid-template-columns: 1fr;
+                gap: 50px;
+            }
+            
+            .artists-section {
+                width: 95%;
+                padding: 0 20px;
+            }
+        }
+
+        /* Animations subtiles */
+        @keyframes subtileFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .artwork-showcase {
+            animation: fadeInScale 0.8s ease forwards;
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        @keyframes fadeInScale {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .artwork-showcase:nth-child(1) { animation-delay: 0.1s; }
+        .artwork-showcase:nth-child(2) { animation-delay: 0.2s; }
+        .artwork-showcase:nth-child(3) { animation-delay: 0.3s; }
+        .artwork-showcase:nth-child(4) { animation-delay: 0.4s; }
+        .artwork-showcase:nth-child(5) { animation-delay: 0.5s; }
+        .artwork-showcase:nth-child(6) { animation-delay: 0.6s; }
+
+        /* Scrollbar minimal */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f8f8f8;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #ccc, #999);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #999, #666);
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-background"></div>
+
+    <div class="main-container">
+        <!-- Navigation NYC Showroom -->
+        <nav class="top-nav">
+            <div class="logo-section">
+                <div class="znk-logo">ZNK</div>
+                <div class="galerie-subtitle">Selected Artists Collection</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-item" onclick="navigateToSection('artists')">Artists</div>
+                <div class="nav-item" onclick="navigateToSection('exhibitions')">Exhibitions</div>
+                <div class="nav-item" onclick="navigateToSection('about')">About</div>
+                <div class="nav-item premium" onclick="openCollection()">Collection</div>
+                <div class="nav-item" onclick="showContact()">Contact</div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-title">Curated Excellence</div>
+                <div class="hero-subtitle">Discover exceptional works from our carefully selected contemporary artists</div>
+                <button class="hero-cta" onclick="scrollToArtists()">View Collection</button>
+            </div>
+        </div>
+
+        <!-- Section Artistes -->
+        <div class="artists-section">
+            <div class="section-header">
+                <div class="section-title">Featured Artists</div>
+                <div class="section-description">
+                    Each artist in our collection represents a unique voice in contemporary art, 
+                    selected for their exceptional technique, innovative vision, and cultural significance. 
+                    Our curation process ensures only the finest works enter our permanent collection.
+                </div>
+            </div>
+            
+            <div class="showroom-grid" id="artworksGrid">
+                <!-- Les œuvres seront générées par JavaScript -->
+            </div>
+        </div>
+
+        <!-- Section Curator's Note -->
+        <div class="curator-section">
+            <div class="curator-content">
+                <div class="curator-title">Curator's Vision</div>
+                <div class="curator-text">
+                    "Our collection bridges cultural boundaries while respecting individual artistic integrity. 
+                    Each piece tells a story that transcends geographical limits, creating a dialogue between 
+                    tradition and modernity, between established masters and emerging voices."
+                </div>
+                <div class="curator-signature">— ZNK Gallery Curatorial Team</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="gallery-footer">
+            <div class="footer-content">
+                <div class="footer-text">ZNK Gallery • New York • Private Collection</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Template pour vos artistes sélectionnés
+        const selectedArtists = [
+            {
+                id: 'znk_artist_001',
+                title: '[Titre de l\'œuvre 1]',
+                artist: '[Nom de l\'artiste 1]',
+                medium: 'Mixed Media on Canvas',
+                price: 'Prix sur demande',
+                gradient: 'linear-gradient(45deg, #8b4513 0%, #deb887 50%, #cd853f 100%)',
+                userId: 'artist_001'
+            },
+            {
+                id: 'znk_artist_002', 
+                title: '[Titre de l\'œuvre 2]',
+                artist: '[Nom de l\'artiste 2]',
+                medium: 'Oil on Canvas',
+                price: 'Prix sur demande',
+                gradient: 'linear-gradient(45deg, #a0522d 0%, #f4a460 50%, #daa520 100%)',
+                userId: 'artist_002'
+            },
+            {
+                id: 'znk_artist_003',
+                title: '[Titre de l\'œuvre 3]',
+                artist: '[Nom de l\'artiste 3]',
+                medium: 'Acrylic and Gold Leaf',
+                price: 'Prix sur demande',
+                gradient: 'linear-gradient(45deg, #2c1810 0%, #8b4513 50%, #cd853f 100%)',
+                userId: 'artist_003'
+            },
+            {
+                id: 'znk_artist_004',
+                title: '[Titre de l\'œuvre 4]',
+                artist: '[Nom de l\'artiste 4]',
+                medium: 'Digital Art on Aluminum',
+                price: 'Prix sur demande',
+                gradient: 'linear-gradient(45deg, #654321 0%, #d2b48c 50%, #f5deb3 100%)',
+                userId: 'artist_004'
+            },
+            {
+                id: 'znk_artist_005',
+                title: '[Titre de l\'œuvre 5]',
+                artist: '[Nom de l\'artiste 5]',
+                medium: 'Sculpture - Bronze',
+                price: 'Prix sur demande',
+                gradient: 'linear-gradient(45deg, #8b4513 0%, #a0522d 50%, #cd853f 100%)',
+                userId: 'artist_005'
+            },
+            {
+                id: 'znk_artist_006',
+                title: '[Titre de l\'œuvre 6]',
+                artist: '[Nom de l\'artiste 6]',
+                medium: 'Photography - Limited Edition',
+                price: 'Prix sur demande',
+                gradient: 'linear-gradient(45deg, #1a1a1a 0%, #8b4513 50%, #2c2c2c 100%)',
+                userId: 'artist_006'
+            }
+        ];
+
+        // Génération du showroom
+        function generateShowroom() {
+            const container = document.getElementById('artworksGrid');
+            container.innerHTML = '';
+
+            selectedArtists.forEach((artwork, index) => {
+                const showcaseCard = document.createElement('div');
+                showcaseCard.className = 'artwork-showcase';
+                showcaseCard.onclick = () => inquireAboutArtwork(artwork);
+                
+                showcaseCard.innerHTML = `
+                    <div class="artwork-visual">
+                        <div class="artwork-placeholder" style="background: ${artwork.gradient}">
+                            🎨
+                        </div>
+                        <div class="artwork-overlay">
+                            <div class="overlay-info">${artwork.artist}</div>
+                            <div class="overlay-price">${artwork.price}</div>
+                        </div>
+                    </div>
+                    <div class="artwork-details">
+                        <div class="artwork-title">${artwork.title}</div>
+                        <div class="artist-name">${artwork.artist}</div>
+                        <div class="artwork-medium">${artwork.medium}</div>
+                        <div class="artwork-price">${artwork.price}</div>
+                        <button class="inquire-button">Inquiry</button>
+                    </div>
+                `;
+                
+                container.appendChild(showcaseCard);
+            });
+        }
+
+        // Système d'enquête pour les œuvres
+        function inquireAboutArtwork(artwork) {
+            showNotification(
+                `Inquiry: ${artwork.title}`,
+                `Artist: ${artwork.artist}\nMedium: ${artwork.medium}\n\nThank you for your interest. Our curator will contact you shortly with detailed information and viewing arrangements.`
+            );
+        }
+
+        // Navigation
+        function navigateToSection(section) {
+            showNotification('Navigation', `Accessing ${section} section`);
+        }
+
+        function openCollection() {
+            showNotification('Private Collection', 'Access to exclusive collection catalog');
+        }
+
+        function showContact() {
+            showNotification(
+                'Contact Information',
+                'ZNK Gallery\nNew York Showroom\n\nBy appointment only\ninfo@znkgallery.com'
+            );
+        }
+
+        function scrollToArtists() {
+            document.querySelector('.artists-section').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // Système de notifications élégant
+        function showNotification(title, message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 255, 255, 0.98);
+                color: #1a1a1a;
+                padding: 40px 50px;
+                border-radius: 0;
+                z-index: 2000;
+                font-size: 14px;
+                backdrop-filter: blur(25px);
+                border: 1px solid rgba(0,0,0,0.08);
+                box-shadow: 0 30px 80px rgba(0,0,0,0.15);
+                text-align: center;
+                min-width: 400px;
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+                font-weight: 300;
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-size: 18px; font-weight: 100; margin-bottom: 20px; color: #1a1a1a; letter-spacing: 1px;">${title}</div>
+                <div style="line-height: 1.6; white-space: pre-line; color: #555;">${message}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            generateShowroom();
+            
+            // Message d'accueil discret
+            setTimeout(() => {
+                showNotification(
+                    'Welcome to ZNK Gallery',
+                    'Discover our carefully curated collection\nof contemporary masters'
+                );
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

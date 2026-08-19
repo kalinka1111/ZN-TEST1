@@ -1,0 +1,402 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-11T19:06:03.448Z",
+  "sections": [
+    {
+      "key": "gestion-classe",
+      "label": "Gestion de Classe",
+      "icon": "🎯",
+      "color": "linear-gradient(135deg, #ff6b35, #f7931e)"
+    },
+    {
+      "key": "analytics",
+      "label": "Tableau de Bord Analytique",
+      "icon": "📊",
+      "color": "linear-gradient(135deg, #059669, #047857)"
+    },
+    {
+      "key": "contenu",
+      "label": "Création de Contenu Pédagogique",
+      "icon": "📝",
+      "color": "linear-gradient(135deg, #7c3aed, #6d28d9)"
+    },
+    {
+      "key": "communication",
+      "label": "Communication & Interaction",
+      "icon": "💬",
+      "color": "linear-gradient(135deg, #dc2626, #b91c1c)"
+    },
+    {
+      "key": "planification",
+      "label": "Planification & Organisation",
+      "icon": "⏰",
+      "color": "linear-gradient(135deg, #ea580c, #dc2626)"
+    },
+    {
+      "key": "parents",
+      "label": "Interface Parents & Contrôles",
+      "icon": "👨‍👩‍👧‍👦",
+      "color": "linear-gradient(135deg, #0891b2, #0e7490)"
+    },
+    {
+      "key": "workflow",
+      "label": "Workflow Pédagogique",
+      "icon": "🔄",
+      "color": "linear-gradient(135deg, #1f2937, #374151)"
+    }
+  ],
+  "modules": [
+    {
+      "id": "gestion-eleves",
+      "section": "gestion-classe",
+      "icon": "👥",
+      "title": "Vue d'ensemble des élèves",
+      "shortDescription": "Gestion complète des élèves connectés avec statuts d'activité en temps réel.",
+      "longDescription": "Ce module vous permet de gérer tous vos élèves en temps réel. Vous pouvez voir qui est connecté, suivre leur activité, consulter leurs profils et gérer leurs permissions.",
+      "status": "actif",
+      "audience": {
+        "eleves": false,
+        "parents": false
+      },
+      "featured": true,
+      "createdAt": "2026-07-11T17:59:08.545Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "progression-eleves",
+      "section": "analytics",
+      "icon": "📈",
+      "title": "Progression des élèves",
+      "shortDescription": "Suivi détaillé de la progression par matière avec graphiques interactifs.",
+      "longDescription": "Suivez la progression détaillée de chaque élève avec des graphiques interactifs. Analyse par matière, points forts, difficultés et recommandations pédagogiques.",
+      "status": "actif",
+      "audience": {
+        "eleves": false,
+        "parents": true
+      },
+      "featured": true,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "stats-chat-ia",
+      "section": "analytics",
+      "icon": "🤖",
+      "title": "Statistiques Chat IA",
+      "shortDescription": "Analyse de l'utilisation du chat IA par les élèves et efficacité pédagogique.",
+      "longDescription": "Analysez l'utilisation du chat IA par vos élèves : questions posées, sujets demandés, efficacité des réponses et impact sur l'apprentissage.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "resultats-interrogations",
+      "section": "analytics",
+      "icon": "📝",
+      "title": "Résultats des interrogations",
+      "shortDescription": "Tableau de bord des résultats des interrogations automatiques avec analyses.",
+      "longDescription": "Consultez et analysez les résultats des interrogations automatiques : statistiques de réussite, questions problématiques, analyses comparatives.",
+      "status": "pret",
+      "audience": {
+        "eleves": true,
+        "parents": true
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "studio-enregistrement",
+      "section": "contenu",
+      "icon": "🎬",
+      "title": "Studio d'enregistrement",
+      "shortDescription": "Studio simple pour enregistrer des leçons vidéo avec écran live et chat IA intégré.",
+      "longDescription": "Enregistrez facilement vos leçons vidéo : capture d'écran, webcam, chat IA en direct et outils d'édition basiques.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "gestion-lecons",
+      "section": "contenu",
+      "icon": "📹",
+      "title": "Gestion des leçons vidéo",
+      "shortDescription": "Upload, organisation et mise à disposition des leçons enregistrées pour les élèves.",
+      "longDescription": "Organisez et gérez toutes vos leçons vidéo : upload, catégorisation, programmation de diffusion, accès par classe, statistiques de visionnage.",
+      "status": "pret",
+      "audience": {
+        "eleves": true,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "creation-interrogations",
+      "section": "contenu",
+      "icon": "❓",
+      "title": "Création d'interrogations",
+      "shortDescription": "Outil de création d'interrogations programmées avec correction automatique.",
+      "longDescription": "Créez des interrogations programmées avec correction automatique : banque de questions, génération IA, correction instantanée.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "gestion-devoirs",
+      "section": "contenu",
+      "icon": "📚",
+      "title": "Gestion des devoirs",
+      "shortDescription": "Organisation des devoirs et gestion des échéances avec rappels automatiques.",
+      "longDescription": "Organisez efficacement les devoirs de vos classes : création, assignation, suivi des remises, échéances, notation intégrée.",
+      "status": "pret",
+      "audience": {
+        "eleves": true,
+        "parents": true
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "chat-prive-eleves",
+      "section": "communication",
+      "icon": "💬",
+      "title": "Chat privé avec élèves",
+      "shortDescription": "Messagerie privée sécurisée pour communiquer individuellement avec chaque élève.",
+      "longDescription": "Communiquez individuellement avec vos élèves via une messagerie sécurisée : conversations privées, partage de fichiers, historique.",
+      "status": "pret",
+      "audience": {
+        "eleves": true,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "notifications-parents",
+      "section": "communication",
+      "icon": "📱",
+      "title": "Notifications parents",
+      "shortDescription": "Système de notifications push automatiques vers les parents des élèves.",
+      "longDescription": "Notifiez automatiquement les parents : progrès, absences, devoirs, événements et résultats d'évaluations.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": true
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "calendrier-cours",
+      "section": "planification",
+      "icon": "📅",
+      "title": "Calendrier des cours",
+      "shortDescription": "Planification complète des cours et activités avec gestion des horaires.",
+      "longDescription": "Planifiez et organisez tous vos cours et activités : vues mensuelle/hebdomadaire/quotidienne, récurrences, synchronisation.",
+      "status": "pret",
+      "audience": {
+        "eleves": true,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "planning-art-classes",
+      "section": "planification",
+      "icon": "🎨",
+      "title": "Planning Art Classes",
+      "shortDescription": "Gestion spécialisée des horaires pour les classes d'art et activités créatives.",
+      "longDescription": "Planification spécialisée pour les cours d'art : gestion des matériels, réservation des espaces, suivi des projets artistiques.",
+      "status": "pret",
+      "audience": {
+        "eleves": true,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "planning-interrogations",
+      "section": "planification",
+      "icon": "📋",
+      "title": "Planning interrogations IA",
+      "shortDescription": "Programmation automatique des interrogations avec IA intégrée.",
+      "longDescription": "Programmation intelligente des évaluations : l'IA optimise la répartition, évite les surcharges, équilibre la charge de travail.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "comptes-rendus-eleves",
+      "section": "parents",
+      "icon": "📄",
+      "title": "Comptes rendus élèves",
+      "shortDescription": "Accès parental aux bulletins, notes et rapports détaillés des élèves.",
+      "longDescription": "Génération automatique de bulletins et rapports détaillés : analyses personnalisées, graphiques de progression, recommandations.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": true
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "suivi-temps-ecran",
+      "section": "parents",
+      "icon": "⏱️",
+      "title": "Suivi temps d'écran",
+      "shortDescription": "Monitoring du temps passé par chaque élève sur la plateforme éducative.",
+      "longDescription": "Monitoring complet du temps passé sur la plateforme : statistiques, alertes de surcharge, recommandations de pauses.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": true
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "controles-parentaux",
+      "section": "parents",
+      "icon": "🔒",
+      "title": "Contrôles parentaux ACTV",
+      "shortDescription": "Paramètres de contrôle parental pour les activités et contenus accessibles.",
+      "longDescription": "Paramètres avancés de contrôle parental : permissions, filtrage de contenu, limitation de temps, restrictions par âge.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": true
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "workflow-lecons",
+      "section": "workflow",
+      "icon": "📹",
+      "title": "Workflow Leçons",
+      "shortDescription": "Processus leçons enregistrées",
+      "longDescription": "Automatisation complète du processus de création et diffusion des leçons, du brouillon à la publication.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "automatisation-notes",
+      "section": "workflow",
+      "icon": "🤖",
+      "title": "Automatisation Notes",
+      "shortDescription": "Correction automatique",
+      "longDescription": "Système intelligent de correction automatique avec IA : QCM, réponses ouvertes, détection de plagiat, feedback personnalisé.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "rapports-progression",
+      "section": "workflow",
+      "icon": "📊",
+      "title": "Rapports Auto",
+      "shortDescription": "Génération rapports",
+      "longDescription": "Génération automatique de rapports de progression : analyses statistiques, tendances d'apprentissage, recommandations.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "backup-donnees",
+      "section": "workflow",
+      "icon": "💾",
+      "title": "Sauvegarde",
+      "shortDescription": "Backup automatique",
+      "longDescription": "Sauvegarde automatique et sécurisée de toutes les données pédagogiques, conforme RGPD.",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T17:59:08.623Z",
+      "updatedAt": "2026-07-11T17:59:08.623Z"
+    },
+    {
+      "id": "bienvenue",
+      "section": "communication",
+      "icon": "🔹",
+      "title": "Bienvenue",
+      "shortDescription": "ZNKArt-Etudes ,notre école sur mesure",
+      "longDescription": "ZNK Art Etudes est une plateforme d'études, pour tous les niveaux ,qui s'adapte à chaque enfant pour l'orienter et lui permet de s'épanouir intellectuellement à son rythme.\n\nLes parents et professeurs suivent la progression et les preferences de l'enfant. Favoriser l'orientation- avoir à disposition tous les outils necessaires pour un cursus scolaire succesfull",
+      "status": "pret",
+      "audience": {
+        "eleves": false,
+        "parents": true
+      },
+      "featured": true,
+      "createdAt": "2026-07-11T18:50:12.297Z",
+      "updatedAt": "2026-07-11T18:50:12.297Z"
+    },
+    {
+      "id": "workflow-lecons",
+      "section": "workflow",
+      "icon": "📝",
+      "title": "Workflow Leçons",
+      "shortDescription": "!ere lecon workflow  de presentation",
+      "longDescription": "La description doit etre elegante et lisible \npossible de mmettre un html?",
+      "status": "pret",
+      "audience": {
+        "eleves": true,
+        "parents": false
+      },
+      "featured": false,
+      "createdAt": "2026-07-11T19:06:03.448Z",
+      "updatedAt": "2026-07-11T19:06:03.448Z"
+    }
+  ]
+}

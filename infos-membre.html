@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Profil • ZNK</title>
+  <style>
+    :root {
+      --bg-primary: #081226;
+      --bg-card: rgba(7, 18, 38, 0.8);
+      --bg-card-hover: rgba(7, 18, 38, 0.95);
+      --accent: #00ffff;
+      --accent-secondary: #0080ff;
+      --success: #25D366;
+      --muted: #9aa6b2;
+      --white: #fff;
+      --border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: linear-gradient(180deg, #071223 0%, #08132a 100%);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(0, 128, 255, 0.05) 0%, transparent 50%);
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(-30px, -50px) rotate(120deg); }
+      66% { transform: translate(30px, -30px) rotate(240deg); }
+    }
+
+    .phone {
+      width: 390px;
+      max-width: 100%;
+      height: 844px;
+      background: linear-gradient(180deg, #000 0%, #071226 100%);
+      border-radius: 40px;
+      padding: 16px;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .screen {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+      height: 100%;
+      border-radius: 30px;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+      backdrop-filter: blur(20px);
+    }
+
+    .screen::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .screen::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+    }
+
+    .screen::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      animation: fadeIn 0.8s ease 0.2s both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+    }
+
+    .close {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: rotate(90deg);
+    }
+
+    .profile-card {
+      background: var(--bg-card);
+      border-radius: 24px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.8s ease 0.4s both;
+    }
+
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+      opacity: 0.1;
+      z-index: 0;
+    }
+
+    .avatar-container {
+      position: relative;
+      z-index: 1;
+    }
+
+    .avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #60a5fa, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: 800;
+      color: #fff;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(255, 255, 255, 0.1);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .avatar:hover {
+      transform: scale(1.05) translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 4px var(--accent);
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .status-indicator {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      background: var(--success);
+      border: 3px solid #000;
+      border-radius: 50%;
+      box-shadow: 0 0 12px rgba(37, 211, 102, 0.8);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(0.95); }
+    }
+
+    .user-name {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      z-index: 1;
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .user-name:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .user-name.editing {
+      background: rgba(0, 255, 255, 0.1);
+      border: 2px solid var(--accent);
+    }
+
+    .name-input {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+      width: 100%;
+    }
+
+    .user-id {
+      font-size: 12px;
+      color: var(--accent);
+      background: rgba(0, 255, 255, 0.1);
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      z-index: 1;
+    }
+
+    .user-handle {
+      font-size: 14px;
+      color: var(--muted);
+      z-index: 1;
+    }
+
+    .account-badge {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .account-badge span {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 14px;
+      background: rgba(0, 255, 255, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .whatsapp {
+      margin-top: 8px;
+      background: linear-gradient(90deg, var(--success), #128C7E);
+      padding: 12px 18px;
+      border-radius: 16px;
+      color: #002b08;
+      font-weight: 700;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    .whatsapp:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(37, 211, 102, 0.5);
+    }
+
+    .federation {
+      width: 100%;
+      margin-top: 8px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+      z-index: 1;
+    }
+
+    .federation:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--accent);
+    }
+
+    .fida {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .fida img {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .center-panel {
+      flex: 1;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.8s ease 0.6s both;
+    }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 12px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .icons-grid {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .icons-grid .icon-tile {
+      width: 140px;
+    }
+
+    .icon-tile {
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      padding: 20px;
+    }
+
+    .icon-tile::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .icon-tile:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 24px rgba(0, 255, 255, 0.3);
+    }
+
+    .icon-tile:hover::before {
+      opacity: 0.1;
+    }
+
+    .icon-tile img {
+      width: 60%;
+      height: 60%;
+      object-fit: contain;
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 10px;
+    }
+
+    .icon-tile:hover img {
+      transform: scale(1.1);
+    }
+
+    .icon-tile-label {
+      font-size: 13px;
+      color: white;
+      font-weight: 600;
+      z-index: 1;
+    }
+
+    .icon-tile-media {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .email-badge {
+      display: none;
+      position: absolute;
+      top: -6px;
+      right: -10px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: #ff3b5c;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      box-shadow: 0 0 0 2px rgba(7, 18, 38, 0.9);
+    }
+
+    .action-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      text-align: center;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 14px;
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.5);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid var(--border);
+      box-shadow: none;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(0, 255, 255, 0.2);
+    }
+
+    footer {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      padding: 16px 8px 8px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+      animation: fadeIn 0.8s ease 0.8s both;
+    }
+
+    .edit-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .user-name:hover + .edit-hint {
+      opacity: 1;
+    }
+
+    @media (max-width: 420px) {
+      .phone { border-radius: 0; padding: 12px; height: 100vh; }
+      .avatar { width: 100px; height: 100px; font-size: 40px; }
+      .user-name { font-size: 20px; }
+      .icons-grid { gap: 10px; }
+      .quick-stats { gap: 8px; }
+    }
+  </style>
+  <script src="./ZNKAuthSystem/znk-session.js"></script>
+</head>
+<body>
+  <div class="phone">
+    <div class="screen">
+      <header>
+        <div class="logo">ZNK • 237</div>
+        <div class="close" onclick="history.back()" title="Retour">✕</div>
+      </header>
+
+      <section class="profile-card" id="profileCard">
+        <div class="avatar-container">
+          <div class="avatar" id="avatarRoot" title="Changer la photo">
+            <img id="avatarImg" src="../../mecanismes/navigation/icons/default-avatar.svg" alt="avatar" 
+                 onerror="this.style.display='none'">
+          </div>
+          <div class="status-indicator" title="En ligne"></div>
+        </div>
+
+        <div class="user-name" id="displayName" title="Cliquer pour modifier">Nom d'utilisateur</div>
+        <div class="edit-hint">✏️ Cliquer pour modifier</div>
+
+        <div class="user-id" id="userId">ID: ZNK-000000</div>
+
+        <div class="user-handle" id="userHandle">@echo.znk</div>
+
+        <div class="account-badge" id="accountBadge" style="display:none;">
+          <span id="accountTypeLabel"></span>
+          <span id="accountNiveauLabel"></span>
+        </div>
+
+        <div class="whatsapp" id="whatsappBox" title="Ouvrir WhatsApp">
+          <strong>📱 WhatsApp:</strong>
+          <div id="whatsappNumber">+237 6XX XXX XXX</div>
+        </div>
+
+        <div class="federation">
+          <div class="fida">
+            <img src="../../mecanismes/navigation/icons/fida.svg" alt="FIDA" onerror="this.style.display='none'">
+            <div>
+              <div style="font-weight:700; font-size:14px;">Fédération : Cameroun</div>
+              <div style="font-size:12px; color:var(--muted); margin-top:2px;">Workflow et pages dédiées</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="center-panel">
+        <div class="quick-stats">
+          <div class="stat-card">
+            <div class="stat-number" id="statPosts">0</div>
+            <div class="stat-label">Posts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statFollowers">0</div>
+            <div class="stat-label">Abonnés</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statFollowing">0</div>
+            <div class="stat-label">Suivi</div>
+          </div>
+        </div>
+
+        <div class="icons-grid" id="iconsGrid">
+          <div class="icon-tile" id="emailTile" data-action="email" title="Email">
+            <div class="icon-tile-media">
+              <img src="../../mecanismes/navigation/icons/messages.svg" alt="email" onerror="this.style.display='none'">
+              <span class="email-badge" id="emailBadge">0</span>
+            </div>
+            <div class="icon-tile-label">Email</div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-secondary" id="logoutBtn">🚪 Se déconnecter</button>
+        </div>
+      </div>
+
+      <footer>
+        Vous êtes connecté à ZNK<br>
+        <small style="opacity:0.6;">Fédération Camerounaise des Arts</small>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    let isEditingName = false;
+
+    // Anciennes clés (conservées uniquement en repli, pour les comptes créés
+    // avant le passage à l'identité unique via ZNKSession).
+    const ACCOUNT_KEY = 'znk_account';
+    const SESSION_KEY = 'znk_userData';
+
+    // Identité unique : ZNKSession (localStorage['currentUserId'] + 'znk_user_<id>')
+    // est désormais la source de vérité, partagée avec nomad.html, user-profile.html, etc.
+    async function loadUserData() {
+      if (window.ZNKSession) {
+        await window.ZNKSession.ready;
+        const current = window.ZNKSession.getCurrentUser();
+        if (current) return current;
+      }
+
+      // Repli legacy, pour ne rien casser tant que tous les comptes existants
+      // n'ont pas été rouverts au moins une fois via inscription.html/ZNKSession.
+      const session = sessionStorage.getItem(SESSION_KEY);
+      if (session) {
+        try { return JSON.parse(session); } catch (e) { console.warn('Session invalide:', e); }
+      }
+      const account = localStorage.getItem(ACCOUNT_KEY);
+      if (account) {
+        try { return JSON.parse(account); } catch (e) { console.warn('Compte invalide:', e); }
+      }
+      return null;
+    }
+
+    // Répercute une modification (nom, avatar...) sur ZNKSession (source de
+    // vérité) et, en repli, sur les anciennes clés pour compatibilité.
+    function persistUserUpdate(updates) {
+      if (window.ZNKSession && window.ZNKSession.getCurrentUser()) {
+        const merged = { ...window.ZNKSession.getCurrentUser(), ...updates };
+        window.ZNKSession.setSession(merged);
+      }
+
+      try {
+        const session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}');
+        Object.assign(session, updates);
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      } catch (e) { console.warn('Erreur mise à jour session:', e); }
+
+      try {
+        const account = JSON.parse(localStorage.getItem(ACCOUNT_KEY) || '{}');
+        Object.assign(account, updates);
+        localStorage.setItem(ACCOUNT_KEY, JSON.stringify(account));
+      } catch (e) { console.warn('Erreur mise à jour compte:', e); }
+    }
+
+    (async () => {
+    const user = await loadUserData();
+    if (user) {
+      try {
+        const fullName = `${user.prenom || ''} ${user.nom || ''}`.trim();
+        if (fullName) {
+          document.getElementById('displayName').textContent = fullName;
+        }
+
+        // idZNK est le champ généré à l'inscription (ex: VI1234 / ET5678)
+        if (user.idZNK || user.id) {
+          document.getElementById('userId').textContent = `ID: ${user.idZNK || user.id}`;
+        }
+
+        if (user.avatar) {
+          const img = document.getElementById('avatarImg');
+          img.src = user.avatar;
+          img.style.display = 'block';
+        }
+
+        if (user.whatsapp || user.whatsznk) {
+          const phone = user.whatsapp || user.whatsznk;
+          document.getElementById('whatsappNumber').textContent = phone;
+        }
+
+        // email est le champ généré à l'inscription (prenom.nom@echo.znk ou @etudes.znk)
+        if (user.email || user.emailZnk) {
+          document.getElementById('userHandle').textContent = user.email || user.emailZnk;
+        }
+
+        // Type de compte (visitor / ecole / member / admin) + niveau scolaire si présent
+        if (user.role) {
+          const roleLabels = {
+            visitor: '👤 Visiteur',
+            ecole: '📚 Études',
+            member: '⭐ Membre',
+            admin: '🛡️ Admin'
+          };
+          document.getElementById('accountTypeLabel').textContent = roleLabels[user.role] || user.role;
+          document.getElementById('accountBadge').style.display = 'flex';
+
+          if (user.niveau) {
+            document.getElementById('accountNiveauLabel').textContent = `🎓 ${user.niveau.toUpperCase()}`;
+          }
+        }
+
+        document.getElementById('statPosts').textContent = user.stats?.posts ?? Math.floor(Math.random() * 50);
+        document.getElementById('statFollowers').textContent = user.stats?.followers ?? Math.floor(Math.random() * 200);
+        document.getElementById('statFollowing').textContent = user.stats?.following ?? Math.floor(Math.random() * 150);
+
+      } catch (e) {
+        console.warn('Erreur affichage user data:', e);
+      }
+    }
+    })();
+
+    document.getElementById('displayName').addEventListener('click', function() {
+      if (isEditingName) return;
+      
+      isEditingName = true;
+      const currentName = this.textContent;
+      
+      this.classList.add('editing');
+      this.innerHTML = `<input type="text" class="name-input" value="${currentName}" id="nameInput">`;
+      
+      const input = document.getElementById('nameInput');
+      input.focus();
+      input.select();
+      
+      const saveName = () => {
+        const newName = input.value.trim();
+        if (newName && newName !== currentName) {
+          const parts = newName.split(' ');
+          persistUserUpdate({ prenom: parts[0] || '', nom: parts.slice(1).join(' ') || '' });
+        }
+        
+        document.getElementById('displayName').textContent = newName || currentName;
+        document.getElementById('displayName').classList.remove('editing');
+        isEditingName = false;
+      };
+      
+      input.addEventListener('blur', saveName);
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          saveName();
+        }
+      });
+    });
+
+    document.getElementById('iconsGrid').addEventListener('click', (e) => {
+      const tile = e.target.closest('.icon-tile');
+      if (!tile) return;
+
+      const action = tile.dataset.action;
+      const routes = {
+        email: './email.html'
+      };
+
+      if (routes[action]) {
+        window.location.href = routes[action];
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+        // On efface uniquement le pointeur de session active (currentUserId +
+        // legacy znk_userData) : le compte et son cache restent enregistrés
+        // localement pour permettre une prochaine connexion.
+        sessionStorage.clear();
+        localStorage.removeItem('currentUserId');
+        localStorage.removeItem('currentUserName');
+        window.location.href = '../../';
+      }
+    });
+
+    document.getElementById('avatarRoot').addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const avatarImg = document.getElementById('avatarImg');
+            avatarImg.src = ev.target.result;
+            avatarImg.style.display = 'block';
+
+            persistUserUpdate({ avatar: ev.target.result });
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    });
+
+    document.getElementById('whatsappBox').addEventListener('click', () => {
+      const phone = document.getElementById('whatsappNumber').textContent.replace(/\s/g, '');
+      window.open(`https://wa.me/${phone}`, '_blank');
+    });
+
+    // ========================================
+    // Badge "Email" : indique juste s'il y a des messages non lus,
+    // sans ouvrir l'interface email (déjà accessible via le tile).
+    // Même logique que email.html : lecture du backend ZNK + comparaison
+    // avec les IDs déjà marqués comme lus.
+    // ========================================
+    const ZNK_BACKEND_URL = 'http://localhost:5000';
+    const READ_IDS_KEY = 'znk_email_read_ids';
+
+    function getReadIds() {
+      try { return new Set(JSON.parse(localStorage.getItem(READ_IDS_KEY) || '[]')); }
+      catch (e) { return new Set(); }
+    }
+
+    async function updateEmailBadge() {
+      try {
+        const user = await loadUserData();
+        const idZNK = user && (user.idZNK || user.id);
+        const badge = document.getElementById('emailBadge');
+        const tile = document.getElementById('emailTile');
+        if (!idZNK || !badge) return;
+
+        const response = await fetch(`${ZNK_BACKEND_URL}/api/messages/inbox`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const readIds = getReadIds();
+        const unread = (data.messages || []).filter(m => !readIds.has(m.id)).length;
+
+        if (unread > 0) {
+          badge.textContent = unread > 9 ? '9+' : String(unread);
+          badge.style.display = 'flex';
+          if (tile) tile.title = `${unread} message${unread > 1 ? 's' : ''} non lu${unread > 1 ? 's' : ''}`;
+        } else {
+          badge.style.display = 'none';
+          if (tile) tile.title = 'Email';
+        }
+      } catch (e) {
+        console.warn('⚠️ Impossible de vérifier les nouveaux messages (server.py non connecté ?):', e);
+      }
+    }
+
+    updateEmailBadge();
+    setInterval(updateEmailBadge, 15000);
+  </script>
+</body>
+</html>

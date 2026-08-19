@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK — Bureau Professeur Organisation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #5a1c00, #000000, #1e293b);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0,0,0,0.35);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .logo-icon {
+            width: 40px; height: 40px; border-radius: 8px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+        }
+        .title { font-size: 20px; font-weight: 700; }
+        .subtitle { font-size: 13px; color: #a0a0a0; }
+
+        .btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff; padding: 0.5rem 1rem; border-radius: 10px;
+            font-size: 0.85rem; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn:hover { background: rgba(255,107,53,0.2); border-color: rgba(255,107,53,0.4); }
+        .btn.primary { background: linear-gradient(135deg, #ff6b35, #f7931e); border: none; font-weight: 600; }
+        .btn.danger { background: rgba(220,38,38,0.15); border-color: rgba(220,38,38,0.4); color: #fca5a5; }
+        .btn.small { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        .panel h2 { font-size: 1.05rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+
+        label { display: block; font-size: 0.8rem; color: #a0a0a0; margin: 0.9rem 0 0.3rem; }
+        input[type=text], textarea, select {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; padding: 0.6rem 0.7rem; color: #fff; font-size: 0.9rem; font-family: inherit;
+        }
+        textarea { resize: vertical; min-height: 60px; }
+        .row { display: flex; gap: 1rem; }
+        .row > div { flex: 1; }
+        .checkboxes { display: flex; gap: 1.2rem; margin-top: 0.6rem; }
+        .checkboxes label { display: flex; align-items: center; gap: 6px; margin: 0; color: #fff; font-size: 0.85rem; }
+        .checkboxes input { width: auto; }
+
+        .form-actions { display: flex; gap: 0.7rem; margin-top: 1.3rem; }
+
+        .icon-picks { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 0.4rem; }
+        .icon-pick {
+            width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 16px;
+        }
+        .icon-pick:hover { background: rgba(255,107,53,0.2); }
+
+        .toolbar { display: flex; gap: 0.6rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+
+        .module-list { display: flex; flex-direction: column; gap: 0.9rem; max-height: 75vh; overflow-y: auto; }
+
+        .module-row {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex; align-items: flex-start; gap: 1rem;
+        }
+        .module-row .icon {
+            width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
+        }
+        .module-row .info { flex: 1; min-width: 0; }
+        .module-row .info h3 { font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .module-row .info p { font-size: 0.8rem; color: #a0a0a0; line-height: 1.35; }
+        .meta-line { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.5rem; font-size: 0.7rem; }
+        .pill { padding: 0.15rem 0.5rem; border-radius: 10px; background: rgba(255,255,255,0.08); color: #ccc; }
+        .pill.status-actif { background: #b51a00; color: #e32400; }
+        .pill.status-pret { background: #b51a00; color: #7fe0c0; }
+        .pill.status-beta { background: rgba(247,147,30,0.15); color: #f7931e; }
+        .pill.status-off { background: rgba(255,255,255,0.05); color: #888; }
+        .pill.aud-eleves { background: rgba(0,212,255,0.15); color: #66d9ff; }
+        .pill.aud-parents { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+        .module-row .actions { display: flex; flex-direction: column; gap: 0.4rem; }
+
+        .empty { text-align: center; color: #a0a0a0; padding: 2rem; }
+
+        .hint { font-size: 0.75rem; color: #888; margin-top: 0.5rem; line-height: 1.4; }
+
+        @media (max-width: 950px) {
+            .main-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo-icon">🛠️</div>
+            <div>
+                <div class="title">Bureau Professeur</div>
+                <div class="subtitle">Organisez votre travail</div>
+            </div>
+        </div>
+        <a class="btn primary" href="base-professeurs.html" target="_blank">👁️ Aperçu du dashboard</a>
+        <a class="btn" href="terminal-interrogations.html">🧪 Interrogations</a>
+        <a class="btn" href="terminal-lecons.html">📚 Leçons</a>
+    </div>
+
+    <div class="main-container">
+        <!-- Formulaire -->
+        <div class="panel">
+            <h2 id="formTitle">➕ Nouveau module</h2>
+            <input type="hidden" id="editId">
+
+            <label>Titre du module</label>
+            <input type="text" id="title" placeholder="Ex: Gestion des devoirs">
+
+            <label>Description courte (affichée sur la carte)</label>
+            <textarea id="shortDescription" placeholder="Une phrase résumant le module."></textarea>
+
+            <label>Description longue (affichée dans la fenêtre détail)</label>
+            <textarea id="longDescription" placeholder="Description complète du module."></textarea>
+
+            <div class="row">
+                <div>
+                    <label>Section</label>
+                    <select id="section"></select>
+                </div>
+                <div>
+                    <label>Statut</label>
+                    <select id="status">
+                        <option value="actif">Actif</option>
+                        <option value="pret" selected>Prêt</option>
+                        <option value="beta">Bêta</option>
+                        <option value="off">Désactivé (masqué)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label>Niveau concerné</label>
+                    <select id="niveau"></select>
+                </div>
+                <div>
+                    <label>Matière</label>
+                    <select id="matiere"></select>
+                </div>
+            </div>
+            <div id="matiereLibreWrap" style="display:none;">
+                <label>Préciser la matière</label>
+                <input type="text" id="matiereLibre" placeholder="Ex: Éducation civique">
+            </div>
+
+            <label>Icône (emoji)</label>
+            <input type="text" id="icon" placeholder="📌" maxlength="4">
+            <div class="icon-picks" id="iconPicks"></div>
+            <div class="hint" id="iconSourceNote"></div>
+
+            <label>Visibilité</label>
+            <div class="checkboxes">
+                <label><input type="checkbox" id="audEleves"> 👩‍🎓 Visible dans etudes.html (élèves)</label>
+                <label><input type="checkbox" id="audParents"> 👨‍👩‍👧 Visible dans parents.html (synthèse parents)</label>
+            </div>
+            <div class="checkboxes">
+                <label><input type="checkbox" id="featured"> ⭐ Module mis en avant</label>
+            </div>
+            <div class="hint">Par défaut, un module n'est visible que dans le dashboard professeur. Cochez les cases ci-dessus pour le faire apparaître aussi côté élèves et/ou parents.</div>
+
+            <div class="form-actions">
+                <button class="btn primary" onclick="submitForm()">💾 Enregistrer</button>
+                <button class="btn" onclick="resetForm()">↺ Annuler</button>
+            </div>
+        </div>
+
+        <!-- Liste des modules -->
+        <div class="panel">
+            <h2>📋 Modules existants (<span id="countModules">0</span>)</h2>
+            <div class="toolbar">
+                <button class="btn small" onclick="ZNKManifest.exportFile()">📤 Exporter (.json)</button>
+                <label class="btn small" style="cursor:pointer;">
+                    📥 Importer
+                    <input type="file" id="importInput" accept="application/json" style="display:none;">
+                </label>
+                <button class="btn small danger" onclick="confirmReset()">♻️ Réinitialiser</button>
+            </div>
+            <div class="module-list" id="moduleList"></div>
+        </div>
+    </div>
+
+    <script src="znk-professeur-manifest.js"></script>
+    <script>
+        function populateSectionSelect() {
+            const sections = ZNKManifest.get().sections;
+            const sel = document.getElementById('section');
+            sel.innerHTML = sections.map(s => `<option value="${s.key}">${s.icon} ${s.label}</option>`).join('');
+        }
+
+        function populateNiveauSelect() {
+            document.getElementById('niveau').innerHTML = ZNKManifest.NIVEAUX
+                .map(n => `<option value="${n.code}">${n.label}</option>`).join('');
+        }
+
+        function populateMatiereSelect() {
+            const options = ZNKManifest.MATIERES
+                .map(m => `<option value="${m.code}">${m.icon} ${m.label}</option>`)
+                .concat('<option value="autre">📌 Autre (préciser)</option>')
+                .join('');
+            document.getElementById('matiere').innerHTML = options;
+        }
+
+        document.getElementById('matiere').addEventListener('change', function () {
+            document.getElementById('matiereLibreWrap').style.display = this.value === 'autre' ? 'block' : 'none';
+        });
+
+        const FALLBACK_ICONS = ['🎯','👥','📊','📈','📝','📹','❓','📚','💬','📱','📅','🎨','📋','📄','⏱️','🔒','🤖','💾','🔄','🧮','🔬','🌍','📖','🧠'];
+
+        async function populateIconPicks() {
+            const wrap = document.getElementById('iconPicks');
+            const custom = await ZNKManifest.loadCustomIcons('icons-intro-manifest.json');
+
+            if (custom && custom.length) {
+                wrap.innerHTML = custom.map(ic => iconPickHTML(ic.value, ic.isImage, ic.label)).join('');
+                const source = (window.znkManifest && typeof window.znkManifest.loadIcons === 'function')
+                    ? `${custom.length} icônes chargées depuis votre bibliothèque ZNK (znkManifest)`
+                    : `${custom.length} icônes chargées depuis icons-intro-manifest.json`;
+                document.getElementById('iconSourceNote').textContent = source;
+            } else {
+                wrap.innerHTML = FALLBACK_ICONS.map(ic => iconPickHTML(ic, false)).join('');
+                document.getElementById('iconSourceNote').textContent =
+                    "Aucune icône personnalisée trouvée (ni via znkManifest, ni via icons-intro-manifest.json) — icônes par défaut affichées.";
+            }
+        }
+
+        function iconPickHTML(value, isImage, label) {
+            const safeValue = value.replace(/'/g, "\\'");
+            const content = isImage ? `<img src="${value}" alt="${label || ''}" style="width:22px;height:22px;object-fit:contain;">` : value;
+            return `<div class="icon-pick" title="${label || value}" onclick="selectIcon('${safeValue}')">${content}</div>`;
+        }
+
+        function selectIcon(value) {
+            document.getElementById('icon').value = value;
+        }
+
+        function resetForm() {
+            document.getElementById('formTitle').textContent = '➕ Nouveau module';
+            document.getElementById('editId').value = '';
+            document.getElementById('title').value = '';
+            document.getElementById('shortDescription').value = '';
+            document.getElementById('longDescription').value = '';
+            document.getElementById('status').value = 'pret';
+            document.getElementById('icon').value = '';
+            document.getElementById('audEleves').checked = false;
+            document.getElementById('audParents').checked = false;
+            document.getElementById('featured').checked = false;
+            populateSectionSelect();
+            populateNiveauSelect();
+            populateMatiereSelect();
+            document.getElementById('niveau').value = 'tous';
+            document.getElementById('matiere').value = 'general';
+            document.getElementById('matiereLibre').value = '';
+            document.getElementById('matiereLibreWrap').style.display = 'none';
+        }
+
+        function submitForm() {
+            const title = document.getElementById('title').value.trim();
+            if (!title) { alert('Merci de donner un titre au module.'); return; }
+
+            const fields = {
+                title,
+                shortDescription: document.getElementById('shortDescription').value.trim(),
+                longDescription: document.getElementById('longDescription').value.trim() || document.getElementById('shortDescription').value.trim(),
+                section: document.getElementById('section').value,
+                status: document.getElementById('status').value,
+                icon: document.getElementById('icon').value.trim() || '🔹',
+                niveau: document.getElementById('niveau').value,
+                matiere: document.getElementById('matiere').value,
+                matiereLibre: document.getElementById('matiereLibre').value.trim(),
+                audience: {
+                    eleves: document.getElementById('audEleves').checked,
+                    parents: document.getElementById('audParents').checked
+                },
+                featured: document.getElementById('featured').checked
+            };
+
+            const editId = document.getElementById('editId').value;
+            if (editId) {
+                ZNKManifest.update(editId, fields);
+            } else {
+                ZNKManifest.add(fields);
+            }
+            resetForm();
+            renderList();
+        }
+
+        function editModule(id) {
+            const mo = ZNKManifest.get().modules.find(m => m.id === id);
+            if (!mo) return;
+            document.getElementById('formTitle').textContent = '✏️ Modifier le module';
+            document.getElementById('editId').value = mo.id;
+            document.getElementById('title').value = mo.title;
+            document.getElementById('shortDescription').value = mo.shortDescription;
+            document.getElementById('longDescription').value = mo.longDescription;
+            populateSectionSelect();
+            populateNiveauSelect();
+            populateMatiereSelect();
+            document.getElementById('section').value = mo.section;
+            document.getElementById('status').value = mo.status;
+            document.getElementById('icon').value = mo.icon;
+            document.getElementById('niveau').value = mo.niveau || 'tous';
+            document.getElementById('matiere').value = mo.matiere || 'general';
+            document.getElementById('matiereLibre').value = mo.matiereLibre || '';
+            document.getElementById('matiereLibreWrap').style.display = (mo.matiere === 'autre') ? 'block' : 'none';
+            document.getElementById('audEleves').checked = !!mo.audience.eleves;
+            document.getElementById('audParents').checked = !!mo.audience.parents;
+            document.getElementById('featured').checked = !!mo.featured;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function removeModule(id) {
+            if (!confirm('Supprimer définitivement ce module ?')) return;
+            ZNKManifest.remove(id);
+            renderList();
+        }
+
+        function confirmReset() {
+            if (!confirm('Réinitialiser tous les modules aux valeurs par défaut ? Cette action efface vos modifications.')) return;
+            ZNKManifest.resetToDefaults();
+            renderList();
+        }
+
+        function renderList() {
+            const manifest = ZNKManifest.get();
+            document.getElementById('countModules').textContent = manifest.modules.length;
+            const list = document.getElementById('moduleList');
+
+            if (manifest.modules.length === 0) {
+                list.innerHTML = '<div class="empty">Aucun module. Utilisez le formulaire pour en créer un.</div>';
+                return;
+            }
+
+            list.innerHTML = manifest.modules.map(mo => {
+                const sec = ZNKManifest.sectionInfo(manifest.sections, mo.section);
+                const niv = ZNKManifest.niveauInfo(mo.niveau);
+                const mat = ZNKManifest.matiereInfo(mo.matiere, mo.matiereLibre);
+                return `
+                    <div class="module-row">
+                        <div class="icon" style="background:${sec.color}">${mo.icon}</div>
+                        <div class="info">
+                            <h3>${mo.title}</h3>
+                            <p>${mo.shortDescription}</p>
+                            <div class="meta-line">
+                                <span class="pill">${sec.icon} ${sec.label}</span>
+                                <span class="pill status-${mo.status}">${ZNKManifest.statusLabel(mo.status)}</span>
+                                <span class="pill">🎓 ${niv.label}</span>
+                                <span class="pill">${mat.icon} ${mat.label}</span>
+                                ${mo.audience.eleves ? '<span class="pill aud-eleves">👩‍🎓 Élèves</span>' : ''}
+                                ${mo.audience.parents ? '<span class="pill aud-parents">👨‍👩‍👧 Parents</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn small" onclick="editModule('${mo.id}')">✏️ Modifier</button>
+                            <button class="btn small danger" onclick="removeModule('${mo.id}')">🗑️ Supprimer</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        document.getElementById('importInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const mode = confirm('OK = fusionner avec les modules existants\nAnnuler = remplacer entièrement') ? 'merge' : 'replace';
+            ZNKManifest.importFile(file, mode)
+                .then(() => { renderList(); alert('Import réussi.'); })
+                .catch(err => alert('Erreur import : ' + err.message));
+            e.target.value = '';
+        });
+
+        populateSectionSelect();
+        populateNiveauSelect();
+        populateMatiereSelect();
+        document.getElementById('niveau').value = 'tous';
+        document.getElementById('matiere').value = 'general';
+        populateIconPicks();
+        renderList();
+
+        window.addEventListener('znk-data-synced', renderList);
+        ZNKManifest.electron.sync().then(renderList);
+    </script>
+</body>
+</html>

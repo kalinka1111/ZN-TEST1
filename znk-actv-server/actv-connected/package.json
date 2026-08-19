@@ -1,0 +1,35 @@
+{
+  "dependencies": {
+    "axios": "^1.6.0",
+    "electron": "^28.0.0",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "aws-sdk": "^2.1500.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "mongoose": "^8.0.0"
+  }
+}
+{
+  "scripts": {
+    "prepare-build": "node scripts/prepare-persistent-videos.js",
+    "build": "npm run prepare-build && electron-builder",
+    "build:win": "npm run prepare-build && electron-builder --win",
+    "build:mac": "npm run prepare-build && electron-builder --mac",
+    "build:linux": "npm run prepare-build && electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.znk.actv",
+    "productName": "ZNK ACTV",
+    "files": [
+      "src/**/*",
+      "resources/videos/persistent/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/videos/persistent",
+        "to": "videos/persistent",
+        "filter": ["**/*"]
+      }
+    ]
+  }
+}

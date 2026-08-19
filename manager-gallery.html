@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNK Gallery Manager</title>
+<style>
+    :root {
+        --bg-card: #1c1c1c;
+        --accent: #929292;
+        --accent-hover: #cd853f;
+        --text: #ffffff;
+        --text-dim: #c0c0c0;
+        --border: #3a3a3a;
+        --success: #238636;
+        --danger: #da3633;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #0d0d0d;
+        color: var(--text);
+        padding: 24px;
+        min-height: 100vh;
+    }
+    .app-header { position: relative; display:flex; align-items:center; justify-content:center; min-height:34px; margin-bottom:4px; }
+    .brand { position:absolute; left:0; top:50%; transform:translateY(-50%); font-family: Georgia, 'Times New Roman', serif; font-style:italic; font-size:15px; letter-spacing:1px; color: var(--accent-hover); white-space:nowrap; user-select:none; }
+    h1 { font-size: 20px; font-weight: 600; text-align:center; }
+    .subtitle { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; text-align:center; }
+    .panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+    .panel h2 { font-size: 15px; margin-bottom: 6px; color: var(--accent-hover); }
+    .panel .panel-note { font-size: 12px; color: var(--text-dim); margin-bottom: 16px; line-height:1.6; }
+    label { display:block; font-size: 12px; color: var(--text-dim); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: .5px; }
+    input[type=text], textarea, select {
+        width: 100%; background: #111; border: 1px solid var(--border); border-radius: 8px;
+        padding: 10px 12px; color: #fff; font-size: 14px; outline: none; font-family: inherit;
+    }
+    select {
+        cursor:pointer; appearance:none; -webkit-appearance:none;
+        background-image: linear-gradient(45deg, transparent 50%, var(--accent-hover) 50%), linear-gradient(135deg, var(--accent-hover) 50%, transparent 50%);
+        background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+        background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent-hover); }
+    textarea { resize: vertical; min-height: 90px; }
+    .row { display:flex; gap:16px; flex-wrap:wrap; }
+    .row > div { flex:1; min-width:180px; }
+
+    .btn { border:none; border-radius:8px; padding:11px 16px; font-size:13px; font-weight:600; cursor:pointer; transition: transform .15s; letter-spacing:.3px; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, #8b4513, #cd853f); color:#fff; }
+    .btn-secondary { background:#2a2a2a; color:#ddd; }
+    .btn-danger { background:transparent; color:var(--danger); border:1px solid var(--danger); padding:6px 10px; font-size:12px; }
+    .btn-small { background:#2a2a2a; color:#ddd; padding:6px 10px; font-size:12px; }
+    .btn-block { width:100%; margin-top:18px; }
+
+    .layout { display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+
+    .empty { color: var(--text-dim); font-size: 13px; text-align:center; padding: 30px 0; }
+    .status { font-size: 12px; color: var(--success); margin-top: 10px; min-height: 16px; }
+    .top-actions { display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px; flex-wrap: wrap; gap:10px; }
+    .note { font-size: 12px; color: var(--text-dim); line-height:1.6; margin-top:10px; }
+
+    /* Liste des expos publiées (source) */
+    .expo-card {
+        background:#151515; border:1px solid var(--border); border-radius:12px; padding:12px;
+        display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;
+    }
+    .expo-card .info .title { font-weight:600; font-size:13px; }
+    .expo-card .info .meta { font-size:11px; color:var(--text-dim); margin-top:2px; }
+    .expo-card.in-roster { border-color: var(--accent-hover); opacity:.6; }
+    .badge { font-size:10px; text-transform:uppercase; letter-spacing:.5px; padding:3px 8px; border-radius:20px; background:#2a2a2a; color:var(--text-dim); }
+    .badge.added { background: rgba(205,133,63,.2); color: var(--accent-hover); }
+
+    /* Grille roster 4x6 */
+    .roster-count { font-size:13px; color: var(--text-dim); margin-bottom:14px; }
+    .roster-count b { color:#fff; }
+    .roster-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
+    @media (max-width: 700px) { .roster-grid { grid-template-columns: repeat(2, 1fr); } }
+    .slot {
+        border:1px dashed var(--border); border-radius:10px; padding:14px 10px; min-height:78px;
+        display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:6px;
+        position:relative;
+    }
+    .slot.filled { border-style:solid; background:#151515; }
+    .slot .slot-index { position:absolute; top:6px; left:8px; font-size:10px; color:var(--text-dim); }
+    .slot .artist-name { font-size:13px; font-weight:600; word-break:break-word; }
+    .slot .expo-title { font-size:10px; color: var(--accent-hover); }
+    .slot .slot-actions { display:flex; gap:4px; margin-top:4px; }
+    .slot .slot-actions button { font-size:10px; padding:3px 6px; border-radius:6px; border:1px solid var(--border); background:#111; color:var(--text-dim); cursor:pointer; }
+    .slot .slot-actions button:hover { color:#fff; border-color: var(--accent-hover); }
+    .slot.empty-slot { color: #555; font-size:11px; }
+
+    /* Aperçu photo artiste du mois */
+    .image-drop {
+        margin-top: 6px; border: 2px dashed var(--border); border-radius: 10px;
+        padding: 14px; text-align: center; cursor: pointer; position: relative; transition: border-color .2s;
+    }
+    .image-drop:hover { border-color: var(--accent-hover); }
+    .image-drop img { max-width: 100%; max-height: 160px; border-radius: 6px; margin-top: 8px; display:block; margin-left:auto; margin-right:auto; }
+    .image-drop input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .image-drop .hint { font-size: 12px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+    <div class="brand">ZNK Gallery — Admin</div>
+    <h1>Gallery Manager</h1>
+    <button class="btn" onclick="exportGalleryForBuild()" style="white-space:nowrap;">⬇️ Exporter pour le build</button>
+</div>
+<div class="subtitle">Composez le roster des 24 artistes affichés dans gallery.html, et désignez l'artiste du mois.</div>
+
+<div class="layout">
+    <!-- Colonne gauche : expositions publiées par les artistes (source) -->
+    <div class="panel">
+        <h2>Expositions soumises</h2>
+        <div class="panel-note">
+            Ces expositions ont été publiées par les artistes depuis leur espace membre
+            (expo-manager.html). Entrez l'ID ZNK d'un artiste ci-dessous pour l'ajouter au roster,
+            ou cliquez directement "Ajouter" sur une carte.
+        </div>
+
+        <label>Ajouter par ID ZNK</label>
+        <div class="row">
+            <div>
+                <input type="text" id="idInput" placeholder="ex: ZNK-2024-014">
+            </div>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="addByIdInput()">➕ Ajouter au roster</button>
+        <div class="status" id="addStatus"></div>
+
+        <div class="note" style="margin-top:20px; margin-bottom:10px;">Toutes les expositions détectées localement :</div>
+        <div id="submittedList"></div>
+    </div>
+
+    <!-- Colonne droite : roster (grille 4x6) + artiste du mois -->
+    <div>
+        <div class="panel">
+            <div class="top-actions">
+                <h2 style="margin:0;">Roster ZNK Gallery</h2>
+                <button class="btn btn-primary" onclick="publishRoster()">🔄 Publier vers Gallery</button>
+            </div>
+            <div class="roster-count"><b id="rosterCount">0</b> / 24 artistes placés</div>
+            <div class="roster-grid" id="rosterGrid"></div>
+            <div class="status" id="publishStatus"></div>
+            <div class="note">
+                L'ordre des cases suit la disposition 4×6 de gallery.html. Utilisez ↑ / ↓ sur une case pour
+                réordonner ; "Retirer" libère la place pour un autre artiste.
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Artiste du mois</h2>
+            <div class="panel-note">Mis en avant sur la page "Artiste du Mois" de gallery.html (photo + présentation longue).</div>
+
+            <label>Nom de l'artiste</label>
+            <input type="text" id="famName" placeholder="Nom affiché">
+
+            <label>Photo</label>
+            <div class="image-drop" id="famDrop" onclick="document.getElementById('famPhotoInput').click()">
+                <input type="file" id="famPhotoInput" accept="image/*" onchange="handleFamPhoto(event)">
+                <div class="hint" id="famHint">Cliquer ou glisser une image ici</div>
+                <img id="famPreview" style="display:none;">
+            </div>
+
+            <label>Présentation (bio)</label>
+            <textarea id="famBio" placeholder="Texte de présentation de l'artiste du mois..."></textarea>
+
+            <button class="btn btn-secondary btn-block" onclick="saveFeaturedArtist()">💾 Enregistrer l'artiste du mois</button>
+            <div class="status" id="famStatus"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const EXPO_INDEX_KEY = 'znk_expo_index';
+const GALLERY_MANIFEST_KEY = 'znk_gallery_manifest';
+const ROSTER_KEY = 'znk_gallery_roster';
+
+// Config backend unifiée avec WhatsZNK.html / user-profile.html / expo-manager.html / ZNKExpos.html / gallery.html.
+function znkResolveBackendUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('backend');
+    if (fromUrl) {
+        localStorage.setItem('znk_backend_url', fromUrl);
+        return fromUrl;
+    }
+    return localStorage.getItem('znk_backend_url') || 'http://localhost:5000';
+}
+const ZNK_BACKEND_URL = znkResolveBackendUrl();
+if (window.electronAPI && window.electronAPI.getRegistryUrl) {
+    window.electronAPI.getRegistryUrl().then(url => {
+        if (url && localStorage.getItem('znk_backend_url') !== url) {
+            localStorage.setItem('znk_backend_url', url);
+        }
+    }).catch(() => {});
+}
+const MAX_SLOTS = 24;
+
+// ---------- Pont Electron optionnel pour persister la photo artiste du mois ----------
+const znkApi = window.znkApi || window.electronAPI || (window.require ? (function () {
+    try {
+        const { ipcRenderer } = require('electron');
+        return { makeMaterialPersistent: (opts) => ipcRenderer.invoke('make-material-persistent', opts) };
+    } catch (e) { return null; }
+})() : null);
+
+let roster = [];          // [{ artistId, expoId, artistName, expoTitle }] ordonné = position dans la grille
+let featuredArtist = { name:'', photo:'', bio:'' };
+let famPhotoData = '';
+
+function loadIndex(){
+    try { return JSON.parse(localStorage.getItem(EXPO_INDEX_KEY) || '[]'); } catch(e){ return []; }
+}
+function loadExpo(id){
+    try { return JSON.parse(localStorage.getItem('znk_expo_' + id) || 'null'); } catch(e){ return null; }
+}
+function loadRoster(){
+    try { return JSON.parse(localStorage.getItem(ROSTER_KEY) || '[]'); } catch(e){ return []; }
+}
+function saveRoster(){ localStorage.setItem(ROSTER_KEY, JSON.stringify(roster)); }
+
+// Exporte le roster + manifest galerie curés (znk_gallery_roster + znk_gallery_manifest)
+// pour être intégrés au seed du build — sans quoi le premier lancement sur une
+// nouvelle machine retombe sur la démo "Amara Bello" codée en dur dans gallery.html.
+function exportGalleryForBuild(){
+    try {
+        const bundle = {
+            roster: JSON.parse(localStorage.getItem(ROSTER_KEY) || '[]'),
+            manifest: JSON.parse(localStorage.getItem(GALLERY_MANIFEST_KEY) || 'null')
+        };
+        const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'znk-gallery-curated-seed.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        alert('Erreur export : ' + e.message);
+        console.error('exportGalleryForBuild:', e);
+    }
+}
+function loadFeatured(){
+    try {
+        const manifest = JSON.parse(localStorage.getItem(GALLERY_MANIFEST_KEY) || 'null');
+        return (manifest && manifest.featuredArtist) ? manifest.featuredArtist : { name:'', photo:'', bio:'' };
+    } catch(e){ return { name:'', photo:'', bio:'' }; }
+}
+
+function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str == null ? '' : str; return d.innerHTML; }
+
+// ---------- Liste des expositions soumises ----------
+// Cache rempli par refreshSubmittedExpos() (appel serveur GET /api/expos) —
+// getSubmittedExpos() reste synchrone pour ne pas casser tous ses appelants
+// existants ; tant que le cache n'est pas rempli (ou si le serveur est
+// injoignable), on retombe sur l'ancien comportement 100% local.
+let remoteExposCache = null;
+
+async function refreshSubmittedExpos(){
+    const statusEl = document.getElementById('submittedList');
+    try {
+        const res = await fetch(`${ZNK_BACKEND_URL}/api/expos`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        remoteExposCache = (data.expos || []).map(e => ({
+            expoId: e.id,
+            title: e.title || e.id,
+            artist: e.artist || 'Artiste inconnu',
+            artistId: e.artistId || null,
+            count: e.panelCount || 0
+        })).filter(e => e.count > 0);
+    } catch (e) {
+        console.warn('⚠️ Impossible de charger les expositions depuis le serveur, repli sur les données locales:', e);
+        remoteExposCache = null;
+    }
+    renderSubmittedList();
+}
+
+function getSubmittedExpos(){
+    if (remoteExposCache) return remoteExposCache;
+    const index = loadIndex();
+    return index.map(entry => {
+        const expo = loadExpo(entry.id);
+        return {
+            expoId: entry.id,
+            title: (expo && expo.title) || entry.title || entry.id,
+            artist: (expo && expo.artist) || 'Artiste inconnu',
+            artistId: (expo && expo.artistId) || null,
+            count: (expo && Array.isArray(expo.panels)) ? expo.panels.length : 0
+        };
+    }).filter(e => e.count > 0);
+}
+
+function renderSubmittedList(){
+    const el = document.getElementById('submittedList');
+    const expos = getSubmittedExpos();
+
+    if (!expos.length) {
+        el.innerHTML = '<div class="empty">Aucune exposition publiée détectée pour le moment.</div>';
+        return;
+    }
+
+    el.innerHTML = expos.map(e => {
+        const already = roster.some(r => r.expoId === e.expoId);
+        return `
+            <div class="expo-card ${already ? 'in-roster' : ''}">
+                <div class="info">
+                    <div class="title">${escapeHtml(e.artist)}</div>
+                    <div class="meta">${escapeHtml(e.title)} · ${e.count} pièce${e.count > 1 ? 's' : ''} · ${e.artistId ? escapeHtml(e.artistId) : 'ID manquant'}</div>
+                </div>
+                ${already
+                    ? '<span class="badge added">Ajouté</span>'
+                    : `<button class="btn btn-small" ${e.artistId ? '' : 'disabled title="Cet artiste n\'a pas d\'ID ZNK associé"'} onclick="addExpoToRoster('${e.expoId}')">Ajouter</button>`
+                }
+            </div>
+        `;
+    }).join('');
+}
+
+// ---------- Roster (grille 4x6) ----------
+function addByIdInput(){
+    const input = document.getElementById('idInput');
+    const id = input.value.trim();
+    const statusEl = document.getElementById('addStatus');
+    if (!id) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'Entrez un ID ZNK.'; return; }
+
+    const matches = getSubmittedExpos().filter(e => e.artistId === id);
+    if (!matches.length) {
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = `Aucune exposition publiée trouvée pour l'ID "${id}".`;
+        return;
+    }
+    // Si l'artiste a plusieurs expos publiées, on prend la plus récente de l'index (dernière entrée).
+    const chosen = matches[matches.length - 1];
+    addExpoToRoster(chosen.expoId);
+    input.value = '';
+}
+
+function addExpoToRoster(expoId){
+    const statusEl = document.getElementById('addStatus');
+    if (roster.length >= MAX_SLOTS) {
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = `Le roster est complet (${MAX_SLOTS}/${MAX_SLOTS}). Retirez un artiste avant d'en ajouter un autre.`;
+        return;
+    }
+    if (roster.some(r => r.expoId === expoId)) {
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = 'Cette exposition est déjà dans le roster.';
+        return;
+    }
+
+    let expo = loadExpo(expoId);
+    if (!expo) {
+        // Pas trouvée en local (znk_expo_<id>) : l'exposition vient probablement
+        // du serveur (soumise depuis un autre appareil) — on reconstruit les
+        // quelques champs nécessaires depuis le cache serveur.
+        const fromServer = getSubmittedExpos().find(e => e.expoId === expoId);
+        if (fromServer) expo = { artist: fromServer.artist, artistId: fromServer.artistId, title: fromServer.title };
+    }
+    if (!expo) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'Exposition introuvable.'; return; }
+
+    if (expo.artistId && roster.some(r => r.artistId === expo.artistId)) {
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = 'Cet artiste est déjà présent dans le roster (une seule exposition par artiste).';
+        return;
+    }
+
+    roster.push({
+        artistId: expo.artistId || null,
+        expoId: expoId,
+        artistName: expo.artist || 'Artiste',
+        expoTitle: expo.title || expoId
+    });
+    saveRoster();
+    statusEl.style.color = 'var(--success)';
+    statusEl.textContent = `✅ ${expo.artist || expoId} ajouté au roster.`;
+    renderAll();
+}
+
+function removeFromRoster(index){
+    roster.splice(index, 1);
+    saveRoster();
+    renderAll();
+}
+
+function moveSlot(index, dir){
+    const newIndex = index + dir;
+    if (newIndex < 0 || newIndex >= roster.length) return;
+    [roster[index], roster[newIndex]] = [roster[newIndex], roster[index]];
+    saveRoster();
+    renderAll();
+}
+
+function renderRosterGrid(){
+    document.getElementById('rosterCount').textContent = roster.length;
+    const grid = document.getElementById('rosterGrid');
+    const cells = [];
+
+    for (let i = 0; i < MAX_SLOTS; i++) {
+        const entry = roster[i];
+        if (entry) {
+            cells.push(`
+                <div class="slot filled">
+                    <span class="slot-index">${i + 1}</span>
+                    <div class="artist-name">${escapeHtml(entry.artistName)}</div>
+                    <div class="expo-title">${escapeHtml(entry.expoTitle)}</div>
+                    <div class="slot-actions">
+                        <button onclick="moveSlot(${i}, -1)" title="Monter">↑</button>
+                        <button onclick="moveSlot(${i}, 1)" title="Descendre">↓</button>
+                        <button onclick="removeFromRoster(${i})" title="Retirer" style="color:var(--danger);">✕</button>
+                    </div>
+                </div>
+            `);
+        } else {
+            cells.push(`
+                <div class="slot empty-slot">
+                    <span class="slot-index">${i + 1}</span>
+                    <div>Emplacement libre</div>
+                </div>
+            `);
+        }
+    }
+    grid.innerHTML = cells.join('');
+}
+
+async function publishRoster(){
+    const manifest = {
+        roster: roster.map((r, i) => ({ position: i + 1, artistId: r.artistId, expoId: r.expoId, artistName: r.artistName, expoTitle: r.expoTitle })),
+        featuredArtist: featuredArtist
+    };
+    const statusEl = document.getElementById('publishStatus');
+    try {
+        localStorage.setItem(GALLERY_MANIFEST_KEY, JSON.stringify(manifest));
+        if (window.parent) window.parent.postMessage({ type: 'publish_gallery_roster', data: manifest }, '*');
+    } catch (e) {
+        console.error('Erreur sauvegarde locale roster galerie:', e);
+    }
+
+    statusEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Publication en cours…';
+
+    try {
+        const response = await fetch(`${ZNK_BACKEND_URL}/api/gallery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(manifest)
+        });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        statusEl.style.color = 'var(--success)';
+        statusEl.textContent = '✅ Galerie publiée — visible immédiatement par tous les users, sans nouvelle version de l\'app.';
+    } catch (e) {
+        console.warn('⚠️ Publication serveur impossible, roster conservé en local seulement:', e);
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = '⚠️ Serveur injoignable — roster sauvegardé en local uniquement, pas encore visible par les autres users. Réessayez une fois connecté.';
+    }
+}
+
+// ---------- Artiste du mois ----------
+function handleFamPhoto(event){
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        let dataUrl = e.target.result;
+
+        if (znkApi && znkApi.makeMaterialPersistent) {
+            try {
+                const path = (window.electronAPI && window.electronAPI.getPathForFile)
+                    ? window.electronAPI.getPathForFile(file)
+                    : (file.path || null);
+                if (path) {
+                    const result = await znkApi.makeMaterialPersistent({ sourcePath: path, category: 'gallery-featured' });
+                    if (result && result.success && result.url) dataUrl = result.url;
+                }
+            } catch (err) { console.warn('makeMaterialPersistent indisponible, on garde le base64:', err); }
+        }
+
+        famPhotoData = dataUrl;
+        const preview = document.getElementById('famPreview');
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+        document.getElementById('famHint').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveFeaturedArtist(){
+    featuredArtist = {
+        name: document.getElementById('famName').value.trim(),
+        photo: famPhotoData || featuredArtist.photo || '',
+        bio: document.getElementById('famBio').value.trim()
+    };
+    const statusEl = document.getElementById('famStatus');
+    if (!featuredArtist.name) {
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = 'Le nom de l\'artiste est requis.';
+        return;
+    }
+    statusEl.style.color = 'var(--success)';
+    statusEl.textContent = '✅ Enregistré. Cliquez "Publier vers Gallery" pour appliquer.';
+}
+
+function renderFeaturedArtist(){
+    document.getElementById('famName').value = featuredArtist.name || '';
+    document.getElementById('famBio').value = featuredArtist.bio || '';
+    if (featuredArtist.photo) {
+        famPhotoData = featuredArtist.photo;
+        const preview = document.getElementById('famPreview');
+        preview.src = featuredArtist.photo;
+        preview.style.display = 'block';
+        document.getElementById('famHint').style.display = 'none';
+    }
+}
+
+function renderAll(){
+    renderSubmittedList();
+    renderRosterGrid();
+}
+
+// ---------- Initialisation ----------
+roster = loadRoster();
+featuredArtist = loadFeatured();
+renderFeaturedArtist();
+renderAll();
+refreshSubmittedExpos(); // remplace la liste locale par la vraie liste serveur dès que possible
+</script>
+</body>
+</html>

@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIDA - Fédération Internationale des Arts</title>
+    <style>
+        :root {
+            --fida-primary: #d29d00;
+            --fida-secondary: #a77b00;
+            --fida-accent: #929292;
+            --fida-bg: #20130e;
+            --fida-bg-secondary: #1a1a2e;
+            --fida-bg-card: #000000;
+            --fida-text-primary: #ffffff;
+            --fida-text-secondary: #b8c5d6;
+            --fida-text-muted: #8b949e;
+            --fida-border: #30363d;
+            --fida-glass: rgba(94, 89, 89, 0.7);
+            --fida-glass-border: #7d5f07;
+            --fida-success: #7a7a7a;
+            --fida-warning: #5c0700;
+            --fida-danger: #da33a5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--fida-bg);
+            color: var(--fida-text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header identique au profil utilisateur */
+        .header {
+            background: var(--fida-glass);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--fida-border);
+            padding: 8px 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Conteneur principal */
+        .main-container {
+            margin-top: 0;
+            min-height: 100vh;
+        }
+
+        /* Page sociale FIDA */
+        .fida-social-page {
+            display: grid;
+            grid-template-columns: 300px minmax(0, 700px);
+            gap: 20px;
+            padding: 20px;
+            max-width: 1040px;
+            margin: 0 auto;
+            justify-content: center;
+            min-height: calc(100vh - 40px);
+        }
+
+        /* Sidebar gauche - Navigation FIDA */
+        .fida-sidebar {
+            background: var(--fida-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--fida-glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .fida-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--fida-primary), var(--fida-secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 8px 24px #7d5f07;
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--fida-primary);
+            margin-bottom: 4px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 12px;
+            color: var(--fida-text-muted);
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .sidebar-nav-item {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--fida-text-secondary);
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .sidebar-nav-link:hover,
+        .sidebar-nav-link.active {
+            background: #7d5f07;
+            color: var(--fida-primary);
+            transform: translateX(4px);
+        }
+
+        .sidebar-stats {
+            border-top: 1px solid var(--fida-border);
+            padding-top: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            color: var(--fida-primary);
+            font-weight: 600;
+        }
+
+        /* Feed central */
+        .main-feed {
+            background: transparent;
+        }
+
+        .feed-header {
+            background: var(--fida-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--fida-glass-border);
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: between;
+        }
+
+        .feed-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--fida-text-primary);
+            flex: 1;
+        }
+
+        .feed-filters {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: #7d5f07;
+            border: 1px solid var(--fida-glass-border);
+            border-radius: 20px;
+            color: var(--fida-text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: var(--fida-primary);
+            color: white;
+        }
+
+        /* Nouveau post */
+        .new-post-card {
+            background: var(--fida-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--fida-glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .new-post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .post-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--fida-primary), var(--fida-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+        }
+
+        .post-textarea {
+            width: 100%;
+            min-height: 80px;
+            background: transparent;
+            border: none;
+            color: var(--fida-text-primary);
+            font-size: 16px;
+            resize: vertical;
+            outline: none;
+        }
+
+        .post-textarea::placeholder {
+            color: var(--fida-text-muted);
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--fida-border);
+        }
+
+        .post-options {
+            display: flex;
+            gap: 16px;
+        }
+
+        .post-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--fida-text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .post-option:hover {
+            color: var(--fida-primary);
+        }
+
+        .post-btn {
+            background: linear-gradient(135deg, var(--fida-primary), var(--fida-secondary));
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .post-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px #7d5f07;
+        }
+
+        /* Posts du feed */
+        .feed-post {
+            background: var(--fida-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--fida-glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .feed-post:hover {
+            border-color: var(--fida-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px #7d5f07;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .post-info {
+            flex: 1;
+        }
+
+        .post-author {
+            font-weight: 600;
+            color: var(--fida-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .post-meta {
+            font-size: 12px;
+            color: var(--fida-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .post-badge {
+            background: var(--fida-primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .post-content {
+            color: var(--fida-text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .post-media {
+            background: var(--fida-bg-card);
+            border-radius: 12px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            border: 1px solid var(--fida-border);
+        }
+
+        .post-engagement {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid var(--fida-border);
+        }
+
+        .engagement-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--fida-text-muted);
+        }
+
+        .engagement-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .engagement-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--fida-border);
+            border-radius: 20px;
+            color: var(--fida-text-muted);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .engagement-btn:hover,
+        .engagement-btn.active {
+            background: var(--fida-primary);
+            color: white;
+            border-color: var(--fida-primary);
+        }
+
+        /* Live events */
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--fida-danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .fida-social-page {
+                grid-template-columns: 260px minmax(0, 1fr);
+                gap: 16px;
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .fida-social-page {
+                grid-template-columns: minmax(0, 600px);
+                gap: 16px;
+                padding: 12px;
+            }
+
+            .fida-sidebar {
+                position: static;
+                order: 2;
+            }
+
+            .main-feed {
+                order: 1;
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Page sociale FIDA -->
+    <div class="main-container">
+        <div class="fida-social-page">
+            <!-- Sidebar gauche - Navigation FIDA -->
+            <aside class="fida-sidebar fade-in">
+                <div class="sidebar-header">
+                    <div class="fida-logo">F</div>
+                    <h2 class="sidebar-title">FIDA </h2>
+                    <p class="sidebar-subtitle">Fédération Internationale des Arts</p>
+                </div>
+
+                <nav>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item">
+                            <a href="#" class="sidebar-nav-link active" onclick="switchFeed('general')">
+                                <span>🌐</span> Feed Général
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="#" class="sidebar-nav-link" onclick="switchFeed('competitions')">
+                                <span>🏆</span> Compétitions
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="#" class="sidebar-nav-link" onclick="switchFeed('events')">
+                                <span>📅</span> Événements
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="#" class="sidebar-nav-link" onclick="switchFeed('collaborations')">
+                                <span>🤝</span> Collaborations
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="#" class="sidebar-nav-link" onclick="switchFeed('announcements')">
+                                <span>📢</span> Annonces FIDA
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="#" class="sidebar-nav-link" onclick="switchFeed('rankings')">
+                                <span>📊</span> Classements
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <div class="sidebar-stats">
+                    <div class="stat-item">
+                        <span>Artistes connectés</span>
+                        <span class="stat-value">2,847</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Événements actifs</span>
+                        <span class="stat-value">24</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Fédérations</span>
+                        <span class="stat-value">67</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Votre rang</span>
+                        <span class="stat-value">#156</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Feed central -->
+            <main class="main-feed">
+                <!-- Header du feed -->
+                <div class="feed-header fade-in">
+                    <h1 class="feed-title">Feed Général FIDA</h1>
+                    <div class="feed-filters">
+                        <button class="filter-btn active" onclick="filterPosts('all')">Tout</button>
+                        <button class="filter-btn" onclick="filterPosts('following')">Abonnements</button>
+                        <button class="filter-btn" onclick="filterPosts('trending')">Tendances</button>
+                        <button class="filter-btn" onclick="filterPosts('live')">🔴 Live</button>
+                    </div>
+                </div>
+
+                <!-- Nouveau post -->
+                <div class="new-post-card fade-in">
+                    <div class="new-post-header">
+                        <div class="post-avatar">FI</div>
+                        <div style="flex: 1;">
+                            <h4 style="color: var(--fida-text-primary); margin-bottom: 4px;">FIDA</h4>
+                            <p style="font-size: 12px; color: var(--fida-text-muted);">Publier une annonce/actualité au nom de la fédération</p>
+                        </div>
+                    </div>
+                    
+                    <textarea class="post-textarea" placeholder="Quoi de neuf dans votre parcours artistique ? Partagez vos créations, collaborations, ou idées..."></textarea>
+                    
+                    <div class="post-actions">
+                        <div class="post-options">
+                            <div class="post-option" onclick="attachMedia('image')">
+                                <span>🖼️</span> Photo/Art
+                            </div>
+                            <div class="post-option" onclick="attachMedia('video')">
+                                <span>🎥</span> Vidéo
+                            </div>
+                            <div class="post-option" onclick="attachMedia('audio')">
+                                <span>🎵</span> Audio
+                            </div>
+                            <div class="post-option" onclick="startLive()">
+                                <span>🔴</span> Live
+                            </div>
+                        </div>
+                        <button class="post-btn" onclick="publishPost()">Publier</button>
+                    </div>
+                </div>
+
+                <!-- Posts du feed : rendus dynamiquement par loadFeed() depuis
+                     localStorage['fidaSocialPosts'] -- meme cle que le widget
+                     d'apercu dans ZNKMembresDash.html, donc ce qui est publie
+                     ici apparait aussi dans la colonne de droite. -->
+                <div id="feedPosts"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Notifications Toast -->
+    <div id="notifications" style="position: fixed; top: 20px; right: 20px; z-index: 2000;"></div>
+
+    <script>
+        // Système de notifications
+        function showNotification(message, type = 'info', duration = 4000) {
+            const notifContainer = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            const colors = {
+                success: 'var(--fida-success)',
+                error: 'var(--fida-danger)',
+                warning: 'var(--fida-warning)',
+                info: 'var(--fida-primary)'
+            };
+
+            notification.style.cssText = `
+                background: var(--fida-glass);
+                backdrop-filter: blur(20px);
+                border: 1px solid ${colors[type]};
+                border-left: 4px solid ${colors[type]};
+                color: var(--fida-text-primary);
+                padding: 16px 20px;
+                border-radius: 12px;
+                margin-bottom: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+                max-width: 350px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 14px;
+            `;
+
+            notification.innerHTML = `
+                <span>${icons[type]}</span>
+                <span style="flex: 1;">${message}</span>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--fida-text-muted); cursor: pointer;">✕</button>
+            `;
+
+            notifContainer.appendChild(notification);
+            requestAnimationFrame(() => notification.style.transform = 'translateX(0)');
+
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, duration);
+        }
+
+        // Fonctions du feed
+        function switchFeed(feedType) {
+            document.querySelectorAll('.sidebar-nav-link').forEach(link => link.classList.remove('active'));
+            event.target.closest('.sidebar-nav-link').classList.add('active');
+            
+            const feedTitles = {
+                'general': 'Feed Général FIDA',
+                'competitions': 'Compétitions Artistiques',
+                'events': 'Événements FIDA',
+                'collaborations': 'Collaborations Internationales',
+                'announcements': 'Annonces Officielles',
+                'rankings': 'Classements Artistiques'
+            };
+            
+            document.querySelector('.feed-title').textContent = feedTitles[feedType];
+            showNotification(`📰 ${feedTitles[feedType]}`, 'info');
+        }
+
+        function filterPosts(filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const filters = {
+                'all': 'Tous les posts',
+                'following': 'Abonnements uniquement',
+                'trending': 'Posts tendances',
+                'live': 'Contenus en direct'
+            };
+            
+            showNotification(`🔍 Filtre: ${filters[filter]}`, 'info');
+        }
+
+        // Actions des posts
+        function attachMedia(type) {
+            const mediaTypes = {
+                'image': '🖼️ Sélection d\'image/art',
+                'video': '🎥 Sélection de vidéo',
+                'audio': '🎵 Sélection d\'audio'
+            };
+            showNotification(mediaTypes[type], 'success');
+        }
+
+        function startLive() {
+            showNotification('🔴 Démarrage du live streaming...', 'success');
+        }
+
+        // ========================================
+        // FEED FIDA-SOCIAL — clé partagée avec le widget d'aperçu de
+        // ZNKMembresDash.html (loadFidaSocialPreview) : ce qui est publié ici
+        // apparaît aussi dans la colonne de droite du dashboard.
+        // ========================================
+        const FIDA_POSTS_KEY = 'fidaSocialPosts';
+
+        function getFidaPosts() {
+            try { return JSON.parse(localStorage.getItem(FIDA_POSTS_KEY) || '[]'); }
+            catch (e) { return []; }
+        }
+
+        function saveFidaPosts(posts) {
+            localStorage.setItem(FIDA_POSTS_KEY, JSON.stringify(posts));
+        }
+
+        function formatTimeAgo(timestamp) {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (seconds < 60) return 'À l\'instant';
+            if (seconds < 3600) return `Il y a ${Math.floor(seconds / 60)}m`;
+            if (seconds < 86400) return `Il y a ${Math.floor(seconds / 3600)}h`;
+            return `Il y a ${Math.floor(seconds / 86400)}j`;
+        }
+
+        function loadFeed() {
+            const posts = getFidaPosts();
+            const container = document.getElementById('feedPosts');
+            if (!container) return;
+
+            if (posts.length === 0) {
+                container.innerHTML = `
+                    <div class="feed-header fade-in" style="text-align:center; color: var(--fida-text-muted);">
+                        <div style="font-size:40px; margin-bottom:10px;">🎨</div>
+                        <p>Aucune publication FIDA pour le moment</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = posts.slice().reverse().map(createFeedPostHTML).join('');
+        }
+
+        function createFeedPostHTML(post) {
+            const initials = (post.author || 'FI').slice(0, 2).toUpperCase();
+            return `
+                <article class="feed-post fade-in" data-post-id="${post.id}">
+                    <div class="post-header">
+                        <div class="post-avatar">${initials}</div>
+                        <div class="post-info">
+                            <div class="post-author">${post.author || 'FIDA'}</div>
+                            <div class="post-meta">
+                                <span>${formatTimeAgo(post.timestamp)}</span>
+                                <span class="post-badge">FIDA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="post-content">${post.content}</div>
+
+                    <div class="post-engagement">
+                        <div class="engagement-stats">
+                            <span>❤️ ${post.likes || 0} likes</span>
+                            <span>💬 ${post.comments || 0} commentaires</span>
+                            <span>🔄 ${post.shares || 0} partages</span>
+                        </div>
+                        <div class="engagement-actions">
+                            <button class="engagement-btn ${post.likedByUser ? 'active' : ''}" onclick="likePost(${post.id})">
+                                <span>❤️</span> J'aime
+                            </button>
+                            <button class="engagement-btn" onclick="commentPost(${post.id})">
+                                <span>💬</span> Commenter
+                            </button>
+                            <button class="engagement-btn" onclick="sharePost(${post.id})">
+                                <span>🔄</span> Partager
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }
+
+        function publishPost() {
+            const textarea = document.querySelector('.post-textarea');
+            if (!textarea.value.trim()) {
+                showNotification('⚠️ Veuillez écrire quelque chose', 'warning');
+                return;
+            }
+
+            const posts = getFidaPosts();
+            posts.push({
+                id: Date.now(),
+                author: 'FIDA',
+                content: textarea.value.trim(),
+                timestamp: Date.now(),
+                likes: 0,
+                comments: 0,
+                shares: 0,
+                likedByUser: false
+            });
+            saveFidaPosts(posts);
+
+            textarea.value = '';
+            showNotification('✅ Post publié avec succès !', 'success');
+            loadFeed();
+        }
+
+        function likePost(postId) {
+            const posts = getFidaPosts().map(p => {
+                if (p.id !== postId) return p;
+                return { ...p, likes: p.likedByUser ? p.likes - 1 : p.likes + 1, likedByUser: !p.likedByUser };
+            });
+            saveFidaPosts(posts);
+            loadFeed();
+        }
+
+        function commentPost(postId) {
+            showNotification('💬 Zone de commentaires ouverte', 'info');
+        }
+
+        function sharePost(postId) {
+            const posts = getFidaPosts().map(p => p.id === postId ? { ...p, shares: (p.shares || 0) + 1 } : p);
+            saveFidaPosts(posts);
+            showNotification('🔄 Post partagé', 'success');
+            loadFeed();
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('FIDA Social - Interface chargée');
+            
+            loadFeed();
+
+            setTimeout(() => {
+                showNotification('🟫  FIDA ! Découvrez le classement des Artistes.', 'success', 6000);
+            }, 1000);
+            
+            // Raccourcis clavier
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'n':
+                            e.preventDefault();
+                            document.querySelector('.post-textarea').focus();
+                            break;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

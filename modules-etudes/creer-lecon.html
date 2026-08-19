@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK — Créer une leçon complète</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #34250c, #3c081b, #000000);
+            color: #fff; min-height: 100vh;
+        }
+        .header {
+            background: #34250c; border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 10px; position: sticky; top: 0; z-index: 5;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .logo-icon {
+            width: 40px; height: 40px; border-radius: 8px;
+            background: linear-gradient(135deg, #831100, #d95000);
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+        }
+        .title { font-size: 20px; font-weight: 700; }
+        .subtitle { font-size: 13px; color: #53d5fd; }
+        .btn {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            color: #fff; padding: 0.6rem 1.1rem; border-radius: 10px; font-size: 0.9rem;
+            cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn:hover { background: #831100; border-color: #831100; }
+        .btn.primary { background: linear-gradient(135deg, #059669, #047857); border: none; font-weight: 700; font-size: 1rem; padding: 0.9rem 1.5rem; }
+        .btn.danger { background: rgba(220,38,38,0.15); border-color: rgba(220,38,38,0.4); color: #fca5a5; }
+        .btn.small { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+        .container { max-width: 780px; margin: 0 auto; padding: 2rem; }
+        .panel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .panel h2 { font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+        .step-num {
+            width: 24px; height: 24px; border-radius: 50%; background: #d95000;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0;
+        }
+        label { display: block; font-size: 0.8rem; color: #53d5fd; margin: 0.9rem 0 0.3rem; }
+        input[type=text], input[type=number], textarea, select {
+            width: 100%; background: #000; border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; padding: 0.7rem 0.8rem; color: #fff; font-size: 0.95rem; font-family: inherit;
+        }
+        textarea { resize: vertical; min-height: 55px; }
+        textarea#content { min-height: 140px; }
+        .row { display: flex; gap: 1rem; }
+        .row > div { flex: 1; }
+        .stat-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .stat { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 0.7rem 1.1rem; font-size: 0.82rem; }
+        .stat b { display: block; font-size: 1.3rem; color: #53d5fd; }
+        .warn { background: #7f1d1d; color: #fff; padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.9rem; }
+        .material-card, .question-card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
+        }
+        .m-head, .q-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .m-head span, .q-head span { font-size: 0.8rem; color: #6ee7b7; font-weight: 600; }
+        .remove-x { cursor: pointer; color: #fca5a5; font-size: 0.9rem; padding: 0 4px; }
+        .option-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+        .option-row input[type=text] { flex: 1; }
+        .option-row input[type=radio] { width: auto; }
+        .empty-hint { font-size: 0.8rem; color: #888; padding: 0.5rem 0; }
+        .publish-zone { text-align: center; padding: 0.5rem 0 0.2rem; }
+        .publish-hint { font-size: 0.78rem; color: #a0a0a0; margin-top: 0.6rem; }
+        #log { background: #000; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 1rem;
+               font-size: 0.8rem; font-family: 'SF Mono', Consolas, monospace; white-space: pre-wrap;
+               max-height: 260px; overflow-y: auto; margin-top: 1rem; }
+        .session-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.8rem; }
+        .session-item { background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.2); border-radius: 8px; padding: 0.5rem 0.8rem; font-size: 0.82rem; display: flex; justify-content: space-between; }
+
+        /* Enregistrement vidéo direct (webcam + micro, qualité réduite) */
+        .rec-btn { background: rgba(213,67,117,0.15); border-color: rgba(213,67,117,0.4); color: #ffb4cd; }
+        .rec-btn:hover { background: rgba(213,67,117,0.3); }
+        .rec-modal {
+            display: none; position: fixed; z-index: 2000; inset: 0;
+            background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+        }
+        .rec-modal.open { display: flex; }
+        .rec-box {
+            background: linear-gradient(135deg, #1a1a2e, #16162a); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px; padding: 1.5rem; width: 92%; max-width: 480px; text-align: center;
+        }
+        .rec-box h3 { margin-bottom: 0.8rem; font-size: 1rem; }
+        .rec-video { width: 100%; border-radius: 12px; background: #000; max-height: 320px; }
+        .rec-status { font-size: 0.82rem; color: #a0a0a0; margin: 0.7rem 0; }
+        .rec-status.live { color: #fca5a5; font-weight: 600; }
+        .rec-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin-top: 0.8rem; }
+        .rec-hint { font-size: 0.72rem; color: #6ee7b7; margin-top: 0.6rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo-icon">✨</div>
+            <div>
+                <div class="title">Créer une leçon complète</div>
+                <div class="subtitle">Leçon + interrogation + média — en un seul geste</div>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <a class="btn" href="terminal-lecons.html">📚 Outils avancés</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>📊 Dans la base actuellement</h2>
+            <div class="stat-row" id="statRow"></div>
+            <div style="margin-top:1rem;">
+                <button class="btn danger small" onclick="wipeEverything()">🗑️ Supprimer MES leçons et repartir à zéro</button>
+                <span id="adminGlobalBtnWrap" style="display:none;">
+                    <button class="btn small" onclick="markAllMyLessonsGlobal()">🌍 Marquer TOUTES mes leçons comme communes (visibles par tous)</button>
+                </span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2><span class="step-num">1</span> La leçon</h2>
+            <label>Titre</label>
+            <input type="text" id="title" placeholder="Ex: 🎈 La Lettre A et le Secret d'Anatole l'Albatros">
+
+            <label>Description courte (optionnel)</label>
+            <input type="text" id="description" placeholder="Ex: Le Voyage de la Lettre A">
+
+            <div class="row">
+                <div>
+                    <label>Catégorie / Matière</label>
+                    <select id="categoryId"></select>
+                </div>
+                <div>
+                    <label>Niveau ciblé</label>
+                    <select id="targetLevel">
+                        <option value="">🔎 Auto (déduit de la catégorie)</option>
+                        <option value="maternelle">🧸 Maternelle</option>
+                        <option value="primaire">📚 Primaire</option>
+                        <option value="college">🎓 Collège</option>
+                        <option value="lycee">🏆 Lycée</option>
+                        <option value="tous">🌍 Tous niveaux</option>
+                    </select>
+                </div>
+            </div>
+
+            <label>Contenu de la leçon</label>
+            <textarea id="content" placeholder="Texte complet de la leçon, tel qu'affiché à l'élève."></textarea>
+
+            <label id="adminGlobalCheckboxWrap" style="display:none; align-items:center; gap:8px; margin-top:1rem; cursor:pointer;">
+                <input type="checkbox" id="isGlobalCheckbox" style="width:auto;">
+                🌍 Visible par TOUS les élèves (toutes classes / tous profs confondus) — coche si c'est une leçon commune plutôt qu'une leçon réservée à tes propres élèves
+            </label>
+        </div>
+
+        <div class="panel">
+            <h2><span class="step-num">2</span> Média (optionnel)</h2>
+            <div id="materialsContainer"></div>
+            <button type="button" class="btn small" onclick="addMaterial()">➕ Ajouter une image / vidéo / audio / document</button>
+        </div>
+
+        <div class="panel">
+            <h2><span class="step-num">3</span> L'interrogation</h2>
+            <p class="empty-hint" style="margin-bottom:0.5rem;">Le titre de l'interrogation reprend automatiquement celui de la leçon.</p>
+
+            <label>🪄 Coller un quiz déjà rédigé (au lieu de tout retaper)</label>
+            <textarea id="pasteQuiz" placeholder="Colle ici un texte du style :&#10;1.  Question ?&#10;▪ [ ] Réponse A&#10;▪ [x] Réponse B (bonne réponse — coche avec x)&#10;▪ [ ] Réponse C"></textarea>
+            <div style="margin-top:0.5rem; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" class="btn small" onclick="convertPastedQuiz()">🪄 Convertir en questions</button>
+                <span class="empty-hint" style="padding:0;">Numérote les questions (1. 2. 3…) et mets une puce (▪ • - *) devant chaque réponse. Marque la bonne réponse avec [x] si tu la connais, sinon tu la coches ensuite à la main.</span>
+            </div>
+
+            <div id="questionsContainer" style="margin-top:1rem;"></div>
+            <button type="button" class="btn small" onclick="addQuestion()">➕ Ajouter une question manuellement</button>
+        </div>
+
+        <div class="panel">
+            <div class="publish-zone">
+                <button class="btn primary" onclick="publishLesson()">✅ Publier la leçon complète</button>
+                <div class="publish-hint">Leçon + interrogation sont créées ET publiées directement — visibles côté élèves immédiatement.</div>
+            </div>
+            <div id="log"></div>
+            <div id="sessionList" class="session-list"></div>
+        </div>
+    </div>
+
+    <!-- Modale d'enregistrement vidéo (webcam + micro, qualité réduite, sans étape d'export externe) -->
+    <div class="rec-modal" id="recModal">
+        <div class="rec-box">
+            <h3>🔴 Enregistrer une vidéo</h3>
+            <video id="recVideo" class="rec-video" autoplay muted playsinline></video>
+            <div class="rec-status" id="recStatus">Initialisation de la caméra…</div>
+            <div class="rec-actions" id="recActions"></div>
+            <div class="rec-hint">🪶 Qualité réduite (640×480, débit limité) — idéale pour la visionneuse élève, aucun export externe nécessaire.</div>
+        </div>
+    </div>
+
+    <script src="znk-professeur-manifest.js" onerror="window.__znkManifestLoadFailed = true;"></script>
+    <script src="znk-etudes-manifest.js" onerror="window.__znkEtudesManifestLoadFailed = true;"></script>
+    <script>
+        (function checkManifestCompatibility() {
+            const missing = [];
+            if (window.__znkManifestLoadFailed) missing.push('znk-professeur-manifest.js (échec de chargement)');
+            else if (typeof window.ZNKManifest === 'undefined') missing.push('ZNKManifest (erreur JS au chargement)');
+            else {
+                if (!window.ZNKManifest.lessons) missing.push('ZNKManifest.lessons');
+                if (!window.ZNKManifest.quiz) missing.push('ZNKManifest.quiz');
+                if (!window.ZNKManifest.lessons.wipeAll) missing.push('ZNKManifest.lessons.wipeAll (utilise la dernière version du fichier)');
+            }
+            if (window.__znkEtudesManifestLoadFailed) missing.push('znk-etudes-manifest.js (échec de chargement)');
+            if (missing.length) {
+                document.body.insertAdjacentHTML('afterbegin', `
+                    <div class="warn">⚠️ <strong>Fichiers manifest manquants ou obsolètes</strong> — éléments manquants : ${missing.join(', ')}.<br>
+                    Place ce fichier dans le MÊME dossier que znk-professeur-manifest.js et znk-etudes-manifest.js, puis recharge complètement (Ctrl+Shift+R ou redémarre l'app).</div>`);
+            }
+        })();
+
+        function showFatalError(context, error) {
+            console.error(context, error);
+            alert('❌ ' + context + '\n\n' + (error && error.message ? error.message : error));
+        }
+
+        function escapeHtml(str) {
+            return (str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function log(msg) {
+            const box = document.getElementById('log');
+            box.textContent += msg + '\n';
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function resolveCurrentProfId() {
+            try {
+                const raw = localStorage.getItem('znk_account');
+                const account = raw ? JSON.parse(raw) : null;
+                if (account && account.idZNK) return account.idZNK;
+            } catch (e) {}
+            let localId = localStorage.getItem('znk_prof_local_id');
+            if (!localId) {
+                localId = 'prof-local-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+                localStorage.setItem('znk_prof_local_id', localId);
+            }
+            return localId;
+        }
+
+        // Un compte admin (role: 'admin' dans znk_account, posé par auth-hub.html) publie
+        // des leçons COMMUNES : visibles par tous les élèves, de tous les profs — contrairement
+        // à une leçon de prof classique, visible uniquement par les élèves de ce même prof.
+        function isCurrentAccountAdmin() {
+            try {
+                const raw = localStorage.getItem('znk_account');
+                const account = raw ? JSON.parse(raw) : null;
+                return !!(account && account.role === 'admin');
+            } catch (e) { return false; }
+        }
+
+        // Migration rétroactive AUTOMATIQUE : ne s'applique qu'aux comptes role='admin'
+        // (les 2 comptes admin codés en dur dans auth-hub.html). Insuffisant pour un
+        // compte prof "classique" (role='enseignant', ex: zaza.prof@echo.znk) qui publie
+        // pourtant du contenu commun à toute l'app — voir markAllMyLessonsGlobal() ci-dessous
+        // pour ce cas, déclenché manuellement par le prof lui-même.
+        function migrateAdminLessonsToGlobal() {
+            if (!isCurrentAccountAdmin()) return;
+            const mine = ZNKManifest.lessons.listMine();
+            let fixed = 0;
+            mine.forEach(l => {
+                if (!l.isGlobal) { ZNKManifest.lessons.update(l.id, { isGlobal: true }); fixed++; }
+            });
+            if (fixed > 0) log(`🌍 ${fixed} leçon(s) déjà publiée(s) marquée(s) comme communes (visibles par tous les élèves, tous profs confondus).`);
+        }
+
+        // Bascule manuelle : indépendante du rôle du compte (role='enseignant' inclus).
+        // Utile pour un prof dont le dashboard sert spécifiquement à publier du contenu
+        // destiné à toute l'app, sans que son compte soit un compte admin au sens strict.
+        function markAllMyLessonsGlobal() {
+            const mine = ZNKManifest.lessons.listMine();
+            if (mine.length === 0) { alert('Aucune leçon à toi pour le moment.'); return; }
+            if (!confirm(`Marquer tes ${mine.length} leçon(s) comme communes ? Elles deviendront visibles par TOUS les élèves, de TOUS les profs, dans tous les ArtEtudes-*.html.`)) return;
+            let fixed = 0;
+            mine.forEach(l => {
+                if (!l.isGlobal) { ZNKManifest.lessons.update(l.id, { isGlobal: true }); fixed++; }
+            });
+            renderStats();
+            log(`🌍 ${fixed} leçon(s) sur ${mine.length} marquée(s) comme communes.` + (fixed < mine.length ? ' (les autres l\'étaient déjà.)' : ''));
+        }
+
+        function populateCategorySelect() {
+            const categories = ZNK_ETUDES_MANIFEST.getCategories();
+            document.getElementById('categoryId').innerHTML = categories
+                .map(c => `<option value="${c.id}">${c.icon} ${c.levelIcon || '⚪'} ${c.name}</option>`).join('');
+        }
+
+        function renderStats() {
+            const lessons = ZNKManifest.lessons.listMine();
+            const quizzes = ZNKManifest.quiz.listMine();
+            document.getElementById('statRow').innerHTML = `
+                <div class="stat"><b>${lessons.length}</b>Leçons (les miennes)</div>
+                <div class="stat"><b>${quizzes.length}</b>Interrogations (les miennes)</div>
+                <div class="stat"><b>${lessons.filter(l => l.status === 'publie').length}</b>Publiées côté élèves</div>
+            `;
+        }
+
+        function wipeEverything() {
+            if (!confirm('⚠️ Supprimer TOUTES VOS leçons et interrogations existantes ?\n\nSeul votre contenu est concerné — celui des autres professeurs n\'est pas touché. Les résultats déjà rendus par les élèves sont conservés. Cette action est immédiate et irréversible pour le contenu.')) return;
+            ZNKManifest.lessons.wipeAll();
+            renderStats();
+            renderSessionList();
+            log('🗑️ Vos leçons et interrogations ont été supprimées — base repartie à zéro (les autres profs ne sont pas affectés).');
+        }
+
+        // --- Média (identique à terminal-lecons.html) -----------------------------
+
+        let currentMaterials = [];
+        const ACCEPT_BY_TYPE = {
+            image: 'image/*', video: 'video/mp4,video/webm,video/*', audio: 'audio/*',
+            document: '.pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        };
+
+        function addMaterial() {
+            currentMaterials.push({ type: 'image', title: '', url: '', _fileName: '', _status: '' });
+            renderMaterials();
+        }
+        function removeMaterial(idx) { currentMaterials.splice(idx, 1); renderMaterials(); }
+        function updateMaterialType(idx, val) { currentMaterials[idx].type = val; renderMaterials(); }
+        function updateMaterialTitle(idx, val) { currentMaterials[idx].title = val; }
+        function updateMaterialUrl(idx, val) { currentMaterials[idx].url = val; }
+
+        // --- Enregistrement vidéo direct (webcam + micro, qualité réduite) --------
+        // Objectif : éviter à l'enseignant de créer la vidéo hors ZNK puis de l'importer.
+        // Enregistrement en direct via MediaRecorder, résolution/débit volontairement bas
+        // (aucune conversion FFmpeg ensuite : le fichier produit est déjà léger).
+        // Le fichier est ensuite persisté via EXACTEMENT le même pipeline que l'upload
+        // classique (persistMaterialFile → window.electronAPI.makeVideoPersistent),
+        // donc 100% compatible avec le reste de ZNK.
+        let recStream = null;
+        let recMediaRecorder = null;
+        let recChunks = [];
+        let recBlob = null;
+        let recTargetIdx = null;
+        let recTimerInterval = null;
+        let recSeconds = 0;
+
+        function getNodeModules() {
+            try { return { fs: require('fs'), os: require('os'), path: require('path') }; }
+            catch (e) { return null; }
+        }
+
+        function setRecActions(html) { document.getElementById('recActions').innerHTML = html; }
+        function setRecStatus(text, live) {
+            const el = document.getElementById('recStatus');
+            el.textContent = text;
+            el.className = 'rec-status' + (live ? ' live' : '');
+        }
+
+        async function openRecorder(idx) {
+            recTargetIdx = idx;
+            recChunks = []; recBlob = null; recSeconds = 0;
+            document.getElementById('recModal').classList.add('open');
+            setRecStatus('Initialisation de la caméra…', false);
+            setRecActions('');
+            try {
+                recStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24 } },
+                    audio: true
+                });
+                document.getElementById('recVideo').srcObject = recStream;
+                document.getElementById('recVideo').muted = true;
+                setRecStatus('Prêt à enregistrer.', false);
+                setRecActions(`
+                    <button class="btn small rec-btn" onclick="startRec()">🔴 Démarrer</button>
+                    <button class="btn small" onclick="closeRecorder()">✖️ Annuler</button>`);
+            } catch (err) {
+                setRecStatus("⚠️ Caméra/micro indisponible : " + err.message, false);
+                setRecActions(`<button class="btn small" onclick="closeRecorder()">Fermer</button>`);
+            }
+        }
+
+        function startRec() {
+            recChunks = []; recSeconds = 0;
+            let mimeType = 'video/webm;codecs=vp8,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+            recMediaRecorder = new MediaRecorder(recStream, {
+                mimeType, videoBitsPerSecond: 700000, audioBitsPerSecond: 64000
+            });
+            recMediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recChunks.push(e.data); };
+            recMediaRecorder.onstop = onRecStopped;
+            recMediaRecorder.start();
+
+            setRecStatus('🔴 Enregistrement… 0:00', true);
+            recTimerInterval = setInterval(() => {
+                recSeconds++;
+                const m = Math.floor(recSeconds / 60), s = recSeconds % 60;
+                setRecStatus(`🔴 Enregistrement… ${m}:${String(s).padStart(2, '0')}`, true);
+            }, 1000);
+
+            setRecActions(`<button class="btn small rec-btn" onclick="stopRec()">⏹️ Arrêter</button>`);
+        }
+
+        function stopRec() {
+            if (recMediaRecorder && recMediaRecorder.state !== 'inactive') recMediaRecorder.stop();
+            clearInterval(recTimerInterval);
+        }
+
+        function onRecStopped() {
+            recBlob = new Blob(recChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(recBlob);
+            const videoEl = document.getElementById('recVideo');
+            videoEl.srcObject = null;
+            videoEl.src = url;
+            videoEl.muted = false;
+            videoEl.controls = true;
+            videoEl.play();
+            setRecStatus(`✅ Enregistrement terminé (${(recBlob.size / (1024 * 1024)).toFixed(1)} Mo).`, false);
+            setRecActions(`
+                <button class="btn small rec-btn" onclick="useRecordedVideo()">✅ Utiliser cette vidéo</button>
+                <button class="btn small" onclick="retakeRec()">🔄 Recommencer</button>
+                <button class="btn small" onclick="closeRecorder()">✖️ Annuler</button>`);
+        }
+
+        function retakeRec() {
+            recBlob = null;
+            const videoEl = document.getElementById('recVideo');
+            videoEl.src = ''; videoEl.controls = false;
+            videoEl.srcObject = recStream; videoEl.muted = true;
+            setRecStatus('Prêt à enregistrer.', false);
+            setRecActions(`
+                <button class="btn small rec-btn" onclick="startRec()">🔴 Démarrer</button>
+                <button class="btn small" onclick="closeRecorder()">✖️ Annuler</button>`);
+        }
+
+        async function useRecordedVideo() {
+            if (!recBlob || recTargetIdx === null) return;
+            const idx = recTargetIdx;
+            const mods = getNodeModules();
+            if (!mods || !window.electronAPI || typeof window.electronAPI.makeVideoPersistent !== 'function') {
+                currentMaterials[idx]._status = 'error';
+                currentMaterials[idx]._statusMsg = "⚠️ Enregistrement fait, mais l'app n'a pas pu le sauvegarder automatiquement (mode navigateur). Renseigne l'URL/chemin manuellement.";
+                renderMaterials();
+                closeRecorder();
+                return;
+            }
+            try {
+                currentMaterials[idx]._status = 'uploading';
+                currentMaterials[idx]._statusMsg = '⏳ Sauvegarde de l\'enregistrement…';
+                renderMaterials();
+
+                const materialId = `rec_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+                const fileName = `${materialId}.webm`;
+                const tempPath = mods.path.join(mods.os.tmpdir(), fileName);
+                const arrayBuffer = await recBlob.arrayBuffer();
+                mods.fs.writeFileSync(tempPath, Buffer.from(arrayBuffer));
+
+                const result = await persistMaterialFile('video', materialId, tempPath, { name: fileName });
+                try { mods.fs.unlinkSync(tempPath); } catch (e) {}
+
+                if (result && result.success) {
+                    currentMaterials[idx].url = result.url;
+                    currentMaterials[idx]._fileName = fileName;
+                    currentMaterials[idx]._status = 'done';
+                    currentMaterials[idx]._statusMsg = `✅ Vidéo enregistrée et sauvegardée → ${result.path}`;
+                    if (!currentMaterials[idx].title) currentMaterials[idx].title = 'Vidéo enregistrée — ' + new Date().toLocaleDateString('fr-FR');
+                } else {
+                    currentMaterials[idx]._status = 'error';
+                    currentMaterials[idx]._statusMsg = '❌ ' + (result && result.error ? result.error : "Échec de la sauvegarde de l'enregistrement");
+                }
+            } catch (err) {
+                currentMaterials[idx]._status = 'error';
+                currentMaterials[idx]._statusMsg = '❌ ' + err.message;
+            }
+            renderMaterials();
+            closeRecorder();
+        }
+
+        function closeRecorder() {
+            document.getElementById('recModal').classList.remove('open');
+            clearInterval(recTimerInterval);
+            if (recMediaRecorder && recMediaRecorder.state !== 'inactive') recMediaRecorder.stop();
+            if (recStream) recStream.getTracks().forEach(t => t.stop());
+            recStream = null; recMediaRecorder = null; recChunks = []; recBlob = null; recTargetIdx = null;
+            const videoEl = document.getElementById('recVideo');
+            videoEl.srcObject = null; videoEl.src = ''; videoEl.controls = false;
+        }
+
+        async function persistMaterialFile(type, materialId, sourcePath, file) {
+            const payload = { sourcePath, materialId, fileName: file.name };
+            if (type === 'video') return window.electronAPI.makeVideoPersistent({ ...payload, videoId: materialId });
+            if (type === 'audio') return window.electronAPI.makeAudioPersistent({ ...payload, audioId: materialId });
+            return window.electronAPI.makeMaterialPersistent({ ...payload, type });
+        }
+
+        async function handleMaterialFileSelect(idx, inputEl) {
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+            const requiredFn = currentMaterials[idx].type === 'video' ? 'makeVideoPersistent'
+                : currentMaterials[idx].type === 'audio' ? 'makeAudioPersistent'
+                : 'makeMaterialPersistent';
+            if (!window.electronAPI || typeof window.electronAPI[requiredFn] !== 'function') {
+                currentMaterials[idx]._status = 'error';
+                currentMaterials[idx]._statusMsg = "⚠️ Upload direct indisponible — renseigne l'URL/chemin manuellement.";
+                renderMaterials(); return;
+            }
+            let sourcePath = null;
+            if (typeof window.electronAPI.getPathForFile === 'function') {
+                try { sourcePath = await window.electronAPI.getPathForFile(file); } catch (e) { sourcePath = null; }
+            }
+            if (!sourcePath) sourcePath = file.path || null;
+            if (!sourcePath) {
+                currentMaterials[idx]._status = 'error';
+                currentMaterials[idx]._statusMsg = "⚠️ Chemin natif indisponible — renseigne l'URL/chemin manuellement.";
+                renderMaterials(); return;
+            }
+            currentMaterials[idx]._status = 'uploading';
+            currentMaterials[idx]._statusMsg = '⏳ Copie du fichier en cours…';
+            renderMaterials();
+            try {
+                const type = currentMaterials[idx].type;
+                const materialId = `mat_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+                const result = await persistMaterialFile(type, materialId, sourcePath, file);
+                if (result && result.success) {
+                    currentMaterials[idx].url = result.url;
+                    currentMaterials[idx]._fileName = file.name;
+                    currentMaterials[idx]._status = 'done';
+                    currentMaterials[idx]._statusMsg = `✅ Copié → ${result.path}`;
+                    if (!currentMaterials[idx].title) currentMaterials[idx].title = file.name;
+                } else {
+                    currentMaterials[idx]._status = 'error';
+                    currentMaterials[idx]._statusMsg = '❌ ' + (result && result.error ? result.error : 'Échec de la copie du fichier');
+                }
+            } catch (err) {
+                currentMaterials[idx]._status = 'error';
+                currentMaterials[idx]._statusMsg = '❌ ' + err.message;
+            }
+            renderMaterials();
+        }
+
+        function renderMaterials() {
+            const container = document.getElementById('materialsContainer');
+            if (currentMaterials.length === 0) {
+                container.innerHTML = '<p class="empty-hint">Aucun média. Optionnel — clique ci-dessous pour en ajouter un.</p>';
+                return;
+            }
+            container.innerHTML = currentMaterials.map((m, idx) => `
+                <div class="material-card">
+                    <div class="m-head"><span>Média ${idx + 1}</span><span class="remove-x" onclick="removeMaterial(${idx})">✕ retirer</span></div>
+                    <div class="row">
+                        <div>
+                            <label style="margin:0 0 3px;">Type</label>
+                            <select onchange="updateMaterialType(${idx}, this.value)">
+                                <option value="image" ${m.type === 'image' ? 'selected' : ''}>🖼️ Image</option>
+                                <option value="video" ${m.type === 'video' ? 'selected' : ''}>🎬 Vidéo</option>
+                                <option value="audio" ${m.type === 'audio' ? 'selected' : ''}>🎵 Audio</option>
+                                <option value="document" ${m.type === 'document' ? 'selected' : ''}>📄 Document</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="margin:0 0 3px;">Titre</label>
+                            <input type="text" value="${escapeHtml(m.title)}" oninput="updateMaterialTitle(${idx}, this.value)">
+                        </div>
+                    </div>
+                    <label style="margin:8px 0 3px;">📁 Choisir un fichier sur ton disque</label>
+                    <input type="file" accept="${ACCEPT_BY_TYPE[m.type] || '*'}" onchange="handleMaterialFileSelect(${idx}, this)">
+                    ${m.type === 'video' ? `
+                    <div style="margin-top:8px; text-align:center; color:#666; font-size:0.75rem;">— ou —</div>
+                    <button type="button" class="btn small rec-btn" style="width:100%; margin-top:6px;" onclick="openRecorder(${idx})">🔴 Enregistrer une vidéo (webcam + micro)</button>
+                    ` : ''}
+                    ${m._statusMsg ? `<p style="font-size:0.75rem; margin-top:6px; color:${m._status === 'error' ? '#fca5a5' : m._status === 'uploading' ? '#fbbf24' : '#6ee7b7'};">${escapeHtml(m._statusMsg)}</p>` : ''}
+                    <label style="margin:8px 0 3px;">— ou URL / chemin manuel —</label>
+                    <input type="text" value="${escapeHtml(m.url)}" oninput="updateMaterialUrl(${idx}, this.value)">
+                </div>`).join('');
+        }
+
+        // --- Questions (identique à terminal-interrogations.html) -----------------
+
+        let currentQuestions = [];
+        function addQuestion() {
+            currentQuestions.push({ id: null, text: '', type: 'qcm', options: ['', ''], correctIndex: 0, points: 1 });
+            renderQuestions();
+        }
+        function removeQuestion(idx) { currentQuestions.splice(idx, 1); renderQuestions(); }
+        function setQuestionType(idx, type) {
+            currentQuestions[idx].type = type;
+            currentQuestions[idx].options = type === 'vrai_faux' ? ['Vrai', 'Faux'] : ['', ''];
+            currentQuestions[idx].correctIndex = 0;
+            renderQuestions();
+        }
+        function addOption(idx) { currentQuestions[idx].options.push(''); renderQuestions(); }
+        function removeOption(idx, optIdx) {
+            currentQuestions[idx].options.splice(optIdx, 1);
+            if (currentQuestions[idx].correctIndex >= currentQuestions[idx].options.length) currentQuestions[idx].correctIndex = 0;
+            renderQuestions();
+        }
+        function updateQuestionText(idx, val) { currentQuestions[idx].text = val; }
+        function updateOptionText(idx, optIdx, val) { currentQuestions[idx].options[optIdx] = val; }
+        function updateCorrectIndex(idx, optIdx) { currentQuestions[idx].correctIndex = optIdx; }
+        function updatePoints(idx, val) { currentQuestions[idx].points = parseInt(val, 10) || 1; }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            if (currentQuestions.length === 0) {
+                container.innerHTML = '<p class="empty-hint">Aucune question. Clique sur "Ajouter une question".</p>';
+                return;
+            }
+            container.innerHTML = currentQuestions.map((q, idx) => `
+                <div class="question-card">
+                    <div class="q-head"><span>Question ${idx + 1}</span><span class="remove-x" onclick="removeQuestion(${idx})">✕ retirer</span></div>
+                    <textarea placeholder="Énoncé de la question" oninput="updateQuestionText(${idx}, this.value)">${escapeHtml(q.text)}</textarea>
+                    <div class="row" style="margin-top:8px;">
+                        <div>
+                            <label style="margin:0 0 3px;">Type</label>
+                            <select onchange="setQuestionType(${idx}, this.value)">
+                                <option value="qcm" ${q.type === 'qcm' ? 'selected' : ''}>QCM</option>
+                                <option value="vrai_faux" ${q.type === 'vrai_faux' ? 'selected' : ''}>Vrai / Faux</option>
+                            </select>
+                        </div>
+                        <div><label style="margin:0 0 3px;">Points</label><input type="number" min="1" value="${q.points}" oninput="updatePoints(${idx}, this.value)"></div>
+                    </div>
+                    <label style="margin:8px 0 3px;">Réponses (cochez la bonne)</label>
+                    ${q.options.map((opt, optIdx) => `
+                        <div class="option-row">
+                            <input type="radio" name="correct-${idx}" ${q.correctIndex === optIdx ? 'checked' : ''} onchange="updateCorrectIndex(${idx}, ${optIdx})">
+                            <input type="text" value="${escapeHtml(opt)}" ${q.type === 'vrai_faux' ? 'readonly' : ''} placeholder="Réponse ${optIdx + 1}" oninput="updateOptionText(${idx}, ${optIdx}, this.value)">
+                            ${q.type === 'qcm' && q.options.length > 2 ? `<span class="remove-x" onclick="removeOption(${idx}, ${optIdx})">✕</span>` : ''}
+                        </div>`).join('')}
+                    ${q.type === 'qcm' ? `<button type="button" class="btn small" style="margin-top:8px;" onclick="addOption(${idx})">➕ Ajouter une réponse</button>` : ''}
+                </div>`).join('');
+        }
+
+        // --- Publication ------------------------------------------------------
+
+        // --- Coller un quiz déjà rédigé -------------------------------------------
+        //
+        // Formats reconnus, ligne par ligne (espaces/tabulations de début ignorés) :
+        //   "1. Texte de la question ?"     ou   "1) Texte ?"      → nouvelle question
+        //   "▪ [ ] Réponse"  /  "- Réponse"  /  "• [x] Réponse"    → une option
+        // Une case cochée ([x], [X], ✅, ✓) marque la bonne réponse ; sinon la 1ère
+        // option de chaque question est cochée par défaut et TOUJOURS à revérifier.
+        function parsePastedQuiz(raw) {
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            const questions = [];
+            let current = null;
+            const questionRe = /^(\d+)[.\)]\s*(.+)$/;
+            const optionRe = /^[▪●•\-\*]?\s*\[\s*([xX✓✅]?)\s*\]?\s*▢?\s*(.+)$/;
+
+            lines.forEach(line => {
+                const qMatch = line.match(questionRe);
+                if (qMatch && qMatch[2].trim()) {
+                    current = { text: qMatch[2].trim(), options: [], correctIndex: 0, hasMarkedCorrect: false };
+                    questions.push(current);
+                    return;
+                }
+                if (!current) return; // ligne de titre ("Quizz : …") ou texte avant la 1ère question — ignorée
+                const oMatch = line.match(optionRe);
+                if (oMatch) {
+                    const isCorrect = !!oMatch[1];
+                    const text = oMatch[2].trim();
+                    if (!text) return;
+                    if (isCorrect) { current.correctIndex = current.options.length; current.hasMarkedCorrect = true; }
+                    current.options.push(text);
+                }
+            });
+            return questions.filter(q => q.options.length >= 2);
+        }
+
+        function convertPastedQuiz() {
+            const raw = document.getElementById('pasteQuiz').value;
+            if (!raw.trim()) { alert('Colle d\'abord ton quiz dans la zone de texte.'); return; }
+            const parsed = parsePastedQuiz(raw);
+            if (parsed.length === 0) {
+                alert('Aucune question reconnue. Vérifie que chaque question commence par "1.", "2." … et que chaque réponse commence par une puce (▪ • - *).');
+                return;
+            }
+            let unmarked = 0;
+            parsed.forEach(q => {
+                if (!q.hasMarkedCorrect) unmarked++;
+                currentQuestions.push({ id: null, text: q.text, type: 'qcm', options: q.options, correctIndex: q.correctIndex, points: 1 });
+            });
+            renderQuestions();
+            document.getElementById('pasteQuiz').value = '';
+            log(`🪄 ${parsed.length} question(s) importée(s) depuis le texte collé.` +
+                (unmarked ? ` ⚠️ ${unmarked} sans bonne réponse marquée [x] — la 1ère option a été cochée par défaut, vérifie-les dans la liste ci-dessous.` : ''));
+        }
+
+        let sessionPublished = [];
+
+        function renderSessionList() {
+            const el = document.getElementById('sessionList');
+            el.innerHTML = sessionPublished.map(t => `<div class="session-item"><span>✅ ${escapeHtml(t)}</span></div>`).join('');
+        }
+
+        function resetForm() {
+            document.getElementById('title').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('content').value = '';
+            document.getElementById('targetLevel').value = '';
+            document.getElementById('pasteQuiz').value = '';
+            populateCategorySelect();
+            currentMaterials = [];
+            currentQuestions = [];
+            renderMaterials();
+            renderQuestions();
+            document.getElementById('title').focus();
+        }
+
+        async function publishLesson() {
+            try {
+                const title = document.getElementById('title').value.trim();
+                if (!title) { alert('Merci de donner un titre à la leçon.'); return; }
+                const content = document.getElementById('content').value.trim();
+                if (!content) { alert('Merci de renseigner le contenu de la leçon.'); return; }
+                for (const m of currentMaterials) {
+                    if (m._status === 'uploading') { alert('Attends la fin de la copie du fichier en cours.'); return; }
+                    if (!m.url.trim()) { alert('Chaque média doit avoir un fichier importé, ou une URL/chemin renseigné — sinon retire-le.'); return; }
+                }
+                for (const q of currentQuestions) {
+                    if (!q.text.trim()) { alert('Chaque question doit avoir un énoncé.'); return; }
+                    if (q.type === 'qcm' && q.options.some(o => !o.trim())) { alert('Toutes les réponses doivent être renseignées.'); return; }
+                }
+
+                ZNKManifest.setCurrentProf(resolveCurrentProfId());
+                if (ZNKManifest.electron && ZNKManifest.electron.sync) await ZNKManifest.electron.sync();
+
+                // 1) Leçon — publiée directement, pas de brouillon oublié.
+                const lesson = ZNKManifest.lessons.add({
+                    title,
+                    description: document.getElementById('description').value.trim(),
+                    categoryId: document.getElementById('categoryId').value,
+                    targetLevel: document.getElementById('targetLevel').value,
+                    status: 'publie',
+                    content,
+                    isGlobal: (isCurrentAccountAdmin() && document.getElementById('isGlobalCheckbox').checked) || isCurrentAccountAdmin(),
+                    materials: currentMaterials.map(m => ({ type: m.type, title: m.title, url: m.url, filename: m._fileName || '' }))
+                });
+
+                // 2) Interrogation — même titre que la leçon (convention), liée par lesson.id,
+                //    publiée directement elle aussi (c'est l'oubli de cette étape qui faisait
+                //    "apparaître mais ne pas se charger" côté élève auparavant).
+                let quiz = null;
+                if (currentQuestions.length > 0) {
+                    quiz = ZNKManifest.quiz.add({
+                        title,
+                        description: 'Interrogation associée à « ' + title + ' ».',
+                        lessonId: lesson.id,
+                        status: 'publie',
+                        audience: { eleves: true, parents: false },
+                        questions: currentQuestions
+                    });
+                    // Lien réciproque explicite, pour que terminal-lecons.html affiche
+                    // immédiatement le badge "interrogation liée" sans avoir à la resélectionner.
+                    ZNKManifest.lessons.update(lesson.id, { quizId: quiz.id });
+                }
+
+                if (ZNKManifest.electron && ZNKManifest.electron.flush) ZNKManifest.electron.flush();
+
+                log('✅ Publiée : "' + title + '"' + (quiz ? ' + interrogation (' + currentQuestions.length + ' question(s))' : ' (sans interrogation)'));
+                sessionPublished.unshift(title + (quiz ? ' — leçon + interrogation' : ' — leçon seule'));
+                renderSessionList();
+                renderStats();
+                resetForm();
+            } catch (error) {
+                showFatalError("Impossible de publier la leçon", error);
+            }
+        }
+
+        (async function init() {
+            if (window.__znkManifestLoadFailed || typeof window.ZNKManifest === 'undefined' ||
+                window.__znkEtudesManifestLoadFailed || typeof window.ZNK_ETUDES_MANIFEST === 'undefined') return;
+            try {
+                ZNKManifest.setCurrentProf(resolveCurrentProfId());
+                if (ZNKManifest.electron && ZNKManifest.electron.sync) await ZNKManifest.electron.sync();
+                migrateAdminLessonsToGlobal();
+                populateCategorySelect();
+                // Contrôles réservés aux comptes admin : masqués pour tous les autres profs.
+                // Rappel : ceci est un confort d'UI, pas une barrière de sécurité — voir
+                // le correctif serveur prévu une fois le VPS branché.
+                const isAdmin = isCurrentAccountAdmin();
+                const btnWrap = document.getElementById('adminGlobalBtnWrap');
+                const cbWrap = document.getElementById('adminGlobalCheckboxWrap');
+                if (btnWrap) btnWrap.style.display = isAdmin ? '' : 'none';
+                if (cbWrap) cbWrap.style.display = isAdmin ? 'flex' : 'none';
+                renderMaterials();
+                renderQuestions();
+                renderStats();
+                window.addEventListener('znk-data-synced', renderStats);
+            } catch (error) {
+                showFatalError('Erreur au chargement de la page', error);
+            }
+        })();
+    </script>
+</body>
+</html>

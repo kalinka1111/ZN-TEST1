@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#00ffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <title>ZNK SmartHub - Authentification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: all 0.5s ease;
+        }
+
+        .login-screen.hidden {
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+        }
+
+        .login-container {
+            text-align: center;
+            color: white;
+            padding: 24px 20px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+            max-width: 360px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .znk-logo {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00ffff, #0080ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .system-text {
+            font-size: 12px;
+            margin-bottom: 20px;
+            color: #00ffff;
+            letter-spacing: 1.5px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .input-label {
+            font-size: 11px;
+            color: #00ffff;
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .code-dots {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .code-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #00ffff;
+            transition: all 0.3s ease;
+        }
+
+        .code-dot.filled {
+            background: #00ffff;
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.8);
+            animation: dotPulse 0.5s ease;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 200px;
+            margin: 0 auto 20px auto;
+        }
+
+        .key {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .key:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .key:active {
+            transform: scale(0.95);
+            background: rgba(0, 255, 255, 0.3);
+        }
+
+        .key.special {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #666;
+            color: #ccc;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #00ffff, #0080ff);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            color: #ff4757;
+            font-size: 12px;
+            margin-top: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            min-height: 18px;
+        }
+
+        .error-message.show {
+            opacity: 1;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .info-text {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .register-link {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .register-link a {
+            color: #00ffff;
+            text-decoration: none;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .register-link a:hover {
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+
+        .success-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 255, 255, 0.9);
+            color: black;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 10001;
+            display: none;
+            animation: successPulse 0.5s ease;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10002;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 255, 255, 0.3);
+            border-top-color: #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .user-info-banner {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 150, 200, 0.05));
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .user-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 11px;
+        }
+
+        .user-info-label {
+            color: #00ffff;
+            font-weight: 600;
+        }
+
+        .user-info-value {
+            color: white;
+            font-family: monospace;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .role-badge.visiteur {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+            color: #000;
+        }
+
+        .role-badge.membre {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: #000;
+        }
+
+        .role-badge.ecole {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: #000;
+        }
+
+        .role-badge.enseignant {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+        }
+
+        .role-badge.admin {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        /* "Devenir Membre" en cours : paiement pas encore confirmé (voir NOTA
+           du cahier des charges) — l'ID/rôle réel reste inchangé (visiteur),
+           seul ce badge signale la demande en attente. */
+        .role-badge.membre-pending {
+            background: linear-gradient(135deg, #ffd700, #ffb347);
+            color: #000;
+        }
+
+        .pending-membre-note {
+            font-size: 11px;
+            color: #ffd700;
+            margin-top: 4px;
+            text-align: center;
+        }
+    </style>
+    <script src="./ZNKAuthSystem/znk-session.js"></script>
+    <script src="./znk-classroom-client.js" onerror="console.warn('⚠️ znk-classroom-client.js non disponible (connexion élève réseau école désactivée)');"></script>
+</head>
+<body>
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="znk-logo">ZNK</div>
+            <div class="system-text">SmartHub Access</div>
+            
+            <!-- Informations utilisateur détectées -->
+            <div class="user-info-banner" id="userInfoBanner" style="display: none;">
+                <div class="user-info-row">
+                    <span class="user-info-label">ID ZNK:</span>
+                    <span class="user-info-value" id="displayIdZNK">---</span>
+                </div>
+                <div class="user-info-row">
+                    <span class="user-info-label">Email:</span>
+                    <span class="user-info-value" id="displayEmail">---</span>
+                </div>
+                <div class="user-info-row">
+                    <span class="user-info-label">Type:</span>
+                    <span class="role-badge" id="displayRole">---</span>
+                </div>
+                <div class="pending-membre-note" id="pendingMembreNote" style="display:none;">
+                    ⭐ Demande "Devenir Membre" en cours — en attente de confirmation du paiement
+                </div>
+            </div>
+
+            <!-- Formulaire de connexion -->
+            <div class="input-group">
+                <label class="input-label">Email ZNK (ou identifiant élève)</label>
+                <input type="text" class="input-field" id="emailInput" placeholder="prenom@echo.znk ou identifiant élève">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Code (4 chiffres)</label>
+                <div class="code-dots">
+                    <div class="code-dot" id="dot1"></div>
+                    <div class="code-dot" id="dot2"></div>
+                    <div class="code-dot" id="dot3"></div>
+                    <div class="code-dot" id="dot4"></div>
+                    <div class="code-dot" id="dot5" style="display:none;"></div>
+                    <div class="code-dot" id="dot6" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="keypad">
+                <button class="key" data-key="1">1</button>
+                <button class="key" data-key="2">2</button>
+                <button class="key" data-key="3">3</button>
+                <button class="key" data-key="4">4</button>
+                <button class="key" data-key="5">5</button>
+                <button class="key" data-key="6">6</button>
+                <button class="key" data-key="7">7</button>
+                <button class="key" data-key="8">8</button>
+                <button class="key" data-key="9">9</button>
+                <button class="key special" data-key="clear">⌫</button>
+                <button class="key" data-key="0">0</button>
+                <button class="key special" data-key="enter">✓</button>
+            </div>
+
+            <button class="login-button" id="loginBtn" onclick="loginUser()">🔓 Connexion</button>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="error-message" id="networkStatus" style="color:#43e97b; display:none;"></div>
+
+            <div class="info-text" id="infoText" style="display:none;">
+                💡 Code test: ME-5558 (membre)
+            </div>
+
+            <div class="register-link" style="margin-top: 4px;">
+                <a href="#" onclick="openChangePinFlow(); return false;">🔑 Modifier mon code d'accès</a>
+            </div>
+
+            <div class="register-link">
+                <span id="classroomHint" style="display:none; font-size:11px; color:#a0a0a0;">🏫 Identifiant élève détecté : connexion automatique au réseau de l'école si besoin</span>
+            </div>
+
+            <div class="register-link">
+                <a href="visiteur-inscription.html">📝 Créer un compte visiteur</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="success-message" id="successMessage">
+        ✅ Accès accordé !
+    </div>
+
+    <!-- Choix unique (mémorisé) entre navigation "hub" (mockup téléphone)
+         et "dash" (interface complète ordi). Affiché seulement si le rôle
+         a un hub disponible et qu'aucun choix n'a encore été fait. -->
+    <div class="login-screen hidden" id="navChoiceScreen" style="z-index:10001;">
+        <div class="login-container">
+            <div class="znk-logo">ZNK</div>
+            <div class="system-text">CHOISIS TON AFFICHAGE</div>
+            <p style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:20px; line-height:1.5;">
+                Tu pourras changer d'avis à tout moment depuis l'interface.
+            </p>
+            <button class="login-button" style="margin-bottom:12px;" onclick="chooseNavPref('dash')">
+                🖥️ Interface complète
+            </button>
+            <button class="login-button" style="background:linear-gradient(135deg,#666,#333); color:#fff;" onclick="chooseNavPref('hub')">
+                📱 Mode téléphone (hub)
+            </button>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        const isElectron = typeof require !== 'undefined';
+        let ipcRenderer = null;
+
+        if (isElectron) {
+            try {
+                ipcRenderer = require('electron').ipcRenderer;
+            } catch (e) {
+                console.log('IPC non disponible');
+            }
+        }
+
+        // Codes de test pour développement
+        // ⚠️ 2026-08-05 : nettoyage suite au log — seuls les 4 IDs officiels listés
+        // dans log.txt sont à garder dans tout l'écosystème (znknomad@echo.znk,
+        // znk-official@echo.znk, zaza.n@echo.znk, membre@echo.znk). Les 3 autres
+        // comptes de test (admin@znk.system, ecole@echo.znk, test@echo.znk) ont été
+        // retirés d'ici. Note : znknomad@echo.znk, znk-official@echo.znk et
+        // zaza.n@echo.znk ne vivent pas dans ce fichier — ce sont des entrées du
+        // ledger partagé (znk-nomad-ledger.json), à créer/modifier via ZNKSECURE.html.
+        const TEST_ACCOUNTS = {
+            'membre@echo.znk': { code: '1407', idZNK: 'ME5558', role: 'member' }
+        };
+
+        // Comptes réels provisionnés avec fiche complète (ne suivent pas le format
+        // d'ID auto-généré VI/ET/ME/00 des inscriptions classiques, le rôle est donc
+        // fixé explicitement ici plutôt que déduit du préfixe de l'ID).
+        // ⚠️ Codes PIN par défaut = 4 derniers chiffres de l'ID ZNK — à changer après le premier test.
+        const PROVISIONED_ACCOUNTS = {
+            // Comptes admin réels retirés de cette version (celle du build
+            // distribué) — ils vivent désormais dans
+            // modules-admin/auth-hub-admin.html, exclu du build via
+            // "!modules-admin/**/*" dans package.json. Accès en dev uniquement
+            // via le raccourci menu Admin Dashboard (Cmd+Shift+A).
+            //
+            // TODO (suite log.txt du 2026-08-05) : znknomad@echo.znk (admin
+            // officiel, privé, hors build) reste dans modules-admin/. Les 2
+            // autres IDs officiels restants — znk-official@echo.znk (membre,
+            // publique) et zaza.n@echo.znk (enseignant, École ZNK Art Études,
+            // publique, doit devenir persistant) — n'existent pas encore ici ;
+            // ils sont à créer/rendre persistants dans le ledger partagé
+            // (znk-nomad-ledger.json) via ZNKSECURE.html, pas dans ce fichier.
+        };
+
+        const ROLES_CONFIG = {
+            admin: {
+                prefix: '00',
+                name: 'Admin+',
+                permissions: ['scan', 'create', 'organize', 'stats', 'modify_system'],
+                dashboard: 'ZNKadminDash.html'
+            },
+            member: {
+                prefix: 'ME',
+                name: 'Membre+',
+                permissions: ['scan', 'create', 'organize', 'stats'],
+                dashboard: 'ZNKMembresDash.html',
+                // Équivalent "hub" (mockup téléphone) de ce rôle, s'il existe.
+                // Seul 'member' en a un pour l'instant (hub-membre.html) ;
+                // les autres rôles restent uniquement sur leur dashboard tant
+                // qu'aucun hub dédié n'a été créé pour eux.
+                hub: 'hub-membre.html'
+            },
+            ecole: {
+                prefix: 'ET',
+                name: 'École',
+                permissions: ['scan', 'create', 'organize', 'stats'],
+                dashboard: 'ZNKartEtudesDash.html',
+                  hub: 'hub-artetudes.html'
+            },
+            enseignant: {
+                prefix: 'EN',
+                name: 'Enseignant',
+                permissions: ['scan', 'create', 'organize', 'stats'],
+                dashboard: 'ZNKartEtudesDash-prof.html',
+                  hub: 'hub-profs.html'
+            },
+            visitor: {
+                prefix: 'VI',
+                name: 'Visiteur',
+                permissions: ['scan', 'create', 'stats'],
+                dashboard: 'ZNKvisiteurDash.html',
+                 hub: 'hub-visiteur.html'
+            },
+            // ⚠️ Les 4 lignes ci-dessous pointent temporairement vers le dashboard
+            // Membre — ZNKSECURE.html gère déjà ces 4 types (Membre Plus, FIDA,
+            // ZNK Business, Fondation-ZNK) mais aucun dashboard dédié ne m'a été
+            // fourni pour eux. Remplacez 'dashboard' dès que ces fichiers existent.
+        };
+        // Préférence hub/dashboard stockée PAR RÔLE (et non plus dans une seule clé
+        // globale 'znk_nav_pref') — sinon le choix fait par un rôle (ex: member)
+        // s'applique automatiquement à tous les autres rôles dès qu'ils ont un hub.
+        function znkNavPrefKey(role) {
+            return 'znk_nav_pref_' + role;
+        }
+
+        // Vos 5 vrais dashboards (Admin/Membre/Études/Prof/Visiteur) couvrent tout.
+        // Les tiers supplémentaires de ZNKSECURE (Membre Plus, FIDA, ZNK Business,
+        // Fondation-ZNK) ne sont PAS des dashboards séparés : ce sont des variantes
+        // du compte Membre, distinguées à l'intérieur de Nomad via le type exact
+        // (conservé dans accountData.type, voir znkRoleFromType ci-dessous).
+
+        // ========================================
+        // LEDGER PARTAGÉ (znk-nomad-ledger.json) — SOURCE PRIORITAIRE d'authentification.
+        // C'est ici que vivent les ID créées depuis ZNKSECURE.html (avec leur pin réel).
+        // Même mécanisme que partout ailleurs dans l'app (electronAPI.znkNomadReadData/
+        // WriteData, fallback localStorage en test navigateur) — évite complètement le
+        // canal IPC 'verify-user-pin' qui n'a jamais de handler côté main.js.
+        // ========================================
+        const ZNK_LEDGER_FALLBACK_KEY = 'znkNomadLedgerFallback';
+
+        async function znkLedgerLoad() {
+            try {
+                if (window.electronAPI && window.electronAPI.znkNomadReadData) {
+                    const raw = await window.electronAPI.znkNomadReadData();
+                    if (raw) return JSON.parse(raw);
+                }
+            } catch (e) { console.warn('znkLedgerLoad:', e); }
+            try {
+                return JSON.parse(localStorage.getItem(ZNK_LEDGER_FALLBACK_KEY) || '{}');
+            } catch (e) { return {}; }
+        }
+
+        async function znkLedgerSave(ledger) {
+            const json = JSON.stringify(ledger);
+            try {
+                if (window.electronAPI && window.electronAPI.znkNomadWriteData) {
+                    await window.electronAPI.znkNomadWriteData(json);
+                }
+            } catch (e) { console.warn('znkLedgerSave:', e); }
+            localStorage.setItem(ZNK_LEDGER_FALLBACK_KEY, json);
+        }
+
+        // Même correspondance niveau -> groupe que dans inscription.html / ZNKartEtudesDash.html,
+        // pour que la classId envoyée au nœud P2P dès la connexion soit cohérente
+        // avec celle recalculée plus tard par le dashboard.
+        const NIVEAU_TO_GROUPE = {
+            ps: 'maternelle', ms: 'maternelle', gs: 'maternelle',
+            cp: 'primaire', ce1: 'primaire', ce2: 'primaire', cm1: 'primaire', cm2: 'primaire',
+            '6eme': 'college', '5eme': 'college', '4eme': 'college', '3eme': 'college',
+            seconde: 'lycee', premiere: 'lycee', terminale: 'lycee'
+        };
+
+        function computeClasseIdForP2P(accountData) {
+            let groupe = null;
+            let profId = null;
+
+            if (accountData.role === 'ecole') {
+                // Élève (compte direct ou connecté via un prof)
+                groupe = accountData.niveauGroupe || NIVEAU_TO_GROUPE[accountData.niveau] || null;
+                profId = accountData.profId || null;
+            } else if (accountData.role === 'enseignant') {
+                groupe = NIVEAU_TO_GROUPE[accountData.niveauEnseigne] || null;
+                profId = accountData.idZNK;
+            }
+
+            if (!groupe) return null; // pas de scope classe pour ce type de compte (membre, admin, visiteur...)
+            return `classe-${groupe}-${profId || 'sans-prof'}`;
+        }
+
+        // Retrouve un élève par son identifiant de connexion (prénom + 1ère lettre du nom,
+        // ex: "leaG") en parcourant toutes les listes "znk_eleves_<idProf>" stockées par
+        // inscription.html. Les élèves n'ont pas d'email : ce n'est pas le ledger partagé.
+        function findEleveByLoginId(loginId) {
+            const id = (loginId || '').trim().toLowerCase();
+            if (!id) return null;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (!key || !key.startsWith('znk_eleves_')) continue;
+                try {
+                    const eleves = JSON.parse(localStorage.getItem(key) || '[]');
+                    const match = eleves.find(e => (e.loginId || '').toLowerCase() === id);
+                    if (match) {
+                        return { eleve: match, profId: key.replace('znk_eleves_', '') };
+                    }
+                } catch (e) {
+                    console.warn('Entrée znk_eleves_* illisible:', key, e);
+                }
+            }
+            return null;
+        }
+
+        // Retrouve un utilisateur du ledger par email (ledger.users est indexé par ID,
+        // pas par email — on cherche donc parmi toutes les fiches). Au passage, on
+        // vérifie l'expiration de son abonnement Membre (voir znkCheckMembershipExpiry)
+        // pour que le rôle/dashboard renvoyés reflètent toujours la réalité, même si
+        // l'utilisateur n'a pas rouvert nomad.html depuis l'échéance.
+        async function znkFindLedgerUserByEmail(email) {
+            const ledger = await znkLedgerLoad();
+            const users = ledger.users || {};
+            const match = Object.values(users).find(u => (u.email || '').toLowerCase() === email);
+            if (match) {
+                const result = znkCheckMembershipExpiry(ledger, match.id);
+                if (result.changed) await znkLedgerSave(ledger);
+            }
+            return match ? { user: match, ledger } : null;
+        }
+
+        // ========================================
+        // EXPIRATION DES ABONNEMENTS (copie EXACTE de ZNKSECURE.html / nomad.html —
+        // voir les commentaires détaillés là-bas). Rappel J-3, grâce de 3 jours après
+        // échéance, puis rétrogradation automatique en Visiteur.
+        // ========================================
+        const ZNK_MEMBERSHIP_GRACE_DAYS = 3;
+        const ZNK_MEMBERSHIP_REMINDER_MS = 3 * 24 * 60 * 60 * 1000;
+
+        function znkCheckMembershipExpiry(ledger, userId) {
+            const result = { changed: false, downgraded: false, reminderDue: false };
+            if (!ledger.users || !ledger.users[userId]) return result;
+            const user = ledger.users[userId];
+            if (!user.subscriptionExpiresAt) return result;
+            if (user.type !== 'member' && user.type !== 'membre-plus') return result;
+
+            const now = Date.now();
+            const expiry = new Date(user.subscriptionExpiresAt).getTime();
+            const graceMs = ZNK_MEMBERSHIP_GRACE_DAYS * 24 * 60 * 60 * 1000;
+
+            if (!ledger.mailbox) ledger.mailbox = {};
+            if (!ledger.mailbox[userId]) ledger.mailbox[userId] = [];
+
+            if (now >= expiry + graceMs) {
+                const oldTypeLabel = user.type === 'membre-plus' ? 'Membre Plus' : 'Membre';
+                user.type = 'visitor';
+                user.chatLines = 80;
+                user.videoMinutes = 0;
+                user.artflowLimit = 0;
+                delete user.subscriptionExpiresAt;
+                delete user.reminderSent;
+                delete user.gracePeriodNotified;
+
+                ledger.mailbox[userId].unshift({
+                    id: `MSG-${Date.now()}`,
+                    date: new Date().toISOString(),
+                    subject: '⏳ Abonnement Membre expiré',
+                    body: `Votre abonnement (${oldTypeLabel}) est arrivé à échéance et le délai de grâce de ${ZNK_MEMBERSHIP_GRACE_DAYS} jours est dépassé. Vous êtes repassé au statut Visiteur. Rendez-vous dans ZNK Nomad pour renouveler votre abonnement Membre.`
+                });
+                result.changed = true;
+                result.downgraded = true;
+            } else if (now >= expiry && !user.gracePeriodNotified) {
+                user.gracePeriodNotified = true;
+                ledger.mailbox[userId].unshift({
+                    id: `MSG-${Date.now()}`,
+                    date: new Date().toISOString(),
+                    subject: '⚠️ Abonnement expiré — délai de grâce',
+                    body: `Votre abonnement est expiré depuis le ${new Date(user.subscriptionExpiresAt).toLocaleDateString('fr-FR')}. Vous avez encore ${ZNK_MEMBERSHIP_GRACE_DAYS} jours pour le renouveler avant de repasser Visiteur.`
+                });
+                result.changed = true;
+                result.reminderDue = true;
+            } else if (expiry - now <= ZNK_MEMBERSHIP_REMINDER_MS && !user.reminderSent) {
+                user.reminderSent = true;
+                ledger.mailbox[userId].unshift({
+                    id: `MSG-${Date.now()}`,
+                    date: new Date().toISOString(),
+                    subject: '🔔 Votre abonnement Membre expire bientôt',
+                    body: `Votre abonnement expire le ${new Date(user.subscriptionExpiresAt).toLocaleDateString('fr-FR')}. Renouvelez-le dans ZNK Nomad pour ne perdre aucun avantage.`
+                });
+                result.changed = true;
+                result.reminderDue = true;
+            }
+
+            return result;
+        }
+
+        // Registre multi-comptes de l'appareil (voir inscription.html) : tous les
+        // comptes créés via le formulaire d'inscription, indexés par email — et
+        // non plus une seule case 'znk_account' écrasée à chaque nouveau compte
+        // (c'était le bug qui faisait disparaître les comptes enseignants créés
+        // après le premier).
+        const ZNK_DEVICE_ACCOUNTS_KEY = 'znk_device_accounts_store';
+
+        function findDeviceAccountByEmail(email) {
+            try {
+                const store = JSON.parse(localStorage.getItem(ZNK_DEVICE_ACCOUNTS_KEY) || '{}');
+                return store[email] || null;
+            } catch (e) {
+                console.warn('findDeviceAccountByEmail:', e);
+                return null;
+            }
+        }
+
+        // Fait correspondre les 7 types ZNKSECURE à vos 5 vrais dashboards.
+        // membre-plus / fida / ultimus-znk / fondation-znk → même dashboard que
+        // 'member' (ZNKMembresDash.html) : la distinction se fait DANS Nomad via
+        // accountData.type, pas par un dashboard séparé.
+        const ZNK_TYPE_TO_ROLE = {
+            visitor: 'visitor',
+            member: 'member',
+            etudes: 'ecole',
+            'membre-plus': 'member',
+            fida: 'member',
+            'ultimus-znk': 'member',
+            'fondation-znk': 'member',
+            enseignant: 'enseignant'
+        };
+
+        function znkRoleFromType(type) {
+            return ZNK_TYPE_TO_ROLE[type] || 'visitor';
+        }
+
+        // ========================================
+        // LIMITATION DES TENTATIVES DE CONNEXION : 3 essais de code PIN max par
+        // identifiant (email ou identifiant élève), puis blocage de 3 jours.
+        // Stocké par identifiant (et non globalement) car un même appareil peut
+        // servir à plusieurs comptes (élèves d'une classe, membres d'une famille...).
+        // ========================================
+        const ZNK_LOGIN_ATTEMPTS_KEY = 'znk_login_attempts';
+        const MAX_LOGIN_ATTEMPTS = 3;
+        const LOCKOUT_DURATION_MS = 3 * 24 * 60 * 60 * 1000; // 3 jours
+
+        function getLoginAttemptsStore() {
+            try {
+                return JSON.parse(localStorage.getItem(ZNK_LOGIN_ATTEMPTS_KEY) || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveLoginAttemptsStore(store) {
+            try {
+                localStorage.setItem(ZNK_LOGIN_ATTEMPTS_KEY, JSON.stringify(store));
+            } catch (e) {
+                console.warn('saveLoginAttemptsStore:', e);
+            }
+        }
+
+        // Renvoie le temps restant (ms) si l'identifiant est actuellement bloqué, sinon 0.
+        // Nettoie automatiquement l'entrée si le blocage est expiré.
+        function getLockoutRemaining(identifiant) {
+            const store = getLoginAttemptsStore();
+            const entry = store[identifiant];
+            if (!entry || !entry.lockedUntil) return 0;
+            const remaining = entry.lockedUntil - Date.now();
+            if (remaining <= 0) {
+                delete store[identifiant];
+                saveLoginAttemptsStore(store);
+                return 0;
+            }
+            return remaining;
+        }
+
+        function formatLockoutDuration(ms) {
+            const totalHours = Math.ceil(ms / (60 * 60 * 1000));
+            const days = Math.floor(totalHours / 24);
+            const hours = totalHours % 24;
+            if (days > 0 && hours > 0) return `${days}j ${hours}h`;
+            if (days > 0) return `${days}j`;
+            return `${hours}h`;
+        }
+
+        // Incrémente le compteur d'échecs pour cet identifiant. Déclenche le
+        // blocage de 3 jours dès que le 3e échec consécutif est atteint.
+        function registerFailedAttempt(identifiant) {
+            const store = getLoginAttemptsStore();
+            const entry = store[identifiant] || { count: 0, lockedUntil: null };
+            entry.count = (entry.count || 0) + 1;
+            let justLocked = false;
+            if (entry.count >= MAX_LOGIN_ATTEMPTS) {
+                entry.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+                entry.count = 0;
+                justLocked = true;
+            }
+            store[identifiant] = entry;
+            saveLoginAttemptsStore(store);
+            return { justLocked, remainingAttempts: Math.max(0, MAX_LOGIN_ATTEMPTS - entry.count) };
+        }
+
+        function resetLoginAttempts(identifiant) {
+            const store = getLoginAttemptsStore();
+            if (store[identifiant]) {
+                delete store[identifiant];
+                saveLoginAttemptsStore(store);
+            }
+        }
+
+        let enteredCode = '';
+
+        function initAuth() {
+            document.querySelectorAll('.key').forEach(key => {
+                key.addEventListener('click', handleKeyPress);
+            });
+            
+            document.addEventListener('keydown', handlePhysicalKeyboard);
+            
+            // Détecter et afficher les infos utilisateur au focus de l'email
+            document.getElementById('emailInput').addEventListener('input', detectUserInfo);
+            document.getElementById('emailInput').addEventListener('blur', detectUserInfo);
+            
+            // Charger le dernier email utilisé
+            loadLastEmail();
+        }
+
+        function loadLastEmail() {
+            const storedAccount = localStorage.getItem('znk_account');
+            if (storedAccount) {
+                try {
+                    const account = JSON.parse(storedAccount);
+                    document.getElementById('emailInput').value = account.email;
+                    detectUserInfo();
+                } catch (e) {
+                    console.log('Pas de compte détecté');
+                }
+            }
+        }
+
+        async function detectUserInfo() {
+            const raw = document.getElementById('emailInput').value.trim();
+            const email = raw.toLowerCase();
+
+            if (!raw) {
+                document.getElementById('userInfoBanner').style.display = 'none';
+                return;
+            }
+
+            let userInfo = null;
+
+            // -1. Identifiant élève (pas un email : "leaG" plutôt que "lea@echo.znk")
+            if (!raw.includes('@')) {
+                const foundEleve = findEleveByLoginId(raw);
+                if (foundEleve) {
+                    userInfo = {
+                        idZNK: `EL-${foundEleve.eleve.loginId}`,
+                        email: `${foundEleve.eleve.prenom} ${foundEleve.eleve.nom}`,
+                        role: 'ecole'
+                    };
+                }
+                const hint = document.getElementById('classroomHint');
+                if (hint) {
+                    const mightBeNetworkStudent = !foundEleve && window.electronAPI && window.electronAPI.classroomDiscover;
+                    hint.style.display = mightBeNetworkStudent ? 'inline' : 'none';
+                }
+            } else {
+                const hint = document.getElementById('classroomHint');
+                if (hint) hint.style.display = 'none';
+            }
+
+            // 0. Vérifier le ledger partagé en premier (vraies ID créées via ZNKSECURE.html)
+            const found = await znkFindLedgerUserByEmail(email);
+            if (!userInfo && found) {
+                userInfo = { idZNK: found.user.id, email: email, role: znkRoleFromType(found.user.type) };
+                // "Devenir Membre" demandé mais paiement pas encore confirmé (voir
+                // devenirmembre ZNK.txt / NOTA) : l'ID et le rôle réels ne changent
+                // qu'après confirmation dans nomad.html (finalizeMembership) — ici on
+                // ne fait qu'afficher le badge d'attente.
+                if (found.user.pendingMembre && userInfo.role !== 'member') {
+                    userInfo.pendingMembre = true;
+                }
+            }
+
+            // 0.7. Vérifier le registre multi-comptes de l'appareil
+            const deviceAccount = findDeviceAccountByEmail(email);
+            if (!userInfo && deviceAccount) {
+                userInfo = {
+                    idZNK: deviceAccount.idZNK,
+                    email: deviceAccount.email,
+                    role: deviceAccount.role || detectRoleFromId(deviceAccount.idZNK)
+                };
+            }
+
+            // 1. Vérifier le compte local (visiteur inscrit)
+            const storedAccount = localStorage.getItem('znk_account');
+            if (!userInfo && storedAccount) {
+                try {
+                    const account = JSON.parse(storedAccount);
+                    if (account.email && account.email.toLowerCase() === email) {
+                        userInfo = {
+                            idZNK: account.idZNK,
+                            email: account.email,
+                            role: detectRoleFromId(account.idZNK)
+                        };
+                    }
+                } catch (e) {
+                    console.error('Erreur parsing account:', e);
+                }
+            }
+
+            // 2. Vérifier les comptes provisionnés (fiches complètes réelles)
+            if (!userInfo && PROVISIONED_ACCOUNTS[email]) {
+                const provisioned = PROVISIONED_ACCOUNTS[email];
+                userInfo = { idZNK: provisioned.idZNK, email: email, role: provisioned.role };
+            }
+
+            // 3. Vérifier les comptes de test
+            if (!userInfo && TEST_ACCOUNTS[email]) {
+                userInfo = TEST_ACCOUNTS[email];
+                userInfo.email = email;
+            }
+
+            // 4. Afficher les infos si trouvées
+            if (userInfo) {
+                displayUserInfo(userInfo);
+            } else {
+                document.getElementById('userInfoBanner').style.display = 'none';
+            }
+        }
+
+        function detectRoleFromId(idZNK) {
+            const prefix = idZNK.substring(0, 2);
+            
+            switch(prefix) {
+                case '00': return 'admin';
+                case 'ME': return 'member';
+                case 'ET': return 'ecole';
+                case 'EN': return 'enseignant';
+                case 'VI': return 'visitor';
+                default: return 'visitor';
+            }
+        }
+
+        function displayUserInfo(userInfo) {
+            document.getElementById('displayIdZNK').textContent = userInfo.idZNK;
+            document.getElementById('displayEmail').textContent = userInfo.email;
+            
+            const roleBadge = document.getElementById('displayRole');
+            const roleConfig = ROLES_CONFIG[userInfo.role];
+            
+            const pendingNote = document.getElementById('pendingMembreNote');
+
+            if (userInfo.pendingMembre) {
+                roleBadge.textContent = roleConfig.name + ' (Membre en cours)';
+                roleBadge.className = 'role-badge membre-pending';
+                if (pendingNote) pendingNote.style.display = 'block';
+            } else {
+                roleBadge.textContent = roleConfig.name;
+                roleBadge.className = 'role-badge ' + userInfo.role;
+                if (pendingNote) pendingNote.style.display = 'none';
+            }
+            
+            document.getElementById('userInfoBanner').style.display = 'block';
+        }
+
+        function handleKeyPress(e) {
+            const key = e.target.dataset.key;
+            processKey(key);
+        }
+
+        function handlePhysicalKeyboard(e) {
+            if (e.key >= '0' && e.key <= '9') {
+                processKey(e.key);
+            } else if (e.key === 'Backspace') {
+                processKey('clear');
+            } else if (e.key === 'Enter') {
+                processKey('enter');
+            }
+        }
+
+        // Identifiant spécial qui active le mode admin (6 chiffres au lieu de 4).
+        // Ne correspond à aucun compte réel, jamais créé via inscription.html.
+        const ADMIN_LOGIN_EMAIL = 'admin@admin.znk';
+
+        function isAdminLoginMode() {
+            const raw = document.getElementById('emailInput').value.trim().toLowerCase();
+            return raw === ADMIN_LOGIN_EMAIL;
+        }
+
+        function processKey(key) {
+            const maxLength = isAdminLoginMode() ? 6 : 4;
+            if (key === 'clear') {
+                enteredCode = '';
+            } else if (key === 'enter') {
+                loginUser();
+            } else if (key >= '0' && key <= '9' && enteredCode.length < maxLength) {
+                enteredCode += key;
+            }
+            updateCodeDisplay();
+        }
+
+        function updateCodeDisplay() {
+            const maxLength = isAdminLoginMode() ? 6 : 4;
+            for (let i = 5; i <= 6; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                if (dot) dot.style.display = (maxLength === 6) ? '' : 'none';
+            }
+            for (let i = 1; i <= maxLength; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                if (dot) {
+                    dot.classList.toggle('filled', i <= enteredCode.length);
+                }
+            }
+        }
+
+        async function loginUser() {
+            const raw = document.getElementById('emailInput').value.trim();
+            const email = raw.toLowerCase();
+            const code = enteredCode;
+            hideNetworkStatus();
+
+            // Accès admin caché : identifiant spécial + code à 6 chiffres.
+            // Ne touche à aucune logique de compte normal ci-dessous.
+            if (email === ADMIN_LOGIN_EMAIL) {
+                if (code.length !== 6) {
+                    showError('⚠️ Code à 6 chiffres requis');
+                    return;
+                }
+                try {
+                    const isValid = await window.electronAPI.verifyAdminKey(code);
+                    if (isValid) {
+                        window.location.href = 'ZNKadminDash.html';
+                    } else {
+                        showError('⚠️ Identifiants incorrects');
+                        enteredCode = '';
+                        updateCodeDisplay();
+                    }
+                } catch (err) {
+                    console.error('Erreur vérification admin:', err);
+                    showError('⚠️ Erreur de vérification');
+                }
+                return;
+            }
+
+            if (!raw) {
+                showError('⚠️ Veuillez entrer votre email ZNK (ou votre identifiant élève)');
+                return;
+            }
+
+            if (code.length !== 4) {
+                showError('⚠️ Code à 4 chiffres requis');
+                return;
+            }
+
+            // Blocage actif suite à 3 tentatives incorrectes ?
+            const lockoutRemaining = getLockoutRemaining(email);
+            if (lockoutRemaining > 0) {
+                showError(`🔒 Trop de tentatives incorrectes. Réessayez dans ${formatLockoutDuration(lockoutRemaining)}.`);
+                return;
+            }
+
+            let authenticated = false;
+            let accountData = null;
+            let isEleve = false;
+
+            // -1. Élève d'un professeur, identifiant de connexion (pas un email) + PIN.
+            //     (a) D'abord le cache local de CET appareil (znk_eleves_<profId>,
+            //         PIN souvent "1234" partagé — rapide, fonctionne hors-ligne).
+            //     (b) Si absent, on tente le serveur de classe du prof sur le réseau
+            //         de l'école (znk-classroom-server.js, via ZNKClassroomClient) :
+            //         c'est ce qui permet à un élève de se connecter directement
+            //         depuis SON PROPRE PC, avec son PIN unique, sans jamais avoir
+            //         eu de compte créé sur cet appareil.
+            if (!raw.includes('@')) {
+                const foundEleve = findEleveByLoginId(raw);
+                if (foundEleve && foundEleve.eleve.pin === code) {
+                    authenticated = true;
+                    isEleve = true;
+                    accountData = {
+                        idZNK: `EL-${foundEleve.eleve.loginId}`,
+                        email: `${foundEleve.eleve.loginId}@eleve.znk`,
+                        role: 'ecole',
+                        prenom: foundEleve.eleve.prenom,
+                        nom: foundEleve.eleve.nom,
+                        niveau: foundEleve.eleve.niveau,
+                        niveauGroupe: foundEleve.eleve.niveauGroupe,
+                        profId: foundEleve.profId,
+                        loginId: foundEleve.eleve.loginId,
+                        balance: 0,
+                        betis: 0
+                    };
+                } else if (window.electronAPI && window.electronAPI.classroomDiscover && window.ZNKClassroomClient) {
+                    const loginBtn = document.getElementById('loginBtn');
+                    if (loginBtn) loginBtn.disabled = true;
+                    showNetworkStatus('🔎 Recherche du serveur de l\'école…');
+                    try {
+                        const classe = new window.ZNKClassroomClient(raw.toLowerCase());
+                        const res = await classe.login(code);
+                        if (res.success && res.data && res.data.profil) {
+                            const profil = res.data.profil;
+                            authenticated = true;
+                            isEleve = true;
+                            accountData = {
+                                idZNK: `EL-${profil.loginId}`,
+                                email: `${profil.loginId}@eleve.znk`,
+                                role: 'ecole',
+                                prenom: profil.prenom,
+                                nom: profil.nom,
+                                niveau: profil.niveau,
+                                niveauGroupe: NIVEAU_TO_GROUPE[profil.niveau] || null,
+                                profId: profil.profId,
+                                loginId: profil.loginId,
+                                balance: 0,
+                                betis: 0
+                            };
+                            showNetworkStatus('🟢 Connecté au réseau de l\'école', true);
+                        } else if (res.error) {
+                            console.log('ℹ️ Connexion réseau école:', res.error);
+                        }
+                    } catch (err) {
+                        console.warn('⚠️ Connexion réseau école échouée:', err.message);
+                    } finally {
+                        if (loginBtn) loginBtn.disabled = false;
+                        if (!authenticated) hideNetworkStatus();
+                    }
+                }
+            }
+
+            // 0. Vérifier le ledger partagé en premier (source de vérité pour les
+            // ID créées via ZNKSECURE.html — c'est le pin réel qui est vérifié ici,
+            // pas de canal IPC 'verify-user-pin' nécessaire).
+            const found = await znkFindLedgerUserByEmail(email);
+            if (!authenticated && found && found.user.pin === code) {
+                authenticated = true;
+                accountData = {
+                    idZNK: found.user.id,
+                    email: email,
+                    role: znkRoleFromType(found.user.type),
+                    type: found.user.type, // type précis (membre-plus, fida...) — utilisé par Nomad pour afficher la bonne variante à l'intérieur du dashboard Membre
+                    prenom: found.user.name,
+                    nom: '',
+                    balance: found.user.balance,
+                    betis: found.user.betis,
+                    whatsapp: found.user.whatsZNKNumber,
+                    paiement: {
+                        carteMasquee: found.user.cardNumber,
+                        carteExpiration: found.user.cardExpiry,
+                        compteReel: found.user.bankAccount
+                    }
+                };
+            }
+
+            // 0.5. Vérifier le stockage persistant réel (users.json, via
+            // user-storage-native.js) : TOUS les comptes créés via
+            // inscription.html sur cet appareil, pas seulement le dernier.
+            // Remplace avantageusement le slot unique 'znk_account' ci-dessous,
+            // qui écrasait chaque compte précédent à chaque nouvelle inscription.
+            if (!authenticated && isElectron && ipcRenderer) {
+                try {
+                    const authResult = await ipcRenderer.invoke('authenticate-user', { email, code });
+                    if (authResult && authResult.success && authResult.user) {
+                        authenticated = true;
+                        const u = authResult.user;
+                        accountData = {
+                            ...u,
+                            idZNK: u.idZNK || u.id,
+                            role: u.role || detectRoleFromId(u.idZNK || u.id)
+                        };
+                    }
+                } catch (err) {
+                    console.warn('authenticate-user IPC:', err);
+                }
+            }
+
+            // 0.7. Vérifier le registre multi-comptes de l'appareil (TOUS les
+            // comptes créés via inscription.html, indexés par email) — remplace
+            // avantageusement le repli sur 'znk_account' juste en dessous, qui
+            // n'a jamais gardé qu'un seul compte à la fois.
+            if (!authenticated) {
+                const deviceAccount = findDeviceAccountByEmail(email);
+                if (deviceAccount && deviceAccount.code === code) {
+                    authenticated = true;
+                    accountData = deviceAccount;
+                    accountData.role = deviceAccount.role || detectRoleFromId(deviceAccount.idZNK);
+                }
+            }
+
+            // 1. Vérifier le compte local (visiteur inscrit) — conservé en repli
+            // pour le mode web (sans Electron/ipcRenderer) ou les comptes créés
+            // avant la mise en place du stockage persistant ci-dessus.
+            const storedAccount = localStorage.getItem('znk_account');
+            if (!authenticated && storedAccount) {
+                try {
+                    const account = JSON.parse(storedAccount);
+                    if (account.email && account.email.toLowerCase() === email && account.code === code) {
+                        authenticated = true;
+                        accountData = account;
+                        accountData.role = detectRoleFromId(account.idZNK);
+                    }
+                } catch (e) {
+                    console.error('Erreur vérification compte:', e);
+                }
+            }
+
+            // 2. Vérifier les comptes provisionnés (fiches complètes réelles)
+            if (!authenticated && PROVISIONED_ACCOUNTS[email]) {
+                const provisioned = PROVISIONED_ACCOUNTS[email];
+                if (provisioned.code === code) {
+                    authenticated = true;
+                    // On copie toute la fiche (moins le code PIN) dans les données de session
+                    const { code: _pin, ...fiche } = provisioned;
+                    accountData = { email, ...fiche };
+                }
+            }
+
+            // 3. Vérifier les comptes de test
+            if (!authenticated && TEST_ACCOUNTS[email]) {
+                const testAccount = TEST_ACCOUNTS[email];
+                if (testAccount.code === code) {
+                    authenticated = true;
+                    accountData = {
+                        idZNK: testAccount.idZNK,
+                        email: email,
+                        role: testAccount.role,
+                        prenom: email.split('@')[0],
+                        nom: 'Test',
+                        balance: 0,
+                        betis: 0
+                    };
+                }
+            }
+
+            // 3. Authentifier
+            if (authenticated && accountData) {
+                // ⚠️ Aucune des sources d'authentification ci-dessus (ledger, IPC
+                // users.json, ledger appareil, compte provisionné/test, école) ne
+                // porte le champ `avatar` — ce n'est pas une donnée de connexion,
+                // c'est une donnée de profil ajoutée plus tard via infos-user.html.
+                // On va la chercher dans le cache PAR compte (znk_user_<idZNK>),
+                // écrit par ZNKSession.setSession() à chaque mise à jour de profil.
+                // Important : on ne réutilise PAS znk_account pour ça, car c'est un
+                // slot UNIQUE qui contient le dernier compte connecté — dès qu'on
+                // change de compte, il est écrasé, donc inutilisable pour retrouver
+                // la photo d'un compte auquel on se reconnecte après en avoir
+                // utilisé un autre entre-temps (cas exact du bug rapporté).
+                if (!accountData.avatar && accountData.idZNK) {
+                    try {
+                        const cachedUser = JSON.parse(localStorage.getItem('znk_user_' + accountData.idZNK) || 'null');
+                        if (cachedUser && cachedUser.avatar) {
+                            accountData.avatar = cachedUser.avatar;
+                        }
+                    } catch (e) { /* pas de cache valide pour ce compte, rien à récupérer */ }
+                }
+
+                // Identité unique : on (ré)ouvre la session ZNKSession avec le
+                // compte réellement authentifié ici. Sans ça, currentUserId
+                // reste bloqué sur le dernier compte CRÉÉ (via inscription.html)
+                // au lieu de refléter le compte avec lequel on vient de se
+                // connecter — c'est ce qui causait "toujours le même compte".
+                if (window.ZNKSession) {
+                    window.ZNKSession.setSession(accountData);
+                }
+
+                // Sauvegarder aussi dans znk_account (localStorage) : c'est la clé lue par
+                // resolveCurrentProfId() dans creer-lecon.html et getStudentProfId() dans
+                // les ArtEtudes-*.html. Avant ce correctif, znk_account n'était écrit que par
+                // inscription.html — une connexion via le ledger, un compte provisionné, un
+                // compte de test, ou le stockage Electron (user-storage-native.js) laissait
+                // znk_account vide ou périmé, forçant resolveCurrentProfId() à retomber sur un
+                // ID local aléatoire (znk_prof_local_id) déconnecté de l'identité réellement
+                // authentifiée — d'où des leçons publiées sous un profId fantôme, invisibles
+                // ensuite côté élève.
+                localStorage.setItem('znk_account', JSON.stringify(accountData));
+
+                // Sauvegarder en session
+                sessionStorage.setItem('znk_role', accountData.role);
+                sessionStorage.setItem('znk_idZNK', accountData.idZNK);
+                sessionStorage.setItem('znk_userData', JSON.stringify(accountData));
+                sessionStorage.setItem('znk_authenticated', 'true');
+                
+                const roleConfig = ROLES_CONFIG[accountData.role];
+                sessionStorage.setItem('znk_permissions', JSON.stringify(roleConfig.permissions));
+
+                // Élève connecté via un compte prof : c'est cette clé que
+                // ZNKartEtudesDash.html lit pour router automatiquement vers le bon
+                // ArtEtudes-*.html (niveau) et scoper le P2P par classe.
+                if (isEleve) {
+                    localStorage.setItem('znk_eleve_session', JSON.stringify({
+                        loginId: accountData.loginId,
+                        prenom: accountData.prenom,
+                        nom: accountData.nom,
+                        niveau: accountData.niveau,
+                        niveauGroupe: accountData.niveauGroupe,
+                        profId: accountData.profId
+                    }));
+                } else {
+                    // Connexion autre qu'élève : on efface une éventuelle session élève
+                    // laissée par un usage précédent de l'appareil (poste partagé en classe).
+                    localStorage.removeItem('znk_eleve_session');
+                }
+
+                // Branche le nœud P2P local (znk_p2p_protocol.py) sur cette identité,
+                // scopé sur la classe déterminée (niveau élève, ou niveau enseigné par
+                // le prof) — voir startP2PNode/ipcMain.handle('znk-p2p:start') dans main.js.
+                // (Avant : fetch vers http://localhost:5000/api/identity/register, qui ne
+                // correspondait à aucun serveur réellement démarré par main.js.)
+                if (isElectron && ipcRenderer) {
+                    const classeId = computeClasseIdForP2P(accountData);
+                    ipcRenderer.invoke('znk-p2p:start', { classeId })
+                        .then(res => console.log('📡 Nœud P2P:', res))
+                        .catch(e => console.warn('⚠️ Nœud P2P injoignable (znk-p2p:start):', e));
+                } else {
+                    console.log('ℹ️ Nœud P2P non démarré (hors Electron)');
+                }
+
+                resetLoginAttempts(email);
+                unlockApp(accountData.role, roleConfig.name);
+            } else {
+                const { justLocked, remainingAttempts } = registerFailedAttempt(email);
+                if (justLocked) {
+                    showError('🔒 3 tentatives incorrectes. Accès bloqué pendant 3 jours.');
+                } else {
+                    const mot = remainingAttempts > 1 ? 'tentatives' : 'tentative';
+                    showError(`❌ Email ou code incorrect (${remainingAttempts} ${mot} restante${remainingAttempts > 1 ? 's' : ''})`);
+                }
+                enteredCode = '';
+                updateCodeDisplay();
+            }
+        }
+
+        // ========================================
+        // Modifier son propre code d'accès (self-service). Vérifie l'ancien code
+        // contre le ledger avant d'accepter le nouveau — évite qu'un tiers change
+        // le code de quelqu'un d'autre juste en connaissant son email.
+        // ========================================
+        async function openChangePinFlow() {
+            const email = (prompt('Votre email ZNK (ex: prenom@echo.znk) :') || '').trim().toLowerCase();
+            if (!email) return;
+
+            const found = await znkFindLedgerUserByEmail(email);
+            if (!found) {
+                alert('❌ Aucune ID complète trouvée pour cet email dans le système.');
+                return;
+            }
+
+            const currentPin = prompt('Votre code actuel (4 chiffres) :');
+            if (currentPin !== found.user.pin) {
+                alert('❌ Code actuel incorrect.');
+                return;
+            }
+
+            const newPin = prompt('Nouveau code (4 chiffres) :');
+            if (!newPin || !/^\d{4}$/.test(newPin.trim())) {
+                alert('❌ Le nouveau code doit contenir exactement 4 chiffres.');
+                return;
+            }
+
+            found.user.pin = newPin.trim();
+            found.ledger.users[found.user.id] = found.user;
+            await znkLedgerSave(found.ledger);
+
+            alert('✅ Code d\'accès mis à jour. Vous pouvez vous connecter avec votre nouveau code.');
+        }
+
+        function showNetworkStatus(message, persistBriefly) {
+            const el = document.getElementById('networkStatus');
+            if (!el) return;
+            el.textContent = message;
+            el.style.display = 'block';
+            if (persistBriefly) setTimeout(hideNetworkStatus, 1500);
+        }
+        function hideNetworkStatus() {
+            const el = document.getElementById('networkStatus');
+            if (el) el.style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message || 'Erreur de connexion';
+            errorEl.classList.add('show');
+            
+            enteredCode = '';
+            updateCodeDisplay();
+            
+            setTimeout(() => {
+                errorEl.classList.remove('show');
+            }, 2500);
+        }
+
+        function unlockApp(role, roleName) {
+            const successMsg = document.getElementById('successMessage');
+            successMsg.textContent = `✅ Bienvenue ${roleName}`;
+            successMsg.style.display = 'block';
+
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+
+                const roleConfig = ROLES_CONFIG[role];
+                const hasChoiceToMake = !!roleConfig.hub && !localStorage.getItem(znkNavPrefKey(role));
+
+                if (hasChoiceToMake) {
+                    pendingRoleAfterChoice = role;
+                    document.getElementById('navChoiceScreen').classList.remove('hidden');
+                } else {
+                    document.getElementById('loadingOverlay').style.display = 'flex';
+                    setTimeout(() => redirectToHub(role), 300);
+                }
+            }, 800);
+        }
+
+        // Mémoire du rôle en attente pendant que l'écran de choix hub/dash est affiché.
+        let pendingRoleAfterChoice = null;
+
+        // Enregistre la préférence de navigation (hub vs dash) et poursuit la connexion.
+        // Stocké en local pour l'instant (cohérent avec le reste du système, qui est
+        // local-first / P2P) — prêt à être synchronisé plus tard via un compte VPS :
+        // il suffira, le jour venu, d'ajouter ici un appel réseau qui écrit la même
+        // valeur côté serveur, sans changer la logique de redirectToHub().
+        function chooseNavPref(pref) {
+            const role = pendingRoleAfterChoice;
+            localStorage.setItem(znkNavPrefKey(role), pref);
+            document.getElementById('navChoiceScreen').classList.add('hidden');
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            pendingRoleAfterChoice = null;
+            setTimeout(() => redirectToHub(role), 300);
+        }
+        window.chooseNavPref = chooseNavPref;
+
+        function redirectToHub(role) {
+            const roleConfig = ROLES_CONFIG[role];
+            const navPref = localStorage.getItem(znkNavPrefKey(role));
+            let targetPage = (navPref === 'hub' && roleConfig.hub) ? roleConfig.hub : roleConfig.dashboard;
+            
+            console.log('🚀 Redirection vers:', targetPage, '(rôle:', role, ', préférence:', navPref, ')');
+            
+            // Pour Electron, vérifier si le fichier existe
+            if (isElectron) {
+                // Retirer le ./ du début si présent
+                targetPage = targetPage.replace('./', '');
+                console.log('📂 Mode Electron - Chemin ajusté:', targetPage);
+                
+                if (ipcRenderer) {
+                    console.log('📡 Utilisation IPC pour navigation...');
+                    ipcRenderer.send('navigate-to-module', targetPage);
+                    return;
+                }
+            }
+            
+            // Mode web normal
+            try {
+                console.log('🌐 Mode Web - Navigation directe');
+                window.location.href = targetPage;
+            } catch (error) {
+                console.error('❌ Erreur de navigation:', error);
+                showError('Erreur: Impossible de charger ' + targetPage);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                // Retour à l'intro après 2 secondes
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            }
+        }
+
+        if (ipcRenderer) {
+            ipcRenderer.on('navigation-success', (event, data) => {
+                console.log('✅ Navigation réussie:', data);
+                document.getElementById('loadingOverlay').style.display = 'none';
+            });
+            
+            ipcRenderer.on('navigation-error', (event, error) => {
+                console.error('❌ Erreur de navigation IPC:', error);
+                showError('Fichier non trouvé: ' + error.file);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                // Retour à l'intro
+                setTimeout(() => {
+                    console.log('🔙 Retour à l\'intro...');
+                    window.location.href = 'index.html';
+                }, 2000);
+            });
+            
+            ipcRenderer.on('module-not-found', (event, data) => {
+                console.error('⚠️ Module non trouvé:', data);
+                showError('Module ' + data.module + ' non trouvé');
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                // Retour à l'intro
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            });
+        }
+
+        window.ZNKAuth = {
+            getCurrentRole: function() {
+                return sessionStorage.getItem('znk_role');
+            },
+            isAuthenticated: function() {
+                return sessionStorage.getItem('znk_authenticated') === 'true';
+            },
+            getPermissions: function() {
+                return JSON.parse(sessionStorage.getItem('znk_permissions') || '[]');
+            },
+            // Préférence de navigation (hub vs dash) — lisible/modifiable depuis
+            // n'importe quel module déjà connecté (ex: une tuile "Changer
+            // d'affichage" dans ZNKMembresDash.html ou hub-membre.html).
+            getNavPref: function(role) {
+                const r = role || sessionStorage.getItem('znk_role');
+                return r ? localStorage.getItem(znkNavPrefKey(r)) : null;
+            },
+            setNavPref: function(pref, role) {
+                const r = role || sessionStorage.getItem('znk_role');
+                if (r) localStorage.setItem(znkNavPrefKey(r), pref);
+            },
+            logout: function() {
+                sessionStorage.clear();
+                // Coupe aussi le pointeur ZNKSession (currentUserId), sinon un
+                // module ouvert ensuite continuerait de voir l'ancien compte.
+                localStorage.removeItem('currentUserId');
+                localStorage.removeItem('currentUserName');
+                location.reload();
+            },
+            detectRole: detectRoleFromId
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initAuth();
+            console.log('🔐 Système d\'authentification ZNK initialisé');
+            console.log('✅ Détection automatique du type de compte');
+            console.log('📧 Format email: prenom@echo.znk (visiteurs)');
+            
+            if (ipcRenderer) {
+                ipcRenderer.send('auth-screen-ready');
+            }
+        });
+
+        // Easter egg: Triple clic sur logo
+        let logoClickCount = 0;
+        document.querySelector('.znk-logo').addEventListener('click', () => {
+            logoClickCount++;
+            if (logoClickCount === 3) {
+                console.log('🔓 Mode développeur activé');
+                document.getElementById('infoText').style.color = '#00ffff';
+                logoClickCount = 0;
+            }
+            setTimeout(() => { logoClickCount = 0; }, 2000);
+        });
+
+        console.log('✅ Auth-hub ZNK chargé avec détection automatique');
+    </script>
+</body>
+</html>

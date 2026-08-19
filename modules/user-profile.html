@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>©ZNK - Profil Social Local</title>
+    <style>
+        :root {
+            --znk-bg-primary: #0f0f23;
+            --znk-bg-secondary: #1a0a53;
+            --znk-bg-card: #16213e;
+            --znk-accent: #a77b00;
+            --znk-accent-hover: #553d00;
+            --znk-text-primary: #ffffff;
+            --znk-text-secondary: #b8c5d6;
+            --znk-text-muted: #8b949e;
+            --znk-border: #002e7a;
+            --znk-success: #238636;
+            --znk-warning: #d29922;
+            --znk-danger: #da3633;
+            --znk-glass: rgba(22, 33, 62, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--znk-bg-primary);
+            color: var(--znk-text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Profil artiste */
+        .artist-profile {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .artist-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--znk-accent), #553d00);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin: 0 auto 12px;
+            border: 3px solid rgba(74, 158, 255, 0.3);
+            box-shadow: 0 0 30px rgba(74, 158, 255, 0.4);
+            overflow: hidden;
+        }
+
+        .artist-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .artist-stats {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 12px;
+            border-top: 1px solid var(--znk-border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--znk-accent);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--znk-text-muted);
+            margin-top: 4px;
+        }
+
+        /* Onglets */
+        .tabs-container {
+            display: flex;
+            gap: 8px;
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--znk-text-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .tab-btn.active {
+            background: var(--znk-accent);
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--znk-text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Créer publication */
+        .create-post {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .create-post-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .create-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--znk-accent), #553d00);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .create-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .create-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--znk-border);
+            border-radius: 12px;
+            padding: 12px;
+            color: var(--znk-text-primary);
+            font-size: 14px;
+            resize: vertical;
+            min-height: 70px;
+            font-family: inherit;
+        }
+
+        .create-input:focus {
+            outline: none;
+            border-color: var(--znk-accent);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .create-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .media-btn {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--znk-border);
+            color: var(--znk-text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .media-btn:hover {
+            background: rgba(74, 158, 255, 0.1);
+            border-color: var(--znk-accent);
+            color: var(--znk-accent);
+        }
+
+        .media-preview {
+            display: none;
+            position: relative;
+            margin-top: 10px;
+            border: 1px solid var(--znk-border);
+            border-radius: 12px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            align-items: center;
+            gap: 10px;
+        }
+
+        .media-preview.active { display: flex; }
+
+        .media-preview img, .media-preview video {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        .media-preview .mp-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .media-preview .mp-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .media-preview .mp-note {
+            font-size: 11px;
+            color: var(--znk-text-muted);
+            margin-top: 2px;
+        }
+
+        .media-preview .mp-remove {
+            background: none;
+            border: none;
+            color: var(--znk-text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .media-preview .mp-remove:hover { color: var(--znk-danger); }
+
+        .publish-btn {
+            margin-left: auto;
+            background: linear-gradient(135deg, var(--znk-accent), var(--znk-accent-hover));
+            color: white;
+            font-weight: 600;        }
+
+        .publish-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+        }
+
+        /* Posts */
+        .feed-post {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feed-post:hover {
+            border-color: var(--znk-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(74, 158, 255, 0.15);
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .post-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--znk-accent), #553d00);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .post-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .post-info {
+            flex: 1;
+        }
+
+        .post-author {
+            font-weight: 600;
+            color: var(--znk-text-primary);
+            margin-bottom: 2px;
+            font-size: 14px;
+        }
+
+        .post-time {
+            color: var(--znk-text-muted);
+            font-size: 11px;
+        }
+
+        .post-delete {
+            color: var(--znk-danger);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 16px;
+            background: none;
+            border: none;
+        }
+
+        .post-delete:hover {
+            background: rgba(218, 54, 51, 0.1);
+        }
+
+        .post-content {
+            margin-bottom: 12px;
+            color: var(--znk-text-secondary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+
+        .post-media {
+            background: var(--znk-bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+            border: 1px solid var(--znk-border);
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--znk-border);
+            color: var(--znk-text-muted);
+            font-size: 12px;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .action-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid var(--znk-border);
+            color: var(--znk-text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+
+        .action-btn:hover {
+            background: rgba(74, 158, 255, 0.1);
+            color: var(--znk-accent);
+            border-color: var(--znk-accent);
+        }
+
+        .action-btn.liked {
+            color: #e0245e;
+            border-color: #e0245e;
+            background: rgba(224, 36, 94, 0.1);
+        }
+
+        /* Status indicator */
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-offline {
+            background: rgba(139, 148, 158, 0.2);
+            border: 1px solid var(--znk-text-muted);
+            color: var(--znk-text-muted);
+        }
+
+        .status-online {
+            background: rgba(35, 134, 54, 0.2);
+            border: 1px solid var(--znk-success);
+            color: var(--znk-success);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .notification.success {
+            background: var(--znk-success);
+            color: white;
+        }
+
+        .notification.warning {
+            background: var(--znk-warning);
+            color: white;
+        }
+
+        .notification.error {
+            background: var(--znk-danger);
+            color: white;
+        }
+
+        .notification.info {
+            background: var(--znk-accent);
+            color: white;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--znk-text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        /* Community feed */
+        .community-post {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .community-post:hover {
+            border-color: var(--znk-accent);
+            transform: translateY(-2px);
+        }
+
+        .pub-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .pub-badge.fulgurance {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .pub-badge.audio {
+            background: rgba(147, 51, 234, 0.1);
+            border-color: #9333ea;
+            color: #9333ea;
+        }
+
+        .pub-badge.code {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--znk-bg-card);
+            border-radius: 12px;
+            font-size: 11px;
+            color: var(--znk-text-secondary);
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 12px;
+            }
+        }
+    </style>
+    <script src="/js/znk-session.js"></script>
+</head>
+<body>
+    <!-- Connection Status -->
+    <div class="connection-status status-offline" id="connectionStatus">
+        <div class="status-dot" style="background: var(--znk-text-muted);"></div>
+        <span>Mode Local</span>
+    </div>
+
+    <div class="main-container">
+        <!-- Profil artiste -->
+        <div class="artist-profile">
+            <div class="artist-avatar-large" id="profileAvatar">
+                <img id="profileAvatarImg" style="display:none;" alt="Avatar">
+            </div>
+            <h2 class="artist-name" id="profileName">Chargement...</h2>
+            <p class="artist-title" id="profileStatus">Membre ZNK</p>
+            <p class="artist-handle" id="profileHandle">@echo.znk</p>
+            
+            <div class="artist-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="studiosCount">0</div>
+                    <div class="stat-label">Studios</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="followersCount">0</div>
+                    <div class="stat-label">Abonnés</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="postsCount">0</div>
+                    <div class="stat-label">Publications</div>
+                </div>
+            </div>
+
+            <div id="publishProfileRow" style="margin-top:12px;">
+                <button class="media-btn publish-btn" id="publishProfileBtn" onclick="publishProfileToCloud()">🌐 Publier mon profil</button>
+                <p id="publishProfileStatus" style="font-size:11px; opacity:0.7; margin-top:6px; display:none;"></p>
+            </div>
+        </div>
+
+        <!-- Publications épinglées : affichées en lecture seule ici, et lues
+             depuis le ledger par ZNKMembresDash.html pour les montrer dans
+             sa colonne de droite quand ce profil est ouvert. Le formulaire
+             d'ajout n'apparaît que sur son propre compte (pas en vue publique). -->
+        <div class="pinned-posts-section" style="margin: 16px auto; max-width: 480px; padding: 14px; border: 1px solid rgba(0,212,255,0.2); border-radius: 12px; background: rgba(0,212,255,0.04);">
+            <h3 style="font-size:14px; color:#00d4ff; margin:0 0 10px 0;">📌 Publications épinglées</h3>
+            <div id="pinnedPostsList"></div>
+            <div id="pinnedPostsForm" style="display:none; margin-top:10px;">
+                <input type="text" id="pinnedPostText" placeholder="Texte court (ex: Nouvelle collecte ouverte)" maxlength="80" style="width:100%; padding:8px; margin-bottom:6px; border-radius:8px; background:#111; color:#fff; border:1px solid #333; box-sizing:border-box;">
+                <input type="url" id="pinnedPostLink" placeholder="Lien (optionnel)" style="width:100%; padding:8px; margin-bottom:6px; border-radius:8px; background:#111; color:#fff; border:1px solid #333; box-sizing:border-box;">
+                <button class="media-btn publish-btn" onclick="addPinnedPost()">📌 Épingler</button>
+            </div>
+        </div>
+
+        <!-- Onglets -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('my-posts')">
+                📝 Mes Publications
+            </button>
+            <button class="tab-btn" onclick="switchTab('community')">
+                🌐 Communauté ZNK
+            </button>
+        </div>
+
+        <!-- Contenu Onglet: Mes Publications -->
+        <div class="tab-content active" id="tab-my-posts">
+            <!-- Créer une publication -->
+            <div class="create-post">
+                <div class="create-post-header">
+                    <div class="create-avatar" id="createAvatar">
+                        <img id="createAvatarImg" style="display:none;" alt="Avatar">
+                    </div>
+                    <textarea 
+                        class="create-input" 
+                        id="postInput" 
+                        placeholder="Partagez vos créations, idées ou projets..."></textarea>
+                </div>
+                <div class="media-preview" id="mediaPreview">
+                    <div id="mediaPreviewThumb"></div>
+                    <div class="mp-info">
+                        <div class="mp-name" id="mediaPreviewName"></div>
+                        <div class="mp-note" id="mediaPreviewNote"></div>
+                    </div>
+                    <button class="mp-remove" onclick="removeAttachedMedia()" title="Retirer">✕</button>
+                </div>
+
+                <div class="create-actions">
+                    <button class="media-btn" onclick="attachMedia('audio')">
+                        <span>🎵</span> Audio
+                    </button>
+                    <button class="media-btn" onclick="attachMedia('image')">
+                        <span>🖼️</span> Image
+                    </button>
+                    <button class="media-btn" id="monetizeToggleBtn" onclick="toggleMonetizePanel()">
+                        <span>💰</span> Vendre
+                    </button>
+                    <button class="media-btn publish-btn" onclick="publishPost()">
+                        <span>📤</span> Publier
+                    </button>
+                </div>
+
+                <!-- Panneau monétisation : concert / whatsznk / oeuvre / copyright / cours -->
+                <div id="monetizePanel" style="display:none; margin-top:10px; padding:12px; border:1px solid var(--znk-border, rgba(0,212,255,0.25)); border-radius:10px; background: rgba(0,212,255,0.05);">
+                    <div style="font-size:12px; font-weight:600; margin-bottom:8px; color:#00d4ff;">💰 Ajouter une offre à cette publication</div>
+                    <select id="monetizeType" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; background:#111; color:#fff; border:1px solid #333;" onchange="onMonetizeTypeChange()">
+                        <option value="">Aucune vente</option>
+                        <option value="concert">🎵 Place de concert</option>
+                        <option value="whatsznk">💬 Abonnement WhatsZNK</option>
+                        <option value="artwork">🎨 Œuvre (peinture, NFT, musique...)</option>
+                        <option value="copyright">© Copyright</option>
+                        <option value="lesson">💃 Cours (danse, etc.)</option>
+                    </select>
+                    <input type="text" id="monetizeName" placeholder="Nom de l'offre (ex: Concert Live Yaoundé)" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; background:#111; color:#fff; border:1px solid #333;">
+                    <input type="number" id="monetizePrice" placeholder="Prix (€)" min="0" step="0.01" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; background:#111; color:#fff; border:1px solid #333;">
+                    <input type="date" id="monetizeDate" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; background:#111; color:#fff; border:1px solid #333; display:none;">
+                    <div style="font-size:10px; color:#aaa;">La commission ZNK et le soutien projets s'ajoutent au prix affiché, à la charge de l'acheteur.</div>
+                </div>
+            </div>
+
+            <!-- Liste des posts -->
+            <div id="feedPosts"></div>
+        </div>
+
+        <!-- Contenu Onglet: Communauté -->
+        <div class="tab-content" id="tab-community">
+            <div id="communityFeed"></div>
+        </div>
+    </div>
+
+    <input type="file" id="postImageInput" accept="image/*" style="display:none;" onchange="handlePostImageUpload(event)">
+    <input type="file" id="postAudioInput" accept="audio/*" style="display:none;" onchange="handlePostAudioUpload(event)">
+
+    <script>
+        // ========================================
+        // VARIABLES GLOBALES
+        // ========================================
+        let currentUser = null;
+        let selectedMedia = null;
+        let selectedMonetization = null;
+        const MAX_POSTS = 30;
+        let isOnline = false;
+
+        // Mêmes clés de session que infos-user.html : la session active vit dans
+        // sessionStorage (par connexion), avec un repli sur le compte enregistré
+        // localement si la page est ouverte hors du flux de connexion.
+        const SESSION_KEY = 'znk_userData';
+        const ACCOUNT_KEY = 'znk_account';
+
+        // Contenu PARTAGÉ (visible par tous) : même mécanisme que ZNK-LIVREmoi.html /
+        // ZNKLibrairie.html / artflow.html / elevesArt.html — vide = uniquement
+        // les comptes présents sur cet appareil (comportement actuel, inchangé).
+        // Unifié avec WhatsZNK.html / expo-manager.html / ZNKExpos.html : même
+        // clé de stockage (znk_backend_url) et même paramètre ?backend=, pour que
+        // régler l'adresse du VPS une fois suffise pour tous ces modules. On
+        // reste compatible avec l'ancienne clé znk_cloud_url si elle existe déjà
+        // et que znk_backend_url n'a jamais été réglée.
+        function znkResolveBackendUrl(){
+            try {
+                const fromUrl = new URLSearchParams(window.location.search).get('backend');
+                if (fromUrl) { localStorage.setItem('znk_backend_url', fromUrl); return fromUrl; }
+                return localStorage.getItem('znk_backend_url') || localStorage.getItem('znk_cloud_url') || '';
+            } catch(e) { return ''; }
+        }
+        const ZNK_CLOUD_URL = znkResolveBackendUrl();
+        function znkCloudPath(path){ return (ZNK_CLOUD_URL || '') + path; }
+
+        // Clé publique du profil dans le cloud : volontairement l'email, PAS
+        // l'ID ZNK interne (auto-généré) qui reste privé — voir la note sur
+        // profileStatus plus bas ("ID ZNK volontairement PAS affiché ici").
+        // L'email est déjà affiché publiquement (profileHandle), donc adapté
+        // à servir de clé publique de recherche.
+        function publicProfileKey(user) {
+            const email = (user && (user.emailZnk || user.email) || '').toLowerCase().trim();
+            return email ? encodeURIComponent(email) : null;
+        }
+
+        // ========================================
+        // MODE "PROFIL PUBLIC" (lecture seule)
+        // ========================================
+        // Permet d'ouvrir le profil d'un ID persistant précis (ex: fida@echo.znk)
+        // depuis un raccourci fixe (icône colonne de gauche), indépendamment de
+        // qui est réellement connecté sur cet appareil. On cherche par email
+        // car ledger.users est indexé par l'ID auto-généré (ZNK-année-random),
+        // pas par email — voir ?viewUserEmail=... dans l'URL du module.
+        const PUBLIC_VIEW_EMAIL = new URLSearchParams(window.location.search).get('viewUserEmail');
+        let isPublicView = false;
+
+        function getUserId() {
+            if (!currentUser) return 'guest';
+            return currentUser.id || currentUser.idZNK || 'guest';
+        }
+
+        // Identité unique : ZNKSession (localStorage['currentUserId'] + 'znk_user_<id>')
+        // est la source de vérité partagée avec nomad.html, infos-user.html, CIZNK.html.
+        async function loadSessionUser() {
+            if (window.ZNKSession) {
+                await window.ZNKSession.ready;
+                const current = window.ZNKSession.getCurrentUser();
+                if (current) return current;
+            }
+            // Repli legacy pour compatibilité pendant la migration.
+            const stored = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(ACCOUNT_KEY);
+            if (stored) {
+                try { return JSON.parse(stored); } catch (e) { console.warn('Session invalide:', e); }
+            }
+            return null;
+        }
+
+        // Clés scopées par compte, pour que chaque compte de test (admin, membre, etc.)
+        // ait ses propres stats/posts/vidéo au lieu de les partager via localStorage.
+        function scopedKey(baseKey) {
+            return `${baseKey}_${getUserId()}`;
+        }
+
+        // ========================================
+        // PERSISTANCE ELECTRON (même API que main.js / preload.js)
+        // Quand l'app tourne dans ZNK (Electron), les vidéos/images sont
+        // copiées sur disque et on ne stocke qu'un chemin/URL — au lieu
+        // d'embarquer le fichier en base64 dans localStorage (qui a un quota
+        // de quelques Mo et échoue silencieusement au-delà).
+        // ========================================
+        const znkApi = window.electronAPI || null;
+        const isElectron = !!(znkApi && znkApi.getPathForFile);
+
+        async function persistImageFile(file) {
+            if (isElectron && znkApi.makeMaterialPersistent) {
+                try {
+                    const realPath = znkApi.getPathForFile(file);
+                    if (realPath) {
+                        const mediaId = `post_${Date.now()}`;
+                        const res = await znkApi.makeMaterialPersistent({ sourcePath: realPath, materialId: mediaId, fileName: file.name, type: 'post-image' });
+                        if (res && res.success) return { src: res.url, persistent: true };
+                    }
+                } catch (e) { console.warn('persistImageFile: repli base64 —', e); }
+            }
+            const src = await readFileAsDataUrl(file);
+            return { src, persistent: false };
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Lecture du fichier échouée'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // localStorage.setItem peut lever une exception silencieuse si le quota
+        // est dépassé (typique avec des vidéos en base64) : on la rend visible.
+        function safeSetItem(key, value) {
+            try {
+                localStorage.setItem(key, value);
+                return true;
+            } catch (e) {
+                console.error('safeSetItem a échoué:', e);
+                showNotification('❌ Stockage plein — ce fichier est trop volumineux pour être enregistré localement', 'warning');
+                return false;
+            }
+        }
+
+        // ========================================
+        // DETECTION CONNECTION
+        // ========================================
+        let znkServerReachable = false;
+
+        async function checkConnection() {
+            isOnline = navigator.onLine;
+            znkServerReachable = false;
+
+            if (isOnline && ZNK_CLOUD_URL) {
+                try {
+                    const resp = await fetch(znkCloudPath('/health'), { cache: 'no-store' });
+                    znkServerReachable = resp.ok;
+                } catch (e) {
+                    znkServerReachable = false;
+                }
+            }
+
+            updateConnectionStatus();
+
+            if (znkServerReachable) {
+                syncWithP2P();
+            }
+        }
+
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            const dotEl = statusEl.querySelector('.status-dot');
+            const textEl = statusEl.querySelector('span');
+
+            if (znkServerReachable) {
+                statusEl.className = 'connection-status status-online';
+                dotEl.style.background = 'var(--znk-success)';
+                textEl.textContent = 'En ligne • Connecté au serveur ZNK';
+            } else if (!isOnline) {
+                statusEl.className = 'connection-status status-offline';
+                dotEl.style.background = 'var(--znk-text-muted)';
+                textEl.textContent = 'Mode Local (hors ligne)';
+            } else if (!ZNK_CLOUD_URL) {
+                statusEl.className = 'connection-status status-offline';
+                dotEl.style.background = 'var(--znk-text-muted)';
+                textEl.textContent = 'Mode Local (serveur non configuré)';
+            } else {
+                statusEl.className = 'connection-status status-offline';
+                dotEl.style.background = 'var(--znk-text-muted)';
+                textEl.textContent = 'Mode Local (serveur ZNK injoignable)';
+            }
+        }
+
+        window.addEventListener('online', checkConnection);
+        window.addEventListener('offline', checkConnection);
+
+        // ========================================
+        // GESTION PROFIL UTILISATEUR
+        // ========================================
+        async function loadUserProfile() {
+            let user;
+
+            if (PUBLIC_VIEW_EMAIL) {
+                isPublicView = true;
+                const ledger = await znkLedgerLoad();
+                const allUsers = Object.values(ledger.users || {});
+                user = allUsers.find(u => (u.email || '').toLowerCase() === PUBLIC_VIEW_EMAIL.toLowerCase());
+
+                // Pas trouvé localement (utilisateur sur un autre appareil) :
+                // on tente le serveur partagé, s'il est configuré.
+                if (!user && ZNK_CLOUD_URL) {
+                    try {
+                        const resp = await fetch(znkCloudPath(`/api/profiles/${encodeURIComponent(PUBLIC_VIEW_EMAIL.toLowerCase())}`));
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            renderCloudProfile(data.profile);
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ Profil distant injoignable:', e);
+                    }
+                }
+
+                if (!user) {
+                    document.getElementById('profileName').textContent = 'Profil introuvable';
+                    document.getElementById('profileStatus').textContent = PUBLIC_VIEW_EMAIL;
+                    document.getElementById('profileHandle').textContent = '';
+                    applyPublicViewRestrictions();
+                    return;
+                }
+            } else {
+                // Priorité à ZNKSession (identité unique), avec repli sur les anciennes
+                // clés de session pour compatibilité pendant la migration.
+                user = await loadSessionUser();
+            }
+            
+            if (user) {
+                try {
+                    currentUser = user;
+                    
+                    // ledger.users (créés via ZNKSECURE) stocke un nom complet
+                    // dans user.name ; la session de connexion normale stocke
+                    // prenom/nom séparés. On gère les deux formes.
+                    const fullName = (user.prenom || user.nom)
+                        ? `${user.prenom || ''} ${user.nom || ''}`.trim()
+                        : (user.name || 'Utilisateur ZNK');
+                    document.getElementById('profileName').textContent = fullName;
+                    
+                    if (user.emailZnk || user.email) {
+                        document.getElementById('profileHandle').textContent = user.emailZnk || user.email;
+                    }
+                    
+                    // ID ZNK volontairement PAS affiché ici : c'est une donnée
+                    // privée (voir demande du 2026-08-06), seul le nom doit
+                    // apparaître publiquement. profileName porte déjà le nom.
+                    document.getElementById('profileStatus').textContent = znkTypeLabel(user.type);
+                    
+                    if (user.avatar) {
+                        const profileImg = document.getElementById('profileAvatarImg');
+                        const createImg = document.getElementById('createAvatarImg');
+                        profileImg.src = user.avatar;
+                        createImg.src = user.avatar;
+                        profileImg.style.display = 'block';
+                        createImg.style.display = 'block';
+                    } else {
+                        const initials = getInitials(fullName);
+                        document.getElementById('profileAvatar').textContent = initials;
+                        document.getElementById('createAvatar').textContent = initials;
+                    }
+                    
+                    loadUserStats();
+                    loadPinnedPosts();
+
+                    if (isPublicView) {
+                        applyPublicViewRestrictions();
+                    } else {
+                        showNotification(`✅ Bienvenue ${fullName} !`, 'success');
+                    }
+                } catch (e) {
+                    console.error('Erreur chargement profil:', e);
+                    useDefaultProfile();
+                }
+            } else {
+                useDefaultProfile();
+            }
+        }
+
+        // Libellé affiché à la place de l'ID (jamais l'ID lui-même, cf. demande
+        // de confidentialité) — dérivé du type de compte créé via ZNKSECURE.
+        function znkTypeLabel(type) {
+            const labels = {
+                admin: 'Admin ZNK',
+                member: 'Membre ZNK',
+                memberPlus: 'Membre+ ZNK',
+                fida: 'Artiste FIDA',
+                enseignant: 'Enseignant ZNK',
+                visitor: 'Visiteur ZNK'
+            };
+            return labels[type] || 'Membre ZNK';
+        }
+
+        // Mode consultation publique (ex: icône "FIDA" en colonne de gauche) :
+        // on affiche le profil d'un ID persistant précis mais on masque tout
+        // ce qui permettrait de le modifier depuis l'appareil de quelqu'un
+        // d'autre (upload vidéo d'intro, composer de post, suppression).
+        function applyPublicViewRestrictions() {
+            document.querySelectorAll('.create-post').forEach(el => el.style.display = 'none');
+
+            document.querySelectorAll('.post-delete').forEach(el => el.style.display = 'none');
+
+            const publishRow = document.getElementById('publishProfileRow');
+            if (publishRow) publishRow.style.display = 'none';
+
+            const communityTabBtn = document.querySelector('.tab-btn[onclick*="community"]');
+            if (communityTabBtn) communityTabBtn.style.display = 'none';
+        }
+
+        // Affiche un profil récupéré depuis le serveur partagé (utilisateur
+        // introuvable sur cet appareil) — mêmes champs que le profil local,
+        // mais les données viennent de /api/profiles/:key au lieu du ledger
+        // local et de localStorage.
+        function renderCloudProfile(profile) {
+            if (!profile) {
+                document.getElementById('profileName').textContent = 'Profil introuvable';
+                document.getElementById('profileStatus').textContent = PUBLIC_VIEW_EMAIL || '';
+                document.getElementById('profileHandle').textContent = '';
+                applyPublicViewRestrictions();
+                return;
+            }
+            document.getElementById('profileName').textContent = profile.name || 'Utilisateur ZNK';
+            document.getElementById('profileStatus').textContent = profile.typeLabel || 'Membre ZNK';
+            document.getElementById('profileHandle').textContent = PUBLIC_VIEW_EMAIL || '';
+
+            const avatarEl = document.getElementById('profileAvatar');
+            if (avatarEl && profile.avatar) avatarEl.innerHTML = `<img src="${profile.avatar}" alt="Avatar">`;
+
+            const stats = profile.stats || {};
+            document.getElementById('studiosCount').textContent = stats.studios || 0;
+            document.getElementById('followersCount').textContent = stats.followers || 0;
+            document.getElementById('postsCount').textContent = stats.posts || (profile.posts || []).length;
+
+            applyPublicViewRestrictions();
+            loadPosts(profile.posts || []);
+        }
+
+        function useDefaultProfile() {
+            currentUser = {
+                prenom: 'Utilisateur',
+                nom: 'ZNK',
+                id: 'ZNK-000000',
+                emailZnk: '@user.znk'
+            };
+            
+            document.getElementById('profileName').textContent = 'Utilisateur ZNK';
+            document.getElementById('profileAvatar').textContent = 'UZ';
+            document.getElementById('createAvatar').textContent = 'UZ';
+        }
+
+        function loadUserStats() {
+            const stats = JSON.parse(localStorage.getItem(scopedKey('znkUserStats')) || '{}');
+            document.getElementById('studiosCount').textContent = stats.studios || 0;
+            document.getElementById('followersCount').textContent = stats.followers || 0;
+            document.getElementById('postsCount').textContent = stats.posts || 0;
+        }
+
+        function saveUserStats() {
+            const stats = {
+                studios: parseInt(document.getElementById('studiosCount').textContent) || 0,
+                followers: parseInt(document.getElementById('followersCount').textContent) || 0,
+                posts: parseInt(document.getElementById('postsCount').textContent) || 0
+            };
+            localStorage.setItem(scopedKey('znkUserStats'), JSON.stringify(stats));
+        }
+
+        // Publie le profil public (nom, avatar, stats, publications) sur le
+        // serveur partagé, pour que les utilisateurs distants puissent le
+        // consulter via ?viewUserEmail=... — mêmes infos déjà visibles ici,
+        // rien de plus (l'ID ZNK interne n'est jamais envoyé).
+        async function publishProfileToCloud() {
+            const statusEl = document.getElementById('publishProfileStatus');
+            if (!ZNK_CLOUD_URL) {
+                statusEl.style.display = 'block';
+                statusEl.textContent = "Aucun serveur partagé configuré pour l'instant — ce profil reste local.";
+                return;
+            }
+            const key = publicProfileKey(currentUser);
+            if (!key) {
+                statusEl.style.display = 'block';
+                statusEl.textContent = 'Impossible de publier : ce compte n\'a pas d\'email ZNK.';
+                return;
+            }
+            const btn = document.getElementById('publishProfileBtn');
+            btn.disabled = true;
+            statusEl.style.display = 'block';
+            statusEl.textContent = 'Publication en cours…';
+            try {
+                const stats = JSON.parse(localStorage.getItem(scopedKey('znkUserStats')) || '{}');
+                const posts = JSON.parse(localStorage.getItem(scopedKey('znkUserPosts')) || '[]');
+                const fullName = document.getElementById('profileName').textContent;
+                const resp = await fetch(znkCloudPath(`/api/profiles/${key}`), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: fullName,
+                        avatar: currentUser && currentUser.avatar || null,
+                        typeLabel: document.getElementById('profileStatus').textContent,
+                        stats,
+                        posts
+                    })
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                statusEl.textContent = '✅ Profil publié — visible par les autres utilisateurs.';
+            } catch (e) {
+                statusEl.textContent = '⚠️ Publication impossible : ' + e.message;
+            } finally {
+                btn.disabled = false;
+                setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+            }
+        }
+
+        function getInitials(name) {
+            const parts = name.split(' ').filter(p => p.length > 0);
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        // ========================================
+        // GESTION PUBLICATIONS
+        // ========================================
+        function publishPost() {
+            const input = document.getElementById('postInput');
+            const content = input.value.trim();
+            
+            if (!content && !selectedMedia) {
+                showNotification('⚠️ Écrivez quelque chose ou ajoutez un média', 'warning');
+                return;
+            }
+
+            const monetizeTypeSelected = document.getElementById('monetizeType').value;
+            if (monetizeTypeSelected) {
+                selectedMonetization = collectMonetizationFromForm();
+                if (!selectedMonetization) return; // offre invalide, message déjà affiché
+            } else {
+                selectedMonetization = null;
+            }
+            
+            let posts = JSON.parse(localStorage.getItem(scopedKey('znkUserPosts')) || '[]');
+            
+            if (posts.length >= MAX_POSTS) {
+                posts = posts.slice(0, MAX_POSTS - 1);
+            }
+            
+            const newPost = {
+                id: Date.now(),
+                content: content,
+                media: selectedMedia,
+                author: currentUser ? `${currentUser.prenom} ${currentUser.nom}`.trim() : 'Utilisateur ZNK',
+                authorId: currentUser?.id || 'ZNK-000000',
+                avatar: currentUser?.avatar || null,
+                timestamp: Date.now(),
+                likes: 0,
+                comments: 0,
+                shares: 0,
+                likedByUser: false,
+                visibility: 'public',
+                monetization: selectedMonetization
+            };
+            
+            posts.unshift(newPost);
+            localStorage.setItem(scopedKey('znkUserPosts'), JSON.stringify(posts));
+            
+            const currentCount = parseInt(document.getElementById('postsCount').textContent) || 0;
+            document.getElementById('postsCount').textContent = currentCount + 1;
+            saveUserStats();
+            
+            input.value = '';
+            selectedMedia = null;
+            selectedMonetization = null;
+            document.getElementById('mediaPreview').classList.remove('active');
+            document.getElementById('monetizePanel').style.display = 'none';
+            document.getElementById('monetizeType').value = '';
+            document.getElementById('monetizeName').value = '';
+            document.getElementById('monetizePrice').value = '';
+            document.getElementById('monetizeDate').value = '';
+            
+            loadPosts();
+            showNotification('✅ Publication créée avec succès !', 'success');
+            
+            // Si en ligne et un serveur cloud est configuré, republie le profil
+            // (stats + posts à jour) pour que ce nouveau post soit réellement
+            // visible par les autres utilisateurs.
+            if (isOnline && ZNK_CLOUD_URL) {
+                publishProfileToCloud();
+            }
+        }
+
+        function attachMedia(type) {
+            if (type === 'image') document.getElementById('postImageInput').click();
+            else if (type === 'audio') document.getElementById('postAudioInput').click();
+        }
+
+        async function handlePostImageUpload(event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showNotification('⚠️ Veuillez sélectionner une image', 'warning');
+                return;
+            }
+            try {
+                const { src, persistent } = await persistImageFile(file);
+                selectedMedia = { type: 'image', icon: '🖼️', title: file.name, src, persistent };
+                showMediaPreview();
+                showNotification(persistent ? '🖼️ Image attachée (fichier persistant)' : '🖼️ Image attachée', 'success');
+            } catch (e) {
+                console.error('handlePostImageUpload:', e);
+                showNotification('❌ Échec de l\'ajout de l\'image', 'warning');
+            }
+        }
+
+        async function handlePostAudioUpload(event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            if (!file.type.startsWith('audio/')) {
+                showNotification('⚠️ Veuillez sélectionner un fichier audio', 'warning');
+                return;
+            }
+            try {
+                // Pas de pipeline de persistance audio exposé pour les posts (voir preload.js :
+                // makeAudioPersistent existe mais est pensé pour la bibliothèque radio) — base64 direct.
+                const src = await readFileAsDataUrl(file);
+                selectedMedia = { type: 'audio', icon: '🎵', title: file.name, src, persistent: false };
+                showMediaPreview();
+                showNotification('🎵 Audio attaché', 'success');
+            } catch (e) {
+                console.error('handlePostAudioUpload:', e);
+                showNotification('❌ Échec de l\'ajout de l\'audio', 'warning');
+            }
+        }
+
+        function showMediaPreview() {
+            const box = document.getElementById('mediaPreview');
+            const thumb = document.getElementById('mediaPreviewThumb');
+            const name = document.getElementById('mediaPreviewName');
+            const note = document.getElementById('mediaPreviewNote');
+
+            if (!selectedMedia) { box.classList.remove('active'); return; }
+
+            if (selectedMedia.type === 'image') {
+                thumb.innerHTML = `<img src="${selectedMedia.src}" alt="">`;
+            } else if (selectedMedia.type === 'video') {
+                thumb.innerHTML = `<video src="${selectedMedia.src}" muted></video>`;
+            } else {
+                thumb.innerHTML = `<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(255,255,255,0.05);border-radius:8px;">${selectedMedia.icon}</div>`;
+            }
+            name.textContent = selectedMedia.title;
+            note.textContent = selectedMedia.persistent ? '✅ Fichier persistant' : 'Intégré à la publication';
+            box.classList.add('active');
+        }
+
+        function removeAttachedMedia() {
+            selectedMedia = null;
+            document.getElementById('mediaPreview').classList.remove('active');
+        }
+
+        // ========================================
+        // MONÉTISATION D'UNE PUBLICATION (concert, œuvre, copyright, cours...)
+        // ========================================
+        function toggleMonetizePanel() {
+            const panel = document.getElementById('monetizePanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function onMonetizeTypeChange() {
+            const type = document.getElementById('monetizeType').value;
+            document.getElementById('monetizeDate').style.display = (type === 'concert') ? 'block' : 'none';
+        }
+
+        function collectMonetizationFromForm() {
+            const type = document.getElementById('monetizeType').value;
+            if (!type) return null;
+
+            const name = document.getElementById('monetizeName').value.trim();
+            const price = parseFloat(document.getElementById('monetizePrice').value);
+            const date = document.getElementById('monetizeDate').value || null;
+
+            if (!name || isNaN(price) || price <= 0) {
+                showNotification('⚠️ Renseignez un nom et un prix valides pour l\'offre', 'warning');
+                return null;
+            }
+
+            return { type, name, price, date };
+        }
+
+        function loadPosts(postsOverride) {
+            const posts = postsOverride || JSON.parse(localStorage.getItem(scopedKey('znkUserPosts')) || '[]');
+            const feedContainer = document.getElementById('feedPosts');
+            
+            if (posts.length === 0) {
+                feedContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>Aucune publication pour le moment</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Commencez à partager vos créations !</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            feedContainer.innerHTML = posts.map(post => createPostHTML(post)).join('');
+        }
+
+        function createPostHTML(post, readOnly = false) {
+            const initials = getInitials(post.author);
+            const timeAgo = formatTimeAgo(post.timestamp);
+            
+            return `
+                <div class="feed-post" data-post-id="${post.id}">
+                    <div class="post-header">
+                        <div class="post-avatar">
+                            ${post.avatar ? `<img src="${post.avatar}" alt="Avatar">` : initials}
+                        </div>
+                        <div class="post-info">
+                            <div class="post-author">${post.author}</div>
+                            <div class="post-time">${timeAgo}</div>
+                        </div>
+                        <button class="post-delete" onclick="deletePost(${post.id})" style="${(isPublicView || readOnly) ? 'display:none;' : ''}">🗑️</button>
+                    </div>
+
+                    <div class="post-content">${post.content}</div>
+
+                    ${post.media ? `
+                        <div class="post-media">
+                            ${post.media.src && post.media.type === 'image' ? `<img src="${post.media.src}" alt="" style="width:100%;border-radius:10px;display:block;">` : ''}
+                            ${post.media.src && post.media.type === 'video' ? `<video src="${post.media.src}" controls preload="none" style="width:100%;border-radius:10px;display:block;"></video>` : ''}
+                            ${post.media.src && post.media.type === 'audio' ? `<audio src="${post.media.src}" controls style="width:100%;"></audio>` : ''}
+                            ${!post.media.src ? `
+                                <div style="font-size: 32px; margin-bottom: 6px;">${post.media.icon}</div>
+                                <div style="font-weight: 600; margin-bottom: 4px; font-size: 13px;">${post.media.title}</div>
+                                <div style="color: var(--znk-text-secondary); font-size: 12px;">${post.media.info || ''}</div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+
+                    ${post.monetization ? `
+                        <div class="post-media" style="border-color: rgba(255,215,0,0.4); background: rgba(255,215,0,0.06);">
+                            <div style="font-weight:700; color:#FFD700; margin-bottom:4px; font-size:13px;">${znkMonetizeIcon(post.monetization.type)} ${post.monetization.name}</div>
+                            <div style="font-size:12px; color:#ddd;">Prix: ${post.monetization.price.toFixed(2)} €${post.monetization.date ? ` • Date: ${post.monetization.date}` : ''}</div>
+                            <button class="media-btn publish-btn" style="margin-top:8px;" onclick="buyItem(${post.id})">🎟️ Participer / Acheter</button>
+                        </div>
+                    ` : ''}
+
+                    <div class="post-stats">
+                        <span>${post.likes} likes</span>
+                        <span>${post.comments} commentaires</span>
+                        <span>${post.shares} partages</span>
+                    </div>
+
+                    ${readOnly ? '' : `
+                    <div class="post-actions">
+                        <button class="action-btn ${post.likedByUser ? 'liked' : ''}" onclick="likePost(${post.id})">
+                            <span>❤️</span> J'aime
+                        </button>
+                        <button class="action-btn">
+                            <span>💬</span> Commenter
+                        </button>
+                        <button class="action-btn">
+                            <span>📤</span> Partager
+                        </button>
+                    </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function znkMonetizeIcon(type) {
+            return { concert: '🎵', whatsznk: '💬', artwork: '🎨', copyright: '©', lesson: '💃' }[type] || '💰';
+        }
+
+        // ========================================
+        // ZNK NOMAD LEDGER - portefeuille partagé hors-ligne (fichier séparé,
+        // voir main.js / preload.js : znk-nomad:read-data / write-data)
+        // Fallback localStorage si electronAPI absent (test navigateur).
+        // ========================================
+        const ZNK_LEDGER_FALLBACK_KEY = 'znkNomadLedgerFallback';
+
+        async function znkLedgerLoad() {
+            try {
+                if (window.electronAPI && window.electronAPI.znkNomadReadData) {
+                    const raw = await window.electronAPI.znkNomadReadData();
+                    if (raw) return JSON.parse(raw);
+                }
+            } catch (e) { console.warn('znkLedgerLoad:', e); }
+            try {
+                return JSON.parse(localStorage.getItem(ZNK_LEDGER_FALLBACK_KEY) || '{}');
+            } catch (e) { return {}; }
+        }
+
+        async function znkLedgerSave(ledger) {
+            const json = JSON.stringify(ledger);
+            try {
+                if (window.electronAPI && window.electronAPI.znkNomadWriteData) {
+                    await window.electronAPI.znkNomadWriteData(json);
+                }
+            } catch (e) { console.warn('znkLedgerSave:', e); }
+            localStorage.setItem(ZNK_LEDGER_FALLBACK_KEY, json);
+        }
+
+        // ========================================
+        // PUBLICATIONS ÉPINGLÉES — saisies à la main (texte + lien), stockées
+        // dans ledger.users[userId].pinnedPosts. Lues aussi par
+        // ZNKMembresDash.html (colonne de droite) pour les comptes membre+
+        // comme fondation@echo.znk, eveilart@echo.znk, znkofficial@echo.znk.
+        // ========================================
+        const MAX_PINNED_POSTS = 5;
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        function loadPinnedPosts() {
+            const listEl = document.getElementById('pinnedPostsList');
+            const formEl = document.getElementById('pinnedPostsForm');
+            if (!listEl || !currentUser) return;
+
+            const pins = currentUser.pinnedPosts || [];
+
+            listEl.innerHTML = pins.length ? pins.map(p => `
+                <div class="pinned-post-item" style="padding:10px; margin-bottom:8px; border:1px solid rgba(0,212,255,0.15); border-radius:8px; background:rgba(255,255,255,0.03);">
+                    <div style="font-size:13px; color:#fff;">${escapeHtml(p.text)}</div>
+                    ${p.link ? `<a href="${escapeHtml(p.link)}" target="_blank" rel="noopener" style="font-size:12px; color:#00d4ff; word-break:break-all;">${escapeHtml(p.link)}</a>` : ''}
+                    ${!isPublicView ? `<div style="text-align:right; margin-top:4px;"><button onclick="removePinnedPost('${p.id}')" style="background:none; border:none; color:#ff5555; cursor:pointer; font-size:11px;">Retirer</button></div>` : ''}
+                </div>
+            `).join('') : `<div style="font-size:12px; color:var(--znk-text-muted, #888);">Aucune publication épinglée</div>`;
+
+            if (formEl) formEl.style.display = isPublicView ? 'none' : 'block';
+        }
+
+        async function addPinnedPost() {
+            const textEl = document.getElementById('pinnedPostText');
+            const linkEl = document.getElementById('pinnedPostLink');
+            const text = (textEl.value || '').trim();
+            const link = (linkEl.value || '').trim();
+            if (!text) { showNotification('❌ Écris un texte pour la publication épinglée', 'warning'); return; }
+
+            const ledger = await znkLedgerLoad();
+            const userId = getUserId();
+            const user = ledger.users && ledger.users[userId];
+            if (!user) { showNotification('❌ Compte introuvable dans le ledger', 'warning'); return; }
+
+            if (!user.pinnedPosts) user.pinnedPosts = [];
+            if (user.pinnedPosts.length >= MAX_PINNED_POSTS) {
+                showNotification(`❌ Maximum ${MAX_PINNED_POSTS} publications épinglées — retire-en une d'abord`, 'warning');
+                return;
+            }
+
+            user.pinnedPosts.unshift({ id: 'pin_' + Date.now(), text, link, createdAt: Date.now() });
+            await znkLedgerSave(ledger);
+
+            currentUser.pinnedPosts = user.pinnedPosts;
+            textEl.value = '';
+            linkEl.value = '';
+            loadPinnedPosts();
+            showNotification('📌 Publication épinglée', 'success');
+        }
+
+        async function removePinnedPost(id) {
+            const ledger = await znkLedgerLoad();
+            const userId = getUserId();
+            const user = ledger.users && ledger.users[userId];
+            if (!user || !user.pinnedPosts) return;
+            user.pinnedPosts = user.pinnedPosts.filter(p => p.id !== id);
+            await znkLedgerSave(ledger);
+            currentUser.pinnedPosts = user.pinnedPosts;
+            loadPinnedPosts();
+        }
+
+        function znkGetWallet(ledger, userId, defaults) {
+            if (!ledger.wallets) ledger.wallets = {};
+            if (!ledger.wallets[userId]) {
+                ledger.wallets[userId] = Object.assign({ balance: 50, betis: 0, iban: '', compte: '', om: '' }, defaults || {});
+            }
+            return ledger.wallets[userId];
+        }
+
+        function znkGetConfig(ledger) {
+            if (!ledger.config) ledger.config = { commission: 5, supportRate: 1 };
+            return ledger.config;
+        }
+
+        // Achat déclenché depuis une publication du mur (concert, œuvre, copyright, cours...)
+        // Tout se passe hors connexion : lecture/écriture du fichier ledger local uniquement.
+        async function buyItem(postId) {
+            const posts = JSON.parse(localStorage.getItem(scopedKey('znkUserPosts')) || '[]');
+            const post = posts.find(p => p.id === postId);
+            if (!post || !post.monetization) return;
+
+            const item = post.monetization;
+            const ledger = await znkLedgerLoad();
+            const config = znkGetConfig(ledger);
+            const commission = (item.price * config.commission) / 100;
+            const support = (item.price * config.supportRate) / 100;
+            const total = item.price + commission + support;
+
+            const buyerId = currentUser?.id || 'ZNK-000000';
+            const buyerName = currentUser ? `${currentUser.prenom} ${currentUser.nom}`.trim() : 'Utilisateur ZNK';
+
+            if (buyerId === post.authorId) {
+                showNotification('⚠️ Vous ne pouvez pas acheter votre propre offre', 'warning');
+                return;
+            }
+
+            const confirmMsg = `Confirmer l'achat "${item.name}" ?\n` +
+                `Prix: ${item.price.toFixed(2)} €\n` +
+                `Commission ZNK (${config.commission}%): ${commission.toFixed(2)} €\n` +
+                `Soutien projets (${config.supportRate}%): ${support.toFixed(2)} €\n` +
+                `TOTAL: ${total.toFixed(2)} €`;
+            if (!confirm(confirmMsg)) return;
+
+            const buyerWallet = znkGetWallet(ledger, buyerId, { name: buyerName });
+            if (buyerWallet.balance < total) {
+                showNotification('❌ Solde insuffisant dans votre Nomad', 'error');
+                return;
+            }
+
+            const sellerWallet = znkGetWallet(ledger, post.authorId, { name: post.author });
+            const znkSystemWallet = znkGetWallet(ledger, 'ZNK_SYSTEM', { name: 'ZNK System' });
+
+            // Débit acheteur / crédit artiste (prix plein) / crédit ZNK (commission + soutien)
+            buyerWallet.balance -= total;
+            sellerWallet.balance += item.price;
+            znkSystemWallet.balance += commission + support;
+
+            const transaction = {
+                id: `TX-${Date.now()}`,
+                date: new Date().toISOString(),
+                postId: post.id,
+                type: item.type,
+                itemName: item.name,
+                eventDate: item.date || null,
+                price: item.price,
+                commission: commission,
+                support: support,
+                total: total,
+                buyerId: buyerId,
+                buyerName: buyerName,
+                sellerId: post.authorId,
+                sellerName: post.author,
+                sellerAccount: { iban: sellerWallet.iban, compte: sellerWallet.compte, om: sellerWallet.om }
+            };
+            if (!ledger.transactions) ledger.transactions = [];
+            ledger.transactions.unshift(transaction);
+
+            await znkLedgerSave(ledger);
+
+            // Affiche les coordonnées de paiement de l'artiste (IBAN / compte / OM), si renseignées
+            const acc = transaction.sellerAccount;
+            const accInfo = (acc.iban || acc.compte || acc.om)
+                ? `\n\nCoordonnées de ${post.author}:\nIBAN: ${acc.iban || '—'}\nCompte bancaire: ${acc.compte || '—'}\nMobile Money: ${acc.om || '—'}`
+                : `\n\n${post.author} n'a pas encore renseigné ses coordonnées de paiement dans son Nomad.`;
+
+            showNotification(`✅ Achat confirmé: ${item.name}`, 'success');
+            alert(`Achat confirmé !${accInfo}\n\nRetrouvez cette transaction dans votre Nomad > Historique.`);
+        }
+
+        function likePost(postId) {
+            const posts = JSON.parse(localStorage.getItem(scopedKey('znkUserPosts')) || '[]');
+            const updatedPosts = posts.map(post => {
+                if (post.id === postId) {
+                    return {
+                        ...post,
+                        likes: post.likedByUser ? post.likes - 1 : post.likes + 1,
+                        likedByUser: !post.likedByUser
+                    };
+                }
+                return post;
+            });
+            
+            localStorage.setItem(scopedKey('znkUserPosts'), JSON.stringify(updatedPosts));
+            loadPosts();
+        }
+
+        function deletePost(postId) {
+            if (!confirm('Supprimer cette publication ?')) return;
+            
+            const posts = JSON.parse(localStorage.getItem(scopedKey('znkUserPosts')) || '[]');
+            const updatedPosts = posts.filter(p => p.id !== postId);
+            localStorage.setItem(scopedKey('znkUserPosts'), JSON.stringify(updatedPosts));
+            
+            const currentCount = parseInt(document.getElementById('postsCount').textContent) || 0;
+            document.getElementById('postsCount').textContent = Math.max(0, currentCount - 1);
+            saveUserStats();
+            
+            loadPosts();
+            showNotification('🗑️ Publication supprimée', 'info');
+        }
+
+        // ========================================
+        // COMMUNAUTE P2P
+        // ========================================
+        async function loadCommunityFeed() {
+            const feedContainer = document.getElementById('communityFeed');
+
+            if (!isOnline) {
+                feedContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌐</div>
+                        <p>Mode hors ligne</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Connectez-vous à Internet pour accéder au Wall</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!ZNK_CLOUD_URL) {
+                feedContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌐</div>
+                        <p>Aucun serveur partagé configuré</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Le Wall a besoin d'un serveur ZNK pour afficher les publications de la communauté</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!znkServerReachable) {
+                feedContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <p>Serveur ZNK injoignable</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Vérifiez que le VPS est bien démarré, ou réessayez dans un instant</p>
+                    </div>
+                `;
+                return;
+            }
+
+            feedContainer.innerHTML = `<div class="empty-state"><p>Chargement du Wall…</p></div>`;
+
+            try {
+                // 1) Liste allégée des profils publiés
+                const listResp = await fetch(znkCloudPath('/api/profiles'));
+                if (!listResp.ok) throw new Error('HTTP ' + listResp.status);
+                const listData = await listResp.json();
+                const profiles = (listData.profiles || []).slice(0, 30); // borne raisonnable pour l'instant
+
+                // 2) Profil complet (avec ses posts) pour chacun, en parallèle
+                const fullProfiles = await Promise.all(profiles.map(async p => {
+                    try {
+                        const r = await fetch(znkCloudPath(`/api/profiles/${encodeURIComponent(p.id)}`));
+                        if (!r.ok) return null;
+                        const d = await r.json();
+                        return d.profile || null;
+                    } catch (e) { return null; }
+                }));
+
+                // 3) Aplatir tous les posts de tous les profils, avec l'auteur/avatar du profil parent
+                let communityPosts = [];
+                fullProfiles.filter(Boolean).forEach(profile => {
+                    (profile.posts || []).forEach(post => {
+                        communityPosts.push({ ...post, author: profile.name || post.author, avatar: profile.avatar || post.avatar });
+                    });
+                });
+
+                communityPosts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                communityPosts = communityPosts.slice(0, 60); // borne d'affichage
+
+                if (communityPosts.length === 0) {
+                    feedContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <p>Aucune publication pour le moment</p>
+                            <p style="font-size: 13px; margin-top: 8px;">Le Wall se remplit au fur et à mesure que les profils sont publiés</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                feedContainer.innerHTML = communityPosts.map(post => createPostHTML(post, true)).join('');
+            } catch (e) {
+                console.error('loadCommunityFeed:', e);
+                feedContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <p>Impossible de charger le Wall</p>
+                        <p style="font-size: 13px; margin-top: 8px;">${e.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ========================================
+        // SYNC (SI ONLINE)
+        // ========================================
+        async function syncWithP2P() {
+            // Charge le vrai feed communauté (posts publics des profils publiés)
+            loadCommunityFeed();
+        }
+
+        // ========================================
+        // GESTION ONGLETS
+        // ========================================
+        function switchTab(tabName) {
+            // Désactiver tous les onglets
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Activer l'onglet sélectionné
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // Charger le contenu si nécessaire
+            if (tabName === 'community') {
+                loadCommunityFeed();
+            }
+        }
+
+        // ========================================
+        // UTILITAIRES
+        // ========================================
+        function formatTimeAgo(timestamp) {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (seconds < 60) return 'À l\'instant';
+            if (seconds < 3600) return `Il y a ${Math.floor(seconds / 60)}m`;
+            if (seconds < 86400) return `Il y a ${Math.floor(seconds / 3600)}h`;
+            return `Il y a ${Math.floor(seconds / 86400)}j`;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // ========================================
+        // INITIALISATION
+        // ========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 ZNK Social Profile Initialisé');
+            
+            // Charger le profil utilisateur (attendu : les posts/stats sont
+            // scopés par currentUser.id, donc il doit être résolu avant)
+            await loadUserProfile();
+            
+            // Charger les posts
+            loadPosts();
+            
+            // Vérifier la connexion
+            checkConnection();
+            
+            console.log('✅ Prêt à l\'emploi');
+        });
+    </script>
+</body>
+</html>

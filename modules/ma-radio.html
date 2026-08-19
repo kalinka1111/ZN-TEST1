@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>©ZNKsystem - Ma Radio</title>
+    <script src="../znk-path-fixer.js"></script>
+    <script src="../znk-unified-bridge.js"></script>
+    <script src="../znk-auth-connector.js"></script>
+    <script src="../znk-hub-wrapper-integrated.js"></script>
+    <script src="../znk-cla-injector.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #07100e 0%, #0f3a30 50%, #16213e 100%);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Barre de retour au hub parent */
+        .hub-back-bar {
+            height: 50px;
+            background: linear-gradient(90deg, rgba(15, 58, 48, 0.95), rgba(7, 32, 28, 0.95));
+            backdrop-filter: blur(15px);
+            border-bottom: 2px solid rgba(16, 185, 129, 0.35);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 12px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .hub-title {
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .hub-subtitle {
+            margin-left: auto;
+            color: #34d399;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .edit-mode-btn {
+            padding: 8px 14px;
+            background: rgba(255, 215, 0, 0.15);
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            color: #ffd700;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .edit-mode-btn:hover {
+            background: rgba(255, 215, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .edit-mode-btn.active {
+            background: #ffd700;
+            color: #000;
+        }
+
+        .refresh-btn {
+            padding: 8px 14px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 2px solid rgba(16, 185, 129, 0.5);
+            border-radius: 8px;
+            color: #34d399;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(16, 185, 129, 0.25);
+            transform: translateY(-2px);
+        }
+
+        /* Container principal */
+        .hub-container {
+            height: calc(100vh - 50px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .phone-container {
+            width: 375px;
+            margin: 30px auto;
+            position: relative;
+            border-radius: 40px;
+            background: #000;
+            box-shadow: 0 0 50px rgba(16, 185, 129, 0.3);
+            border: 3px solid #10b981;
+            overflow: hidden;
+            height: calc(100vh - 110px);
+        }
+
+        .status-bar {
+            height: 44px;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .app-pages {
+            height: calc(100% - 44px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #07100e 0%, #0f3a30 50%, #16213e 100%);
+            padding: 20px 24px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .page-logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 3px;
+        }
+
+        .page-subtitle {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Grille des morceaux */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px 12px;
+        }
+
+        .app-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .app-icon {
+            width: 75px;
+            height: 75px;
+            border-radius: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(16, 185, 129, 0.15);
+            background-size: cover;
+            background-position: center;
+            background-color: rgba(255, 255, 255, 0.03);
+            position: relative;
+        }
+
+        .app-icon:active {
+            transform: scale(0.92);
+        }
+
+        .app-icon.edit-mode {
+            animation: wiggle 0.5s infinite;
+            border-color: rgba(255, 215, 0, 0.6);
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+
+        .app-label {
+            text-align: center;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.75);
+            margin-top: 6px;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* État vide */
+        .empty-state {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            height: 80%;
+            text-align: center;
+            padding: 0 20px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .empty-state .big-icon {
+            font-size: 46px;
+        }
+
+        .empty-state .publish-link {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* Visionneuse générique (audio ou iframe icon-maker) */
+        .viewer {
+            position: fixed;
+            inset: 0;
+            background: #07100e;
+            z-index: 9000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .viewer.active {
+            display: flex;
+        }
+
+        .viewer-bar {
+            height: 50px;
+            flex-shrink: 0;
+            background: linear-gradient(90deg, rgba(15, 58, 48, 0.95), rgba(7, 32, 28, 0.95));
+            border-bottom: 2px solid rgba(16, 185, 129, 0.35);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 20px;
+        }
+
+        .viewer-title {
+            color: #34d399;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        .viewer-frame {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #fff;
+        }
+
+        /* Lecteur audio */
+        .audio-player-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 30px;
+        }
+
+        .audio-cover {
+            width: 180px;
+            height: 180px;
+            border-radius: 22px;
+            background-size: cover;
+            background-position: center;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(16, 185, 129, 0.4);
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.25);
+        }
+
+        .audio-track-name {
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            margin-top: 14px;
+        }
+
+        .audio-track-artist {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .audio-track-artist:empty { display: none; }
+
+        #audioEl {
+            width: 100%;
+            max-width: 320px;
+            margin-top: 24px;
+        }
+
+        /* Modal Icône du morceau */
+        .icon-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .icon-modal.active {
+            display: flex;
+        }
+
+        .icon-modal-content {
+            background: linear-gradient(135deg, #0f2a24, #16213e);
+            border: 2px solid #10b981;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 440px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 50px rgba(16, 185, 129, 0.4);
+        }
+
+        .icon-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .icon-modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .close-modal {
+            width: 35px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #10b981;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #34d399;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            color: #34d399;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .track-name-display {
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 8px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .form-hint {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 8px 0 6px;
+        }
+
+        .icon-upload-zone {
+            width: 100%;
+            height: 140px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px dashed rgba(16, 185, 129, 0.5);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .icon-upload-zone:hover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .icon-upload-zone.has-image {
+            border-style: solid;
+        }
+
+        .icon-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-placeholder {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+        }
+
+        .upload-placeholder .upload-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .icon-maker-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ffd700, #ff9d00);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .icon-maker-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .save-icon-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .save-icon-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .notification {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: rgba(16, 185, 129, 0.9);
+            color: black;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 11000;
+            font-weight: bold;
+            display: none;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @media (max-width: 480px) {
+            .hub-back-bar { padding: 0 10px; gap: 8px; }
+            .hub-title { font-size: 15px; }
+            .hub-subtitle { display: none; }
+            .edit-mode-btn, .refresh-btn { padding: 8px 10px; font-size: 12px; }
+            .phone-container {
+                width: 100%;
+                margin: 0;
+                border-radius: 0;
+                border: none;
+                height: calc(100vh - 50px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre de retour -->
+    <div class="hub-back-bar">
+        <button class="back-button" onclick="returnToParentHub()">← Retour</button>
+        <div class="hub-title">Ma Radio</div>
+        <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">✏️ Personnaliser les icônes</button>
+        <button class="refresh-btn" onclick="loadEmission()">🔄 Actualiser</button>
+        <div class="hub-subtitle" id="trackCount"></div>
+    </div>
+
+    <!-- Container principal -->
+    <div class="hub-container">
+        <div class="phone-container">
+            <div class="status-bar">
+                <div class="time" id="currentTime">12:35</div>
+                <div style="color: #34d399;">Ma Radio</div>
+            </div>
+
+            <div class="app-pages">
+                <div class="app-page">
+                    <div class="page-header">
+                        <div class="page-logo">MA RADIO</div>
+                        <div class="page-subtitle" id="pageSubtitle">Mes morceaux publiés</div>
+                    </div>
+
+                    <div class="app-grid" id="grid1"></div>
+
+                    <div class="empty-state" id="emptyState">
+                        <div class="big-icon">🎧</div>
+                        <div>Tu n'as pas encore publié de morceaux.</div>
+                        <button class="publish-link" onclick="goToPublish()">🚀 Publier ma radio</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lecteur audio -->
+    <div class="viewer" id="audioViewer">
+        <div class="viewer-bar">
+            <button class="back-button" onclick="closeAudioViewer()">← Retour</button>
+            <div class="viewer-title" id="audioViewerTitle">Lecture</div>
+        </div>
+        <div class="audio-player-body">
+            <div class="audio-cover" id="audioCover"></div>
+            <div class="audio-track-name" id="audioTrackName">—</div>
+            <div class="audio-track-artist" id="audioTrackArtist"></div>
+            <audio id="audioEl" controls></audio>
+        </div>
+    </div>
+
+    <!-- Icon Maker (iframe) -->
+    <div class="viewer" id="iconMakerViewer" style="z-index: 10500;">
+        <div class="viewer-bar">
+            <button class="back-button" onclick="closeIconMakerViewer()">← Retour</button>
+            <div class="viewer-title">🎨 Créer une icône</div>
+        </div>
+        <iframe class="viewer-frame" id="iconMakerFrame" src="" title="Icon Maker"></iframe>
+    </div>
+
+    <!-- Modal Icône du morceau -->
+    <div class="icon-modal" id="iconModal">
+        <div class="icon-modal-content">
+            <div class="icon-modal-header">
+                <div class="icon-modal-title">🖼️ Icône du morceau</div>
+                <div class="close-modal" onclick="closeIconModal()">×</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🎵 Morceau</label>
+                <div class="track-name-display" id="iconModalTrackName">—</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🖼️ Icône</label>
+                <div class="icon-upload-zone" id="iconUploadZone" onclick="document.getElementById('iconFileInput').click()">
+                    <div class="upload-placeholder" id="uploadPlaceholder">
+                        <div class="upload-icon">📁</div>
+                        <div>Cliquez pour uploader une image</div>
+                    </div>
+                    <img class="icon-preview" id="iconPreview" style="display: none;">
+                </div>
+                <input type="file" id="iconFileInput" accept="image/*,.svg" style="display: none;">
+
+                <div class="form-hint">Ou indiquez le chemin d'une icône déjà créée (./icons/xxx.svg) :</div>
+                <input type="text" class="form-input" id="iconPathInput" placeholder="./icons/mon-icone.svg" oninput="onIconPathInput()">
+
+                <button type="button" class="icon-maker-btn" onclick="openIconMakerFor()">🎨 Créer une icône avec Icon Maker</button>
+            </div>
+
+            <button type="button" class="save-icon-btn" onclick="saveTrackIcon()">💾 Enregistrer l'icône</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Détection Electron
+        const isElectron = typeof require !== 'undefined';
+        let ipcRenderer = null;
+        if (isElectron) {
+            try { ipcRenderer = require('electron').ipcRenderer; } catch (e) {}
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const parentHub = urlParams.get('parent') || './ZNKMembresDash.html';
+
+        // Si Ma Radio est ouvert DANS l'iframe "Studio" d'un hub (AdminHubCreator
+        // ou un hub exporté), le bouton "← Retour" ne doit pas naviguer dans
+        // l'iframe : il doit fermer la visionneuse et revenir au hub parent.
+        const isEmbedded = window.self !== window.top;
+
+        /* ============================================================
+           Compte utilisateur / manifest — logique identique à
+           user-publish-radio.html pour retrouver la MÊME émission
+           (id fixe = user_<userId>) et ses morceaux publiés.
+           ============================================================ */
+        function getCurrentAccount() {
+            try {
+                const raw = localStorage.getItem('znk_account');
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            try {
+                const raw = sessionStorage.getItem('znk_userData');
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            try {
+                const raw = localStorage.getItem('znkUserData');
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return null;
+        }
+
+        function getStableUserId(account) {
+            if (account && (account.idZNK || account.id || account.userId || account.username)) {
+                return String(account.idZNK || account.id || account.userId || account.username);
+            }
+            let uid = localStorage.getItem('znk_radio_local_uid');
+            if (!uid) {
+                uid = 'local_' + Math.random().toString(36).slice(2, 10);
+                localStorage.setItem('znk_radio_local_uid', uid);
+            }
+            return uid;
+        }
+
+        const account = getCurrentAccount();
+        const userId = getStableUserId(account);
+        const currentEmissionId = `user_${userId}`;
+
+        function manifestPathCandidates() {
+            return [
+                './users/manifests/user-audio-manifest.json',
+                '../users/manifests/user-audio-manifest.json',
+                '../../users/manifests/user-audio-manifest.json'
+            ];
+        }
+
+        async function fetchAllEmissions() {
+            for (const path of manifestPathCandidates()) {
+                try {
+                    const res = await fetch(path);
+                    if (!res.ok) continue;
+                    const json = await res.json();
+                    console.log(`✅ Manifest audio chargé depuis ${path}`);
+                    return Array.isArray(json.emissions) ? json.emissions : [];
+                } catch (e) {
+                    continue;
+                }
+            }
+            console.warn('⚠️ Aucun manifest audio trouvé. Chemins essayés:', manifestPathCandidates());
+            return [];
+        }
+
+        /* ============================================================
+           Icônes personnalisées par morceau — stockées localement,
+           indépendamment du manifest (aucune modification du format
+           partagé avec user-publish-radio.html / radio.html).
+           ============================================================ */
+        function iconMapKey() {
+            return `znk-maradio-icons-${userId}`;
+        }
+
+        function loadIconMap() {
+            try {
+                return JSON.parse(localStorage.getItem(iconMapKey())) || {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveIconMap() {
+            localStorage.setItem(iconMapKey(), JSON.stringify(iconMap));
+        }
+
+        let iconMap = loadIconMap();
+
+        const DEFAULT_TRACK_ICON = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+            '<rect width="100" height="100" rx="20" fill="#0f3a30"/>' +
+            '<circle cx="38" cy="68" r="11" fill="none" stroke="#34d399" stroke-width="5"/>' +
+            '<circle cx="70" cy="60" r="11" fill="none" stroke="#34d399" stroke-width="5"/>' +
+            '<path d="M49 68 V28 L81 20 V60" fill="none" stroke="#34d399" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '</svg>'
+        );
+
+        /* ============================================================
+           État
+           ============================================================ */
+        let tracks = [];
+        let isEditMode = false;
+        let currentIconTrackId = null;
+        let modalCurrentIconData = null;
+
+        async function loadEmission(manual) {
+            const list = await fetchAllEmissions();
+            const mine = list.find(e => e.id === currentEmissionId) || null;
+            tracks = (mine && mine.tracks) || [];
+            renderGrid();
+            updateTrackCount();
+            if (manual !== false) {
+                showNotification(tracks.length
+                    ? `🔄 ${tracks.length} morceau(x) chargé(s)`
+                    : '📭 Aucun morceau publié pour le moment');
+            }
+        }
+
+        function updateTrackCount() {
+            document.getElementById('trackCount').textContent = `🎵 ${tracks.length} morceau(x)`;
+        }
+
+        async function goToPublish() {
+            const candidates = ['../user-publish-radio.html', './user-publish-radio.html', '../../user-publish-radio.html'];
+            let target = candidates[0];
+            for (const c of candidates) {
+                try {
+                    const res = await fetch(c, { method: 'HEAD' });
+                    if (res.ok) { target = c; break; }
+                } catch (e) { /* on essaie le suivant */ }
+            }
+            if (ipcRenderer) ipcRenderer.send('navigate-to-module', target);
+            else window.location.href = target;
+        }
+
+        /* ============================================================
+           Rendu de la grille
+           ============================================================ */
+        function renderGrid() {
+            const grid = document.getElementById('grid1');
+            const emptyState = document.getElementById('emptyState');
+            grid.innerHTML = '';
+
+            if (!tracks.length) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'flex';
+                return;
+            }
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            tracks.forEach((t) => {
+                const wrap = document.createElement('div');
+                wrap.className = 'app-tile';
+
+                const icon = document.createElement('div');
+                icon.className = 'app-icon' + (isEditMode ? ' edit-mode' : '');
+                icon.style.backgroundImage = `url('${iconMap[t.id] || DEFAULT_TRACK_ICON}')`;
+
+                if (isEditMode) {
+                    icon.title = `${t.title || t.filename} (clic = changer l'icône)`;
+                    icon.onclick = () => openIconModal(t);
+                } else {
+                    icon.title = t.title || t.filename;
+                    icon.onclick = () => openAudioViewer(t);
+                }
+
+                const label = document.createElement('div');
+                label.className = 'app-label';
+                label.textContent = t.title || t.filename || 'Sans titre';
+
+                wrap.appendChild(icon);
+                wrap.appendChild(label);
+                grid.appendChild(wrap);
+            });
+        }
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('editModeBtn');
+            btn.classList.toggle('active', isEditMode);
+            btn.textContent = isEditMode ? '✅ Terminer' : '✏️ Personnaliser les icônes';
+            renderGrid();
+            showNotification(isEditMode ? '✏️ Mode personnalisation activé' : '👁️ Mode lecture');
+        }
+
+        /* ============================================================
+           Lecteur audio
+           ============================================================ */
+        function openAudioViewer(track) {
+            document.getElementById('audioViewerTitle').textContent = track.title || track.filename;
+            document.getElementById('audioTrackName').textContent = track.title || track.filename;
+            document.getElementById('audioTrackArtist').textContent = track.artist || '';
+            document.getElementById('audioCover').style.backgroundImage =
+                `url('${iconMap[track.id] || DEFAULT_TRACK_ICON}')`;
+
+            const audioEl = document.getElementById('audioEl');
+            audioEl.src = track.url || '';
+            document.getElementById('audioViewer').classList.add('active');
+            audioEl.play().catch(() => {});
+        }
+
+        function closeAudioViewer() {
+            const audioEl = document.getElementById('audioEl');
+            audioEl.pause();
+            audioEl.src = '';
+            document.getElementById('audioViewer').classList.remove('active');
+        }
+
+        /* ============================================================
+           Modal Icône du morceau
+           ============================================================ */
+        function openIconModal(track) {
+            currentIconTrackId = track.id;
+            modalCurrentIconData = null;
+            document.getElementById('iconModalTrackName').textContent = track.title || track.filename;
+            document.getElementById('iconPathInput').value = '';
+
+            const existing = iconMap[track.id];
+            if (existing) {
+                showIconPreview(existing);
+                if (existing.startsWith('data:')) {
+                    modalCurrentIconData = existing;
+                } else {
+                    document.getElementById('iconPathInput').value = existing;
+                }
+            } else {
+                clearIconPreview();
+            }
+
+            document.getElementById('iconModal').classList.add('active');
+        }
+
+        function closeIconModal() {
+            document.getElementById('iconModal').classList.remove('active');
+            currentIconTrackId = null;
+            modalCurrentIconData = null;
+        }
+
+        function showIconPreview(src) {
+            const preview = document.getElementById('iconPreview');
+            const placeholder = document.getElementById('uploadPlaceholder');
+            const zone = document.getElementById('iconUploadZone');
+            preview.src = src;
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+            zone.classList.add('has-image');
+        }
+
+        function clearIconPreview() {
+            const preview = document.getElementById('iconPreview');
+            const placeholder = document.getElementById('uploadPlaceholder');
+            const zone = document.getElementById('iconUploadZone');
+            preview.style.display = 'none';
+            placeholder.style.display = 'block';
+            zone.classList.remove('has-image');
+        }
+
+        function onIconPathInput() {
+            const val = document.getElementById('iconPathInput').value.trim();
+            if (val) {
+                modalCurrentIconData = null;
+                showIconPreview(val);
+            } else {
+                clearIconPreview();
+            }
+        }
+
+        document.getElementById('iconFileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                modalCurrentIconData = event.target.result;
+                document.getElementById('iconPathInput').value = '';
+                showIconPreview(modalCurrentIconData);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function saveTrackIcon() {
+            const path = document.getElementById('iconPathInput').value.trim();
+            const value = modalCurrentIconData || path;
+
+            if (!value) {
+                alert('Choisis une image, indique un chemin, ou crée une icône avec Icon Maker.');
+                return;
+            }
+            if (!currentIconTrackId) return;
+
+            iconMap[currentIconTrackId] = value;
+            saveIconMap();
+            renderGrid();
+            closeIconModal();
+            showNotification('✅ Icône enregistrée');
+        }
+
+        /* ============================================================
+           Pont vers Icon Maker (iframe + postMessage)
+           ============================================================ */
+        function openIconMakerFor() {
+            document.getElementById('iconMakerFrame').src = './icon-maker.html?embed=maradio';
+            document.getElementById('iconMakerViewer').classList.add('active');
+        }
+
+        function closeIconMakerViewer() {
+            document.getElementById('iconMakerViewer').classList.remove('active');
+            document.getElementById('iconMakerFrame').src = '';
+        }
+
+        window.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'znk-icon-maker:icon-selected' && currentIconTrackId) {
+                modalCurrentIconData = e.data.dataUrl;
+                document.getElementById('iconPathInput').value = '';
+                showIconPreview(modalCurrentIconData);
+                closeIconMakerViewer();
+                showNotification('🎨 Icône reçue — clique "Enregistrer" pour la valider');
+            }
+        });
+
+        /* ============================================================
+           Retour au hub parent / horloge / notifications
+           ============================================================ */
+        function returnToParentHub() {
+            if (isEmbedded) {
+                // Ne pas naviguer dans l'iframe : demander au hub parent de
+                // fermer la visionneuse Studio et revenir à la grille.
+                window.parent.postMessage({ type: 'znk-studio:close' }, '*');
+                return;
+            }
+
+            if (ipcRenderer) {
+                ipcRenderer.send('navigate-to-module', parentHub);
+            } else {
+                window.location.href = parentHub.startsWith('.') || parentHub.startsWith('http')
+                    ? parentHub
+                    : `./${parentHub}`;
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const el = document.getElementById('currentTime');
+            if (el) el.textContent = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function showNotification(message) {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 3000);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            if (document.getElementById('iconMakerViewer').classList.contains('active')) {
+                closeIconMakerViewer();
+            } else if (document.getElementById('iconModal').classList.contains('active')) {
+                closeIconModal();
+            } else if (document.getElementById('audioViewer').classList.contains('active')) {
+                closeAudioViewer();
+            } else {
+                returnToParentHub();
+            }
+        });
+
+        /* ============================================================
+           Initialisation
+           ============================================================ */
+        function init() {
+            loadEmission(false);
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+
+        init();
+        console.log('🚀 Ma Radio initialisée pour', currentEmissionId);
+    </script>
+    <script src="../module-mapping.js"></script>
+</body>
+</html>

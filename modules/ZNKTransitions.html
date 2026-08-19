@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNKTransitions</title>
+<style>
+  :root{
+    --bg:#12100e;
+    --panel:#232323;
+    --panel-2:#444444;
+    --line:#000000;
+    --amber:#ff8a1e;
+    --amber-dim:#7a4b17;
+    --green:#7dff9e;
+    --text:#efe6d8;
+    --text-dim:#9a8f7d;
+    --mono: "SF Mono","Consolas","Menlo",monospace;
+    --serif: "Georgia","Iowan Old Style",serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background: radial-gradient(ellipse at top, #1a1712 0%, var(--bg) 60%);
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:16px;
+    display:block;
+    min-height:100vh;
+    padding:36px 24px;
+  }
+
+  .rig{
+    width:100%;
+    max-width:1220px;
+    margin:0 auto;
+    background:linear-gradient(180deg,#444444,#171410);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
+    overflow:hidden;
+  }
+
+  .rig-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:26px 34px 20px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  }
+  .rig-head .brand{
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:32px;
+    letter-spacing:0.5px;
+    color:var(--text);
+  }
+  .rig-head .brand b{
+    font-style:normal;
+    color:var(--amber);
+    font-weight:700;
+  }
+  .rig-head .tag{
+    font-size:13px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+
+  .body{ padding:30px; display:flex; flex-direction:column; gap:24px; }
+
+  .dual-screens{ display:flex; gap:18px; }
+  .slot{ flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+  .slot-label{
+    display:flex; justify-content:space-between;
+    font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim);
+  }
+  .slot-label b{color:var(--amber);}
+  .slot-label .dim{font-variant-numeric:tabular-nums;}
+
+  .screen{
+    position:relative;
+    background:#000;
+    border-radius:8px;
+    overflow:hidden;
+    height:230px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #000;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .screen img{
+    width:100%; height:100%; object-fit:contain; display:none;
+  }
+  .dropzone{ text-align:center; color:var(--text-dim); padding:14px; cursor:pointer; }
+  .dropzone .icon{ font-size:40px; margin-bottom:10px; color:var(--amber-dim); }
+  .dropzone .main-txt{ font-size:15px; color:var(--text); margin-bottom:5px; }
+  .dropzone .sub-txt{ font-size:12px; color:var(--text-dim); }
+  .dropzone.drag-over{color:var(--amber);}
+  .dropzone.drag-over .icon{color:var(--amber);}
+  input[type=file]{display:none;}
+
+  .screen.bg-screen{ height:160px; }
+  .screen.bg-screen video{ width:100%; height:100%; object-fit:cover; display:none; }
+  .bg-clear{
+    background:none; border:none; color:var(--text-dim); font-family:var(--mono);
+    font-size:12px; letter-spacing:1px; text-decoration:underline; cursor:pointer; padding:2px 0;
+    align-self:flex-start;
+  }
+  .bg-clear:hover{ color:#ff8080; }
+
+  /* ---- Effects grid ---- */
+  .fx-section{ display:flex; flex-direction:column; gap:12px; }
+  .fx-title{ font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); }
+  .fx-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap:12px;
+  }
+  .fx-btn{
+    display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:var(--mono);
+    padding:13px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    text-align:left;
+    transition: all .15s;
+  }
+  .fx-btn .fx-name{ font-size:16px; color:var(--text); }
+  .fx-btn .fx-desc{ font-size:12px; color:var(--text-dim); letter-spacing:0.3px; }
+  .fx-btn:hover{ border-color:var(--amber-dim); }
+  .fx-btn.active{ border-color:var(--amber); box-shadow:0 0 0 1px var(--amber) inset; }
+  .fx-btn.active .fx-name{ color:var(--amber); }
+  .fx-btn .fx-warn{ font-size:12px; color:#ffb15c; margin-top:2px; }
+
+  /* ---- Timing faders (3 horizontal) ---- */
+  .timing-row{
+    display:flex; gap:20px; flex-wrap:wrap;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 24px;
+  }
+  .tblock{ flex:1; min-width:200px; display:flex; flex-direction:column; gap:9px; }
+  .tblock .thead{ display:flex; justify-content:space-between; align-items:baseline; }
+  .tblock .tlabel{ font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); }
+  .tblock .tval{ font-size:19px; color:var(--amber); font-variant-numeric:tabular-nums; font-weight:bold; }
+  input[type=range].hfader{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:8px;
+    background:linear-gradient(90deg,#000,#2a251d);
+    border-radius:4px;
+    border:1px solid #050403;
+    cursor:ew-resize;
+  }
+  input[type=range].hfader::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:21px; height:21px; border-radius:50%;
+    background:linear-gradient(180deg,#3a342b,#1c1712);
+    border:1px solid #4a423490; border-top:1px solid #6b5f4c;
+    box-shadow:0 2px 6px rgba(0,0,0,0.6);
+    cursor:ew-resize;
+  }
+  input[type=range].hfader::-moz-range-thumb{
+    width:21px; height:21px; border-radius:50%;
+    background:linear-gradient(180deg,#3a342b,#1c1712);
+    border:1px solid #4a423490; cursor:ew-resize;
+  }
+
+  /* ---- Preview ---- */
+  .preview-wrap{ display:flex; flex-direction:column; gap:12px; }
+  .preview-head{ display:flex; justify-content:space-between; align-items:center; }
+  .preview-head .title{ font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); }
+  .preview-screen{
+    position:relative; background:#000; border-radius:8px; overflow:hidden; height:340px;
+    border:1px solid #000;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 20px 40px rgba(0,0,0,0.6);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .preview-screen video{ width:100%; height:100%; object-fit:contain; }
+  .preview-empty{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:var(--text-dim); font-size:14px; text-align:center; padding:20px;
+  }
+  .preview-btn{
+    display:flex; align-items:center; gap:7px;
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    font-family:var(--mono); font-size:14px; padding:10px 18px; border-radius:6px; cursor:pointer;
+    transition:border-color .15s, color .15s;
+  }
+  .preview-btn:hover{border-color:var(--amber); color:var(--amber);}
+  .preview-btn:disabled{color:var(--text-dim); cursor:not-allowed; border-color:var(--line);}
+
+  .export-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .export-btn{
+    display:flex; align-items:center; gap:7px;
+    background:linear-gradient(180deg, var(--amber), #d96f10);
+    border:1px solid #a85c0e; color:#1a1006; font-family:var(--mono); font-weight:bold;
+    font-size:14px; letter-spacing:0.5px; padding:11px 20px; border-radius:6px; cursor:pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .export-btn:hover{ filter:brightness(1.08); }
+  .export-btn:active{ transform:scale(0.97); }
+  .export-btn:disabled{ background:var(--panel-2); color:var(--text-dim); border-color:var(--line); cursor:not-allowed; }
+  .export-note{ font-size:12px; color:var(--text-dim); letter-spacing:0.5px; }
+
+  .export-overlay{
+    position:absolute; inset:0; background:rgba(6,5,4,0.86); backdrop-filter: blur(2px);
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+    color:var(--text); z-index:5; text-align:center; padding:16px;
+  }
+  .export-overlay.active{ display:flex; }
+  .export-overlay .rec-dot{
+    width:10px;height:10px;border-radius:50%; background:#ff4d4d; box-shadow:0 0 8px #ff4d4d;
+    animation: blink 1s infinite; display:inline-block; margin-right:6px;
+  }
+  @keyframes blink{ 50%{ opacity:0.25; } }
+  .export-overlay .lbl{ font-size:14px; letter-spacing:1.5px; text-transform:uppercase; }
+  .export-overlay .bar-wrap{
+    width:70%; max-width:400px; height:8px; background:var(--panel-2); border-radius:4px;
+    overflow:hidden; border:1px solid var(--line);
+  }
+  .export-overlay .bar-fill{
+    height:100%; width:0%; background:linear-gradient(90deg, var(--amber-dim), var(--amber));
+    transition:width .15s linear;
+  }
+  .export-overlay .pct{ font-size:26px; color:var(--amber); font-variant-numeric: tabular-nums; }
+  .export-overlay .cancel-export{
+    margin-top:4px; background:none; border:1px solid var(--line); color:var(--text-dim);
+    font-family:var(--mono); font-size:12px; letter-spacing:1px; text-transform:uppercase;
+    padding:7px 14px; border-radius:5px; cursor:pointer;
+  }
+  .export-overlay .cancel-export:hover{ color:#ff8080; border-color:#ff8080; }
+
+  .hint{ font-size:12px; color:var(--text-dim); letter-spacing:0.5px; line-height:1.6; }
+  .footer-strip{
+    padding:14px 34px; border-top:1px solid var(--line); font-size:11px; color:var(--text-dim);
+    letter-spacing:1.5px; text-transform:uppercase; display:flex; justify-content:space-between;
+    gap:10px; flex-wrap:wrap;
+  }
+
+  @media (max-width:760px){
+    .dual-screens{ flex-direction:column; }
+  }
+  @media (max-width:520px){
+    .rig-head .brand{ font-size:24px; }
+    .screen{ height:190px; }
+    .preview-screen{ height:240px; }
+    .timing-row{ flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="rig">
+  <div class="rig-head">
+    <div class="brand"><b>ZNK</b>Transitions</div>
+    <div class="tag">2 photos — effet de transition — export .mp4 local</div>
+  </div>
+
+  <div class="body">
+
+    <div class="dual-screens">
+      <div class="slot">
+        <div class="slot-label"><b>Photo A</b><span class="dim" id="dimA">--×--</span></div>
+        <div class="screen" id="screenA">
+          <div class="dropzone" id="dropzoneA">
+            <div class="icon">🖼</div>
+            <div class="main-txt">Déposez la 1ʳᵉ photo, ou cliquez</div>
+            <div class="sub-txt">JPG, PNG, WebP… — 100% local</div>
+          </div>
+          <img id="imgA" alt="Photo A">
+        </div>
+        <input type="file" id="fileInputA" accept="image/*">
+      </div>
+
+      <div class="slot">
+        <div class="slot-label"><b>Photo B</b><span class="dim" id="dimB">--×--</span></div>
+        <div class="screen" id="screenB">
+          <div class="dropzone" id="dropzoneB">
+            <div class="icon">🖼</div>
+            <div class="main-txt">Déposez la 2ᵉ photo, ou cliquez</div>
+            <div class="sub-txt">JPG, PNG, WebP… — 100% local</div>
+          </div>
+          <img id="imgB" alt="Photo B">
+        </div>
+        <input type="file" id="fileInputB" accept="image/*">
+      </div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-title">Effet de transition</div>
+      <div class="fx-grid" id="fxGrid"></div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-title">Format d'export</div>
+      <div class="fx-grid" id="aspectGrid"></div>
+    </div>
+
+    <div class="fx-section">
+      <div class="fx-title">Arrière-plan</div>
+      <div class="fx-grid" id="bgGrid"></div>
+      <div class="screen bg-screen" id="screenBg" style="display:none;">
+        <div class="dropzone" id="dropzoneBg">
+          <div class="icon">🎬</div>
+          <div class="main-txt">Déposez la vidéo d'arrière-plan, ou cliquez</div>
+          <div class="sub-txt">MP4, WebM… — jouée en boucle si plus courte que la transition</div>
+        </div>
+        <video id="bgPreviewVideo" muted loop playsinline></video>
+      </div>
+      <input type="file" id="fileInputBg" accept="video/*">
+      <button class="bg-clear" id="bgClearBtn" style="display:none;">Retirer la vidéo</button>
+      <div class="hint" id="bgHint" style="display:none;">
+        Vos PNG détourés sont incrustés par-dessus la vidéo (chroma key interne, invisible pour vous). Fonctionne avec tous les effets.
+      </div>
+    </div>
+
+    <div class="timing-row">
+      <div class="tblock">
+        <div class="thead"><span class="tlabel">Maintien A</span><span class="tval" id="holdAVal">1.0s</span></div>
+        <input type="range" class="hfader" id="holdAFader" min="0.2" max="5" step="0.1" value="1.0">
+      </div>
+      <div class="tblock">
+        <div class="thead"><span class="tlabel">Durée transition</span><span class="tval" id="fdVal">1.5s</span></div>
+        <input type="range" class="hfader" id="fdFader" min="0.3" max="4" step="0.1" value="1.5">
+      </div>
+      <div class="tblock">
+        <div class="thead"><span class="tlabel">Maintien B</span><span class="tval" id="holdBVal">1.0s</span></div>
+        <input type="range" class="hfader" id="holdBFader" min="0.2" max="5" step="0.1" value="1.0">
+      </div>
+    </div>
+
+
+    <div class="preview-wrap">
+      <div class="preview-head">
+        <div class="title">Aperçu (rendu réel basse résolution)</div>
+        <button class="preview-btn" id="previewBtn" disabled>▶ Aperçu rapide</button>
+      </div>
+      <div class="preview-screen" id="previewScreen">
+        <div class="preview-empty" id="previewEmpty">Chargez les deux photos et choisissez un effet</div>
+        <video id="previewVideo" playsinline loop muted style="display:none;"></video>
+
+        <div class="export-overlay" id="exportOverlay">
+          <div class="lbl"><span class="rec-dot"></span><span id="overlayLbl">Export en cours</span></div>
+          <div class="pct" id="exportPct">0%</div>
+          <div class="bar-wrap"><div class="bar-fill" id="exportBar"></div></div>
+          <div class="export-note" id="exportEta">estimation…</div>
+          <button class="cancel-export" id="cancelExport">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-row">
+      <button class="export-btn" id="exportBtn" disabled>⬇ Exporter la transition</button>
+      <span class="export-note" id="exportSupportNote"></span>
+    </div>
+
+    <div class="hint" id="fxHint">
+      L'aperçu rapide fait un vrai rendu ffmpeg en basse résolution — plus fiable qu'une simulation CSS, mais prend quelques secondes (plus pour "Vague").
+    </div>
+  </div>
+
+  <div class="footer-strip">
+    <span>ZNKTransitions</span>
+    <span id="footNote">—</span>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ZNKTransitions — construction du filter_complex ffmpeg
+   Une seule source de vérité, utilisée par le repli ffmpeg.wasm
+   ET transmise telle quelle au ffmpeg natif (main.js) : aucun
+   risque de divergence entre les deux moteurs.
+   ============================================================ */
+const EFFECTS = [
+  { id:'fade',      name:'Fondu',            desc:'Fondu enchaîné classique' },
+  { id:'zoom',      name:'Zoom',             desc:'Zoom avant pendant le fondu' },
+  { id:'wipe',      name:'Balayage',         desc:'Balayage horizontal' },
+  { id:'pixelize',  name:'Pixelisation',     desc:'Passage par la pixelisation' },
+  { id:'dissolve',  name:'Dissolution',      desc:'Grain façon dissolve' },
+  { id:'flash',     name:'Éclat de lumière', desc:'Flash blanc au milieu du fondu' },
+  { id:'spin',      name:'Tournoiement',     desc:'Rotation + zoom croisés' },
+  { id:'echo',      name:'Répétition',       desc:'Traînée fantôme (echo)' },
+  { id:'wave',      name:'Vague',            desc:'Distorsion ondulante', warn:'Plus lent à exporter (surtout hors Electron natif)' },
+];
+
+function fx3(n){ return (Math.round(n*1000)/1000).toFixed(3); }
+
+// {W,H,FPS,holdA,fd,holdB,bgColor,hasBgVideo} -> { filterComplex, durationA, durationB, totalDuration }
+// bgColor: couleur ffmpeg (ex '0x000000' fond noir, '0x00FF00' fond vert
+// pour le chroma key) utilisée pour le letterboxing/pillarboxing quand la
+// photo ne remplit pas le format d'export choisi.
+// hasBgVideo: si true, bgColor doit valoir '0x00FF00' (fond vert) — la
+// composition se termine alors par une incrustation (colorkey) de ce vert
+// sur une vidéo d'arrière-plan fournie en 3ᵉ entrée ([2:v]).
+function buildTransitionFilter(effect, {W,H,FPS,holdA,fd,holdB,bgColor,hasBgVideo}){
+  W = Math.round(W); H = Math.round(H); FPS = Math.round(FPS);
+  bgColor = bgColor || '0x000000';
+  const durationA = +fx3(holdA+fd);
+  const durationB = +fx3(fd+holdB);
+  const totalDuration = +fx3(holdA+fd+holdB);
+  const end = +fx3(holdA+fd);
+
+  // Prépare chaque source (idx 0/1) au même format WxH/FPS. En mode fond
+  // vidéo, un simple pad(color) ne colore QUE les marges de letterboxing —
+  // le trou transparent à L'INTÉRIEUR du PNG détouré, lui, perd son alpha
+  // en cours de route et retombe par défaut sur du noir opaque. On aplatit
+  // donc explicitement toute la transparence (trou intérieur ET marges) sur
+  // le vert via un overlay sur un canevas plein, avant tout le reste.
+  function normClause(idx, outLabel){
+    if(hasBgVideo){
+      return `[${idx}:v]format=rgba,scale=${W}:${H}:force_original_aspect_ratio=decrease[sc${outLabel}];`+
+        `color=${bgColor}:size=${W}x${H}:rate=${FPS}[cv${outLabel}];`+
+        `[cv${outLabel}][sc${outLabel}]overlay=(W-w)/2:(H-h)/2:format=auto,setsar=1,fps=${FPS}[${outLabel}];`;
+    }
+    return `[${idx}:v]scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=${bgColor},setsar=1,fps=${FPS}[${outLabel}];`;
+  }
+  const norm = normClause(0,'v0') + normClause(1,'v1');
+
+  const simple = (type) => norm + `[v0][v1]xfade=transition=${type}:duration=${fx3(fd)}:offset=${fx3(holdA)}[vout]`;
+
+  let filterComplex;
+  switch(effect){
+    case 'zoom':     filterComplex = simple('zoomin'); break;
+    case 'wipe':      filterComplex = simple('wipeleft'); break;
+    case 'pixelize':  filterComplex = simple('pixelize'); break;
+    case 'dissolve':  filterComplex = simple('dissolve'); break;
+
+    case 'flash': {
+      const half = fx3(fd/2);
+      const mid = fx3(holdA + fd/2);
+      filterComplex = norm +
+        `[v0][v1]xfade=transition=dissolve:duration=${fx3(fd)}:offset=${fx3(holdA)}[xf];`+
+        `color=white:size=${W}x${H}:rate=${FPS}:duration=${fx3(durationA)},format=rgba,`+
+        `fade=t=in:st=${fx3(holdA)}:d=${half}:alpha=1,`+
+        `fade=t=out:st=${mid}:d=${half}:alpha=1[flash];`+
+        `[xf][flash]blend=all_mode=screen:shortest=1[vout]`;
+      break;
+    }
+
+    case 'echo': {
+      filterComplex = norm +
+        `[v0][v1]xfade=transition=dissolve:duration=${fx3(fd)}:offset=${fx3(holdA)}[xf];`+
+        `[xf]tmix=frames=8:weights='1 0.85 0.7 0.55 0.4 0.3 0.2 0.1'[vout]`;
+      break;
+    }
+
+    case 'wave': {
+      const mid = fx3(holdA + fd/2);
+      const sigma = fx3(Math.max(0.3, fd/2.5));
+      const disp = `p(X+16*sin(2*PI*(Y/60+T*1.6))*exp(-((T-${mid})/${sigma})^2),Y)`;
+      filterComplex = norm +
+        `[v0][v1]xfade=transition=dissolve:duration=${fx3(fd)}:offset=${fx3(holdA)}[xf];`+
+        `[xf]format=rgb24,geq=r='${disp}':g='${disp}':b='${disp}',format=yuv420p[vout]`;
+      break;
+    }
+
+    case 'spin': {
+      // Canevas de fond explicite : sans lui, les marges transparentes de
+      // la rotation retombent sur un flou noir/indéfini à la conversion
+      // finale en yuv420p (pas de canal alpha). Avec le canevas, elles
+      // prennent proprement la couleur de fond choisie (noir ou vert).
+      // Même correctif qu'en normClause : en mode fond vidéo, on aplatit
+      // le trou transparent intérieur du PNG (pas seulement les marges).
+      const spinSrc = (idx, outA, outB) => hasBgVideo
+        ? `[${idx}:v]format=rgba,scale=${W}:${H}:force_original_aspect_ratio=decrease[sp${outA}0];`+
+          `color=${bgColor}:size=${W}x${H}:rate=${FPS}[sp${outA}c];`+
+          `[sp${outA}c][sp${outA}0]overlay=(W-w)/2:(H-h)/2:format=auto,setsar=1,fps=${FPS},split=2[${outA}][${outB}];`
+        : `[${idx}:v]scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=${bgColor},setsar=1,fps=${FPS},split=2[${outA}][${outB}];`;
+      filterComplex =
+        spinSrc(0,'va1','va2') +
+        spinSrc(1,'vb1','vb2') +
+        `[va1]trim=start=${fx3(holdA)}:end=${end},setpts=PTS-STARTPTS,format=yuva420p,`+
+          `rotate=a='2*PI*t/${fx3(fd)}':c=black@0:ow=${W}:oh=${H},`+
+          `scale=w='${W}*(1-0.5*t/${fx3(fd)})':h='${H}*(1-0.5*t/${fx3(fd)})':eval=frame,`+
+          `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black@0,`+
+          `fade=t=out:st=0:d=${fx3(fd)}:alpha=1[spinA];`+
+        `[vb1]trim=start=${fx3(holdA)}:end=${end},setpts=PTS-STARTPTS,format=yuva420p,`+
+          `rotate=a='-2*PI*(1-t/${fx3(fd)})':c=black@0:ow=${W}:oh=${H},`+
+          `scale=w='${W}*(0.5+0.5*t/${fx3(fd)})':h='${H}*(0.5+0.5*t/${fx3(fd)})':eval=frame,`+
+          `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black@0,`+
+          `fade=t=in:st=0:d=${fx3(fd)}:alpha=1[spinB];`+
+        `[va2]trim=end=${fx3(holdA)},setpts=PTS-STARTPTS,format=yuva420p[preA];`+
+        `[vb2]trim=start=${end},setpts=PTS-STARTPTS,format=yuva420p[postB];`+
+        `color=${bgColor}:size=${W}x${H}:rate=${FPS}:duration=${fx3(fd)}[bgcanvas];`+
+        `[bgcanvas][spinA]overlay=(W-w)/2:(H-h)/2:format=auto[tmp1];`+
+        `[tmp1][spinB]overlay=(W-w)/2:(H-h)/2:format=auto[spinmix];`+
+        `[preA][spinmix]concat=n=2:v=1:a=0[part1];`+
+        `[part1][postB]concat=n=2:v=1:a=0[vout]`;
+      break;
+    }
+
+    case 'fade':
+    default:
+      filterComplex = simple('fade'); break;
+  }
+
+  // Incrustation sur vidéo d'arrière-plan : on renomme la sortie de l'effet
+  // en [vraw], on l'incruste (colorkey sur le fond vert) par-dessus la
+  // vidéo [2:v] mise à l'échelle/rognée/bouclée sur la durée totale, et le
+  // résultat redevient [vout] — aucun des 9 effets ci-dessus n'a besoin
+  // d'être modifié pour ça.
+  // colorkey plus tolérant (similarity/blend) : les pixels du bord du
+  // détourage (anti-aliasing du PNG, semi-transparents) deviennent un
+  // mélange sujet+vert une fois aplatis sur le canevas — un colorkey trop
+  // strict les rate et laisse un liseret vert. despill nettoie ensuite la
+  // contamination verte résiduelle qui reste teintée sur les tout derniers
+  // pixels du bord, sans ronger le sujet lui-même.
+  if(hasBgVideo){
+    filterComplex = filterComplex.replace(/\[vout\]$/, '[vraw]') +
+      `;[2:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,fps=${FPS},trim=duration=${totalDuration},setpts=PTS-STARTPTS[bgv];`+
+      `[vraw]format=rgba,colorkey=0x00FF00:0.42:0.22,despill=type=green:mix=0.65:expand=0.15,format=yuva420p[vfg];`+
+      `[bgv][vfg]overlay=format=auto:shortest=1[vout]`;
+  }
+
+  return { filterComplex, durationA, durationB, totalDuration };
+}
+window.__znkBuildTransitionFilter = buildTransitionFilter;
+</script>
+
+<script>
+(function(){
+  const dropzoneA = document.getElementById('dropzoneA');
+  const dropzoneB = document.getElementById('dropzoneB');
+  const fileInputA = document.getElementById('fileInputA');
+  const fileInputB = document.getElementById('fileInputB');
+  const screenA = document.getElementById('screenA');
+  const screenB = document.getElementById('screenB');
+  const imgA = document.getElementById('imgA');
+  const imgB = document.getElementById('imgB');
+  const dimA = document.getElementById('dimA');
+  const dimB = document.getElementById('dimB');
+  const fxGrid = document.getElementById('fxGrid');
+  const fxHint = document.getElementById('fxHint');
+  const holdAFader = document.getElementById('holdAFader');
+  const fdFader = document.getElementById('fdFader');
+  const holdBFader = document.getElementById('holdBFader');
+  const holdAVal = document.getElementById('holdAVal');
+  const fdVal = document.getElementById('fdVal');
+  const holdBVal = document.getElementById('holdBVal');
+  const previewBtn = document.getElementById('previewBtn');
+  const previewEmpty = document.getElementById('previewEmpty');
+  const exportBtn = document.getElementById('exportBtn');
+
+  let selectedEffect = 'fade';
+  window.__znkSelectedEffect = () => selectedEffect;
+  window.__znkTiming = () => ({
+    holdA: parseFloat(holdAFader.value),
+    fd: parseFloat(fdFader.value),
+    holdB: parseFloat(holdBFader.value)
+  });
+
+  const ASPECTS = [
+    { id:'horizontal', name:'Horizontal', desc:'16:9 — écran, YouTube' },
+    { id:'vertical',   name:'Vertical',   desc:'9:16 — Stories, Reels' },
+    { id:'square',     name:'Carré',      desc:'1:1 — Instagram feed' },
+  ];
+  let selectedAspect = 'horizontal';
+  window.__znkSelectedAspect = () => selectedAspect;
+  const aspectGrid = document.getElementById('aspectGrid');
+  ASPECTS.forEach(a=>{
+    const btn = document.createElement('button');
+    btn.className = 'fx-btn' + (a.id === selectedAspect ? ' active' : '');
+    btn.dataset.aspect = a.id;
+    btn.innerHTML = `<span class="fx-name">${a.name}</span><span class="fx-desc">${a.desc}</span>`;
+    btn.addEventListener('click', ()=>{
+      selectedAspect = a.id;
+      [...aspectGrid.children].forEach(b=>b.classList.toggle('active', b.dataset.aspect===a.id));
+    });
+    aspectGrid.appendChild(btn);
+  });
+
+  // Fond : uni (noir) par défaut, ou vidéo d'arrière-plan. En mode vidéo,
+  // la composition interne des photos se fait sur un fond vert (chroma
+  // key), invisible pour l'utilisateur, puis incrustée sur la vidéo.
+  const BG_MODES = [
+    { id:'color', name:'Fond noir',  desc:'Cadrage classique, fond uni' },
+    { id:'video', name:'Vidéo de fond', desc:'PNG détourés incrustés sur une vidéo' },
+  ];
+  let selectedBgMode = 'color';
+  const bgGrid = document.getElementById('bgGrid');
+  const screenBg = document.getElementById('screenBg');
+  const dropzoneBg = document.getElementById('dropzoneBg');
+  const fileInputBg = document.getElementById('fileInputBg');
+  const bgPreviewVideo = document.getElementById('bgPreviewVideo');
+  const bgClearBtn = document.getElementById('bgClearBtn');
+  const bgHint = document.getElementById('bgHint');
+
+  function bgVideoActive(){ return selectedBgMode === 'video' && !!window.__znkBgVideoFile; }
+  window.__znkHasBgVideo = bgVideoActive;
+  window.__znkSelectedBgColor = () => bgVideoActive() ? '0x00FF00' : '0x000000';
+
+  function refreshBgUI(){
+    const isVideoMode = selectedBgMode === 'video';
+    screenBg.style.display = isVideoMode ? 'flex' : 'none';
+    bgHint.style.display = isVideoMode ? 'block' : 'none';
+    bgClearBtn.style.display = (isVideoMode && window.__znkBgVideoFile) ? 'inline-block' : 'none';
+  }
+
+  BG_MODES.forEach(m=>{
+    const btn = document.createElement('button');
+    btn.className = 'fx-btn' + (m.id === selectedBgMode ? ' active' : '');
+    btn.dataset.bg = m.id;
+    btn.innerHTML = `<span class="fx-name">${m.name}</span><span class="fx-desc">${m.desc}</span>`;
+    btn.addEventListener('click', ()=>{
+      selectedBgMode = m.id;
+      [...bgGrid.children].forEach(b=>b.classList.toggle('active', b.dataset.bg===m.id));
+      refreshBgUI();
+    });
+    bgGrid.appendChild(btn);
+  });
+
+  function loadBgVideo(file){
+    if(!file || !file.type.startsWith('video/')) return;
+    const url = URL.createObjectURL(file);
+    bgPreviewVideo.src = url;
+    bgPreviewVideo.style.display = 'block';
+    dropzoneBg.style.display = 'none';
+    bgPreviewVideo.play().catch(()=>{});
+
+    window.__znkBgVideoFile = file;
+    window.__znkNativeBgVideoPath = null;
+    if(window.electronAPI && typeof window.electronAPI.getPathForFile === 'function'){
+      try{
+        const p = window.electronAPI.getPathForFile(file);
+        if(p) window.__znkNativeBgVideoPath = p;
+      } catch(e){ /* repli ffmpeg.wasm */ }
+    }
+    refreshBgUI();
+  }
+
+  dropzoneBg.addEventListener('click', ()=> fileInputBg.click());
+  fileInputBg.addEventListener('change', e=> loadBgVideo(e.target.files[0]));
+  ['dragover','dragenter'].forEach(evt=>{
+    screenBg.addEventListener(evt, e=>{ e.preventDefault(); dropzoneBg.classList.add('drag-over'); });
+  });
+  ['dragleave','dragend'].forEach(evt=>{
+    screenBg.addEventListener(evt, ()=> dropzoneBg.classList.remove('drag-over'));
+  });
+  screenBg.addEventListener('drop', e=>{
+    e.preventDefault();
+    dropzoneBg.classList.remove('drag-over');
+    loadBgVideo(e.dataTransfer.files[0]);
+  });
+  bgClearBtn.addEventListener('click', ()=>{
+    window.__znkBgVideoFile = null;
+    window.__znkNativeBgVideoPath = null;
+    bgPreviewVideo.pause();
+    bgPreviewVideo.removeAttribute('src');
+    bgPreviewVideo.style.display = 'none';
+    dropzoneBg.style.display = 'block';
+    refreshBgUI();
+  });
+
+  EFFECTS.forEach(fx=>{
+    const btn = document.createElement('button');
+    btn.className = 'fx-btn' + (fx.id === selectedEffect ? ' active' : '');
+    btn.dataset.fx = fx.id;
+    btn.innerHTML = `<span class="fx-name">${fx.name}</span><span class="fx-desc">${fx.desc}</span>` +
+      (fx.warn ? `<span class="fx-warn">⚠ ${fx.warn}</span>` : '');
+    btn.addEventListener('click', ()=>{
+      selectedEffect = fx.id;
+      [...fxGrid.children].forEach(b=>b.classList.toggle('active', b.dataset.fx===fx.id));
+      fxHint.textContent = fx.warn
+        ? `${fx.name} — ${fx.warn}`
+        : `${fx.name} : ${fx.desc}. L'aperçu rapide fait un vrai rendu ffmpeg basse résolution.`;
+    });
+    fxGrid.appendChild(btn);
+  });
+
+  function setHold(which, v){
+    v = Math.max(0.2, Math.min(5, v));
+    (which==='A'?holdAFader:holdBFader).value = v;
+    (which==='A'?holdAVal:holdBVal).textContent = v.toFixed(1)+'s';
+  }
+  function setFd(v){
+    v = Math.max(0.3, Math.min(4, v));
+    fdFader.value = v;
+    fdVal.textContent = v.toFixed(1)+'s';
+  }
+  holdAFader.addEventListener('input', ()=> setHold('A', parseFloat(holdAFader.value)));
+  holdBFader.addEventListener('input', ()=> setHold('B', parseFloat(holdBFader.value)));
+  fdFader.addEventListener('input', ()=> setFd(parseFloat(fdFader.value)));
+  setHold('A', 1.0); setHold('B', 1.0); setFd(1.5);
+
+  function bothLoaded(){ return !!(window.__znkFileA && window.__znkFileB); }
+  function refreshReadyState(){
+    const ready = bothLoaded();
+    previewBtn.disabled = !ready;
+    exportBtn.disabled = !ready;
+    previewEmpty.style.display = ready ? 'none' : 'flex';
+  }
+  window.__znkRefreshReadyState = refreshReadyState;
+
+  function loadFile(which, file){
+    if(!file || !file.type.startsWith('image/')) return;
+    const isA = which === 'A';
+    const img = isA ? imgA : imgB;
+    const dropzone = isA ? dropzoneA : dropzoneB;
+    const dimEl = isA ? dimA : dimB;
+    const url = URL.createObjectURL(file);
+    img.src = url;
+    img.style.display = 'block';
+    dropzone.style.display = 'none';
+
+    window['__znkFile'+which] = file;
+    window['__znkNativePath'+which] = null;
+    if(window.electronAPI && typeof window.electronAPI.getPathForFile === 'function'){
+      try{
+        const p = window.electronAPI.getPathForFile(file);
+        if(p) window['__znkNativePath'+which] = p;
+      } catch(e){ /* repli ffmpeg.wasm */ }
+    }
+
+    img.onload = ()=>{
+      window['__znkDims'+which] = { w: img.naturalWidth, h: img.naturalHeight };
+      dimEl.textContent = img.naturalWidth + '×' + img.naturalHeight;
+      refreshReadyState();
+    };
+  }
+
+  [['A',dropzoneA,fileInputA,screenA],['B',dropzoneB,fileInputB,screenB]].forEach(([which,dz,input,screen])=>{
+    dz.addEventListener('click', ()=> input.click());
+    input.addEventListener('change', e=> loadFile(which, e.target.files[0]));
+    ['dragover','dragenter'].forEach(evt=>{
+      screen.addEventListener(evt, e=>{ e.preventDefault(); dz.classList.add('drag-over'); });
+    });
+    ['dragleave','dragend'].forEach(evt=>{
+      screen.addEventListener(evt, ()=> dz.classList.remove('drag-over'));
+    });
+    screen.addEventListener('drop', e=>{
+      e.preventDefault();
+      dz.classList.remove('drag-over');
+      loadFile(which, e.dataTransfer.files[0]);
+    });
+  });
+})();
+</script>
+
+<script type="module">
+/* ---------------- Export / Aperçu : ffmpeg natif (Electron) ou ffmpeg.wasm (navigateur) ---------------- */
+let FFmpeg, toBlobURL, fetchFile;
+async function loadWasmDeps(){
+  if(FFmpeg) return;
+  const mod1 = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
+  const mod2 = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js');
+  FFmpeg = mod1.FFmpeg;
+  toBlobURL = mod2.toBlobURL;
+  fetchFile = mod2.fetchFile;
+}
+
+const previewBtn = document.getElementById('previewBtn');
+const previewVideo = document.getElementById('previewVideo');
+const previewEmpty = document.getElementById('previewEmpty');
+const exportBtn = document.getElementById('exportBtn');
+const exportOverlay = document.getElementById('exportOverlay');
+const overlayLbl = document.getElementById('overlayLbl');
+const exportPct = document.getElementById('exportPct');
+const exportBar = document.getElementById('exportBar');
+const exportEta = document.getElementById('exportEta');
+const exportSupportNote = document.getElementById('exportSupportNote');
+const cancelExport = document.getElementById('cancelExport');
+
+let ffmpeg = null;
+let ffmpegLoadingPromise = null;
+let busy = false;
+let lastLogs = [];
+
+const isElectronNative = !!(window.electronAPI && typeof window.electronAPI.transitionVideos === 'function');
+
+const FFMPEG_CACHE_NAME = 'znk-ffmpeg-core-v1';
+const CORE_JS_URL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js';
+const CORE_WASM_URL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm';
+
+async function getCachedBlobURL(url, mime){
+  await loadWasmDeps();
+  if('caches' in window){
+    try{
+      const cache = await caches.open(FFMPEG_CACHE_NAME);
+      let response = await cache.match(url);
+      if(!response){
+        response = await fetch(url);
+        if(response.ok) await cache.put(url, response.clone());
+      }
+      const blob = await response.blob();
+      return URL.createObjectURL(new Blob([blob], {type: mime}));
+    } catch(e){
+      return await toBlobURL(url, mime);
+    }
+  }
+  return await toBlobURL(url, mime);
+}
+
+if(isElectronNative){
+  exportSupportNote.textContent = 'Sortie .mp4 — ffmpeg natif de l\'app ZNK, hors ligne';
+} else {
+  exportSupportNote.textContent = 'Sortie .mp4 — moteur ffmpeg.wasm (mis en cache après le 1er export) — les effets Vague/Tournoiement peuvent être lents';
+}
+
+async function ensureFFmpeg(){
+  if(ffmpeg) return ffmpeg;
+  if(ffmpegLoadingPromise) return ffmpegLoadingPromise;
+  ffmpegLoadingPromise = (async ()=>{
+    await loadWasmDeps();
+    const instance = new FFmpeg();
+    instance.on('log', ({message})=>{ lastLogs.push(message); if(lastLogs.length>40) lastLogs.shift(); });
+    instance.on('progress', ({progress})=>{
+      if(!busy) return;
+      const pct = Math.max(0, Math.min(100, Math.round(progress*100)));
+      exportPct.textContent = pct + '%';
+      exportBar.style.width = pct + '%';
+    });
+    await instance.load({
+      coreURL: await getCachedBlobURL(CORE_JS_URL, 'text/javascript'),
+      wasmURL: await getCachedBlobURL(CORE_WASM_URL, 'application/wasm'),
+    });
+    ffmpeg = instance;
+    return instance;
+  })();
+  return ffmpegLoadingPromise;
+}
+
+function lockControls(locked){
+  previewBtn.disabled = locked || !(window.__znkFileA && window.__znkFileB);
+  exportBtn.disabled = locked || !(window.__znkFileA && window.__znkFileB);
+}
+
+// Résolution/FPS de travail : dépend du format d'export choisi (l'aspect
+// des photos sources est géré séparément par le letterboxing dans le
+// filter_complex), pas de la résolution native des photos.
+function computeDims(maxSide){
+  const aspect = window.__znkSelectedAspect ? window.__znkSelectedAspect() : 'horizontal';
+  let W, H;
+  if(aspect === 'vertical'){ H = maxSide; W = Math.round(maxSide*9/16); }
+  else if(aspect === 'square'){ W = maxSide; H = maxSide; }
+  else { W = maxSide; H = Math.round(maxSide*9/16); }
+  W = Math.round(W/2)*2; H = Math.round(H/2)*2;
+  return {W, H};
+}
+
+async function runNative(pathA, pathB, fileA, fileB, plan, filterComplex, isPreview, bgVideoPath){
+  const result = await window.electronAPI.transitionVideos({
+    filePathA: pathA, filePathB: pathB,
+    fileNameA: fileA.name, fileNameB: fileB.name,
+    durationA: plan.durationA, durationB: plan.durationB, totalDuration: plan.totalDuration,
+    filterComplex, isPreview, bgVideoPath
+  });
+  if(!result || !result.success) throw new Error((result && result.error) || 'export natif échoué');
+  return result;
+}
+
+async function runWasm(fileA, fileB, plan, filterComplex, outWidthHint, bgVideoFile){
+  const ff = await ensureFFmpeg();
+  lastLogs = [];
+  const extA = (fileA.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+  const extB = (fileB.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+  const inA = 'photoA_' + Date.now() + '.' + extA;
+  const inB = 'photoB_' + Date.now() + '.' + extB;
+  const outPath = 'output.mp4';
+  await ff.writeFile(inA, await fetchFile(fileA));
+  await ff.writeFile(inB, await fetchFile(fileB));
+
+  let inBg = null;
+  if(bgVideoFile){
+    const extBg = (bgVideoFile.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g,'') || 'mp4';
+    inBg = 'bgvid_' + Date.now() + '.' + extBg;
+    await ff.writeFile(inBg, await fetchFile(bgVideoFile));
+  }
+  await ff.deleteFile(outPath).catch(()=>{});
+
+  const args = ['-y',
+    '-loop','1','-t', String(plan.durationA), '-i', inA,
+    '-loop','1','-t', String(plan.durationB), '-i', inB];
+  if(inBg) args.push('-stream_loop','-1','-i', inBg);
+  args.push(
+    '-filter_complex', filterComplex,
+    '-map','[vout]',
+    '-c:v','libx264','-preset','veryfast','-crf','20','-pix_fmt','yuv420p',
+    '-movflags','+faststart','-an', outPath);
+
+  const ret = await ff.exec(args);
+  if(ret !== 0 && ret !== undefined){
+    throw new Error('ffmpeg code ' + ret + ' — ' + lastLogs.slice(-3).join(' | '));
+  }
+  const data = await ff.readFile(outPath);
+  if(!data || !data.length) throw new Error('sortie vide — ' + lastLogs.slice(-3).join(' | '));
+
+  await ff.deleteFile(inA).catch(()=>{});
+  await ff.deleteFile(inB).catch(()=>{});
+  if(inBg) await ff.deleteFile(inBg).catch(()=>{});
+  await ff.deleteFile(outPath).catch(()=>{});
+  return data;
+}
+
+async function doRender(isPreview){
+  const fileA = window.__znkFileA, fileB = window.__znkFileB;
+  if(!fileA || !fileB || busy) return;
+  busy = true;
+  lockControls(true);
+
+  const timing = window.__znkTiming();
+  const effect = window.__znkSelectedEffect();
+  const aspect = window.__znkSelectedAspect ? window.__znkSelectedAspect() : 'horizontal';
+  const hasBgVideo = window.__znkHasBgVideo ? window.__znkHasBgVideo() : false;
+  const bgVideoFile = hasBgVideo ? window.__znkBgVideoFile : null;
+  const maxSide = isPreview ? 480 : (aspect === 'square' ? 1080 : 1920);
+  const {W,H} = computeDims(maxSide);
+  const FPS = 30;
+  const t = isPreview
+    ? { holdA: Math.min(timing.holdA, 0.4), fd: Math.min(timing.fd, 1.2), holdB: Math.min(timing.holdB, 0.4) }
+    : timing;
+
+  const plan = window.__znkBuildTransitionFilter(effect, {W,H,FPS,holdA:t.holdA, fd:t.fd, holdB:t.holdB, bgColor: window.__znkSelectedBgColor(), hasBgVideo});
+
+  overlayLbl.textContent = isPreview ? 'Aperçu en cours' : 'Export en cours';
+  exportPct.textContent = '0%';
+  exportBar.style.width = '0%';
+  exportEta.textContent = isPreview ? 'rendu basse résolution…' : 'encodage en cours…';
+  exportOverlay.classList.add('active');
+
+  // Fond vidéo = 3ᵉ flux ffmpeg. Le pont natif (main.js) sait désormais le
+  // fournir via bgVideoPath — on ne force le moteur intégré que si aucun
+  // chemin de fichier natif n'est disponible pour la vidéo de fond (ex.
+  // navigateur sans electronAPI.getPathForFile).
+  const useNative = isElectronNative && window.__znkNativePathA && window.__znkNativePathB
+    && (!hasBgVideo || !!window.__znkNativeBgVideoPath);
+
+  let unsubscribe = null;
+  try{
+    if(useNative){
+      if(!isPreview && window.electronAPI.onTransitionExportProgress){
+        unsubscribe = window.electronAPI.onTransitionExportProgress(data=>{
+          if(!busy) return;
+          const pct = Math.max(0, Math.min(100, Math.round(data.progress || 0)));
+          exportPct.textContent = pct + '%';
+          exportBar.style.width = pct + '%';
+        });
+      }
+      const result = await runNative(window.__znkNativePathA, window.__znkNativePathB, fileA, fileB, plan, plan.filterComplex, isPreview, hasBgVideo ? window.__znkNativeBgVideoPath : null);
+      if(isPreview){
+        previewVideo.src = 'file://' + result.outputPath;
+        previewVideo.style.display = 'block';
+        previewEmpty.style.display = 'none';
+        previewVideo.play().catch(()=>{});
+      } else {
+        exportEta.textContent = 'enregistré : ' + result.outputFileName;
+        if(window.electronAPI.openOutputFolder) window.electronAPI.openOutputFolder().catch(()=>{});
+      }
+    } else {
+      exportEta.textContent = hasBgVideo
+        ? 'chargement du moteur ffmpeg (fond vidéo, ~30 Mo au 1er lancement)…'
+        : 'chargement du moteur ffmpeg (~30 Mo au 1er lancement)…';
+      const data = await runWasm(fileA, fileB, plan, plan.filterComplex, maxSide, bgVideoFile);
+      const blob = new Blob([data.buffer], {type:'video/mp4'});
+      const url = URL.createObjectURL(blob);
+      if(isPreview){
+        previewVideo.src = url;
+        previewVideo.style.display = 'block';
+        previewEmpty.style.display = 'none';
+        previewVideo.play().catch(()=>{});
+      } else {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ZNKTransition_' + effect + '.mp4';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(()=> URL.revokeObjectURL(url), 4000);
+        exportEta.textContent = 'export MP4 terminé';
+      }
+    }
+    exportPct.textContent = '100%';
+    exportBar.style.width = '100%';
+  } catch(e){
+    console.error('[ZNKTransitions]', e, lastLogs.join('\n'));
+    const msg = (e && e.message) ? e.message : String(e);
+    exportEta.textContent = "échec : " + msg.slice(0, 160);
+  } finally {
+    if(unsubscribe) unsubscribe();
+    setTimeout(()=> exportOverlay.classList.remove('active'), isPreview ? 300 : 800);
+    busy = false;
+    lockControls(false);
+  }
+}
+
+previewBtn.addEventListener('click', ()=> doRender(true));
+exportBtn.addEventListener('click', ()=> doRender(false));
+cancelExport.addEventListener('click', ()=>{
+  if(!busy) return;
+  try{ if(ffmpeg){ ffmpeg.terminate(); ffmpeg = null; ffmpegLoadingPromise = null; } }catch(e){}
+  busy = false;
+  exportOverlay.classList.remove('active');
+  lockControls(false);
+});
+</script>
+</body>
+</html>

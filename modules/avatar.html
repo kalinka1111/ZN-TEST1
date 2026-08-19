@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ZNK Avatar · Mesh-warp bouche</title>
+<style>
+  :root{ --bg:#12141a; --panel:#1b1e27; --panel-2:#232733; --line:#2e3340; --text:#eef0f4; --muted:#8b93a6; --accent:#ff7a45; --accent-2:#4dd6c2; --radius:10px; }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; padding:24px;}
+  h1{ font-size:20px; margin:0 0 4px 0; }
+  .sub{ color:var(--muted); font-size:13px; margin-bottom:24px; }
+  .layout{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .stage{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; flex:0 0 auto; }
+  canvas{ display:block; border-radius:6px; background:#000; cursor:crosshair; touch-action:none; }
+  .zone-modes{ display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; width:340px; flex:1 1 320px; }
+  .step{ margin-bottom:22px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+  .step-title{ font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--accent-2); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  input[type="file"]{ font-size:12px; color:var(--muted); }
+  textarea{ width:100%; min-height:70px; background:var(--panel-2); border:1px solid var(--line); border-radius:6px; color:var(--text); padding:10px; font-size:14px; resize:vertical; font-family:inherit;}
+  button{ background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:8px 14px; border-radius:6px; font-size:13px; cursor:pointer;}
+  button.primary{ background:var(--accent); border-color:var(--accent); color:#1a1005; font-weight:600;}
+  .row{ display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap;}
+  .hint{ font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:6px; }
+  .timer{ font-size:12px; color:var(--muted); margin-top:8px; }
+  video.preview-out{ margin-top:10px; width:100%; border-radius:6px; border:1px solid var(--line); }
+  .badge{ display:inline-block; font-size:10px; padding:2px 6px; border-radius:4px; background:var(--panel-2); color:var(--muted); margin-left:0; }
+</style>
+</head>
+<body>
+<h1>ZNK · Avatar Parlant <span class="badge">Hors-ligne</span></h1>
+<div class="sub">Mesh-warp pour la bouche (pixels réels) · Phonétiseur FR · Export vidéo</div>
+
+<div class="layout">
+  <div class="stage">
+    <canvas id="stageCanvas" width="480" height="480"></canvas>
+    <div class="zone-modes">
+      <button id="modeHead">Tête</button>
+      <button id="modeMouth" class="active">Bouche</button>
+      <button id="modeEyeL">Oeil G</button>
+      <button id="modeEyeR">Oeil D</button>
+      <button id="modeBrows">Sourcils</button>
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <button id="btnClearZone">Effacer zone</button>
+      <span class="badge" id="mouthBadge">bouche: non définie</span>
+    </div>
+    <div style="margin-top:10px;">
+      <button id="btnPlay">▶ Aperçu</button>
+      <button id="btnStop">■ Stop</button>
+      <button id="btnRecord" class="primary">● Enregistrer</button>
+    </div>
+    <div class="timer" id="timerDisplay">Durée estimée : <b>0.0s</b> / 25s max</div>
+    <div id="recordOut"></div>
+  </div>
+
+  <div class="panel">
+    <div class="step">
+      <div class="step-title"><span class="step-num">1</span>Photo</div>
+      <input type="file" id="imgInput" accept="image/*">
+      <div class="hint">Photo nette tête + épaules recommandée.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">2</span>Zone bouche</div>
+      <div class="hint">Mode "Bouche": clique-glisse pour délimiter lèvres + un peu de peau.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">3</span>Audio (optionnel)</div>
+      <input type="file" id="audioInput" accept="audio/*">
+      <div class="hint" id="audioHint">Ajouter audio pour synchronisation plus précise.</div>
+      <button id="btnClearAudio" style="margin-top:6px;">Retirer l'audio</button>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">4</span>Texte (si pas d'audio)</div>
+      <textarea id="textInput">Bonjour, je suis ton avatar ZNK, prêt à parler hors ligne.</textarea>
+      <div class="hint">Texte → phonétiseur FR → visème → mesh-warp.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">5</span>Mouvements</div>
+      <div class="row"><label class="hint" style="margin:0;"><input type="checkbox" id="headBob" checked> mouvement naturel de tête</label></div>
+      <div class="row"><label class="hint" style="margin:0;"><input type="checkbox" id="blinkOn" checked> clignement</label></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+/* ---------- CONFIG: grid resolution (u x v) ----------
+   Increase for smoother deformation (cost CPU). */
+const GRID_U = 6; // horizontal divisions (columns)
+const GRID_V = 4; // vertical divisions (rows)
+
+/* ---------- Canvas & state ---------- */
+const canvas = document.getElementById('stageCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+let img = null;
+let imgDraw = { x:0, y:0, w:0, h:0 };
+
+let mouthZone = null;
+let currentMode = 'mouth';
+let cleanCanvasRaw = null, cleanCanvas = null, headLayerCanvas = null;
+
+/* mouth base (extracted pixels) & mesh targets */
+let mouthBase = null; // canvas containing mouth source pixels
+let meshNeutral = null; // array of points {x,y} in base-local coords
+let visemeTargets = {}; // map viseme->array of {x,y}
+let meshSize = { w:0, h:0 };
+const mouthBadge = document.getElementById('mouthBadge');
+
+/* UI mode handlers */
+function setMode(m){ currentMode = m; }
+document.getElementById('modeHead').addEventListener('click', ()=>setMode('head'));
+document.getElementById('modeMouth').addEventListener('click', ()=>setMode('mouth'));
+document.getElementById('modeEyeL').addEventListener('click', ()=>setMode('eyeL'));
+document.getElementById('modeEyeR').addEventListener('click', ()=>setMode('eyeR'));
+document.getElementById('modeBrows').addEventListener('click', ()=>setMode('brows'));
+document.getElementById('btnClearZone').addEventListener('click', ()=>{ if(currentMode==='mouth') mouthZone=null; updateBadges(); rebuildLayers(); renderStatic(); });
+
+function updateBadges(){ mouthBadge.textContent = 'bouche: ' + (mouthZone ? 'définie' : 'non définie'); }
+
+/* load image */
+document.getElementById('imgInput').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const im = new Image();
+    im.onload = ()=>{
+      img = im; fitImage(); mouthZone=null; mouthBase=null; updateBadges(); rebuildLayers(); renderStatic();
+    };
+    im.src = ev.target.result;
+  };
+  r.readAsDataURL(f);
+});
+function fitImage(){
+  if(!img) return;
+  const margin = 20;
+  const maxW = W - margin*2, maxH = H - margin*2;
+  const scale = Math.min(maxW/img.width, maxH/img.height);
+  const w = img.width * scale, h = img.height * scale;
+  imgDraw = { x:(W-w)/2, y:(H-h)/2, w:w, h:h };
+}
+
+/* mouse/touch to draw mouth zone */
+function canvasPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const cx = (e.touches? e.touches[0].clientX : e.clientX) - rect.left;
+  const cy = (e.touches? e.touches[0].clientY : e.clientY) - rect.top;
+  return { x: cx * (W/rect.width), y: cy * (H/rect.height) };
+}
+let dragging=false, dragStart=null;
+canvas.addEventListener('mousedown', e=>{ if(!img) return; dragging=true; dragStart=canvasPos(e); });
+canvas.addEventListener('touchstart', e=>{ if(!img) return; dragging=true; dragStart=canvasPos(e); });
+canvas.addEventListener('mousemove', e=>{ if(!dragging) return; e.preventDefault(); moveDrag(e); });
+canvas.addEventListener('touchmove', e=>{ if(!dragging) return; e.preventDefault(); moveDrag(e); });
+window.addEventListener('mouseup', ()=>endDrag()); window.addEventListener('touchend', ()=>endDrag());
+function moveDrag(e){
+  const p = canvasPos(e);
+  const r = { x: Math.min(dragStart.x,p.x), y: Math.min(dragStart.y,p.y), w: Math.abs(p.x-dragStart.x), h: Math.abs(p.y-dragStart.y) };
+  if(currentMode==='mouth') mouthZone = r;
+  renderStatic();
+}
+function endDrag(){
+  if(!dragging) return;
+  dragging=false;
+  if(mouthZone && mouthZone.w>6 && mouthZone.h>6){
+    rebuildLayers();
+    updateBadges();
+  }
+}
+
+/* rebuild layers and prepare mouth base + meshes */
+function rebuildLayers(){
+  if(!img) return;
+  cleanCanvasRaw = document.createElement('canvas'); cleanCanvasRaw.width = W; cleanCanvasRaw.height = H;
+  cleanCanvasRaw.getContext('2d').drawImage(img, imgDraw.x, imgDraw.y, imgDraw.w, imgDraw.h);
+
+  cleanCanvas = document.createElement('canvas'); cleanCanvas.width = W; cleanCanvas.height = H;
+  cleanCanvas.getContext('2d').drawImage(cleanCanvasRaw, 0, 0);
+
+  headLayerCanvas = document.createElement('canvas'); headLayerCanvas.width = W; headLayerCanvas.height = H;
+  headLayerCanvas.getContext('2d').drawImage(cleanCanvas, 0, 0);
+
+  mouthBase = null;
+  meshNeutral = null;
+  visemeTargets = {};
+
+  if(mouthZone){
+    // extract base region with padding and store base canvas
+    const padX = Math.round(mouthZone.w * 0.45);
+    const padY = Math.round(mouthZone.h * 0.55);
+    const sx = Math.max(0, Math.round(mouthZone.x - padX));
+    const sy = Math.max(0, Math.round(mouthZone.y - padY));
+    const sw = Math.min(W - sx, Math.round(mouthZone.w + padX*2));
+    const sh = Math.min(H - sy, Math.round(mouthZone.h + padY*2));
+
+    const base = document.createElement('canvas'); base.width = sw; base.height = sh;
+    base.getContext('2d').drawImage(cleanCanvasRaw, sx, sy, sw, sh, 0, 0, sw, sh);
+    mouthBase = { canvas: base, sx, sy, sw, sh };
+
+    meshSize = { w: sw, h: sh };
+
+    // build neutral mesh (points in base-local coordinates)
+    meshNeutral = [];
+    for(let v=0; v<=GRID_V; v++){
+      const row = [];
+      for(let u=0; u<=GRID_U; u++){
+        const x = (u/GRID_U) * sw;
+        const y = (v/GRID_V) * sh;
+        row.push({ x, y });
+      }
+      meshNeutral.push(row);
+    }
+
+    // generate viseme targets based on neutral mesh
+    generateVisemeTargets();
+  }
+}
+
+/* generate viseme target meshes by copying neutral and applying row/col displacements
+   The offsets are heuristics — tune values for your photos. */
+function generateVisemeTargets(){
+  if(!meshNeutral) return;
+  function cloneMesh(mesh){
+    return mesh.map(row => row.map(p => ({ x: p.x, y: p.y })));
+  }
+  const neutral = cloneMesh(meshNeutral);
+
+  // helper to apply vertical shift to bottom rows (open)
+  function openTarget(){
+    const m = cloneMesh(neutral);
+    const sh = meshSize.h;
+    for(let v=0; v<=GRID_V; v++){
+      const frac = v/GRID_V;
+      // bottom rows move more down
+      const dy = Math.max(0, (frac - 0.45)) * (sh * 0.42); // move bottom-most ~42% of height
+      for(let u=0; u<=GRID_U; u++) m[v][u].y += dy;
+    }
+    // slightly pull corners outward
+    const sw = meshSize.w;
+    for(let v=0; v<=GRID_V; v++){
+      const frac = v/GRID_V;
+      for(let u=0; u<=GRID_U; u++){
+        const cx = (u/GRID_U - 0.5);
+        m[v][u].x += cx * (sw * 0.06) * (0.8*frac + 0.2);
+      }
+    }
+    return m;
+  }
+
+  function wideTarget(){
+    const m = cloneMesh(neutral);
+    const sw = meshSize.w;
+    for(let v=0; v<=GRID_V; v++){
+      const frac = 1 - Math.abs( (v/GRID_V) - 0.5 )*1.6; // middle rows get more effect
+      for(let u=0; u<=GRID_U; u++){
+        const cx = (u/GRID_U - 0.5);
+        m[v][u].x += cx * (sw * 0.28) * frac; // spread horizontally
+        m[v][u].y -= Math.abs(cx) * (meshSize.h * 0.03) * frac; // slight lift at corners
+      }
+    }
+    return m;
+  }
+
+  function roundTarget(){
+    const m = cloneMesh(neutral);
+    // compress horizontally, push center forward (down), arc inwards
+    for(let v=0; v<=GRID_V; v++){
+      const fracV = Math.abs((v/GRID_V)-0.5) * 2;
+      for(let u=0; u<=GRID_U; u++){
+        const cx = (u/GRID_U - 0.5);
+        m[v][u].x -= cx * (meshSize.w * 0.20) * (1 - fracV*0.6);
+        m[v][u].y += (1 - Math.abs(cx)) * (meshSize.h * 0.12) * (1 - fracV*0.4);
+      }
+    }
+    return m;
+  }
+
+  function closedTarget(){
+    const m = cloneMesh(neutral);
+    // push top and bottom towards center (compress vertical)
+    for(let v=0; v<=GRID_V; v++){
+      const frac = (v/GRID_V);
+      const dy = (0.5 - frac) * (meshSize.h * 0.35); // compress towards midline
+      for(let u=0; u<=GRID_U; u++){
+        m[v][u].y += dy;
+        // slight inward horizontal pinch
+        const cx = (u/GRID_U - 0.5);
+        m[v][u].x -= cx * (meshSize.w * 0.04);
+      }
+    }
+    return m;
+  }
+
+  function midTarget(){
+    // small variation from neutral: tiny vertical breathing
+    const m = cloneMesh(neutral);
+    for(let v=0; v<=GRID_V; v++){
+      const frac = Math.sin(v) * 0.01;
+      for(let u=0; u<=GRID_U; u++){
+        m[v][u].y += meshSize.h * 0.02 * (0.5 - Math.abs((u/GRID_U)-0.5)) * (1 - Math.abs((v/GRID_V)-0.5));
+      }
+    }
+    return m;
+  }
+
+  visemeTargets = {
+    closed: closedTarget(),
+    mid: midTarget(),
+    open: openTarget(),
+    round: roundTarget(),
+    wide: wideTarget()
+  };
+}
+
+/* ---------- AFFINE math helpers (compute matrix mapping src tri -> dst tri) ----------
+   Returns [a, b, c, d, e, f] for ctx.setTransform(a, b, c, d, e, f)
+   Solves linear system U = M * S where S = [ [x0 y0 1], [x1 y1 1], [x2 y2 1] ] and U = [ [u0 u1 u2], [v0 v1 v2] ]
+*/
+function computeAffineFromTriangles(src, dst){
+  // src and dst are arrays of 3 points: {x,y}
+  const x0 = src[0].x, y0 = src[0].y;
+  const x1 = src[1].x, y1 = src[1].y;
+  const x2 = src[2].x, y2 = src[2].y;
+  const u0 = dst[0].x, v0 = dst[0].y;
+  const u1 = dst[1].x, v1 = dst[1].y;
+  const u2 = dst[2].x, v2 = dst[2].y;
+
+  // compute inverse of matrix S = [[x0,y0,1],[x1,y1,1],[x2,y2,1]]
+  const det = x0*(y1 - y2) - y0*(x1 - x2) + (x1*y2 - x2*y1);
+  if(Math.abs(det) < 1e-8) return null;
+  const invDet = 1 / det;
+
+  // compute inverse S^-1 explicitly (3x3) then M = U * S^-1
+  const s00 = (y1 - y2) * invDet;
+  const s01 = (x2 - x1) * invDet;
+  const s02 = (x1*y2 - x2*y1) * invDet;
+  const s10 = (y2 - y0) * invDet;
+  const s11 = (x0 - x2) * invDet;
+  const s12 = (x2*y0 - x0*y2) * invDet;
+  const s20 = (y0 - y1) * invDet;
+  const s21 = (x1 - x0) * invDet;
+  const s22 = (x0*y1 - x1*y0) * invDet;
+
+  // U matrix rows: [u0 u1 u2], [v0 v1 v2]
+  // M = U * S^-1, M is 2x3 => [a c e; b d f]
+  const a = u0 * s00 + u1 * s10 + u2 * s20;
+  const c = u0 * s01 + u1 * s11 + u2 * s21;
+  const e = u0 * s02 + u1 * s12 + u2 * s22;
+  const b = v0 * s00 + v1 * s10 + v2 * s20;
+  const d = v0 * s01 + v1 * s11 + v2 * s21;
+  const f = v0 * s02 + v1 * s12 + v2 * s22;
+
+  return [a, b, c, d, e, f];
+}
+
+/* ---------- Mesh rendering: for each quad -> two triangles; for each triangle compute affine and draw clipped ---------- */
+function renderMesh(baseCanvas, srcMesh, dstMesh, destX, destY, destW, destH){
+  const rows = srcMesh.length;
+  const cols = srcMesh[0].length;
+  const sctx = baseCanvas.getContext('2d');
+
+  // for each cell (v,u) produce triangles [p00,p10,p11] and [p00,p11,p01]
+  for(let v=0; v<rows-1; v++){
+    for(let u=0; u<cols-1; u++){
+      const s00 = srcMesh[v][u];
+      const s10 = srcMesh[v][u+1];
+      const s11 = srcMesh[v+1][u+1];
+      const s01 = srcMesh[v+1][u];
+
+      const d00 = dstMesh[v][u];
+      const d10 = dstMesh[v][u+1];
+      const d11 = dstMesh[v+1][u+1];
+      const d01 = dstMesh[v+1][u];
+
+      // draw triangle 1: s00, s10, s11 -> d00, d10, d11
+      drawMappedTriangle(baseCanvas, s00, s10, s11, d00, d10, d11, destX, destY);
+      // triangle 2: s00, s11, s01 -> d00, d11, d01
+      drawMappedTriangle(baseCanvas, s00, s11, s01, d00, d11, d01, destX, destY);
+    }
+  }
+}
+
+/* drawMappedTriangle draws the portion of baseCanvas corresponding to srcTri into destination triangle in main canvas,
+   using ctx.setTransform with the computed affine, clipping to dest triangle. dest offsets (destX,destY) position dstMesh points
+   in main canvas coordinates already, so no extra transform required besides affine from src->dst (but drawImage will use base coords).
+*/
+function drawMappedTriangle(baseCanvas, sA, sB, sC, dA, dB, dC, destX, destY){
+  // source triangle points in baseCanvas coordinates
+  const src = [ {x: sA.x, y: sA.y}, {x: sB.x, y: sB.y}, {x: sC.x, y: sC.y} ];
+  // destination triangle in canvas coordinates: we need absolute coords by adding destX/destY offset
+  const dst = [ {x: dA.x + destX, y: dA.y + destY}, {x: dB.x + destX, y: dB.y + destY}, {x: dC.x + destX, y: dC.y + destY} ];
+
+  // compute bounding box of source triangle
+  const minSX = Math.floor(Math.min(src[0].x, src[1].x, src[2].x));
+  const minSY = Math.floor(Math.min(src[0].y, src[1].y, src[2].y));
+  const maxSX = Math.ceil(Math.max(src[0].x, src[1].x, src[2].x));
+  const maxSY = Math.ceil(Math.max(src[0].y, src[1].y, src[2].y));
+  const sw = Math.max(1, maxSX - minSX);
+  const sh = Math.max(1, maxSY - minSY);
+
+  // compute affine that maps source triangle -> destination triangle
+  // but we will draw using drawImage(baseCanvas, sx, sy, sw, sh, 0,0, sw, sh) after setting transform mapping (minSX,minSY) space to dst tri
+  const srcTriRel = [ {x: src[0].x - minSX, y: src[0].y - minSY}, {x: src[1].x - minSX, y: src[1].y - minSY}, {x: src[2].x - minSX, y: src[2].y - minSY} ];
+  const dstTri = dst;
+
+  const affine = computeAffineFromTriangles(srcTriRel, dstTri);
+  if(!affine) return;
+  ctx.save();
+
+  // clip to destination triangle
+  ctx.beginPath();
+  ctx.moveTo(dstTri[0].x, dstTri[0].y);
+  ctx.lineTo(dstTri[1].x, dstTri[1].y);
+  ctx.lineTo(dstTri[2].x, dstTri[2].y);
+  ctx.closePath();
+  ctx.clip();
+
+  // set transform so that drawing (0..sw) coordinates map to dst triangle
+  // the affine was computed to map (x,y) in source-relative space to destination coords
+  // setTransform(a, b, c, d, e, f) maps canvas coords (x,y) -> (a*x + c*y + e, b*x + d*y + f)
+  ctx.setTransform(affine[0], affine[1], affine[2], affine[3], affine[4], affine[5]);
+
+  // draw the relevant sub-rectangle of baseCanvas at origin (source-relative). Because we used srcTriRel we must draw at ( -minSX, -minSY) ??? 
+  // Actually we want drawImage(baseCanvas, minSX, minSY, sw, sh, 0,0, sw, sh) but our transform maps (0,0) to dstTri mapping of srcTriRel coordinates
+  ctx.drawImage(baseCanvas, minSX, minSY, sw, sh, 0, 0, sw, sh);
+
+  // restore transform and clipping
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.restore();
+}
+
+/* ---------- Mesh interpolation & drawing per frame ----------
+   We compute a dstMesh (same shape as meshNeutral) whose points are weighted sum of viseme targets.
+*/
+const VISEMES = ['closed','mid','open','round','wide'];
+let smoothedWeights = { closed:1, mid:0, open:0, round:0, wide:0 };
+
+function computeDstMesh(tms){
+  if(!meshNeutral) return null;
+  const rows = meshNeutral.length, cols = meshNeutral[0].length;
+  // initialize dstMesh with zeros
+  const dst = [];
+  for(let v=0; v<rows; v++){
+    const row = [];
+    for(let u=0; u<cols; u++){
+      row.push({ x:0, y:0 });
+    }
+    dst.push(row);
+  }
+  // sum weighted targets
+  let totalW = 0;
+  VISEMES.forEach(vname => totalW += (smoothedWeights[vname] || 0));
+  // avoid division by zero
+  if(totalW < 1e-8) totalW = 1;
+  for(let v=0; v<rows; v++){
+    for(let u=0; u<cols; u++){
+      let x=0, y=0;
+      VISEMES.forEach(vname=>{
+        const w = (smoothedWeights[vname] || 0) / totalW;
+        const target = visemeTargets[vname] || meshNeutral;
+        x += target[v][u].x * w;
+        y += target[v][u].y * w;
+      });
+      // fallback ensures neutral influences remain
+      dst[v][u].x = x || meshNeutral[v][u].x;
+      dst[v][u].y = y || meshNeutral[v][u].y;
+    }
+  }
+  return dst;
+}
+
+/* ---------- Phonétiseur heuristique FR & viseme mapping (kept simple) ---------- */
+// (same approach as before — useful to produce viseme events from text)
+function phonemizeFrench(text){
+  if(!text) return [];
+  let s = text.toLowerCase();
+  s = s.replace(/é|è|ê|ë/g,'e').replace(/à|â|ä/g,'a').replace(/ô|ö/g,'o').replace(/ù|û|ü/g,'u').replace(/ï|î/g,'i').replace(/œ/g,'eu');
+  s = s.replace(/[^a-z0-9\s.,;:!?'-]/g, '');
+  const rules = [
+    {find:/eau/g, rep:'o'},
+    {find:/ais\b/g, rep:'e'},
+    {find:/ain|ein/g, rep:'an'},
+    {find:/au/g, rep:'o'}, {find:/oi/g, rep:'wa'}, {find:/ou/g, rep:'u'}, {find:/ch/g, rep:'sh'},
+    {find:/gn/g, rep:'gn'}, {find:/qu/g, rep:'k'}, {find:/(.)\1/g, rep:'$1'}
+  ];
+  rules.forEach(r=> s = s.replace(r.find, r.rep));
+  const tokens = [];
+  const words = s.split(/\s+/);
+  words.forEach((w, wi)=>{
+    if(w===''){ tokens.push({type:'space'}); return; }
+    let cur='';
+    for(let i=0;i<w.length;i++){
+      const ch = w[i];
+      if(/[,.;:!?'-]/.test(ch)){
+        if(cur) tokens.push({type:'seq', seq:cur}); tokens.push({type:'punct', char:ch}); cur='';
+      } else cur += ch;
+    }
+    if(cur) tokens.push({type:'seq', seq:cur});
+    if(wi < words.length-1) tokens.push({type:'space'});
+  });
+  const phonemes = [];
+  tokens.forEach(t=>{
+    if(t.type==='punct' || t.type==='space'){ phonemes.push({ph:'PAUSE', raw:t.type}); return; }
+    if(t.type==='seq'){
+      const seq = t.seq;
+      for(let i=0;i<seq.length;i++){
+        const two = seq.substr(i,2);
+        const three = seq.substr(i,3);
+        if(three==='sch'){ phonemes.push({ph:'SH', raw:three}); i+=2; continue; }
+        if(two==='sh' || two==='gn' || two==='eu' || two==='wa' || two==='wi' || two==='iy'){ phonemes.push({ph:two.toUpperCase(), raw:two}); i+=1; continue; }
+        phonemes.push({ph: seq[i].toUpperCase(), raw: seq[i]});
+      }
+    }
+  });
+  return phonemes;
+}
+
+function phonemeToViseme(phToken){
+  const p = (phToken.ph || '').toLowerCase();
+  const closedSet = ['p','b','m'];
+  if(closedSet.indexOf(p)!==-1) return 'closed';
+  if(['o','u','wa','eu'].indexOf(p)!==-1) return 'round';
+  if(['e','i','iy','y','wi'].indexOf(p)!==-1) return 'wide';
+  if(['a','an','on','in'].indexOf(p)!==-1) return 'open';
+  if(p==='pause') return 'closed';
+  if(['sh','f','s','c','k','q','t','d','g','v','z','r','n','l','gn'].indexOf(p)!==-1) return 'mid';
+  if(p.length===1 && 'aeiou'.indexOf(p)!==-1){
+    if(p==='o' || p==='u') return 'round';
+    if(p==='a') return 'open';
+    if(p==='e' || p==='i') return 'wide';
+  }
+  return 'mid';
+}
+
+function buildTimelineFromText(text){
+  const phonemes = phonemizeFrench(text);
+  const events = []; let t=0;
+  phonemes.forEach(ph=>{
+    let dur = 100;
+    const p = (ph.ph||'').toLowerCase();
+    if(p==='pause') dur=160;
+    else if(['a','an','on','in'].indexOf(p)!==-1) dur=180 + Math.random()*40;
+    else if(['o','u','wa','eu'].indexOf(p)!==-1) dur=160 + Math.random()*40;
+    else if(['e','i','iy','y','wi'].indexOf(p)!==-1) dur=140 + Math.random()*40;
+    else dur = 90 + Math.random()*50;
+    const vis = phonemeToViseme(ph);
+    events.push({ start: t, dur: Math.round(dur), viseme: vis, raw: ph.raw });
+    t += dur;
+  });
+  const tl = { events, total:t, usesAudio:false, speedScale: t>25000 ? t/25000 : 1, playDuration: Math.min(t,25000) };
+  return tl;
+}
+
+function visemeAtTimeFromText(tl, tms){
+  if(!tl || !tl.events || tl.events.length===0) return 'mid';
+  const scaled = tms / (tl.speedScale || 1);
+  for(let i=0;i<tl.events.length;i++){
+    const e = tl.events[i];
+    if(scaled >= e.start && scaled < e.start + e.dur) return e.viseme;
+  }
+  return 'mid';
+}
+
+/* ---------- Audio analysis (heuristic) ---------- */
+let audioEl = null, audioCtx=null, sourceNode=null, analyser=null, freqData=null, timeData=null, streamDest=null;
+function setupAudio(file){
+  const url = URL.createObjectURL(file);
+  audioEl = new Audio(); audioEl.src = url; audioEl.preload='auto';
+  audioEl.addEventListener('loadedmetadata', ()=>{ document.getElementById('audioHint').textContent = `Audio chargé : ${file.name} (${audioEl.duration.toFixed(1)}s)`; prepareTimeline(); });
+}
+function ensureAudioGraph(){
+  if(!audioEl || sourceNode) return;
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  sourceNode = audioCtx.createMediaElementSource(audioEl);
+  analyser = audioCtx.createAnalyser(); analyser.fftSize = 1024;
+  freqData = new Uint8Array(analyser.frequencyBinCount); timeData = new Uint8Array(analyser.fftSize);
+  streamDest = audioCtx.createMediaStreamDestination();
+  sourceNode.connect(analyser); sourceNode.connect(audioCtx.destination); sourceNode.connect(streamDest);
+}
+function audioRMS(){
+  if(!analyser) return 0;
+  analyser.getByteTimeDomainData(timeData);
+  let sum=0; for(let i=0;i<timeData.length;i++){ const v=(timeData[i]-128)/128; sum+=v*v; } return Math.sqrt(sum/timeData.length);
+}
+function audioCentroid(){
+  if(!analyser) return 0;
+  analyser.getByteFrequencyData(freqData);
+  let num=0, den=0; for(let i=0;i<freqData.length;i++){ num += i * freqData[i]; den += freqData[i]; } return den===0 ? 0 : num/den;
+}
+function currentAudioViseme(){
+  if(!analyser) return 'mid';
+  const rms = audioRMS();
+  const centroid = audioCentroid();
+  if(rms < 0.02) return 'closed';
+  if(rms < 0.06) return centroid < (freqData.length*0.4) ? 'round' : 'mid';
+  if(rms < 0.12) return centroid < (freqData.length*0.4) ? 'round' : 'wide';
+  return 'open';
+}
+
+/* ---------- Smooth viseme weights (inertia) ---------- */
+const VISEMES = ['closed','mid','open','round','wide'];
+let smoothedWeights = { closed:1, mid:0, open:0, round:0, wide:0 };
+function setTargetViseme(viseme){
+  const t = {}; VISEMES.forEach(v=> t[v] = (v===viseme?1:0)); return t;
+}
+
+/* ---------- Head motion (more natural) ---------- */
+const headState = { slowFreq: 0.12 + Math.random()*0.18, medFreq: 0.6 + Math.random()*1.0, microFreq: 4 + Math.random()*6, slowAmp: 0.03 + Math.random()*0.03, medAmp: 0.02 + Math.random()*0.03, microAmp: 0.004 + Math.random()*0.01, phaseSlow: Math.random()*Math.PI*2, phaseMed: Math.random()*Math.PI*2, phaseMicro: Math.random()*Math.PI*2, intentNextAt: 2000 + Math.random()*6000, intentAmp:0 };
+let headSmoothed = { rot:0, dx:0, dy:0, sx:1, sy:1 };
+function headMotion(tms){
+  if(tms > headState.intentNextAt){ headState.intentAmp = 0.25 + Math.random()*0.6; headState.intentNextAt = tms + 1500 + Math.random()*4000; }
+  headState.intentAmp *= 0.995;
+  const s = Math.sin(tms*0.001 * headState.slowFreq * Math.PI*2 + headState.phaseSlow) * headState.slowAmp;
+  const m = Math.sin(tms*0.001 * headState.medFreq * Math.PI*2 + headState.phaseMed) * headState.medAmp;
+  const mi = Math.sin(tms*0.001 * headState.microFreq * Math.PI*2 + headState.phaseMicro) * headState.microAmp;
+  const rot = s + m + mi + headState.intentAmp * Math.sin(tms*0.001*0.8);
+  const dx = (s*18 + m*10) * 1.2;
+  const dy = (s*6 + mi*4) * 0.9;
+  const sx = 1 + Math.sin(tms*0.0007)*0.004;
+  const sy = 1 - Math.sin(tms*0.0009)*0.003;
+  const k = 0.06;
+  headSmoothed.rot += (rot - headSmoothed.rot) * k;
+  headSmoothed.dx += (dx - headSmoothed.dx) * (k*1.1);
+  headSmoothed.dy += (dy - headSmoothed.dy) * (k*1.1);
+  headSmoothed.sx += (sx - headSmoothed.sx) * (k*0.9);
+  headSmoothed.sy += (sy - headSmoothed.sy) * (k*0.9);
+  return { rot: headSmoothed.rot, dx: headSmoothed.dx, dy: headSmoothed.dy, sx: headSmoothed.sx, sy: headSmoothed.sy };
+}
+
+/* ---------- Draw frame: apply head transform, compute viseme, update weights, draw mesh ---------- */
+function drawFrame(tms, animate, mouthOverrideViseme){
+  ctx.save();
+  ctx.fillStyle = '#12141a'; ctx.fillRect(0,0,W,H);
+
+  if(!img){ ctx.fillStyle='#4a5163'; ctx.font='14px sans-serif'; ctx.textAlign='center'; ctx.fillText('Charge une photo pour commencer', W/2, H/2); ctx.restore(); return; }
+
+  ctx.drawImage(cleanCanvas || cleanCanvasRaw, 0, 0);
+
+  // head motion
+  const bobOn = document.getElementById('headBob').checked;
+  let motion = { rot:0, dx:0, dy:0, sx:1, sy:1 };
+  if(animate && bobOn) motion = headMotion(tms);
+
+  // pivot approximate at neck base
+  const pivotX = imgDraw.x + imgDraw.w/2;
+  const pivotY = imgDraw.y + imgDraw.h*0.62;
+  ctx.save();
+  ctx.translate(pivotX + motion.dx, pivotY + motion.dy);
+  ctx.rotate(motion.rot);
+  ctx.scale(motion.sx, motion.sy);
+  ctx.translate(-pivotX, -pivotY);
+
+  // choose viseme target
+  let targetViseme = 'mid';
+  if(mouthOverrideViseme) targetViseme = mouthOverrideViseme;
+  else if(animate && audioEl && analyser) targetViseme = currentAudioViseme();
+  else if(!audioEl && currentTimeline && !currentTimeline.usesAudio) targetViseme = visemeAtTimeFromText(currentTimeline, tms);
+  else targetViseme = 'mid';
+
+  // smooth weights
+  const targ = setTargetViseme(targetViseme);
+  const step = 0.12;
+  VISEMES.forEach(v => { const desired = targ[v] || 0; smoothedWeights[v] += (desired - smoothedWeights[v]) * step; if(smoothedWeights[v] < 1e-4) smoothedWeights[v] = 0; });
+
+  // if mesh available, compute dst mesh and render
+  if(meshNeutral && mouthBase){
+    // compute dst mesh
+    // update small breathing/inertia offset for realism
+    const rows = meshNeutral.length, cols = meshNeutral[0].length;
+    // compute dstMesh as weighted sum
+    const dstMesh = computeDstMesh(tms);
+    // draw base mesh warped at the mouth destination on the main canvas
+    // dest position = mouthZone center relative to canvas
+    const destX = Math.round(mouthZone.x + mouthZone.w*0.5 - meshSize.w*0.5);
+    const destY = Math.round(mouthZone.y + mouthZone.h*0.5 - meshSize.h*0.5);
+    renderMesh(mouthBase.canvas, meshNeutral, dstMesh, destX, destY, meshSize.w, meshSize.h);
+
+    // skin patch to blend edges: draw blurred base under the mesh with alpha
+    // build once: we created skin patch earlier in previous versions; here we'll simulate by drawing a blurred copy
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.filter = 'blur(6px)';
+    ctx.drawImage(mouthBase.canvas, destX, destY, meshSize.w, meshSize.h);
+    ctx.filter = 'none';
+    ctx.globalAlpha = 1.0;
+    ctx.restore();
+    // re-draw mesh on top to ensure crispness
+    renderMesh(mouthBase.canvas, meshNeutral, dstMesh, destX, destY, meshSize.w, meshSize.h);
+  }
+
+  ctx.restore();
+  ctx.restore();
+}
+
+/* ---------- Timeline / playback & recording (reuse previous logic) ---------- */
+let currentTimeline = null;
+const MAX_MS = 25000;
+const timerDisplay = document.getElementById('timerDisplay');
+
+function prepareTimeline(){
+  if(audioEl && audioEl.duration){
+    currentTimeline = { usesAudio:true, playDuration: Math.min(audioEl.duration*1000, MAX_MS) };
+    timerDisplay.innerHTML = `Durée (audio) : <b>${(currentTimeline.playDuration/1000).toFixed(1)}s</b> / 25s max`;
+    return currentTimeline;
+  }
+  const text = document.getElementById('textInput').value || '';
+  const tl = buildTimelineFromText(text);
+  currentTimeline = tl;
+  timerDisplay.innerHTML = `Durée estimée (texte) : <b>${(tl.playDuration/1000).toFixed(1)}s</b> / 25s max`;
+  return tl;
+}
+
+let playing=false, playStartTs=null, rafId=null;
+function loop(ts){
+  if(!playing) return;
+  if(playStartTs===null) playStartTs = ts;
+  const elapsed = ts - playStartTs;
+  const vis = currentTimeline && currentTimeline.usesAudio ? currentAudioViseme() : visemeAtTimeFromText(currentTimeline, elapsed);
+  drawFrame(elapsed, true, vis);
+  if(elapsed >= (currentTimeline ? currentTimeline.playDuration : MAX_MS) + 300){ stopPlayback(); return; }
+  rafId = requestAnimationFrame(loop);
+}
+function startPlayback(){ if(!img){ alert("Charge une photo d'abord."); return; } prepareTimeline(); if(audioEl){ ensureAudioGraph(); if(audioCtx.state==='suspended') audioCtx.resume(); audioEl.currentTime = 0; audioEl.play(); } playing=true; playStartTs=null; rafId=requestAnimationFrame(loop); }
+function stopPlayback(){ playing=false; if(rafId) cancelAnimationFrame(rafId); if(audioEl) audioEl.pause(); renderStatic(); }
+document.getElementById('btnPlay').addEventListener('click', startPlayback);
+document.getElementById('btnStop').addEventListener('click', stopPlayback);
+
+/* audio and recording (same pattern) */
+document.getElementById('audioInput').addEventListener('change', e=>{ const f = e.target.files[0]; if(!f) return; setupAudio(f); });
+document.getElementById('btnClearAudio').addEventListener('click', ()=>{ if(audioEl) audioEl.pause(); audioEl=null; document.getElementById('audioInput').value=''; document.getElementById('audioHint').textContent='Audio retiré.'; prepareTimeline(); });
+
+const recordOut = document.getElementById('recordOut');
+document.getElementById('btnRecord').addEventListener('click', async ()=>{
+  if(!img){ alert("Charge une photo d'abord."); return; }
+  if(!mouthZone){ alert("Définis la zone de bouche avant d'enregistrer."); return; }
+  if(typeof MediaRecorder === 'undefined' || !canvas.captureStream){ alert("Ton navigateur ne supporte pas l'enregistrement (MediaRecorder/captureStream)."); return; }
+  recordOut.innerHTML = '';
+  try{
+    const tl = prepareTimeline();
+    if(audioEl){ ensureAudioGraph(); if(audioCtx.state==='suspended') await audioCtx.resume(); }
+    const videoStream = canvas.captureStream(30);
+    let combined = videoStream;
+    if(audioEl && streamDest){ combined = new MediaStream([...videoStream.getVideoTracks(), ...streamDest.stream.getAudioTracks()]); audioEl.currentTime = 0; }
+    const candidates = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    let recorder = null, mimeType = null;
+    for(const c of candidates){ try{ if(MediaRecorder.isTypeSupported && !MediaRecorder.isTypeSupported(c)) continue; recorder = new MediaRecorder(combined, { mimeType: c }); mimeType = c; break; } catch(e){} }
+    if(!recorder){ try{ recorder = new MediaRecorder(combined); mimeType = recorder.mimeType || 'video/webm'; } catch(e){ recorder = null; } }
+    if(!recorder){ recordOut.innerHTML = '<div class="hint" style="color:#ff8a8a;">Impossible de démarrer l\'enregistrement.</div>'; return; }
+    const isMp4 = mimeType && mimeType.indexOf('mp4') !== -1;
+    const outExt = isMp4 ? 'mp4' : 'webm';
+    const chunks = [];
+    recorder.ondataavailable = e=>{ if(e.data.size>0) chunks.push(e.data); };
+    recorder.onerror = e=>{ recordOut.innerHTML = '<div class="hint" style="color:#ff8a8a;">Erreur enregistrement</div>'; };
+    recorder.onstop = ()=>{
+      if(chunks.length===0){ recordOut.innerHTML = '<div class="hint" style="color:#ff8a8a;">Aucune donnée.</div>'; if(audioEl) audioEl.pause(); return; }
+      const blob = new Blob(chunks, { type: isMp4 ? 'video/mp4' : 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const wrap = document.createElement('div'); wrap.style.marginTop='10px'; wrap.style.padding='10px'; wrap.style.border='1px solid #4dd68f'; wrap.style.borderRadius='8px'; wrap.style.background='rgba(77,214,143,0.06)';
+      const video = document.createElement('video'); video.className='preview-out'; video.src=url; video.controls=true;
+      const link = document.createElement('a'); link.href=url; link.download='znk_avatar_parlant.' + outExt; link.textContent = '⬇ Télécharger la vidéo (.' + outExt + ')';
+      wrap.appendChild(video); wrap.appendChild(document.createElement('br')); wrap.appendChild(link);
+      recordOut.innerHTML = ''; recordOut.appendChild(wrap); wrap.scrollIntoView({behavior:'smooth', block:'center'});
+      if(audioEl) audioEl.pause();
+    };
+    recorder.start(200);
+    if(audioEl) audioEl.play();
+    playing = true; playStartTs = null;
+    const duration = tl.playDuration;
+    recordOut.innerHTML = '<div class="hint">● Enregistrement en cours… <span id="recProgress">0.0</span>s / ' + (duration/1000).toFixed(1) + 's</div>';
+    const progressEl = document.getElementById('recProgress');
+    function recLoop(ts){
+      if(!playing) return;
+      if(playStartTs===null) playStartTs = ts;
+      const elapsed = ts - playStartTs;
+      const vis = tl.usesAudio ? currentAudioViseme() : visemeAtTimeFromText(tl, elapsed);
+      drawFrame(elapsed, true, vis);
+      if(progressEl) progressEl.textContent = (elapsed/1000).toFixed(1);
+      if(elapsed >= duration){ playing = false; recordOut.innerHTML = '<div class="hint">Finalisation…</div>'; recorder.stop(); renderStatic(); return; }
+      requestAnimationFrame(recLoop);
+    }
+    requestAnimationFrame(recLoop);
+  } catch(err){
+    recordOut.innerHTML = '<div class="hint" style="color:#ff8a8a;">Erreur : ' + (err.message || err) + '</div>';
+    console.error(err);
+  }
+});
+
+/* ---------- Helpers / initial render ---------- */
+function renderStatic(){
+  drawFrame(0, false);
+  ctx.save(); ctx.setLineDash([5,4]); ctx.lineWidth = 2; if(mouthZone){ ctx.strokeStyle = '#4dd6c2'; ctx.strokeRect(mouthZone.x, mouthZone.y, mouthZone.w, mouthZone.h); } ctx.restore();
+}
+
+let currentTimeline = null;
+function prepareTimeline(){
+  if(audioEl && audioEl.duration){
+    currentTimeline = { usesAudio:true, playDuration: Math.min(audioEl.duration*1000, MAX_MS) };
+    timerDisplay.innerHTML = `Durée (audio) : <b>${(currentTimeline.playDuration/1000).toFixed(1)}s</b> / 25s max`;
+    return currentTimeline;
+  }
+  const text = document.getElementById('textInput').value || '';
+  const tl = buildTimelineFromText(text);
+  currentTimeline = tl;
+  timerDisplay.innerHTML = `Durée estimée (texte) : <b>${(tl.playDuration/1000).toFixed(1)}s</b> / 25s max`;
+  return tl;
+}
+
+/* Expose some helpers for tuning in console */
+window._znk = {
+  rebuildLayers,
+  generateVisemeTargets,
+  meshNeutral,
+  visemeTargets,
+  mouthBase,
+  GRID_U,
+  GRID_V
+};
+
+renderStatic();
+prepareTimeline();
+
+})();
+</script>
+</body>
+</html>

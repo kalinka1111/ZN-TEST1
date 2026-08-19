@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNK Anim Images.— Séquenceur d'images animées</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #444444;
+    --panel: #171f16;
+    --panel-2: #1d271b;
+    --line: #2a352a;
+    --text: #eef1ea;
+    --muted: #8fa38c;
+    --bloom: #d58400;
+    --bloom-dim: #6d2f45;
+    --growth: #b7e35a;
+    --growth-dim: #4e5b30;
+    --radius: 14px;
+    font-size: 16px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(232,101,154,0.10), transparent 60%),
+      radial-gradient(900px 500px at -5% 110%, rgba(183,227,90,0.08), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app{ max-width: 1400px; margin: 0 auto; padding: 28px 24px 60px; }
+
+  header.top{ display:flex; align-items:baseline; gap:16px; margin-bottom: 28px; flex-wrap:wrap; }
+  header.top .mark{
+    font-family:'Fraunces', serif; font-weight:600; font-size: 2.1rem; letter-spacing:-0.02em;
+    background: linear-gradient(100deg, var(--bloom), var(--growth));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  header.top .tagline{ color: var(--muted); font-size:.92rem; }
+
+  .layout{ display:grid; grid-template-columns: 360px 1fr; gap: 20px; align-items:start; }
+  @media (max-width: 920px){ .layout{ grid-template-columns: 1fr; } }
+
+  .panel{
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 18px 20px;
+    margin-bottom: 16px;
+  }
+  .panel h2{
+    font-family:'Fraunces', serif; font-weight:500; font-size:1.02rem;
+    margin: 0 0 14px; color: var(--text);
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel h2 .stage-no{
+    font-family:'JetBrains Mono', monospace; font-size:.7rem; color: var(--bg);
+    background: var(--growth); padding: 2px 7px; border-radius: 999px; font-weight:600;
+  }
+
+  .dropzone{
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    border: 1.5px dashed var(--line); border-radius: 10px; padding: 18px 12px;
+    color: var(--muted); font-size:.87rem; cursor:pointer; transition: border-color .15s, color .15s, background .15s;
+  }
+  .dropzone:hover, .dropzone.drag{ border-color: var(--bloom); color: var(--text); background: rgba(232,101,154,0.06); }
+
+  .image-list{ list-style:none; margin: 14px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; max-height: 320px; overflow-y:auto; }
+  .image-list li{
+    display:flex; align-items:center; gap:10px; background: rgba(0,0,0,0.18);
+    border:1px solid var(--line); border-radius:10px; padding:7px 8px; cursor:grab;
+  }
+  .image-list li.dragging{ opacity:.4; }
+  .image-list li .stage{
+    font-family:'JetBrains Mono', monospace; font-size:.68rem; color: var(--bloom);
+    width:16px; text-align:center; flex-shrink:0;
+  }
+  .image-list li img{ width:42px; height:42px; object-fit:cover; border-radius:6px; flex-shrink:0; border:1px solid var(--line); }
+  .image-list li .name{ flex:1; font-size:.8rem; color: var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .image-list li button{
+    background:none; border:none; color: var(--muted); cursor:pointer; font-size:1rem; line-height:1; padding:4px;
+    border-radius:6px;
+  }
+  .image-list li button:hover{ color: var(--bloom); background: rgba(232,101,154,0.1); }
+  .image-list:empty::after{
+    content:"Aucune image pour l'instant"; display:block; text-align:center; color:var(--muted); font-size:.8rem; padding:10px 0 2px;
+  }
+
+  .field{ margin-bottom: 14px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label{ display:flex; justify-content:space-between; font-size:.8rem; color: var(--muted); margin-bottom:6px; }
+  .field label span{ font-family:'JetBrains Mono', monospace; color: var(--growth); }
+  select, input[type=range]{ width:100%; }
+  select{
+    background: rgba(0,0,0,0.25); border:1px solid var(--line); color: var(--text);
+    padding: 8px 10px; border-radius:8px; font-size:.85rem; font-family:'Inter',sans-serif;
+  }
+  input[type=range]{ accent-color: var(--bloom); height: 4px; }
+  .checkbox-field label{ display:flex; align-items:center; gap:8px; font-size:.85rem; color: var(--text); }
+  .checkbox-field input{ accent-color: var(--growth); width:16px; height:16px; }
+
+  .btn{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    padding: 11px 14px; border-radius: 10px; border:1px solid var(--line);
+    background: rgba(255,255,255,0.03); color: var(--text); font-size:.88rem; font-weight:600;
+    cursor:pointer; text-decoration:none; transition: transform .1s, background .15s, border-color .15s;
+    font-family:'Inter', sans-serif;
+  }
+  .btn:hover:not(:disabled){ border-color: var(--growth); }
+  .btn:active:not(:disabled){ transform: scale(0.98); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.primary{ background: linear-gradient(100deg, var(--bloom), #c94b81); border:none; color:#1a0a12; }
+  .btn.primary:hover:not(:disabled){ filter:brightness(1.08); }
+  .btn.secondary{ border-color: var(--growth); color: var(--growth); margin-top:10px; }
+  .hint{ font-size:.72rem; color: var(--muted); margin-top:8px; line-height:1.4; }
+
+  .progress{ margin-top: 14px; }
+  .progress.hidden{ display:none; }
+  .progress-bar{ height:6px; background: rgba(0,0,0,0.3); border-radius:999px; overflow:hidden; }
+  #progressFill{ height:100%; width:0%; background: linear-gradient(90deg, var(--growth), var(--bloom)); transition: width .2s; }
+  #progressLabel{ font-size:.75rem; color: var(--muted); margin: 7px 0 0; font-family:'JetBrains Mono', monospace; }
+
+  .hidden{ display:none !important; }
+
+  main.preview{ display:flex; flex-direction:column; gap:14px; }
+  .canvas-wrap{
+    position:relative; background: #05070a; border:1px solid var(--line); border-radius: var(--radius);
+    padding: 10px; display:flex; align-items:center; justify-content:center; min-height: 320px;
+  }
+  .canvas-wrap::before{
+    content: attr(data-label); position:absolute; top:14px; left:18px;
+    font-family:'JetBrains Mono', monospace; font-size:.68rem; color: var(--muted); letter-spacing:.04em;
+  }
+  canvas{ max-width:100%; max-height: 68vh; border-radius:8px; display:block; }
+  .empty-state{
+    position:absolute; color: var(--muted); font-size:.9rem; text-align:center; padding: 0 30px;
+    font-family:'Fraunces', serif; font-style:italic;
+  }
+
+  .preview-controls{
+    display:flex; align-items:center; gap:12px; background: var(--panel); border:1px solid var(--line);
+    border-radius: var(--radius); padding: 12px 16px;
+  }
+  .preview-controls .btn{ width:auto; padding: 9px 16px; }
+  #timeLabel{ margin-left:auto; font-family:'JetBrains Mono', monospace; font-size:.8rem; color: var(--muted); }
+
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-thumb{ background: var(--line); border-radius:8px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <span class="mark">ZNK Anim Images</span>
+    <span class="tagline">Transformez une séquence d'images (bourgeon → fleur épanouie…) en animation fluide, exportable en MP4.</span>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+
+      <section class="panel">
+        <h2><span class="stage-no">01</span> Images de la séquence</h2>
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept="image/*" multiple hidden>
+          <span>📁 Glissez vos images ici, ou cliquez pour parcourir<br><span style="opacity:.7">L'ordre de la liste = l'ordre de l'animation</span></span>
+        </label>
+        <ul class="image-list" id="imageList"></ul>
+      </section>
+
+      <section class="panel">
+        <h2><span class="stage-no">02</span> Réglages de transition</h2>
+        <div class="field">
+          <label>Type de transition</label>
+          <select id="transitionType">
+            <option value="fade" selected>Fondu enchaîné</option>
+            <option value="slide-left">Glissement — gauche</option>
+            <option value="slide-right">Glissement — droite</option>
+            <option value="zoom-in">Zoom avant (réveil)</option>
+            <option value="zoom-out">Zoom arrière (retrait)</option>
+            <option value="cut">Coupe franche</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Durée de transition <span id="transDurVal">600 ms</span></label>
+          <input type="range" id="transDur" min="50" max="2000" step="50" value="600">
+        </div>
+        <div class="field">
+          <label>Durée d'affichage <span id="holdDurVal">1200 ms</span></label>
+          <input type="range" id="holdDur" min="50" max="5000" step="50" value="1200">
+        </div>
+        <div class="field">
+          <label>Courbe de progression (easing)</label>
+          <select id="easing">
+            <option value="linear">Linéaire</option>
+            <option value="easeInOut" selected>Ease In-Out</option>
+            <option value="easeIn">Ease In</option>
+            <option value="easeOut">Ease Out</option>
+          </select>
+        </div>
+        <div class="field checkbox-field">
+          <label><input type="checkbox" id="loopToggle" checked> Boucler l'animation (aperçu + export)</label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2><span class="stage-no">03</span> Mouvement de caméra</h2>
+        <div class="field">
+          <label>Type de mouvement</label>
+          <select id="cameraMode">
+            <option value="none" selected>Aucun (image fixe)</option>
+            <option value="pan-right">Panoramique → droite</option>
+            <option value="pan-left">Panoramique → gauche</option>
+            <option value="pan-vertical">Panoramique vertical</option>
+            <option value="zoom-in">Zoom avant lent</option>
+            <option value="zoom-out">Zoom arrière lent</option>
+            <option value="kenburns">Ken Burns (pan + zoom)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Intensité du mouvement <span id="cameraIntensityVal">15%</span></label>
+          <input type="range" id="cameraIntensity" min="5" max="45" step="1" value="15">
+        </div>
+        <p class="hint">La caméra se déplace en un seul mouvement continu du début à la fin de toute la composition (à travers les images et les transitions), pas image par image.</p>
+      </section>
+
+      <section class="panel">
+        <h2><span class="stage-no">04</span> Export vidéo</h2>
+        <div class="field">
+          <label>Résolution</label>
+          <select id="resolution">
+            <option value="native">Native (1re image)</option>
+            <option value="1280x720">1280 × 720 — HD</option>
+            <option value="1920x1080" selected>1920 × 1080 — Full HD</option>
+            <option value="1080x1080">1080 × 1080 — Carré</option>
+            <option value="1080x1920">1080 × 1920 — Vertical</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Images par seconde</label>
+          <select id="fps">
+            <option value="24">24 fps</option>
+            <option value="30" selected>30 fps</option>
+            <option value="60">60 fps</option>
+          </select>
+        </div>
+        <button id="exportBtn" class="btn primary" disabled>🎬 Exporter en MP4</button>
+        <div class="progress hidden" id="exportProgress">
+          <div class="progress-bar"><div id="progressFill"></div></div>
+          <p id="progressLabel">…</p>
+        </div>
+        <a id="downloadLink" class="btn secondary hidden" download>⬇️ Télécharger le fichier</a>
+        <p class="hint">L'export génère d'abord chaque image de l'animation, puis les encode en MP4 : via le ffmpeg natif de l'app ZNK si disponible (aucun téléchargement), sinon via un convertisseur chargé depuis le web la première fois. La durée exportée correspond exactement à celle de l'aperçu.</p>
+      </section>
+
+    </aside>
+
+    <main class="preview">
+      <div class="canvas-wrap" id="canvasWrap" data-label="APERÇU">
+        <canvas id="canvas" width="1920" height="1080"></canvas>
+        <div class="empty-state" id="emptyState">Ajoutez au moins deux images pour démarrer l'aperçu de floraison</div>
+      </div>
+      <div class="preview-controls">
+        <button id="playBtn" class="btn" disabled>▶️ Lecture</button>
+        <button id="restartBtn" class="btn" disabled>⏮️ Redémarrer</button>
+        <span id="timeLabel">0.0s / 0.0s</span>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---------- State ----------
+  let images = [];        // { id, img, name }
+  let isPlaying = false;
+  let animStart = null;
+  let rafId = null;
+  let cachedTimeline = null; // { segments, cumulative, total }
+
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const imageList = document.getElementById('imageList');
+  const fileInput = document.getElementById('fileInput');
+  const dropzone = document.getElementById('dropzone');
+  const emptyState = document.getElementById('emptyState');
+  const playBtn = document.getElementById('playBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const timeLabel = document.getElementById('timeLabel');
+  const downloadLink = document.getElementById('downloadLink');
+  const exportProgress = document.getElementById('exportProgress');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+
+  const transitionType = document.getElementById('transitionType');
+  const transDur = document.getElementById('transDur');
+  const holdDur = document.getElementById('holdDur');
+  const easingSel = document.getElementById('easing');
+  const loopToggle = document.getElementById('loopToggle');
+  const resolutionSel = document.getElementById('resolution');
+  const fpsSel = document.getElementById('fps');
+  const cameraMode = document.getElementById('cameraMode');
+  const cameraIntensity = document.getElementById('cameraIntensity');
+  const cameraIntensityVal = document.getElementById('cameraIntensityVal');
+
+  const transDurVal = document.getElementById('transDurVal');
+  const holdDurVal = document.getElementById('holdDurVal');
+
+  // ---------- Easing ----------
+  const easings = {
+    linear: t => t,
+    easeInOut: t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2,
+    easeIn: t => t*t,
+    easeOut: t => 1 - (1-t)*(1-t),
+  };
+
+  // ---------- File handling ----------
+  function uid(){ return Math.random().toString(36).slice(2, 10); }
+
+  function addFiles(fileList){
+    const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+    let remaining = files.length;
+    if (!remaining) return;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          images.push({ id: uid(), img, name: file.name });
+          renderList();
+          onImagesChanged();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  fileInput.addEventListener('change', e => { addFiles(e.target.files); fileInput.value=''; });
+  dropzone.addEventListener('click', () => fileInput.click());
+  ['dragenter','dragover'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('drag'); }));
+  dropzone.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+
+  function removeImage(id){
+    images = images.filter(i => i.id !== id);
+    renderList();
+    onImagesChanged();
+  }
+
+  let dragSrcIndex = null;
+  function renderList(){
+    imageList.innerHTML = '';
+    images.forEach((item, idx) => {
+      const li = document.createElement('li');
+      li.draggable = true;
+      li.dataset.index = idx;
+      li.innerHTML = `
+        <span class="stage">${idx+1}</span>
+        <img src="${item.img.src}" alt="">
+        <span class="name">${item.name}</span>
+        <button title="Retirer">✕</button>
+      `;
+      li.querySelector('button').addEventListener('click', () => removeImage(item.id));
+      li.addEventListener('dragstart', () => { dragSrcIndex = idx; li.classList.add('dragging'); });
+      li.addEventListener('dragend', () => li.classList.remove('dragging'));
+      li.addEventListener('dragover', e => e.preventDefault());
+      li.addEventListener('drop', e => {
+        e.preventDefault();
+        const targetIndex = idx;
+        if (dragSrcIndex === null || dragSrcIndex === targetIndex) return;
+        const [moved] = images.splice(dragSrcIndex, 1);
+        images.splice(targetIndex, 0, moved);
+        dragSrcIndex = null;
+        renderList();
+        onImagesChanged();
+      });
+      imageList.appendChild(li);
+    });
+  }
+
+  function onImagesChanged(){
+    const ready = images.length >= 2;
+    playBtn.disabled = !ready;
+    restartBtn.disabled = !ready;
+    exportBtn.disabled = !ready;
+    emptyState.classList.toggle('hidden', images.length > 0);
+    resizeCanvas();
+    cachedTimeline = null;
+    stopPlayback();
+    renderStaticFrame();
+  }
+
+  // ---------- Canvas sizing ----------
+  function resizeCanvas(){
+    const val = resolutionSel.value;
+    if (val === 'native' && images.length){
+      canvas.width = images[0].img.naturalWidth;
+      canvas.height = images[0].img.naturalHeight;
+    } else if (val !== 'native'){
+      const [w,h] = val.split('x').map(Number);
+      canvas.width = w; canvas.height = h;
+    }
+  }
+  resolutionSel.addEventListener('change', () => { resizeCanvas(); cachedTimeline = null; renderStaticFrame(); });
+
+  // ---------- Drawing ----------
+  function drawCover(img, x, y, w, h, alpha){
+    if (alpha <= 0) return;
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    const targetRatio = w / h, srcRatio = iw / ih;
+    let sx, sy, sw, sh;
+    if (srcRatio > targetRatio){
+      sh = ih; sw = ih * targetRatio; sx = (iw - sw)/2; sy = 0;
+    } else {
+      sw = iw; sh = iw / targetRatio; sx = 0; sy = (ih - sh)/2;
+    }
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    ctx.restore();
+  }
+
+  function getGlobalCameraParams(mode, t){
+    const intensity = Number(cameraIntensity.value) / 100;
+    switch(mode){
+      case 'pan-right':
+        return { scale: 1 + intensity, dx: -1 + 2*t, dy: 0 };
+      case 'pan-left':
+        return { scale: 1 + intensity, dx: 1 - 2*t, dy: 0 };
+      case 'pan-vertical':
+        return { scale: 1 + intensity, dx: 0, dy: -1 + 2*t };
+      case 'zoom-in':
+        return { scale: 1 + intensity*t, dx: 0, dy: 0 };
+      case 'zoom-out':
+        return { scale: 1 + intensity*(1-t), dx: 0, dy: 0 };
+      case 'kenburns':
+        return { scale: 1 + intensity*t, dx: -1 + 2*t, dy: (-1 + 2*t) * 0.5 };
+      default:
+        return { scale: 1, dx: 0, dy: 0 };
+    }
+  }
+
+  function drawScaled(img, w, h, scale, alpha){
+    ctx.save();
+    ctx.translate(w/2, h/2);
+    ctx.scale(scale, scale);
+    ctx.translate(-w/2, -h/2);
+    drawCover(img, 0, 0, w, h, alpha);
+    ctx.restore();
+  }
+
+  function drawTransition(kind, fromImg, toImg, rawT){
+    const w = canvas.width, h = canvas.height;
+    const ease = easings[easingSel.value] || easings.linear;
+    const t = ease(Math.max(0, Math.min(1, rawT)));
+    switch(kind){
+      case 'fade':
+        drawCover(fromImg, 0,0,w,h,1);
+        drawCover(toImg, 0,0,w,h,t);
+        break;
+      case 'slide-left':
+        drawCover(fromImg, -t*w, 0, w, h, 1);
+        drawCover(toImg, (1-t)*w, 0, w, h, 1);
+        break;
+      case 'slide-right':
+        drawCover(fromImg, t*w, 0, w, h, 1);
+        drawCover(toImg, -(1-t)*w, 0, w, h, 1);
+        break;
+      case 'zoom-in':
+        drawCover(fromImg, 0,0,w,h,1);
+        drawScaled(toImg, w, h, 0.88 + 0.12*t, t);
+        break;
+      case 'zoom-out':
+        drawCover(toImg, 0,0,w,h,1);
+        drawScaled(fromImg, w, h, 1 + 0.18*t, 1-t);
+        break;
+      case 'cut':
+      default:
+        drawCover(toImg, 0,0,w,h,1);
+        break;
+    }
+  }
+
+  function renderStaticFrame(){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if (!images.length) return;
+    renderFrame(0);
+  }
+
+  // ---------- Timeline ----------
+  function buildTimeline(){
+    if (cachedTimeline) return cachedTimeline;
+    const n = images.length;
+    const hold = Number(holdDur.value);
+    const trans = transitionType.value === 'cut' ? 0 : Number(transDur.value);
+    const loop = loopToggle.checked;
+    const segments = [];
+    for (let i=0; i<n; i++){
+      segments.push({ type:'hold', imgIndex:i, duration: hold });
+      if (i < n-1){
+        segments.push({ type:'trans', from:i, to:i+1, duration: trans, kind: transitionType.value });
+      } else if (loop && n > 1){
+        segments.push({ type:'trans', from:i, to:0, duration: trans, kind: transitionType.value });
+      }
+    }
+    let acc = 0;
+    const cumulative = segments.map(seg => { const start = acc; acc += seg.duration; return start; });
+    cachedTimeline = { segments, cumulative, total: acc || 1 };
+    return cachedTimeline;
+  }
+
+  [transitionType, transDur, holdDur, easingSel, loopToggle, cameraMode, cameraIntensity].forEach(el => {
+    el.addEventListener('input', () => {
+      transDurVal.textContent = `${transDur.value} ms`;
+      holdDurVal.textContent = `${holdDur.value} ms`;
+      cameraIntensityVal.textContent = `${cameraIntensity.value}%`;
+      cachedTimeline = null;
+      if (!isPlaying) renderStaticFrame();
+    });
+  });
+
+  function renderFrame(elapsed){
+    const { segments, cumulative, total } = buildTimeline();
+    const e = Math.max(0, Math.min(elapsed, total));
+    let idx = segments.length - 1;
+    for (let i=0;i<segments.length;i++){
+      const start = cumulative[i], end = start + segments[i].duration;
+      if (e >= start && (e < end || i === segments.length-1)){ idx = i; break; }
+    }
+    const seg = segments[idx];
+    const segElapsed = e - cumulative[idx];
+
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    const camMode = cameraMode.value;
+    if (camMode !== 'none' && total > 0){
+      const globalT = easings.easeInOut(Math.max(0, Math.min(1, e / total)));
+      const p = getGlobalCameraParams(camMode, globalT);
+      const maxShiftX = (canvas.width * (p.scale - 1)) / 2;
+      const maxShiftY = (canvas.height * (p.scale - 1)) / 2;
+      ctx.translate(canvas.width/2 + p.dx*maxShiftX, canvas.height/2 + p.dy*maxShiftY);
+      ctx.scale(p.scale, p.scale);
+      ctx.translate(-canvas.width/2, -canvas.height/2);
+    }
+
+    if (seg.type === 'hold'){
+      drawCover(images[seg.imgIndex].img, 0, 0, canvas.width, canvas.height, 1);
+    } else {
+      const t = seg.duration > 0 ? segElapsed / seg.duration : 1;
+      drawTransition(seg.kind, images[seg.from].img, images[seg.to].img, t);
+    }
+    ctx.restore();
+
+    timeLabel.textContent = `${(e/1000).toFixed(1)}s / ${(total/1000).toFixed(1)}s`;
+  }
+
+  // ---------- Playback ----------
+  function tick(now){
+    const { total } = buildTimeline();
+    if (animStart === null) animStart = now;
+    let elapsed = now - animStart;
+    if (elapsed >= total){
+      if (loopToggle.checked){ animStart = now; elapsed = 0; }
+      else { elapsed = total; isPlaying = false; playBtn.textContent = '▶️ Lecture'; }
+    }
+    renderFrame(elapsed);
+    if (isPlaying) rafId = requestAnimationFrame(tick);
+  }
+
+  function startPlayback(){
+    if (images.length < 2) return;
+    isPlaying = true; animStart = null;
+    playBtn.textContent = '⏸️ Pause';
+    rafId = requestAnimationFrame(tick);
+  }
+  function stopPlayback(){
+    isPlaying = false;
+    playBtn.textContent = '▶️ Lecture';
+    if (rafId) cancelAnimationFrame(rafId);
+  }
+  playBtn.addEventListener('click', () => isPlaying ? stopPlayback() : startPlayback());
+  restartBtn.addEventListener('click', () => {
+    animStart = null;
+    if (!isPlaying) startPlayback();
+  });
+
+  // ---------- Export ----------
+  function showProgress(pct, label){
+    exportProgress.classList.remove('hidden');
+    progressFill.style.width = `${pct}%`;
+    progressLabel.textContent = label;
+  }
+  function hideDownload(){ downloadLink.classList.add('hidden'); }
+  function offerDownload(blob, filename){
+    const url = URL.createObjectURL(blob);
+    downloadLink.onclick = null;
+    downloadLink.href = url;
+    downloadLink.download = filename;
+    downloadLink.classList.remove('hidden');
+    downloadLink.textContent = `⬇️ Télécharger ${filename}`;
+    // auto-trigger the first download
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+
+  let ffmpegInstance = null;
+  async function loadFFmpeg(){
+    if (ffmpegInstance) return ffmpegInstance;
+    const { FFmpeg } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
+    const { toBlobURL } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js');
+    const ffmpeg = new FFmpeg();
+    const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
+    await ffmpeg.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    });
+    ffmpegInstance = ffmpeg;
+    return ffmpeg;
+  }
+
+  // ---------- Frame-by-frame capture ----------
+  // On rend et capture chaque image individuellement à un pas de temps fixe
+  // (1000/fps ms), plutôt que d'enregistrer l'aperçu en temps réel : la durée
+  // exportée correspond alors exactement à la durée de la composition, quelle
+  // que soit la charge de la machine au moment de l'export.
+  function canvasToBlob(type, quality){
+    return new Promise(resolve => canvas.toBlob(resolve, type, quality));
+  }
+
+  async function captureFrames(fps, total, onProgress){
+    const totalFrames = Math.max(1, Math.round((total / 1000) * fps));
+    const frames = [];
+    for (let i = 0; i < totalFrames; i++){
+      const elapsed = Math.min((i / fps) * 1000, total);
+      renderFrame(elapsed);
+      const blob = await canvasToBlob('image/jpeg', 0.92);
+      frames.push(blob);
+      if (onProgress) onProgress((i + 1) / totalFrames);
+    }
+    return frames;
+  }
+
+  function blobToBase64(blob){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  // ---- App Electron ZNK : envoi des images par lots, encodage ffmpeg natif ----
+  async function exportViaElectron(api, frames, fps){
+    const sessionId = `znkanim-${Date.now()}`;
+    const batchSize = 24;
+    for (let start = 0; start < frames.length; start += batchSize){
+      const batch = frames.slice(start, start + batchSize);
+      const base64Batch = await Promise.all(batch.map(blobToBase64));
+      const res = await api.writeAnimFrameBatch({ sessionId, startIndex: start, frames: base64Batch });
+      if (!res || !res.success) throw new Error((res && res.error) || 'Échec de l\'envoi des images');
+      showProgress(55 + Math.round(((start + batch.length) / frames.length) * 20),
+        `Transfert des images… ${start + batch.length}/${frames.length}`);
+    }
+
+    let unsubscribe = null;
+    if (typeof api.onAnimExportProgress === 'function'){
+      unsubscribe = api.onAnimExportProgress(({ progress }) => {
+        showProgress(76 + Math.round((progress || 0) * 0.24), `Encodage ffmpeg natif… ${progress || 0}%`);
+      });
+    }
+    try {
+      const result = await api.finalizeAnimExport({ sessionId, fps, frameCount: frames.length, fileName: 'ZNKAnim' });
+      if (!result || !result.success) throw new Error((result && result.error) || 'Échec de l\'encodage ffmpeg');
+      showProgress(100, `Terminé — enregistré dans : ${result.outputPath}`);
+      downloadLink.classList.remove('hidden');
+      downloadLink.removeAttribute('href');
+      downloadLink.removeAttribute('download');
+      downloadLink.textContent = '📂 Ouvrir le dossier de sortie';
+      downloadLink.onclick = (e) => { e.preventDefault(); api.openOutputFolder && api.openOutputFolder(); };
+    } finally {
+      if (unsubscribe) unsubscribe();
+    }
+  }
+
+  // ---- Navigateur classique : ffmpeg.wasm à partir de la même séquence d'images ----
+  async function exportViaFfmpegWasm(frames, fps, onProgress){
+    const ffmpeg = await loadFFmpeg();
+    ffmpeg.on('progress', ({ progress }) => onProgress(Math.max(0, Math.min(1, progress))));
+    for (let i = 0; i < frames.length; i++){
+      const buf = new Uint8Array(await frames[i].arrayBuffer());
+      const name = `frame_${String(i + 1).padStart(5, '0')}.jpg`;
+      await ffmpeg.writeFile(name, buf);
+    }
+    await ffmpeg.exec([
+      '-framerate', String(fps), '-i', 'frame_%05d.jpg',
+      '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-r', String(fps),
+      '-movflags', '+faststart', 'output.mp4'
+    ]);
+    const data = await ffmpeg.readFile('output.mp4');
+    return new Blob([data.buffer], { type: 'video/mp4' });
+  }
+
+  async function exportVideo(){
+    if (images.length < 2) return;
+    stopPlayback();
+    resizeCanvas();
+    cachedTimeline = null;
+    const { total } = buildTimeline();
+    const fps = Number(fpsSel.value);
+
+    exportBtn.disabled = true;
+    hideDownload();
+    showProgress(0, 'Génération des images de l\'animation…');
+
+    const frames = await captureFrames(fps, total, p => {
+      showProgress(Math.round(p * 50), `Génération des images… ${Math.round(p * 100)}% (${Math.round(p * fps * total/1000)}/${Math.round(fps*total/1000)} images)`);
+    });
+
+    const electronAPI = window.electronAPI;
+    if (electronAPI && typeof electronAPI.writeAnimFrameBatch === 'function' && typeof electronAPI.finalizeAnimExport === 'function'){
+      try {
+        await exportViaElectron(electronAPI, frames, fps);
+      } catch (err){
+        console.error('Export natif Electron impossible :', err);
+        showProgress(100, `Échec de l'export natif : ${err.message || err}`);
+      } finally {
+        exportBtn.disabled = false;
+        renderStaticFrame();
+      }
+      return;
+    }
+
+    try {
+      showProgress(52, 'Chargement du convertisseur MP4 (première fois seulement)…');
+      const mp4Blob = await exportViaFfmpegWasm(frames, fps, p => {
+        showProgress(55 + Math.round(p * 44), 'Encodage MP4…');
+      });
+      showProgress(100, 'Terminé — MP4 prêt ✅');
+      offerDownload(mp4Blob, 'ZNKAnim.mp4');
+    } catch (err){
+      console.error('Conversion MP4 impossible :', err);
+      showProgress(100, `MP4 indisponible : ${err.message || err}`);
+    } finally {
+      exportBtn.disabled = false;
+      renderStaticFrame();
+    }
+  }
+  exportBtn.addEventListener('click', exportVideo);
+
+  // ---------- Init ----------
+  transDurVal.textContent = `${transDur.value} ms`;
+  holdDurVal.textContent = `${holdDur.value} ms`;
+  cameraIntensityVal.textContent = `${cameraIntensity.value}%`;
+  renderStaticFrame();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNKVitesseVideo</title>
+<style>
+  :root{
+    --bg:#ffaa00;
+    --panel:#1c1916;
+    --panel-2:#444444;
+    --line:#4f7a28;
+    --amber:#b51a00;
+    --amber-dim:#7a4b17;
+    --green:#7dff9e;
+    --text:#efe6d8;
+    --text-dim:#9a8f7d;
+    --mono: "SF Mono","Consolas","Menlo",monospace;
+    --serif: "Georgia","Iowan Old Style",serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse at top, #1a1712 0%, var(--bg) 60%);
+    color:var(--text);
+    font-family:var(--mono);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:24px;
+  }
+
+  .rig{
+    width:100%;
+    max-width:980px;
+    background:linear-gradient(180deg,#211d18,#171410);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
+    overflow:hidden;
+  }
+
+  .rig-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:18px 24px 14px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  }
+  .rig-head .brand{
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:22px;
+    letter-spacing:0.5px;
+    color:var(--text);
+  }
+  .rig-head .brand b{
+    font-style:normal;
+    color:var(--amber);
+    font-weight:700;
+  }
+  .rig-head .tag{
+    font-size:10px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+
+  .body{
+    display:grid;
+    grid-template-columns: 1fr 150px;
+    gap:0;
+  }
+  @media (max-width:700px){
+    .body{grid-template-columns:1fr;}
+    .fader-col{
+      border-left:none !important;
+      border-top:1px solid var(--line);
+      flex-direction:row !important;
+      padding:16px 20px !important;
+      align-items:center;
+    }
+    .fader-track-wrap{height:60px !important; width:100% !important;}
+    .fader-track-wrap input[type=range]{
+      writing-mode: horizontal-tb !important;
+      width:100% !important;
+      height:36px !important;
+      transform:none !important;
+    }
+  }
+
+  /* ---- Screen / video area ---- */
+  .screen-col{
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .screen{
+    position:relative;
+    background:#000;
+    border-radius:6px;
+    overflow:hidden;
+    aspect-ratio:16/9;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #000;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .screen video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:none;
+  }
+  .dropzone{
+    text-align:center;
+    color:var(--text-dim);
+    padding:20px;
+    cursor:pointer;
+  }
+  .dropzone .icon{
+    font-size:34px;
+    margin-bottom:10px;
+    color:var(--amber-dim);
+  }
+  .dropzone .main-txt{
+    font-size:13px;
+    color:var(--text);
+    margin-bottom:4px;
+  }
+  .dropzone .sub-txt{
+    font-size:11px;
+    color:var(--text-dim);
+  }
+  .dropzone.drag-over{
+    color:var(--amber);
+  }
+  .dropzone.drag-over .icon{color:var(--amber);}
+  input[type=file]{display:none;}
+
+  .speed-badge{
+    position:absolute;
+    top:12px;
+    right:12px;
+    background:rgba(0,0,0,0.55);
+    border:1px solid rgba(255,138,30,0.4);
+    color:var(--amber);
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:12px;
+    letter-spacing:1px;
+    backdrop-filter: blur(3px);
+    display:none;
+  }
+
+  /* transport row */
+  .transport{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .transport button{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    width:34px;height:34px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color .15s, color .15s;
+  }
+  .transport button:hover{border-color:var(--amber); color:var(--amber);}
+  .transport button:active{transform:scale(0.94);}
+
+  .scrubber{
+    flex:1;
+    -webkit-appearance:none;
+    appearance:none;
+    height:4px;
+    background:var(--line);
+    border-radius:2px;
+    outline:none;
+  }
+  .scrubber::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:12px;height:12px;
+    border-radius:50%;
+    background:var(--amber);
+    cursor:pointer;
+    box-shadow:0 0 6px rgba(255,138,30,0.6);
+  }
+  .scrubber::-moz-range-thumb{
+    width:12px;height:12px;border-radius:50%;
+    background:var(--amber); border:none;
+    box-shadow:0 0 6px rgba(255,138,30,0.6);
+  }
+
+  .time-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:10px;
+    color:var(--text-dim);
+    letter-spacing:1px;
+  }
+
+  .presets{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .presets button{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:var(--mono);
+    font-size:11px;
+    padding:6px 10px;
+    border-radius:4px;
+    cursor:pointer;
+    transition: all .15s;
+  }
+  .presets button:hover{
+    color:var(--text);
+    border-color:var(--amber-dim);
+  }
+  .presets button.active{
+    color:var(--bg);
+    background:var(--amber);
+    border-color:var(--amber);
+    font-weight:bold;
+  }
+
+  .hint{
+    font-size:10px;
+    color:var(--text-dim);
+    letter-spacing:0.5px;
+    line-height:1.6;
+  }
+  .hint kbd{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-bottom-width:2px;
+    padding:1px 5px;
+    border-radius:3px;
+    color:var(--text);
+    font-size:10px;
+  }
+
+  /* ---- Fader column (the signature element) ---- */
+  .fader-col{
+    border-left:1px solid var(--line);
+    background:linear-gradient(180deg, #191510, #14110d);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 0 18px;
+  }
+
+  .fader-readout{
+    text-align:center;
+  }
+  .fader-readout .val{
+    font-size:26px;
+    color:var(--amber);
+    font-weight:bold;
+    text-shadow:0 0 12px rgba(255,138,30,0.35);
+    font-variant-numeric: tabular-nums;
+  }
+  .fader-readout .lbl{
+    font-size:9px;
+    letter-spacing:2px;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+
+  .fader-track-wrap{
+    position:relative;
+    width:60px;
+    height:280px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* tick marks background */
+  .fader-ticks{
+    position:absolute;
+    left:50%;
+    top:0;
+    bottom:0;
+    width:100%;
+    transform:translateX(-50%);
+    pointer-events:none;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:6px 0;
+  }
+  .fader-ticks span{
+    display:block;
+    text-align:right;
+    padding-right:36px;
+    font-size:8px;
+    color:var(--text-dim);
+    position:relative;
+  }
+  .fader-ticks span::after{
+    content:"";
+    position:absolute;
+    right:26px;
+    top:50%;
+    width:6px;
+    height:1px;
+    background:var(--line);
+  }
+  .fader-ticks span.zero::after{background:var(--amber-dim);}
+
+  input[type=range].vfader{
+    -webkit-appearance:none;
+    appearance:none;
+    width:280px;
+    height:34px;
+    background:transparent;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    transform: rotate(180deg);
+    cursor:ns-resize;
+    position:relative;
+    z-index:2;
+  }
+  input[type=range].vfader::-webkit-slider-runnable-track{
+    width:6px;
+    background:linear-gradient(180deg,#000,#2a251d);
+    border-radius:3px;
+    border:1px solid #050403;
+  }
+  input[type=range].vfader::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:38px;
+    height:16px;
+    border-radius:3px;
+    background:linear-gradient(180deg,#3a342b,#1c1712);
+    border:1px solid #4a423490;
+    border-top:1px solid #6b5f4c;
+    box-shadow:0 2px 6px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.03);
+    margin-left:-16px;
+    position:relative;
+  }
+  input[type=range].vfader::-webkit-slider-thumb:hover{
+    border-color: var(--amber-dim);
+  }
+  input[type=range].vfader::-moz-range-track{
+    width:6px;
+    background:linear-gradient(180deg,#000,#2a251d);
+    border-radius:3px;
+    border:1px solid #050403;
+  }
+  input[type=range].vfader::-moz-range-thumb{
+    width:38px;
+    height:16px;
+    border-radius:3px;
+    background:linear-gradient(180deg,#3a342b,#1c1712);
+    border:1px solid #4a423490;
+    cursor:ns-resize;
+  }
+
+  .reset-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:6px 10px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .reset-btn:hover{color:var(--amber); border-color:var(--amber-dim);}
+
+  .footer-strip{
+    padding:10px 24px;
+    border-top:1px solid var(--line);
+    font-size:9px;
+    color:var(--text-dim);
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    display:flex;
+    justify-content:space-between;
+  }
+
+  /* ---- Export ---- */
+  .export-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .export-btn{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    background:linear-gradient(180deg, var(--amber), #d96f10);
+    border:1px solid #a85c0e;
+    color:#1a1006;
+    font-family:var(--mono);
+    font-weight:bold;
+    font-size:11px;
+    letter-spacing:0.5px;
+    padding:8px 14px;
+    border-radius:5px;
+    cursor:pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .export-btn:hover{ filter:brightness(1.08); }
+  .export-btn:active{ transform:scale(0.97); }
+  .export-btn:disabled{
+    background:var(--panel-2);
+    color:var(--text-dim);
+    border-color:var(--line);
+    cursor:not-allowed;
+  }
+  .export-note{
+    font-size:9px;
+    color:var(--text-dim);
+    letter-spacing:0.5px;
+  }
+
+  .export-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(6,5,4,0.86);
+    backdrop-filter: blur(2px);
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    color:var(--text);
+    z-index:5;
+  }
+  .export-overlay.active{ display:flex; }
+  .export-overlay .rec-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:#ff4d4d;
+    box-shadow:0 0 8px #ff4d4d;
+    animation: blink 1s infinite;
+    display:inline-block;
+    margin-right:6px;
+  }
+  @keyframes blink{ 50%{ opacity:0.25; } }
+  .export-overlay .lbl{
+    font-size:11px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+  }
+  .export-overlay .bar-wrap{
+    width:70%;
+    max-width:320px;
+    height:6px;
+    background:var(--panel-2);
+    border-radius:3px;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .export-overlay .bar-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--amber-dim), var(--amber));
+    transition:width .15s linear;
+  }
+  .export-overlay .pct{
+    font-size:20px;
+    color:var(--amber);
+    font-variant-numeric: tabular-nums;
+  }
+  .export-overlay .cancel-export{
+    margin-top:4px;
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:5px 10px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .export-overlay .cancel-export:hover{ color:#ff8080; border-color:#ff8080; }
+</style>
+</head>
+<body>
+
+<div class="rig">
+  <div class="rig-head">
+    <div class="brand"><b>ZNK</b>VitesseVideo</div>
+    <div class="tag">Contrôle de vitesse — lecture locale</div>
+  </div>
+
+  <div class="body">
+    <div class="screen-col">
+      <div class="screen" id="screen">
+        <div class="dropzone" id="dropzone">
+          <div class="icon">▶</div>
+          <div class="main-txt">Déposez une vidéo ici, ou cliquez pour en choisir une</div>
+          <div class="sub-txt">MP4, WebM, MOV… — traitement 100% local, rien n'est envoyé</div>
+        </div>
+        <video id="video" playsinline></video>
+        <div class="speed-badge" id="speedBadge">1.00×</div>
+
+        <div class="export-overlay" id="exportOverlay">
+          <div class="lbl"><span class="rec-dot"></span>Export en cours — <span id="exportSpeedLbl">1.00×</span></div>
+          <div class="pct" id="exportPct">0%</div>
+          <div class="bar-wrap"><div class="bar-fill" id="exportBar"></div></div>
+          <div class="export-note" id="exportEta">estimation…</div>
+          <button class="cancel-export" id="cancelExport">Annuler</button>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept="video/*">
+
+      <div class="time-row">
+        <span id="curTime">00:00</span>
+        <span id="durTime">00:00</span>
+      </div>
+      <input type="range" class="scrubber" id="scrubber" min="0" max="100" value="0" step="0.01">
+
+      <div class="transport">
+        <button id="playBtn" title="Lecture / Pause">▶</button>
+        <button id="backBtn" title="Reculer 5s">«</button>
+        <button id="fwdBtn" title="Avancer 5s">»</button>
+        <div style="flex:1"></div>
+        <div class="presets" id="presets"></div>
+      </div>
+
+      <div class="export-row">
+        <button class="export-btn" id="exportBtn">⬇ Exporter à <span id="exportBtnSpeed">1.00×</span></button>
+        <span class="export-note" id="exportSupportNote"></span>
+      </div>
+
+      <div class="hint">
+        <kbd>Espace</kbd> lecture/pause &nbsp; <kbd>↑</kbd><kbd>↓</kbd> vitesse &nbsp; <kbd>←</kbd><kbd>→</kbd> ±5s &nbsp; <kbd>0</kbd> reset vitesse
+      </div>
+    </div>
+
+    <div class="fader-col">
+      <div class="fader-readout">
+        <div class="val" id="faderVal">1.00×</div>
+        <div class="lbl">vitesse</div>
+      </div>
+
+      <div class="fader-track-wrap">
+        <div class="fader-ticks" id="ticks"></div>
+        <input type="range" class="vfader" id="fader" min="0.25" max="4" step="0.05" value="1">
+      </div>
+
+      <button class="reset-btn" id="resetFader">Reset 1.00×</button>
+    </div>
+  </div>
+
+  <div class="footer-strip">
+    <span>0.25× — 4.00×</span>
+    <span id="statusTxt">en attente d'une vidéo</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const video = document.getElementById('video');
+  const dropzone = document.getElementById('dropzone');
+  const screen = document.getElementById('screen');
+  const fileInput = document.getElementById('fileInput');
+  const fader = document.getElementById('fader');
+  const faderVal = document.getElementById('faderVal');
+  const speedBadge = document.getElementById('speedBadge');
+  const resetFader = document.getElementById('resetFader');
+  const playBtn = document.getElementById('playBtn');
+  const backBtn = document.getElementById('backBtn');
+  const fwdBtn = document.getElementById('fwdBtn');
+  const scrubber = document.getElementById('scrubber');
+  const curTime = document.getElementById('curTime');
+  const durTime = document.getElementById('durTime');
+  const statusTxt = document.getElementById('statusTxt');
+  const presetsWrap = document.getElementById('presets');
+  const ticksWrap = document.getElementById('ticks');
+  const exportBtnSpeed = document.getElementById('exportBtnSpeed');
+
+  const PRESETS = [0.25, 0.5, 1, 1.5, 2, 4];
+  const TICKS = [4, 3, 2, 1, 0.25];
+
+  TICKS.forEach(t=>{
+    const s = document.createElement('span');
+    s.textContent = t + '×';
+    if(t === 1) s.classList.add('zero');
+    ticksWrap.appendChild(s);
+  });
+
+  PRESETS.forEach(p=>{
+    const b = document.createElement('button');
+    b.textContent = p + '×';
+    b.dataset.speed = p;
+    b.addEventListener('click', ()=> setSpeed(p));
+    presetsWrap.appendChild(b);
+  });
+
+  function fmtTime(s){
+    if(!isFinite(s)) return '00:00';
+    const m = Math.floor(s/60).toString().padStart(2,'0');
+    const sec = Math.floor(s%60).toString().padStart(2,'0');
+    return m+':'+sec;
+  }
+
+  function setSpeed(v){
+    v = Math.min(4, Math.max(0.25, v));
+    video.playbackRate = v;
+    fader.value = v;
+    const txt = v.toFixed(2) + '×';
+    faderVal.textContent = txt;
+    speedBadge.textContent = txt;
+    exportBtnSpeed.textContent = txt;
+    [...presetsWrap.children].forEach(b=>{
+      b.classList.toggle('active', Math.abs(parseFloat(b.dataset.speed) - v) < 0.001);
+    });
+  }
+
+  function loadFile(file){
+    if(!file || !file.type.startsWith('video/')) return;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.style.display = 'block';
+    dropzone.style.display = 'none';
+    speedBadge.style.display = 'block';
+    statusTxt.textContent = file.name;
+    video.load();
+    video.play().catch(()=>{});
+    setSpeed(1);
+    window.__znkFile = file;
+    window.__znkNativePath = null;
+    // Dans l'app Electron ZNK : récupère le chemin disque réel via le preload
+    // (webUtils.getPathForFile), pour pouvoir appeler ffmpeg natif à l'export.
+    if(window.electronAPI && typeof window.electronAPI.getPathForFile === 'function'){
+      try{
+        const p = window.electronAPI.getPathForFile(file);
+        if(p) window.__znkNativePath = p;
+      } catch(e){ /* pas grave, on retombera sur ffmpeg.wasm */ }
+    }
+    window.dispatchEvent(new CustomEvent('znk:file-loaded', {detail:{file}}));
+  }
+
+  dropzone.addEventListener('click', ()=> fileInput.click());
+  fileInput.addEventListener('change', e=> loadFile(e.target.files[0]));
+
+  ['dragover','dragenter'].forEach(evt=>{
+    screen.addEventListener(evt, e=>{
+      e.preventDefault();
+      dropzone.classList.add('drag-over');
+    });
+  });
+  ['dragleave','dragend'].forEach(evt=>{
+    screen.addEventListener(evt, e=> dropzone.classList.remove('drag-over'));
+  });
+  screen.addEventListener('drop', e=>{
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    loadFile(e.dataTransfer.files[0]);
+  });
+
+  fader.addEventListener('input', ()=> setSpeed(parseFloat(fader.value)));
+  resetFader.addEventListener('click', ()=> setSpeed(1));
+
+  playBtn.addEventListener('click', ()=>{
+    if(video.paused) video.play(); else video.pause();
+  });
+  video.addEventListener('play', ()=> playBtn.textContent = '❚❚');
+  video.addEventListener('pause', ()=> playBtn.textContent = '▶');
+
+  backBtn.addEventListener('click', ()=> video.currentTime = Math.max(0, video.currentTime - 5));
+  fwdBtn.addEventListener('click', ()=> video.currentTime = Math.min(video.duration||0, video.currentTime + 5));
+
+  video.addEventListener('loadedmetadata', ()=>{
+    durTime.textContent = fmtTime(video.duration);
+  });
+  video.addEventListener('timeupdate', ()=>{
+    if(!scrubber.matches(':active')){
+      scrubber.value = (video.currentTime / (video.duration||1)) * 100;
+    }
+    curTime.textContent = fmtTime(video.currentTime);
+  });
+  scrubber.addEventListener('input', ()=>{
+    if(video.duration){
+      video.currentTime = (scrubber.value/100) * video.duration;
+    }
+  });
+
+  document.addEventListener('keydown', e=>{
+    if(!video.src) return;
+    if(e.code === 'Space'){ e.preventDefault(); playBtn.click(); }
+    else if(e.code === 'ArrowUp'){ e.preventDefault(); setSpeed(video.playbackRate + 0.05); }
+    else if(e.code === 'ArrowDown'){ e.preventDefault(); setSpeed(video.playbackRate - 0.05); }
+    else if(e.code === 'ArrowLeft'){ e.preventDefault(); backBtn.click(); }
+    else if(e.code === 'ArrowRight'){ e.preventDefault(); fwdBtn.click(); }
+    else if(e.code === 'Digit0'){ e.preventDefault(); setSpeed(1); }
+  });
+
+  setSpeed(1);
+})();
+</script>
+
+<script type="module">
+/* ---------------- Export MP4 : ffmpeg natif (Electron) ou ffmpeg.wasm (navigateur) ---------------- */
+// Imports dynamiques (et non statiques) : en mode Electron natif hors ligne,
+// on ne veut JAMAIS dépendre du réseau, pas même au chargement de la page.
+let FFmpeg, toBlobURL, fetchFile;
+async function loadWasmDeps(){
+  if(FFmpeg) return;
+  const mod1 = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
+  const mod2 = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js');
+  FFmpeg = mod1.FFmpeg;
+  toBlobURL = mod2.toBlobURL;
+  fetchFile = mod2.fetchFile;
+}
+
+const video = document.getElementById('video');
+const fader = document.getElementById('fader');
+const scrubber = document.getElementById('scrubber');
+const statusTxt = document.getElementById('statusTxt');
+const exportBtn = document.getElementById('exportBtn');
+const exportOverlay = document.getElementById('exportOverlay');
+const exportPct = document.getElementById('exportPct');
+const exportBar = document.getElementById('exportBar');
+const exportEta = document.getElementById('exportEta');
+const exportSpeedLbl = document.getElementById('exportSpeedLbl');
+const exportSupportNote = document.getElementById('exportSupportNote');
+const cancelExport = document.getElementById('cancelExport');
+
+let ffmpeg = null;
+let ffmpegLoadingPromise = null;
+let exporting = false;
+
+// Si l'app tourne dans le shell Electron ZNK avec l'API exposée par
+// preload.js, on utilise ffmpeg NATIF (child_process côté main process) :
+// pas de téléchargement, plus rapide, hors ligne dès le premier essai.
+// Sinon (navigateur classique), repli sur ffmpeg.wasm ci-dessous.
+const isElectronNative = !!(window.electronAPI && typeof window.electronAPI.changeVideoSpeed === 'function');
+
+const FFMPEG_CACHE_NAME = 'znk-ffmpeg-core-v1';
+const CORE_JS_URL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js';
+const CORE_WASM_URL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm';
+
+// Stocke explicitement les fichiers du moteur ffmpeg dans le Cache Storage du
+// navigateur : une fois présents, ils sont réutilisés sans aucune requête
+// réseau, donc l'export fonctionne réellement hors ligne ensuite (tant que
+// les données du site ne sont pas effacées).
+async function getCachedBlobURL(url, mime){
+  await loadWasmDeps();
+  if('caches' in window){
+    try{
+      const cache = await caches.open(FFMPEG_CACHE_NAME);
+      let response = await cache.match(url);
+      if(!response){
+        response = await fetch(url);
+        if(response.ok) await cache.put(url, response.clone());
+      }
+      const blob = await response.blob();
+      return URL.createObjectURL(new Blob([blob], {type: mime}));
+    } catch(e){
+      // repli si Cache Storage indisponible (ex: navigation privée stricte)
+      return await toBlobURL(url, mime);
+    }
+  }
+  return await toBlobURL(url, mime);
+}
+
+async function isFfmpegCached(){
+  if(!('caches' in window)) return false;
+  try{
+    const cache = await caches.open(FFMPEG_CACHE_NAME);
+    const hit = await cache.match(CORE_WASM_URL);
+    return !!hit;
+  } catch(e){ return false; }
+}
+
+if(isElectronNative){
+  exportSupportNote.textContent = 'Sortie .mp4 — ffmpeg natif de l\'app ZNK, hors ligne dès maintenant';
+} else {
+  isFfmpegCached().then(cached=>{
+    exportSupportNote.textContent = cached
+      ? "Moteur d'export déjà en cache — fonctionne hors ligne"
+      : 'Sortie .mp4 — moteur ffmpeg.wasm mis en cache au premier export (~30 Mo, une seule fois), puis hors ligne';
+  });
+}
+
+// atempo ne supporte que 0.5–2.0 par instance : on chaîne pour couvrir 0.25×–4×
+function buildAtempoFilter(speed){
+  const filters = [];
+  let remaining = speed;
+  if(remaining < 0.5 - 1e-9){
+    while(remaining < 0.5 - 1e-9){
+      filters.push('atempo=0.5');
+      remaining = remaining / 0.5;
+    }
+    filters.push('atempo=' + remaining.toFixed(6));
+  } else if(remaining > 2.0 + 1e-9){
+    while(remaining > 2.0 + 1e-9){
+      filters.push('atempo=2.0');
+      remaining = remaining / 2.0;
+    }
+    filters.push('atempo=' + remaining.toFixed(6));
+  } else {
+    filters.push('atempo=' + remaining.toFixed(6));
+  }
+  return filters.join(',');
+}
+
+async function ensureFFmpeg(){
+  if(ffmpeg) return ffmpeg;
+  if(ffmpegLoadingPromise) return ffmpegLoadingPromise;
+  ffmpegLoadingPromise = (async ()=>{
+    await loadWasmDeps();
+    const instance = new FFmpeg();
+    instance.on('progress', ({progress})=>{
+      if(!exporting) return;
+      const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
+      exportPct.textContent = pct + '%';
+      exportBar.style.width = pct + '%';
+    });
+    await instance.load({
+      coreURL: await getCachedBlobURL(CORE_JS_URL, 'text/javascript'),
+      wasmURL: await getCachedBlobURL(CORE_WASM_URL, 'application/wasm'),
+    });
+    ffmpeg = instance;
+    return instance;
+  })();
+  return ffmpegLoadingPromise;
+}
+
+function lockControls(locked){
+  fader.disabled = locked;
+  scrubber.disabled = locked;
+  exportBtn.disabled = locked;
+}
+
+async function startExportNative(){
+  const nativePath = window.__znkNativePath;
+  const file = window.__znkFile;
+  if(!nativePath || !file || exporting) return;
+  exporting = true;
+  lockControls(true);
+
+  const speed = video.playbackRate;
+  exportSpeedLbl.textContent = speed.toFixed(2) + '×';
+  exportPct.textContent = '0%';
+  exportBar.style.width = '0%';
+  exportEta.textContent = 'encodage en cours (ffmpeg natif)…';
+  exportOverlay.classList.add('active');
+
+  let unsubscribe = null;
+  try{
+    unsubscribe = window.electronAPI.onSpeedExportProgress(data=>{
+      if(!exporting) return;
+      const pct = Math.max(0, Math.min(100, Math.round(data.progress || 0)));
+      exportPct.textContent = pct + '%';
+      exportBar.style.width = pct + '%';
+    });
+
+    const result = await window.electronAPI.changeVideoSpeed({
+      filePath: nativePath,
+      speed: speed,
+      fileName: file.name
+    });
+
+    if(!result || !result.success){
+      throw new Error((result && result.error) || 'export natif échoué');
+    }
+
+    exportPct.textContent = '100%';
+    exportBar.style.width = '100%';
+    statusTxt.textContent = 'export MP4 terminé — ' + result.outputFileName;
+    exportEta.textContent = 'enregistré : ' + result.outputFileName;
+
+    // Propose d'ouvrir le dossier de sortie (déjà utilisé ailleurs dans l'app ZNK)
+    if(window.electronAPI.openOutputFolder){
+      window.electronAPI.openOutputFolder().catch(()=>{});
+    }
+  } catch(e){
+    console.error('[ZNKVitesseVideo export natif]', e);
+    exportEta.textContent = "échec de l'export — voir la console";
+    statusTxt.textContent = 'erreur export';
+  } finally {
+    if(unsubscribe) unsubscribe();
+    setTimeout(()=> exportOverlay.classList.remove('active'), 800);
+    exporting = false;
+    lockControls(false);
+  }
+}
+
+async function startExportWasm(){
+  const file = window.__znkFile;
+  if(!file || exporting) return;
+  exporting = true;
+  lockControls(true);
+
+  const speed = video.playbackRate;
+  exportSpeedLbl.textContent = speed.toFixed(2) + '×';
+  exportPct.textContent = '0%';
+  exportBar.style.width = '0%';
+  exportEta.textContent = 'chargement du moteur ffmpeg…';
+  exportOverlay.classList.add('active');
+
+  let inputPath = null;
+  let outputPath = 'output.mp4';
+
+  try{
+    const ff = await ensureFFmpeg();
+    exportEta.textContent = 'encodage en cours…';
+
+    const ext = (file.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g,'') || 'mp4';
+    inputPath = 'input_' + Date.now() + '.' + ext;
+
+    await ff.writeFile(inputPath, await fetchFile(file));
+
+    const atempo = buildAtempoFilter(speed);
+    const vf = 'setpts=PTS/' + speed;
+
+    try{
+      await ff.exec([
+        '-i', inputPath,
+        '-filter_complex', `[0:v]${vf}[v];[0:a]${atempo}[a]`,
+        '-map', '[v]', '-map', '[a]',
+        '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
+        '-c:a', 'aac',
+        outputPath
+      ]);
+    } catch(err){
+      // repli : source sans piste audio exploitable -> vidéo seule
+      await ff.deleteFile(outputPath).catch(()=>{});
+      await ff.exec([
+        '-i', inputPath,
+        '-filter_complex', `[0:v]${vf}[v]`,
+        '-map', '[v]',
+        '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
+        '-an',
+        outputPath
+      ]);
+    }
+
+    const data = await ff.readFile(outputPath);
+    const blob = new Blob([data.buffer], {type:'video/mp4'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ZNKVitesseVideo_' + speed.toFixed(2) + 'x.mp4';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 4000);
+
+    exportPct.textContent = '100%';
+    exportBar.style.width = '100%';
+    statusTxt.textContent = 'export MP4 terminé — ' + speed.toFixed(2) + '×';
+  } catch(e){
+    console.error('[ZNKVitesseVideo export]', e);
+    exportEta.textContent = "échec de l'export — voir la console";
+    statusTxt.textContent = 'erreur export';
+  } finally {
+    try{
+      if(ffmpeg && inputPath) await ffmpeg.deleteFile(inputPath).catch(()=>{});
+      if(ffmpeg) await ffmpeg.deleteFile(outputPath).catch(()=>{});
+    }catch(e){}
+    setTimeout(()=> exportOverlay.classList.remove('active'), 500);
+    exporting = false;
+    lockControls(false);
+  }
+}
+
+function startExport(){
+  if(isElectronNative && window.__znkNativePath){
+    return startExportNative();
+  }
+  return startExportWasm();
+}
+
+function cancelExportFn(){
+  if(!exporting) return;
+  try{
+    if(ffmpeg){
+      ffmpeg.terminate();
+      ffmpeg = null;
+      ffmpegLoadingPromise = null;
+    }
+  } catch(e){}
+  exporting = false;
+  exportOverlay.classList.remove('active');
+  lockControls(false);
+  statusTxt.textContent = 'export annulé';
+}
+
+exportBtn.addEventListener('click', startExport);
+cancelExport.addEventListener('click', cancelExportFn);
+</script>
+</body>
+</html>

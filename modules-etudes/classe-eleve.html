@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Classe - ZNK System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f1f16, #16213e, #0f2a1e);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(30, 41, 59, 0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(67, 233, 123, 0.2);
+            padding: 1rem 2rem;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-content {
+            display: flex; align-items: center; justify-content: space-between;
+            max-width: 900px; margin: 0 auto; flex-wrap: wrap; gap: 10px;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 40px; height: 40px; background: linear-gradient(135deg, #43e97b, #38f9d7);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 20px; color: #0f1f16;
+        }
+        .logo-text { font-size: 20px; font-weight: 700; }
+
+        .conn-badge { font-size: 0.75rem; padding: 0.35rem 0.8rem; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+        .conn-badge.searching { background: rgba(255,255,255,0.08); color: #ccc; }
+        .conn-badge.online { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .conn-badge.offline { background: rgba(255,170,0,0.15); color: #ffaa00; }
+        .conn-badge.unavailable { background: rgba(220,38,38,0.15); color: #fca5a5; }
+
+        .main-container { padding: 1.5rem; max-width: 900px; margin: 0 auto; }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 1.6rem 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 { font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.78rem; color: #a0a0a0; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px; padding: 0.7rem 0.9rem; color: #fff; font-size: 0.95rem; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #43e97b; }
+
+        .btn {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            border: none; color: #0f1f16; padding: 0.65rem 1.3rem; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn.secondary { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); font-weight: 600; }
+        .btn.small { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
+        .help-text { font-size: 0.8rem; color: #a0a0a0; margin-top: 0.8rem; line-height: 1.5; }
+
+        .profile-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .profile-avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, #43e97b, #0d8a4e);
+            display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;
+        }
+        .profile-info { flex: 1; min-width: 160px; }
+        .profile-info .p-name { font-weight: 700; font-size: 1.05rem; }
+        .profile-info .p-meta { font-size: 0.8rem; color: #a0a0a0; margin-top: 2px; }
+        .profile-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+        .sync-line { font-size: 0.8rem; color: #ffaa00; margin-top: 0.9rem; }
+        .sync-line.ok { color: #00ff88; }
+
+        .devoirs-list { display: flex; flex-direction: column; gap: 1rem; }
+        .devoir-card {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 1.2rem 1.4rem;
+        }
+        .devoir-card .d-title { font-weight: 700; font-size: 1rem; }
+        .devoir-card .d-meta { font-size: 0.78rem; color: #a0a0a0; margin: 4px 0 8px; }
+        .devoir-card .d-contenu { font-size: 0.88rem; color: #e5e5e5; white-space: pre-wrap; margin-bottom: 10px; }
+        .devoir-card textarea {
+            width: 100%; min-height: 80px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px; padding: 0.7rem 0.9rem; color: #fff; font-size: 0.85rem; font-family: inherit; resize: vertical;
+        }
+        .devoir-card .d-actions { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+        .sent-tag { font-size: 0.78rem; color: #00ff88; }
+
+        .empty { text-align: center; color: #a0a0a0; padding: 2rem; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🏫</div>
+                <div class="logo-text">Ma Classe</div>
+            </div>
+            <span class="conn-badge searching" id="connBadge">…</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+
+        <!-- Écran de connexion : affiché tant qu'aucun profil élève n'est chargé -->
+        <div class="card" id="loginCard">
+            <h2>🔑 Rejoindre ma classe</h2>
+
+            <div class="form-group" id="enfantSelectGroup" style="display:none;">
+                <label>Choisir un élève</label>
+                <select id="enfantSelect" onchange="onEnfantSelectChange()"></select>
+            </div>
+
+            <div class="form-group" id="loginIdGroup">
+                <label>Identifiant</label>
+                <input type="text" id="loginIdInput" placeholder="Ex: leam" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>Code PIN (4 chiffres)</label>
+                <input type="text" id="pinInput" placeholder="••••" inputmode="numeric" maxlength="4" autocomplete="off">
+            </div>
+
+            <button class="btn" id="loginBtn" onclick="doLogin()">Se connecter</button>
+
+            <div class="help-text" id="loginHelp">
+                Connecte-toi au Wi-Fi de l'école, puis entre l'identifiant et le PIN donnés par ton professeur.
+                L'application recherche automatiquement son ordinateur sur le réseau — aucun Internet n'est nécessaire.
+            </div>
+        </div>
+
+        <!-- Profil + devoirs : affiché une fois connecté -->
+        <div id="appArea" style="display:none;">
+            <div class="card">
+                <div class="profile-row">
+                    <div class="profile-avatar">🧑‍🎓</div>
+                    <div class="profile-info">
+                        <div class="p-name" id="profileName">—</div>
+                        <div class="p-meta" id="profileMeta">—</div>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="btn secondary small" onclick="doSync()">🔄 Resynchroniser</button>
+                        <button class="btn secondary small" onclick="doLogout()">↩️ Changer d'élève</button>
+                    </div>
+                </div>
+                <div class="sync-line" id="syncLine"></div>
+            </div>
+
+            <div class="card">
+                <h2>📚 Mes devoirs</h2>
+                <div class="devoirs-list" id="devoirsList">
+                    <div class="empty">Chargement…</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="./znk-classroom-client.js" onerror="window.__znkClassroomClientFailed = true;"></script>
+    <script>
+        // ================= État =================
+        let classe = null;              // instance ZNKClassroomClient active
+        let currentLoginId = null;
+        const LAST_LOGIN_KEY = 'znk_classroom_last_login_id';
+        const REPONSES_KEY_PREFIX = 'znk_classroom_reponses_'; // + loginId -> { [devoirId]: isoDate }
+
+        function getStoredAccount() {
+            try {
+                const raw = localStorage.getItem('znk_account');
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) { return null; }
+        }
+
+        function getReponsesEnvoyees(loginId) {
+            try { return JSON.parse(localStorage.getItem(REPONSES_KEY_PREFIX + loginId) || '{}'); }
+            catch (e) { return {}; }
+        }
+        function marquerReponseEnvoyee(loginId, devoirId) {
+            const r = getReponsesEnvoyees(loginId);
+            r[devoirId] = new Date().toISOString();
+            try { localStorage.setItem(REPONSES_KEY_PREFIX + loginId, JSON.stringify(r)); } catch (e) {}
+        }
+
+        function setConnBadge(state, text) {
+            const badge = document.getElementById('connBadge');
+            badge.className = 'conn-badge ' + state;
+            badge.textContent = text;
+        }
+
+        // ================= Pré-remplissage : liste d'enfants d'un compte "membreParent" =================
+        function initEnfantSelect() {
+            const account = getStoredAccount();
+            const enfants = (account && Array.isArray(account.enfants)) ? account.enfants : [];
+            const selectGroup = document.getElementById('enfantSelectGroup');
+            const idGroup = document.getElementById('loginIdGroup');
+            const select = document.getElementById('enfantSelect');
+
+            if (enfants.length === 0) return; // pas de liste connue : saisie manuelle de l'identifiant
+
+            select.innerHTML = '<option value="">-- Choisir --</option>' +
+                enfants.map(e => `<option value="${e.loginId}">${e.prenom} ${e.nom}${e.niveau ? ' (' + e.niveau + ')' : ''}</option>`).join('') +
+                '<option value="__manuel__">Autre identifiant…</option>';
+
+            selectGroup.style.display = 'block';
+            idGroup.style.display = 'none'; // masqué tant qu'on n'a pas choisi "Autre"
+        }
+
+        function onEnfantSelectChange() {
+            const select = document.getElementById('enfantSelect');
+            const idGroup = document.getElementById('loginIdGroup');
+            const idInput = document.getElementById('loginIdInput');
+            if (select.value === '__manuel__') {
+                idGroup.style.display = 'block';
+                idInput.value = '';
+                idInput.focus();
+            } else {
+                idGroup.style.display = 'none';
+                idInput.value = select.value;
+            }
+        }
+
+        // ================= Connexion =================
+        async function doLogin() {
+            if (!window.ZNKClassroomClient) {
+                alert('❌ Le module de classe locale n\'a pas pu être chargé (fichier znk-classroom-client.js introuvable).');
+                return;
+            }
+
+            const loginId = document.getElementById('loginIdInput').value.trim().toLowerCase();
+            const pin = document.getElementById('pinInput').value.trim();
+
+            if (!loginId) { alert('⚠️ Renseigne ton identifiant'); return; }
+            if (!/^\d{4}$/.test(pin)) { alert('⚠️ Le code PIN doit contenir 4 chiffres'); return; }
+
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = '⏳ Connexion…';
+            setConnBadge('searching', '🔎 Recherche du serveur…');
+
+            try {
+                const c = new window.ZNKClassroomClient(loginId);
+                const res = await c.login(pin);
+                if (!res.success) {
+                    setConnBadge('offline', '🟡 Hors ligne');
+                    alert('❌ ' + (res.error || 'Connexion impossible. Vérifie l\'identifiant, le PIN, et que tu es bien sur le réseau Wi-Fi de l\'école.'));
+                    return;
+                }
+
+                classe = c;
+                currentLoginId = loginId;
+                localStorage.setItem(LAST_LOGIN_KEY, loginId);
+                showAppArea();
+            } catch (err) {
+                console.error('Erreur connexion classe locale:', err);
+                setConnBadge('offline', '🟡 Hors ligne');
+                alert('❌ ' + (err.message || 'Connexion impossible'));
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Se connecter';
+            }
+        }
+
+        // Reprise automatique d'une session précédente : si un identifiant a déjà été
+        // utilisé sur cet appareil, on recharge directement son cache local (hors-ligne
+        // par défaut) puis on tente une resynchro en tâche de fond.
+        async function tryAutoResume() {
+            if (!window.ZNKClassroomClient) return false;
+            const lastLoginId = localStorage.getItem(LAST_LOGIN_KEY);
+            if (!lastLoginId) return false;
+
+            const c = new window.ZNKClassroomClient(lastLoginId);
+            if (!c.profil) return false; // jamais connecté avec succès sur cet appareil
+
+            classe = c;
+            currentLoginId = lastLoginId;
+            showAppArea();
+            return true;
+        }
+
+        function doLogout() {
+            classe = null;
+            currentLoginId = null;
+            document.getElementById('appArea').style.display = 'none';
+            document.getElementById('loginCard').style.display = 'block';
+            document.getElementById('pinInput').value = '';
+            setConnBadge('searching', '…');
+        }
+
+        // ================= Écran principal (profil + devoirs) =================
+        function showAppArea() {
+            document.getElementById('loginCard').style.display = 'none';
+            document.getElementById('appArea').style.display = 'block';
+
+            const profil = classe.profil || {};
+            document.getElementById('profileName').textContent = `${profil.prenom || ''} ${profil.nom || ''}`.trim() || currentLoginId;
+            document.getElementById('profileMeta').textContent =
+                `Identifiant : ${currentLoginId}${profil.niveau ? ' · ' + profil.niveau : ''}`;
+
+            renderSyncLine();
+            renderDevoirs();
+            doSync(true); // resynchro silencieuse en arrière-plan
+        }
+
+        function renderSyncLine() {
+            const line = document.getElementById('syncLine');
+            const enAttente = classe.getNombreEnAttente();
+            if (enAttente > 0) {
+                line.className = 'sync-line';
+                line.textContent = `⏳ ${enAttente} réponse(s) en attente d'envoi (seront envoyées dès que le réseau de l'école sera retrouvé).`;
+            } else {
+                line.className = 'sync-line ok';
+                line.textContent = '✅ Tout est synchronisé.';
+            }
+        }
+
+        async function doSync(silent) {
+            if (!classe) return;
+            if (!silent) setConnBadge('searching', '🔎 Synchronisation…');
+            try {
+                const res = await classe.synchroniser();
+                if (res.success) {
+                    setConnBadge('online', '🟢 Connecté à l\'école');
+                } else {
+                    setConnBadge('offline', '🟡 Hors ligne (cache local)');
+                }
+            } catch (e) {
+                setConnBadge('offline', '🟡 Hors ligne (cache local)');
+            }
+            renderSyncLine();
+            renderDevoirs();
+        }
+
+        function renderDevoirs() {
+            const list = document.getElementById('devoirsList');
+            const devoirs = classe.getDevoirsLocaux().slice().sort((a, b) => new Date(b.publieLe) - new Date(a.publieLe));
+
+            if (devoirs.length === 0) {
+                list.innerHTML = '<div class="empty">Aucun devoir reçu pour le moment. Reste connecté au réseau de l\'école pour les recevoir automatiquement.</div>';
+                return;
+            }
+
+            const reponses = getReponsesEnvoyees(currentLoginId);
+
+            list.innerHTML = devoirs.map(d => {
+                const dejaEnvoye = !!reponses[d.id];
+                return `
+                <div class="devoir-card">
+                    <div class="d-title">${d.titre}${d.matiere ? ' · ' + d.matiere : ''}</div>
+                    <div class="d-meta">
+                        Publié le ${new Date(d.publieLe).toLocaleString('fr-FR')}
+                        ${d.dateLimite ? ' · à rendre pour le ' + new Date(d.dateLimite).toLocaleDateString('fr-FR') : ''}
+                    </div>
+                    ${d.contenu ? `<div class="d-contenu">${d.contenu}</div>` : ''}
+                    <textarea id="reponse_${d.id}" placeholder="Écris ta réponse ici…"></textarea>
+                    <div class="d-actions">
+                        <button class="btn small" onclick="envoyerReponse('${d.id}')">📤 Envoyer ma réponse</button>
+                        ${dejaEnvoye ? `<span class="sent-tag">✅ Envoyé le ${new Date(reponses[d.id]).toLocaleString('fr-FR')}</span>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function envoyerReponse(devoirId) {
+            const textarea = document.getElementById('reponse_' + devoirId);
+            const contenu = textarea.value.trim();
+            if (!contenu) { alert('⚠️ Écris une réponse avant d\'envoyer'); return; }
+
+            classe.soumettreDevoir(devoirId, contenu, null);
+            marquerReponseEnvoyee(currentLoginId, devoirId);
+            renderSyncLine();
+            renderDevoirs();
+        }
+
+        // ================= Init =================
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__znkClassroomClientFailed || typeof window.ZNKClassroomClient === 'undefined') {
+                setConnBadge('unavailable', '⚪ Indisponible');
+                document.getElementById('loginHelp').textContent =
+                    '⚠️ znk-classroom-client.js n\'a pas pu être chargé. Vérifie qu\'il se trouve à la racine de l\'application.';
+                return;
+            }
+
+            initEnfantSelect();
+
+            const resumed = await tryAutoResume();
+            if (!resumed) {
+                setConnBadge('searching', '…');
+            }
+        });
+    </script>
+</body>
+</html>

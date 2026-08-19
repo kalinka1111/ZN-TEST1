@@ -1,0 +1,31 @@
+{
+  "name": "whatsznk-server",
+  "version": "1.0.0",
+  "description": "WhatsZNK - Serveur de signaling WebRTC pour vidéo chat",
+  "main": "whatsznk-server.js",
+  "scripts": {
+    "start": "node whatsznk-server.js",
+    "dev": "nodemon whatsznk-server.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "webrtc",
+    "video",
+    "chat",
+    "signaling",
+    "znk"
+  ],
+  "author": "ZNK Studios",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

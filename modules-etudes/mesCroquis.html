@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>ZNK Beti Fondation - Carnet de Croquis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<style>
+  :root{
+    --bg1:#2b2a3d; --bg2:#1b1a26;
+    --gold:#c9a24b; --gold-soft:#e4c887;
+    --arrow-left:#7fb0c9;
+    --arrow-right:#c9a24b;
+    --ink:#eae6da;
+    --teal:#7fb0c9;
+    --hairline:rgba(201,162,75,0.55);
+    --serif:'Iowan Old Style','Palatino Linotype',Georgia,'Times New Roman',serif;
+    --sans:'Segoe UI',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    height:100vh;
+    font-family:var(--sans);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,255,255,0.05), transparent 60%),
+      linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 100%);
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  /* ===== En-tête : masthead façon magazine + titre de la page ===== */
+  .topbar{
+    flex:0 0 auto;
+    width:100%;
+    text-align:center;
+    padding:14px 20px 10px;
+  }
+  .masthead{
+    margin:0 0 4px;
+    line-height:1;
+  }
+  .mast-word{
+    font-family: Lato, sans-serif;
+    font-weight:800;
+    letter-spacing:2px;
+    font-size:clamp(1em, 4.2vw, 1.55em);
+  }
+  .mast-znk{ color:var(--gold-soft); }
+  .mast-art{ color:var(--ink); margin-left:.35em; }
+  .mast-mag{
+    color:var(--teal);
+    margin-left:.35em;
+    font-size:0.62em;
+    vertical-align:super;
+    letter-spacing:2.5px;
+  }
+  .mast-rule{
+    width:min(360px, 60%);
+    height:2px;
+    margin:6px auto 7px;
+    background:linear-gradient(90deg, transparent, var(--gold), var(--teal), transparent);
+    opacity:0.8;
+  }
+  .mast-tagline{
+    font-family: Lato, sans-serif;
+    font-size:0.63em;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:#a29cb0;
+    margin-bottom:10px;
+  }
+  .page-title{
+    margin:0;
+    font-family:var(--serif);
+    font-size:clamp(1.35em, 4vw, 1.5em);
+    letter-spacing:0.4px;
+    color:var(--gold-soft);
+  }
+  .page-meta{
+    margin-top:5px;
+    font-family: Roboto, sans-serif;
+    font-size:0.68em;
+    letter-spacing:1.6px;
+    text-transform:uppercase;
+    color:var(--teal);
+    min-height:1em;
+  }
+
+  /* ===== Zone image : occupe tout l'espace restant ===== */
+  .stage{
+    position:relative;
+    flex:1 1 auto;
+    width:100%;
+    min-height:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px;
+  }
+
+  .frame{
+    position:relative;
+    background:#fff;
+    padding:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    box-shadow:
+      0 0 0 1px var(--hairline),
+      0 0 0 7px #fff,
+      0 0 0 8px var(--hairline),
+      0 26px 55px rgba(0,0,0,0.55);
+    transition:box-shadow .25s ease;
+    /* largeur/hauteur calculées en JS pour épouser le ratio réel de l'image */
+  }
+  .frame img{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+  }
+
+  /* ===== Numéro de planche, façon médaillon d'édition ===== */
+  .page-number{
+    position:absolute;
+    bottom:10px;
+    right:14px;
+    padding:5px 12px;
+    border-radius:999px;
+    background:rgba(20,19,30,0.72);
+    border:1px solid var(--hairline);
+    color:var(--gold-soft);
+    font-family:var(--sans);
+    font-size:0.68em;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    box-shadow:0 6px 14px rgba(0,0,0,0.4);
+    z-index:5;
+    backdrop-filter:blur(2px);
+    display:none;
+  }
+  .page-number.show{ display:block; }
+
+  .frame-empty{
+    max-width:420px;
+    padding:40px 30px;
+    text-align:center;
+    font-size:0.95em;
+    line-height:1.7;
+    color:#cfc9ba;
+  }
+  .frame-empty strong{ color:var(--gold-soft); }
+
+  /* ===== Flèches de navigation, colorées ===== */
+  .nav-btn{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    width:48px; height:48px;
+    border-radius:50%;
+    border:none;
+    color:#fff;
+    font-size:1.4em;
+    font-weight:bold;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 6px 18px rgba(0,0,0,0.45);
+    transition:transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+    z-index:5;
+  }
+  .nav-btn:hover{ transform:translateY(-50%) scale(1.08); }
+  .nav-btn:disabled{ opacity:0; pointer-events:none; }
+
+  .nav-btn.prev{
+    left:14px;
+    background:linear-gradient(160deg, var(--arrow-left), #4f7f96);
+  }
+  .nav-btn.next{
+    right:14px;
+    background:linear-gradient(160deg, var(--arrow-right), #8a6a2f);
+  }
+
+  @media print{
+    .nav-btn, .page-number{ display:none !important; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Merriweather:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Roboto:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap"></head>
+<body>
+
+  <div class="topbar">
+    <div class="masthead"><span class="mast-word mast-znk">ZNK</span><span class="mast-word mast-art">ART</span><span class="mast-word mast-mag">MAG</span></div>
+    <div class="mast-rule"></div>
+    <div class="mast-tagline">ART ETUDES· Carnet de Croquis</div>
+    <h1 class="page-title" id="pageTitle">Carnet de Croquis</h1>
+    <div class="page-meta" id="pageMeta"></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <button class="nav-btn prev" id="prevBtn" onclick="turnPage(-1)" aria-label="Page précédente">‹</button>
+    <div class="frame" id="frame"></div>
+    <div class="page-number" id="pageNumber"></div>
+    <button class="nav-btn next" id="nextBtn" onclick="turnPage(1)" aria-label="Page suivante">›</button>
+  </div>
+
+<script>
+  // ===================================================================
+  // ===== CARNET DE CROQUIS — lit les pages déposées automatiquement
+  // ===== par dessin-kids.html (znk_carnet_croquis_<idZNK>) et mises à
+  // ===== jour par la validation des leçons dans ArtEtudes-*.html.
+  // ===================================================================
+
+  function getStoredAccount() {
+    try {
+      const raw = localStorage.getItem('znk_account');
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function currentStudentId() {
+    const account = getStoredAccount();
+    return (account && account.idZNK) || 'demo';
+  }
+
+  function carnetStorageKey() {
+    return `znk_carnet_croquis_${currentStudentId()}`;
+  }
+
+  function getCarnetPages() {
+    try {
+      const pages = JSON.parse(localStorage.getItem(carnetStorageKey()) || '[]');
+      // Ordre chronologique : le carnet se remplit dans l'ordre où l'élève a dessiné.
+      return pages.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    } catch (e) { return []; }
+  }
+
+  // Annuaire partagé (nom / niveau) que elevesArt.html utilise pour afficher
+  // les cartes des élèves — mis à jour à chaque ouverture du carnet.
+  function registerInCarnetAnnuaire() {
+    try {
+      const account = getStoredAccount();
+      const id = currentStudentId();
+      const annuaire = JSON.parse(localStorage.getItem('znk_carnet_annuaire') || '{}');
+      annuaire[id] = {
+        idZNK: id,
+        prenom: (account && account.prenom) || '',
+        nom: (account && account.nom) || '',
+        niveau: (account && account.niveau) || '',
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('znk_carnet_annuaire', JSON.stringify(annuaire));
+    } catch (e) {
+      console.warn('Impossible de mettre à jour l\'annuaire des carnets:', e);
+    }
+  }
+
+  let pages = [];
+  let currentIndex = 0; // 0 = couverture (illustrée par le 1er dessin)
+
+  const pageTitleEl = document.getElementById('pageTitle');
+  const pageMetaEl = document.getElementById('pageMeta');
+  const pageNumberEl = document.getElementById('pageNumber');
+  const stageEl = document.getElementById('stage');
+  const frameEl = document.getElementById('frame');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  function formatStudentId() {
+    const id = currentStudentId();
+    return id === 'demo' ? 'ÉDITION DÉMO' : `ID ${id}`;
+  }
+
+  // ----- Le cadre épouse le ratio réel de l'image (portrait, paysage, carré) -----
+  const ratioCache = new Map();
+  const FRAME_PADDING = 16; // marge respirante autour du cadre dans la scène
+
+  function getImageRatio(url) {
+    if (ratioCache.has(url)) return Promise.resolve(ratioCache.get(url));
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
+        ratioCache.set(url, ratio);
+        resolve(ratio);
+      };
+      img.onerror = () => resolve(1);
+      img.src = url;
+    });
+  }
+
+  let currentRatio = null;
+
+  function fitFrameToRatio(ratio) {
+    const availW = stageEl.clientWidth - FRAME_PADDING * 2;
+    const availH = stageEl.clientHeight - FRAME_PADDING * 2;
+    if (availW <= 0 || availH <= 0) return;
+    let w = availW;
+    let h = w / ratio;
+    if (h > availH) {
+      h = availH;
+      w = h * ratio;
+    }
+    frameEl.style.width = w + 'px';
+    frameEl.style.height = h + 'px';
+  }
+
+  window.addEventListener('resize', () => {
+    if (currentRatio) fitFrameToRatio(currentRatio);
+  });
+
+  function emptyCoverHTML() {
+    return `
+      <div class="frame-empty">
+        Voici ton carnet d'inspiration.<br><br>
+        <strong>Avant de créer ta première leçon</strong>, cherche la leçon
+        « La couverture du carnet ». Ensuite, chaque dessin de tes leçons
+        viendra automatiquement dans ton carnet.
+      </div>
+    `;
+  }
+
+  function renderPage() {
+    let title, imageUrl, imageAlt, meta;
+
+    if (currentIndex === 0) {
+      // Couverture : illustrée par le tout premier dessin du carnet,
+      // le titre affiche le nom/prénom de l'élève plutôt que "Couverture".
+      const account = getStoredAccount();
+      const fullName = account && (account.prenom || account.nom)
+        ? `${account.prenom || ''} ${account.nom || ''}`.trim()
+        : 'Artiste ZNK';
+      title = fullName;
+      meta = pages.length
+        ? `${formatStudentId()} · ${pages.length} planche${pages.length > 1 ? 's' : ''}`
+        : formatStudentId();
+      if (pages.length) {
+        const firstDrawing = pages[0];
+        imageUrl = firstDrawing.imageDataUrl;
+        imageAlt = firstDrawing.lessonTitle || 'Couverture du carnet';
+      }
+    } else {
+      const page = pages[currentIndex - 1];
+      title = page.lessonTitle || 'Sans titre';
+      imageUrl = page.imageDataUrl;
+      imageAlt = page.lessonTitle || 'Dessin';
+      const dateStr = page.date ? new Date(page.date).toLocaleDateString('fr-FR') : '';
+      meta = `Planche ${currentIndex} / ${pages.length}${dateStr ? ' · ' + dateStr : ''}`;
+    }
+
+    pageTitleEl.textContent = title;
+    pageMetaEl.textContent = meta || '';
+
+    if (imageUrl) {
+      frameEl.innerHTML = `<img src="${imageUrl}" alt="${imageAlt}">`;
+      frameEl.style.background = '#fff';
+      frameEl.style.boxShadow = '';
+      getImageRatio(imageUrl).then(ratio => {
+        currentRatio = ratio;
+        fitFrameToRatio(ratio);
+      });
+      pageNumberEl.textContent = currentIndex === 0
+        ? 'COUVERTURE'
+        : `N° ${String(currentIndex).padStart(2, '0')} / ${String(pages.length).padStart(2, '0')}`;
+      pageNumberEl.classList.add('show');
+    } else {
+      frameEl.innerHTML = emptyCoverHTML();
+      frameEl.style.background = 'transparent';
+      frameEl.style.boxShadow = 'none';
+      frameEl.style.width = '';
+      frameEl.style.height = '';
+      currentRatio = null;
+      pageNumberEl.classList.remove('show');
+    }
+
+    prevBtn.disabled = currentIndex === 0;
+    nextBtn.disabled = currentIndex >= pages.length;
+  }
+
+  function turnPage(direction) {
+    const target = currentIndex + direction;
+    if (target < 0 || target > pages.length) return;
+    currentIndex = target;
+    renderPage();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') turnPage(1);
+    if (e.key === 'ArrowLeft') turnPage(-1);
+  });
+
+  function reloadCarnet(keepIndex) {
+    pages = getCarnetPages();
+    if (!keepIndex || currentIndex > pages.length) currentIndex = Math.min(currentIndex, pages.length);
+    renderPage();
+    registerInCarnetAnnuaire();
+  }
+
+  // Si un dessin est ajouté/modifié depuis un autre onglet (dessin-kids.html /
+  // ArtEtudes-primaire.html), on rafraîchit le carnet automatiquement.
+  window.addEventListener('storage', (e) => {
+    if (e.key === carnetStorageKey()) reloadCarnet(true);
+  });
+  window.addEventListener('focus', () => reloadCarnet(true));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') reloadCarnet(true);
+  });
+
+  reloadCarnet();
+</script>
+</body>
+</html>

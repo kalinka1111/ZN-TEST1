@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK P2P DMG Creator 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .logo {
+            font-size: 52px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00d4ff, #0099ff, #00ff88);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientFlow 3s ease infinite;
+            margin-bottom: 10px;
+        }
+        
+        @keyframes gradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .version-badge {
+            display: inline-block;
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .panel {
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .panel-icon {
+            font-size: 28px;
+        }
+        
+        .panel-title {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .p2p-toggle {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .p2p-toggle:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+        
+        .p2p-toggle.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+        }
+        
+        .toggle-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 13px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .p2p-toggle.active .toggle-switch {
+            background: #00ff88;
+        }
+        
+        .toggle-knob {
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .p2p-toggle.active .toggle-knob {
+            left: 26px;
+        }
+        
+        .p2p-options {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .p2p-toggle.active .p2p-options {
+            display: block;
+        }
+        
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .file-drop-zone {
+            border: 3px dashed rgba(255,255,255,0.3);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .file-drop-zone:hover {
+            border-color: rgba(0, 212, 255, 0.5);
+            background: rgba(0, 212, 255, 0.05);
+        }
+        
+        .file-drop-zone.dragover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.15);
+            transform: scale(1.02);
+        }
+        
+        .file-drop-zone.has-files {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        .config-section {
+            margin: 20px 0;
+        }
+        
+        .input-group {
+            margin: 15px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #00d4ff;
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .platform-card {
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .platform-card:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .platform-card.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+        }
+        
+        .platform-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .build-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .build-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+        }
+        
+        .build-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .build-button.success {
+            background: linear-gradient(135deg, #00ff88, #00d4aa);
+        }
+        
+        .console-panel {
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .console-line {
+            padding: 5px 0;
+            line-height: 1.6;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .console-line.info { color: #00d4ff; }
+        .console-line.success { color: #00ff88; }
+        .console-line.warning { color: #ffaa00; }
+        .console-line.error { color: #ff4444; }
+        
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .download-grid.visible {
+            display: grid;
+        }
+        
+        .download-card {
+            padding: 15px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .download-card:hover {
+            background: rgba(0, 255, 136, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .download-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">©ZNK P2P DMG CREATOR</div>
+            <p style="opacity: 0.8; margin: 10px 0;">Créateur moderne pour applications Electron P2P</p>
+            <span class="version-badge">v2.0 - Electron 32 - 2025</span>
+        </div>
+        
+        <div class="main-grid">
+            <!-- Configuration Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-icon">⚙️</span>
+                    <span class="panel-title">Configuration du Projet</span>
+                </div>
+                
+                <!-- P2P Toggle -->
+                <div class="p2p-toggle" id="p2pToggle">
+                    <div class="toggle-header">
+                        <span><strong>🌐 Activer P2P/WebRTC</strong></span>
+                        <div class="toggle-switch">
+                            <div class="toggle-knob"></div>
+                        </div>
+                    </div>
+                    <p style="font-size: 13px; opacity: 0.8;">Intégration WebRTC pour communication peer-to-peer</p>
+                    
+                    <div class="p2p-options">
+                        <div class="option-row">
+                            <input type="checkbox" id="opt-signaling" class="checkbox" checked>
+                            <label for="opt-signaling">Serveur de signalisation Socket.io</label>
+                        </div>
+                        <div class="option-row">
+                            <input type="checkbox" id="opt-datachannel" class="checkbox" checked>
+                            <label for="opt-datachannel">RTCDataChannel</label>
+                        </div>
+                        <div class="option-row">
+                            <input type="checkbox" id="opt-media" class="checkbox">
+                            <label for="opt-media">MediaStream (Audio/Video)</label>
+                        </div>
+                        <div class="option-row">
+                            <input type="checkbox" id="opt-webtorrent" class="checkbox">
+                            <label for="opt-webtorrent">WebTorrent (P2P File Sharing)</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- File Selection -->
+                <div class="file-drop-zone" id="dropZone">
+                    <input type="file" id="fileInput" webkitdirectory multiple style="display: none;">
+                    <div id="dropContent">
+                        <p style="font-size: 40px; margin-bottom: 15px;">📁</p>
+                        <p style="font-size: 16px; margin-bottom: 10px;"><strong>Glissez votre projet ici</strong></p>
+                        <p style="font-size: 13px; opacity: 0.7;">ou cliquez pour sélectionner un dossier</p>
+                    </div>
+                    <div id="fileInfo" style="display: none;">
+                        <p style="font-size: 14px;"><strong id="projectName">Projet chargé</strong></p>
+                        <p style="font-size: 12px; opacity: 0.7;" id="fileCount">0 fichiers</p>
+                    </div>
+                </div>
+                
+                <!-- Project Config -->
+                <div class="config-section">
+                    <div class="input-group">
+                        <label>Nom de l'application</label>
+                        <input type="text" class="input-field" id="appName" placeholder="MonApp" value="ZNK-P2P-App">
+                    </div>
+                    <div class="input-group">
+                        <label>Version</label>
+                        <input type="text" class="input-field" id="appVersion" placeholder="1.0.0" value="1.0.0">
+                    </div>
+                    <div class="input-group">
+                        <label>Auteur</label>
+                        <input type="text" class="input-field" id="appAuthor" placeholder="Votre nom" value="ZNK Systems">
+                    </div>
+                </div>
+                
+                <!-- Platform Selection -->
+                <div class="platform-grid">
+                    <div class="platform-card active" data-platform="mac" id="platformMac">
+                        <div class="platform-icon">🍎</div>
+                        <div><strong>macOS</strong></div>
+                        <div style="font-size: 12px; opacity: 0.7;">DMG + ARM64/x64</div>
+                    </div>
+                    <div class="platform-card" data-platform="win" id="platformWin">
+                        <div class="platform-icon">🪟</div>
+                        <div><strong>Windows</strong></div>
+                        <div style="font-size: 12px; opacity: 0.7;">EXE/MSI + NSIS</div>
+                    </div>
+                </div>
+                
+                <button class="build-button" id="buildButton" disabled>
+                    SÉLECTIONNER UN PROJET
+                </button>
+            </div>
+            
+            <!-- Console Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-icon">📋</span>
+                    <span class="panel-title">Console de Build</span>
+                </div>
+                
+                <div class="console-panel" id="console">
+                    <div class="console-line info">🚀 ZNK P2P DMG Creator 2025 initialisé</div>
+                    <div class="console-line success">✅ Electron 32.0 - Node 20 - WebRTC natif</div>
+                    <div class="console-line info">💡 Sélectionnez votre projet pour commencer</div>
+                </div>
+                
+                <div class="download-grid" id="downloadGrid">
+                    <div class="download-card" onclick="downloadFile('package')">
+                        <div class="download-icon">📦</div>
+                        <div style="font-size: 14px;"><strong>package.json</strong></div>
+                    </div>
+                    <div class="download-card" onclick="downloadFile('main')">
+                        <div class="download-icon">⚡</div>
+                        <div style="font-size: 14px;"><strong>main.js</strong></div>
+                    </div>
+                    <div class="download-card" onclick="downloadFile('p2p')">
+                        <div class="download-icon">🌐</div>
+                        <div style="font-size: 14px;"><strong>p2p-manager.js</strong></div>
+                    </div>
+                    <div class="download-card" onclick="downloadFile('script')">
+                        <div class="download-icon">📜</div>
+                        <div style="font-size: 14px;"><strong>build script</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // État global
+        let state = {
+            files: [],
+            p2pEnabled: false,
+            platform: 'mac',
+            config: {
+                name: 'ZNK-P2P-App',
+                version: '1.0.0',
+                author: 'ZNK Systems'
+            },
+            p2pOptions: {
+                signaling: true,
+                datachannel: true,
+                media: false,
+                webtorrent: false
+            },
+            generatedFiles: {}
+        };
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeEventListeners();
+            log('💡 Prêt à créer votre application Electron P2P', 'info');
+        });
+
+        function initializeEventListeners() {
+            // P2P Toggle
+            document.getElementById('p2pToggle').addEventListener('click', (e) => {
+                if (!e.target.classList.contains('checkbox')) {
+                    state.p2pEnabled = !state.p2pEnabled;
+                    document.getElementById('p2pToggle').classList.toggle('active');
+                    log(state.p2pEnabled ? '🌐 P2P activé' : '🔌 P2P désactivé', 'info');
+                }
+            });
+
+            // Platform selection
+            document.getElementById('platformMac').addEventListener('click', () => selectPlatform('mac'));
+            document.getElementById('platformWin').addEventListener('click', () => selectPlatform('win'));
+
+            // File input
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+            });
+
+            dropZone.addEventListener('drop', handleDrop, false);
+
+            // Config inputs
+            document.getElementById('appName').addEventListener('input', (e) => {
+                state.config.name = e.target.value;
+            });
+            document.getElementById('appVersion').addEventListener('input', (e) => {
+                state.config.version = e.target.value;
+            });
+            document.getElementById('appAuthor').addEventListener('input', (e) => {
+                state.config.author = e.target.value;
+            });
+
+            // Build button
+            document.getElementById('buildButton').addEventListener('click', generateBuildFiles);
+
+            // P2P options
+            ['signaling', 'datachannel', 'media', 'webtorrent'].forEach(opt => {
+                document.getElementById(`opt-${opt}`).addEventListener('change', (e) => {
+                    state.p2pOptions[opt] = e.target.checked;
+                });
+            });
+        }
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
+
+        function handleDrop(e) {
+            const files = Array.from(e.dataTransfer.files);
+            processFiles(files);
+        }
+
+        function processFiles(files) {
+            if (files.length === 0) return;
+
+            state.files = files;
+            const projectName = files[0].webkitRelativePath?.split('/')[0] || 'MonProjet';
+            
+            document.getElementById('dropZone').classList.add('has-files');
+            document.getElementById('dropContent').style.display = 'none';
+            document.getElementById('fileInfo').style.display = 'block';
+            document.getElementById('projectName').textContent = projectName;
+            document.getElementById('fileCount').textContent = `${files.length} fichiers`;
+            document.getElementById('appName').value = projectName;
+            state.config.name = projectName;
+
+            updateBuildButton(true);
+            log(`📁 Projet "${projectName}" chargé (${files.length} fichiers)`, 'success');
+            analyzeProject(files);
+        }
+
+        function analyzeProject(files) {
+            const types = {};
+            files.forEach(f => {
+                const ext = f.name.split('.').pop();
+                types[ext] = (types[ext] || 0) + 1;
+            });
+
+            const hasPackageJson = files.some(f => f.name === 'package.json');
+            const hasHTML = files.some(f => f.name.toLowerCase().endsWith('.html'));
+            const hasJS = files.some(f => f.name.toLowerCase().endsWith('.js'));
+
+            if (hasPackageJson) log('✅ package.json détecté', 'success');
+            if (hasHTML) log('✅ Fichiers HTML trouvés', 'success');
+            if (hasJS) log('✅ JavaScript détecté', 'success');
+
+            log(`📊 Types: ${Object.keys(types).slice(0, 5).join(', ')}`, 'info');
+        }
+
+        function selectPlatform(platform) {
+            state.platform = platform;
+            document.querySelectorAll('.platform-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`platform${platform === 'mac' ? 'Mac' : 'Win'}`).classList.add('active');
+            log(`🎯 Plateforme: ${platform === 'mac' ? 'macOS' : 'Windows'}`, 'info');
+        }
+
+        function updateBuildButton(enabled) {
+            const btn = document.getElementById('buildButton');
+            btn.disabled = !enabled;
+            btn.textContent = enabled ? 'GÉNÉRER FICHIERS DE BUILD' : 'SÉLECTIONNER UN PROJET';
+        }
+
+        async function generateBuildFiles() {
+            const btn = document.getElementById('buildButton');
+            btn.disabled = true;
+            btn.textContent = 'GÉNÉRATION EN COURS...';
+
+            log('🚀 Début de génération des fichiers...', 'info');
+
+            try {
+                await delay(300);
+                log('📦 Génération package.json...', 'info');
+                state.generatedFiles.package = generatePackageJson();
+                
+                await delay(300);
+                log('⚡ Génération main.js...', 'info');
+                state.generatedFiles.main = generateMainJs();
+                
+                if (state.p2pEnabled) {
+                    await delay(300);
+                    log('🌐 Génération module P2P...', 'info');
+                    state.generatedFiles.p2p = generateP2PManager();
+                }
+                
+                await delay(300);
+                log('📜 Génération script de build...', 'info');
+                state.generatedFiles.script = generateBuildScript();
+
+                log('🎉 Tous les fichiers générés avec succès!', 'success');
+                document.getElementById('downloadGrid').classList.add('visible');
+                
+                btn.classList.add('success');
+                btn.textContent = '✓ FICHIERS GÉNÉRÉS';
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.classList.remove('success');
+                    btn.textContent = 'REGÉNÉRER';
+                }, 2000);
+
+            } catch (error) {
+                log(`❌ Erreur: ${error.message}`, 'error');
+                btn.disabled = false;
+                btn.textContent = 'RÉESSAYER';
+            }
+        }
+
+        function generatePackageJson() {
+            const deps = {
+                "electron": "^32.0.0",
+                "electron-builder": "^25.0.0"
+            };
+
+            if (state.p2pEnabled) {
+                if (state.p2pOptions.signaling) deps["socket.io"] = "^4.7.0";
+                if (state.p2pOptions.signaling) deps["socket.io-client"] = "^4.7.0";
+                if (state.p2pOptions.webtorrent) deps["webtorrent"] = "^2.3.0";
+                deps["simple-peer"] = "^9.11.1";
+            }
+
+            return JSON.stringify({
+                name: state.config.name.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+                version: state.config.version,
+                description: `${state.config.name} - Créé avec ZNK P2P DMG Creator`,
+                main: "main.js",
+                author: state.config.author,
+                license: "MIT",
+                scripts: {
+                    start: "electron .",
+                    dev: "NODE_ENV=development electron .",
+                    build: state.platform === 'mac' ? "electron-builder --mac" : "electron-builder --win",
+                    "build-all": "electron-builder -mwl",
+                    postinstall: "electron-builder install-app-deps"
+                },
+                devDependencies: deps,
+                build: {
+                    appId: `com.znksystems.${state.config.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+                    productName: state.config.name,
+                    directories: {
+                        output: "dist",
+                        buildResources: "build"
+                    },
+                    files: ["**/*", "!node_modules/**/*", "!dist/**/*"],
+                    mac: {
+                        category: "public.app-category.productivity",
+                        target: [{ target: "dmg", arch: ["x64", "arm64"] }],
+                        icon: "build/icon.icns",
+                        hardenedRuntime: true,
+                        gatekeeperAssess: false,
+                        entitlements: "build/entitlements.mac.plist",
+                        entitlementsInherit: "build/entitlements.mac.plist"
+                    },
+                    win: {
+                        target: [{ target: "nsis", arch: ["x64", "ia32"] }],
+                        icon: "build/icon.ico"
+                    },
+                    linux: {
+                        target: ["AppImage", "deb"],
+                        category: "Utility"
+                    }
+                }
+            }, null, 2);
+        }
+
+        function generateMainJs() {
+            const p2pImport = state.p2pEnabled ? `const P2PManager = require('./p2p-manager');` : '';
+            const p2pInit = state.p2pEnabled ? `
+    // Initialiser P2P Manager
+    const p2pManager = new P2PManager();
+    await p2pManager.initialize();
+    
+    // Exposer P2P au renderer via IPC
+    const { ipcMain } = require('electron');
+    ipcMain.handle('p2p-send', async (event, data) => {
+        return await p2pManager.send(data);
+    });
+    ipcMain.handle('p2p-connect', async (event, peerId) => {
+        return await p2pManager.connect(peerId);
+    });` : '';
+
+            return `const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const path = require('path');
+${p2pImport}
+
+let mainWindow;
+const isDev = process.env.NODE_ENV === 'development';
+
+async function createWindow() {
+    mainWindow = new BrowserWindow({
+        width: 1200,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js')
+        },
+        titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+        show: false
+    });
+
+    mainWindow.loadFile('index.html');
+    
+    mainWindow.once('ready-to-show', () => {
+        mainWindow.

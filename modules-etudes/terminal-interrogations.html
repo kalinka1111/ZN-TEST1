@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK — Interrogations</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #5a1c00, #3c081b, #1e293b);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0,0,0,0.35);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .logo-icon {
+            width: 40px; height: 40px; border-radius: 8px;
+            background: linear-gradient(135deg, #008cb4, #6d28d9);
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+        }
+        .title { font-size: 20px; font-weight: 700; }
+        .subtitle { font-size: 13px; color: #a0a0a0; }
+        .sync-badge { font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 10px; }
+        .sync-badge.on { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .sync-badge.off { background: rgba(255,255,255,0.08); color: #999; }
+
+        .btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff; padding: 0.5rem 1rem; border-radius: 10px;
+            font-size: 0.85rem; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn:hover { background: rgba(124,58,237,0.25); border-color: rgba(124,58,237,0.5); }
+        .btn.primary { background: linear-gradient(135deg, #008cb4, #6d28d9); border: none; font-weight: 600; }
+        .btn.danger { background: rgba(220,38,38,0.15); border-color: rgba(220,38,38,0.4); color: #fca5a5; }
+        .btn.small { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        .panel h2 { font-size: 1.05rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+
+        label { display: block; font-size: 0.8rem; color: #a0a0a0; margin: 0.9rem 0 0.3rem; }
+        input[type=text], input[type=number], textarea, select {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; padding: 0.6rem 0.7rem; color: #fff; font-size: 0.9rem; font-family: inherit;
+        }
+        textarea { resize: vertical; min-height: 55px; }
+        .row { display: flex; gap: 1rem; }
+        .row > div { flex: 1; }
+        .checkboxes { display: flex; gap: 1.2rem; margin-top: 0.6rem; flex-wrap: wrap; }
+        .checkboxes label { display: flex; align-items: center; gap: 6px; margin: 0; color: #fff; font-size: 0.85rem; }
+        .checkboxes input { width: auto; }
+
+        .form-actions { display: flex; gap: 0.7rem; margin-top: 1.3rem; }
+
+        .questions-block { margin-top: 1.2rem; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 1rem; }
+        .question-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .question-card .q-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .question-card .q-head span { font-size: 0.8rem; color: #a78bfa; font-weight: 600; }
+        .option-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+        .option-row input[type=text] { flex: 1; }
+        .option-row input[type=radio] { width: auto; }
+        .remove-x { cursor: pointer; color: #fca5a5; font-size: 0.9rem; padding: 0 4px; }
+
+        .toolbar { display: flex; gap: 0.6rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+
+        .quiz-list { display: flex; flex-direction: column; gap: 0.9rem; max-height: 45vh; overflow-y: auto; }
+        .quiz-row {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-left: 3px solid #008cb4;
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex; align-items: flex-start; gap: 1rem;
+        }
+        .quiz-row .info { flex: 1; min-width: 0; }
+        .quiz-row .info h3 { font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .quiz-row .info p { font-size: 0.8rem; color: #a0a0a0; }
+        .meta-line { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.5rem; font-size: 0.7rem; }
+        .pill { padding: 0.15rem 0.5rem; border-radius: 10px; background: rgba(255,255,255,0.08); color: #ccc; }
+        .pill.status-publie { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .pill.status-brouillon { background: rgba(247,147,30,0.15); color: #f7931e; }
+        .pill.status-archive { background: rgba(255,255,255,0.05); color: #888; }
+        .quiz-row .actions { display: flex; flex-direction: column; gap: 0.4rem; }
+
+        .results-section { margin-top: 2rem; }
+        table.results-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        table.results-table th, table.results-table td {
+            text-align: left; padding: 0.6rem 0.7rem; border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        table.results-table th { color: #a78bfa; font-weight: 600; }
+        .score-badge { padding: 0.15rem 0.5rem; border-radius: 8px; font-weight: 600; }
+        .score-good { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .score-bad { background: rgba(220,38,38,0.15); color: #fca5a5; }
+
+        .empty { text-align: center; color: #a0a0a0; padding: 2rem; }
+
+        @media (max-width: 1050px) {
+            .main-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo-icon">🧪</div>
+            <div>
+                <div class="title">Gestionnaire d'interrogations</div>
+                <div class="subtitle">Créez des quiz, publiez-les, et suivez les résultats des élèves</div>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span class="sync-badge" id="syncBadge">…</span>
+            <a class="btn" href="terminal-professeurs.html">🛠️ Modules</a>
+            <a class="btn primary" href="etudes.html">👁️ Vue élève</a>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Formulaire -->
+        <div class="panel">
+            <h2 id="formTitle">➕ Nouvelle interrogation</h2>
+            <input type="hidden" id="editId">
+
+            <label>Titre</label>
+            <input type="text" id="title" placeholder="Ex: Interrogation sur le Cameroun">
+
+            <label>Description / consigne</label>
+            <textarea id="description" placeholder="Ex: Répondez aux 5 questions sur la géographie du Cameroun."></textarea>
+
+            <div class="row">
+                <div>
+                    <label>Niveau</label>
+                    <select id="niveau"></select>
+                </div>
+                <div>
+                    <label>Matière</label>
+                    <select id="matiere"></select>
+                </div>
+            </div>
+            <div id="matiereLibreWrap" style="display:none;">
+                <label>Préciser la matière</label>
+                <input type="text" id="matiereLibre" placeholder="Ex: Éducation civique">
+            </div>
+
+            <div>
+                <label>🔗 Lier à une leçon (optionnel)</label>
+                <select id="linkedLessonId"></select>
+                <p style="font-size:0.8em; opacity:0.7; margin-top:4px;">
+                    Si tu lies cette interrogation à une leçon, elle apparaîtra automatiquement avec elle
+                    dans les tableaux de bord élèves (une leçon = leçon + quiz + visuel).
+                </p>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label>Statut</label>
+                    <select id="status">
+                        <option value="brouillon" selected>Brouillon (non visible)</option>
+                        <option value="publie">Publié (visible élèves)</option>
+                        <option value="archive">Archivé</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Temps limite (minutes, optionnel)</label>
+                    <input type="number" id="timeLimit" min="1" placeholder="Ex: 15">
+                </div>
+            </div>
+
+            <div class="checkboxes">
+                <label><input type="checkbox" id="audParents"> 👨‍👩‍👧 Statistiques visibles pour les parents (moyenne, taux de réussite — sans le détail nominatif)</label>
+            </div>
+
+            <div class="questions-block">
+                <label style="margin-top:0;">Questions</label>
+                <div id="questionsContainer"></div>
+                <button type="button" class="btn small" onclick="addQuestion()">➕ Ajouter une question</button>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn primary" onclick="submitQuizForm()">💾 Enregistrer</button>
+                <button class="btn" onclick="resetQuizForm()">↺ Annuler</button>
+            </div>
+        </div>
+
+        <!-- Liste + résultats -->
+        <div class="panel">
+            <h2>📋 Interrogations (<span id="countQuizzes">0</span>)</h2>
+            <div class="toolbar">
+                <button class="btn small" onclick="publishAllDrafts()">🚀 Publier tout (brouillons)</button>
+                <button class="btn small" onclick="ZNKManifest.exportFile()">📤 Exporter modules</button>
+            </div>
+            <div class="quiz-list" id="quizList"></div>
+
+            <div class="results-section" id="resultsSection" style="display:none;">
+                <h2>📊 Résultats — <span id="resultsQuizTitle"></span></h2>
+                <div id="resultsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="znk-professeur-manifest.js" onerror="window.__znkManifestLoadFailed = true;"></script>
+    <script src="znk-etudes-manifest.js" onerror="window.__znkEtudesManifestLoadFailed = true;"></script>
+    <script>
+        // --- Vérification de compatibilité : si znk-professeur-manifest.js est une
+        // version ancienne (sans moteur de quiz), on le signale clairement au lieu
+        // de planter en silence sur les menus Niveau/Matière et sur Enregistrer.
+        (function checkManifestCompatibility() {
+            const missing = [];
+            if (window.__znkManifestLoadFailed) missing.push('znk-professeur-manifest.js (échec de chargement — 404 ou mauvais chemin, voir onglet Réseau/Network)');
+            else if (typeof window.ZNKManifest === 'undefined') missing.push('ZNKManifest (fichier chargé mais erreur JS à l\'exécution — voir la console)');
+            else {
+                if (!window.ZNKManifest.quiz) missing.push('ZNKManifest.quiz');
+                if (!window.ZNKManifest.NIVEAUX) missing.push('ZNKManifest.NIVEAUX');
+                if (!window.ZNKManifest.MATIERES) missing.push('ZNKManifest.MATIERES');
+                if (!window.ZNKManifest.setCurrentProf) missing.push('ZNKManifest.setCurrentProf (ancienne version du manifest, pas encore mise à jour)');
+            }
+            if (missing.length) {
+                document.body.insertAdjacentHTML('afterbegin', `
+                    <div style="background:#444444;color:#fff;padding:1rem 2rem;font-size:0.9rem;">
+                        ⚠️ <strong>znk-professeur-manifest.js semble obsolète ou introuvable</strong> — éléments manquants : ${missing.join(', ')}.<br>
+                        Vérifie que le fichier znk-professeur-manifest.js (dernière version) se trouve bien dans le MÊME dossier que cette page, puis recharge complètement (Ctrl+Shift+R ou redémarre l'app).
+                    </div>`);
+                return true;
+            }
+            return false;
+        })();
+    </script>
+    <script>
+        function showFatalError(context, error) {
+            console.error(context, error);
+            alert('❌ ' + context + '\n\n' + (error && error.message ? error.message : error) + '\n\n(Détails dans la console développeur)');
+        }
+
+        let currentQuestions = [];
+
+        function populateNiveauSelect() {
+            document.getElementById('niveau').innerHTML = ZNKManifest.NIVEAUX
+                .map(n => `<option value="${n.code}">${n.label}</option>`).join('');
+        }
+        function populateMatiereSelect() {
+            const options = ZNKManifest.MATIERES
+                .map(m => `<option value="${m.code}">${m.icon} ${m.label}</option>`)
+                .concat('<option value="autre">📌 Autre (préciser)</option>')
+                .join('');
+            document.getElementById('matiere').innerHTML = options;
+        }
+        document.getElementById('matiere').addEventListener('change', function () {
+            document.getElementById('matiereLibreWrap').style.display = this.value === 'autre' ? 'block' : 'none';
+        });
+
+        // Liste fusionnée des leçons disponibles (seed + créées via terminal-lecons.html)
+        // pour permettre de lier une interrogation à sa leçon (lesson.id <-> quiz.lessonId).
+        function getAllLessonsForLinking() {
+            const seed = window.ZNK_ETUDES_MANIFEST ? ZNK_ETUDES_MANIFEST.getAllLessons({}) : [];
+            const created = (window.ZNKManifest && ZNKManifest.lessons) ? ZNKManifest.lessons.list() : [];
+            return seed.concat(created);
+        }
+
+        function populateLessonLinkSelect(selectedId) {
+            const select = document.getElementById('linkedLessonId');
+            const lessons = getAllLessonsForLinking();
+            const options = ['<option value="">— Aucune (interrogation autonome) —</option>']
+                .concat(lessons.map(l => `<option value="${l.id}">${l.title}</option>`));
+            select.innerHTML = options.join('');
+            select.value = selectedId || '';
+        }
+
+        // Convention : la leçon et son interrogation portent le même titre — plus facile
+        // à retrouver dans les listes. Ne s'applique qu'à une NOUVELLE interrogation dont
+        // le titre est encore vide, pour ne jamais écraser un titre déjà saisi/édité.
+        document.getElementById('linkedLessonId').addEventListener('change', function () {
+            const titleField = document.getElementById('title');
+            const editId = document.getElementById('editId').value;
+            if (editId || titleField.value.trim() || !this.value) return;
+            const lesson = getAllLessonsForLinking().find(l => l.id === this.value);
+            if (lesson) titleField.value = lesson.title;
+        });
+
+        function addQuestion() {
+            currentQuestions.push({ id: null, text: '', type: 'qcm', options: ['', ''], correctIndex: 0, points: 1 });
+            renderQuestions();
+        }
+        function removeQuestion(idx) {
+            currentQuestions.splice(idx, 1);
+            renderQuestions();
+        }
+        function setQuestionType(idx, type) {
+            currentQuestions[idx].type = type;
+            currentQuestions[idx].options = type === 'vrai_faux' ? ['Vrai', 'Faux'] : ['', ''];
+            currentQuestions[idx].correctIndex = 0;
+            renderQuestions();
+        }
+        function addOption(idx) {
+            currentQuestions[idx].options.push('');
+            renderQuestions();
+        }
+        function removeOption(idx, optIdx) {
+            currentQuestions[idx].options.splice(optIdx, 1);
+            if (currentQuestions[idx].correctIndex >= currentQuestions[idx].options.length) {
+                currentQuestions[idx].correctIndex = 0;
+            }
+            renderQuestions();
+        }
+        function updateQuestionText(idx, val) { currentQuestions[idx].text = val; }
+        function updateOptionText(idx, optIdx, val) { currentQuestions[idx].options[optIdx] = val; }
+        function updateCorrectIndex(idx, optIdx) { currentQuestions[idx].correctIndex = optIdx; }
+        function updatePoints(idx, val) { currentQuestions[idx].points = parseInt(val, 10) || 1; }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            if (currentQuestions.length === 0) {
+                container.innerHTML = '<p style="font-size:0.8rem;color:#888;">Aucune question. Cliquez sur "Ajouter une question".</p>';
+                return;
+            }
+            container.innerHTML = currentQuestions.map((q, idx) => `
+                <div class="question-card">
+                    <div class="q-head">
+                        <span>Question ${idx + 1}</span>
+                        <span class="remove-x" onclick="removeQuestion(${idx})">✕ retirer</span>
+                    </div>
+                    <textarea placeholder="Énoncé de la question" oninput="updateQuestionText(${idx}, this.value)">${escapeHtml(q.text)}</textarea>
+                    <div class="row" style="margin-top:8px;">
+                        <div>
+                            <label style="margin:0 0 3px;">Type</label>
+                            <select onchange="setQuestionType(${idx}, this.value)">
+                                <option value="qcm" ${q.type === 'qcm' ? 'selected' : ''}>QCM</option>
+                                <option value="vrai_faux" ${q.type === 'vrai_faux' ? 'selected' : ''}>Vrai / Faux</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="margin:0 0 3px;">Points</label>
+                            <input type="number" min="1" value="${q.points}" oninput="updatePoints(${idx}, this.value)">
+                        </div>
+                    </div>
+                    <label style="margin:8px 0 3px;">Réponses (cochez la bonne)</label>
+                    ${q.options.map((opt, optIdx) => `
+                        <div class="option-row">
+                            <input type="radio" name="correct-${idx}" ${q.correctIndex === optIdx ? 'checked' : ''} onchange="updateCorrectIndex(${idx}, ${optIdx})">
+                            <input type="text" value="${escapeHtml(opt)}" ${q.type === 'vrai_faux' ? 'readonly' : ''} placeholder="Réponse ${optIdx + 1}" oninput="updateOptionText(${idx}, ${optIdx}, this.value)">
+                            ${q.type === 'qcm' && q.options.length > 2 ? `<span class="remove-x" onclick="removeOption(${idx}, ${optIdx})">✕</span>` : ''}
+                        </div>
+                    `).join('')}
+                    ${q.type === 'qcm' ? `<button type="button" class="btn small" style="margin-top:8px;" onclick="addOption(${idx})">➕ Ajouter une réponse</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            return (str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function resetQuizForm() {
+            try {
+                document.getElementById('formTitle').textContent = '➕ Nouvelle interrogation';
+                document.getElementById('editId').value = '';
+                document.getElementById('title').value = '';
+                document.getElementById('description').value = '';
+                document.getElementById('status').value = 'brouillon';
+                document.getElementById('timeLimit').value = '';
+                document.getElementById('audParents').checked = false;
+                populateNiveauSelect();
+                populateMatiereSelect();
+                document.getElementById('niveau').value = 'tous';
+                document.getElementById('matiere').value = 'general';
+                document.getElementById('matiereLibre').value = '';
+                document.getElementById('matiereLibreWrap').style.display = 'none';
+                populateLessonLinkSelect('');
+                currentQuestions = [];
+                renderQuestions();
+            } catch (error) {
+                showFatalError('Impossible d\'initialiser le formulaire (voir bandeau rouge en haut de page)', error);
+            }
+        }
+
+        function submitQuizForm() {
+            try {
+                const title = document.getElementById('title').value.trim();
+                if (!title) { alert('Merci de donner un titre à l\'interrogation.'); return; }
+                if (currentQuestions.length === 0) { alert('Ajoutez au moins une question.'); return; }
+                for (const q of currentQuestions) {
+                    if (!q.text.trim()) { alert('Chaque question doit avoir un énoncé.'); return; }
+                    if (q.type === 'qcm' && q.options.some(o => !o.trim())) { alert('Toutes les réponses doivent être renseignées.'); return; }
+                }
+
+                const fields = {
+                    title,
+                    description: document.getElementById('description').value.trim(),
+                    niveau: document.getElementById('niveau').value,
+                    matiere: document.getElementById('matiere').value,
+                    matiereLibre: document.getElementById('matiereLibre').value.trim(),
+                    lessonId: document.getElementById('linkedLessonId').value || null,
+                    status: document.getElementById('status').value,
+                    timeLimitMinutes: document.getElementById('timeLimit').value ? parseInt(document.getElementById('timeLimit').value, 10) : null,
+                    audience: { eleves: true, parents: document.getElementById('audParents').checked },
+                    questions: currentQuestions
+                };
+
+                const editId = document.getElementById('editId').value;
+                if (editId) {
+                    ZNKManifest.quiz.update(editId, fields);
+                } else {
+                    ZNKManifest.quiz.add(fields);
+                }
+                resetQuizForm();
+                renderQuizList();
+            } catch (error) {
+                showFatalError("Impossible d'enregistrer l'interrogation", error);
+            }
+        }
+
+        function editQuiz(id) {
+            const quiz = ZNKManifest.quiz.get(id);
+            if (!quiz) return;
+            document.getElementById('formTitle').textContent = '✏️ Modifier l\'interrogation';
+            document.getElementById('editId').value = quiz.id;
+            document.getElementById('title').value = quiz.title;
+            document.getElementById('description').value = quiz.description;
+            populateNiveauSelect();
+            populateMatiereSelect();
+            document.getElementById('niveau').value = quiz.niveau;
+            document.getElementById('matiere').value = quiz.matiere;
+            document.getElementById('matiereLibre').value = quiz.matiereLibre || '';
+            document.getElementById('matiereLibreWrap').style.display = (quiz.matiere === 'autre') ? 'block' : 'none';
+            populateLessonLinkSelect(quiz.lessonId || '');
+            document.getElementById('status').value = quiz.status;
+            document.getElementById('timeLimit').value = quiz.timeLimitMinutes || '';
+            document.getElementById('audParents').checked = !!(quiz.audience && quiz.audience.parents);
+            currentQuestions = JSON.parse(JSON.stringify(quiz.questions));
+            renderQuestions();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function removeQuiz(id) {
+            if (!confirm('Supprimer définitivement cette interrogation ? (les résultats déjà enregistrés seront conservés)')) return;
+            ZNKManifest.quiz.remove(id);
+            renderQuizList();
+        }
+
+        function togglePublish(id, currentStatus) {
+            ZNKManifest.quiz.update(id, { status: currentStatus === 'publie' ? 'brouillon' : 'publie' });
+            renderQuizList();
+        }
+
+        // Même principe que côté leçons (terminal-lecons.html) : publie en une
+        // fois toutes les interrogations "brouillon" du prof courant — utile
+        // après un import en masse.
+        function publishAllDrafts() {
+            const drafts = ZNKManifest.quiz.listMine().filter(q => q.status === 'brouillon');
+            if (drafts.length === 0) {
+                alert('Aucun brouillon à publier — tout est déjà publié.');
+                return;
+            }
+            const proceed = confirm(`Publier ${drafts.length} interrogation(s) actuellement en brouillon ?\n\nElles deviendront visibles côté élève immédiatement.`);
+            if (!proceed) return;
+            drafts.forEach(q => ZNKManifest.quiz.update(q.id, { status: 'publie' }));
+            if (ZNKManifest.electron && ZNKManifest.electron.flush) ZNKManifest.electron.flush();
+            renderQuizList();
+            alert(`✅ ${drafts.length} interrogation(s) publiée(s).`);
+        }
+
+        function renderQuizList() {
+            try {
+                const quizzes = ZNKManifest.quiz.listMine();
+                document.getElementById('countQuizzes').textContent = quizzes.length;
+                const list = document.getElementById('quizList');
+
+                if (quizzes.length === 0) {
+                    list.innerHTML = '<div class="empty">Aucune interrogation. Créez-en une avec le formulaire.</div>';
+                    return;
+                }
+
+                list.innerHTML = quizzes.slice().reverse().map(quiz => {
+                    const niv = ZNKManifest.niveauInfo(quiz.niveau);
+                    const mat = ZNKManifest.matiereInfo(quiz.matiere, quiz.matiereLibre);
+                    const stats = ZNKManifest.quiz.stats(quiz.id);
+                    const statusLabel = { brouillon: 'Brouillon', publie: 'Publié', archive: 'Archivé' }[quiz.status];
+                    const linkedLesson = quiz.lessonId ? getAllLessonsForLinking().find(l => l.id === quiz.lessonId) : null;
+                    return `
+                        <div class="quiz-row">
+                            <div class="info">
+                                <h3>${quiz.title}</h3>
+                                <p>${quiz.questions.length} question(s) — ${quiz.description || ''}</p>
+                                <div class="meta-line">
+                                    <span class="pill status-${quiz.status}">${statusLabel}</span>
+                                    <span class="pill">🎓 ${niv.label}</span>
+                                    <span class="pill">${mat.icon} ${mat.label}</span>
+                                    <span class="pill">📝 ${stats.count} réponse(s)</span>
+                                    ${stats.count > 0 ? `<span class="pill">📊 moy. ${stats.average}%</span>` : ''}
+                                    ${linkedLesson ? `<span class="pill">🔗 ${linkedLesson.title}</span>` : (quiz.lessonId ? '<span class="pill">🔗 leçon introuvable</span>' : '')}
+                                </div>
+                            </div>
+                            <div class="actions">
+                                <button class="btn small" onclick="editQuiz('${quiz.id}')">✏️ Modifier</button>
+                                <button class="btn small" onclick="togglePublish('${quiz.id}', '${quiz.status}')">${quiz.status === 'publie' ? '⏸️ Dépublier' : '🚀 Publier'}</button>
+                                <button class="btn small" onclick="showResults('${quiz.id}')">📊 Résultats</button>
+                                <button class="btn small danger" onclick="removeQuiz('${quiz.id}')">🗑️ Supprimer</button>
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch (error) {
+                showFatalError('Impossible d\'afficher la liste des interrogations', error);
+            }
+        }
+
+        function showResults(quizId) {
+            const quiz = ZNKManifest.quiz.get(quizId);
+            if (!quiz) return;
+            const attempts = ZNKManifest.quiz.attemptsForQuiz(quizId).slice().reverse();
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('resultsQuizTitle').textContent = quiz.title;
+            const content = document.getElementById('resultsContent');
+
+            if (attempts.length === 0) {
+                content.innerHTML = '<div class="empty">Aucun élève n\'a encore répondu à cette interrogation.</div>';
+            } else {
+                content.innerHTML = `
+                    <table class="results-table">
+                        <thead><tr><th>Élève</th><th>Score</th><th>%</th><th>Date</th></tr></thead>
+                        <tbody>
+                            ${attempts.map(a => `
+                                <tr>
+                                    <td>${a.studentName}</td>
+                                    <td>${a.score} / ${a.total}</td>
+                                    <td><span class="score-badge ${a.percent >= 50 ? 'score-good' : 'score-bad'}">${a.percent}%</span></td>
+                                    <td>${new Date(a.completedAt).toLocaleString('fr-FR')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>`;
+            }
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function updateSyncBadge() {
+            const badge = document.getElementById('syncBadge');
+            if (ZNKManifest.electron.available()) {
+                badge.textContent = '🟢 Fichier partagé (Electron)';
+                badge.className = 'sync-badge on';
+            } else {
+                badge.textContent = '⚪ Local uniquement (navigateur)';
+                badge.className = 'sync-badge off';
+            }
+        }
+
+        // Identifie le prof courant (compte créé via inscription.html, même clé que côté élève),
+        // avec repli local si aucun compte n'est trouvé (mode mono-poste).
+        function resolveCurrentProfId() {
+            try {
+                const raw = localStorage.getItem('znk_account');
+                const account = raw ? JSON.parse(raw) : null;
+                if (account && account.idZNK) return account.idZNK;
+            } catch (e) {}
+            let localId = localStorage.getItem('znk_prof_local_id');
+            if (!localId) {
+                localId = 'prof-local-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+                localStorage.setItem('znk_prof_local_id', localId);
+            }
+            return localId;
+        }
+
+        window.addEventListener('znk-data-synced', renderQuizList);
+
+        (async function init() {
+            if (window.__znkManifestLoadFailed || typeof window.ZNKManifest === 'undefined') {
+                return; // le bandeau rouge ci-dessus explique déjà le problème
+            }
+            try {
+                ZNKManifest.setCurrentProf(resolveCurrentProfId());
+                resetQuizForm();
+                await ZNKManifest.electron.sync();
+                updateSyncBadge();
+                renderQuizList();
+            } catch (error) {
+                showFatalError('Erreur au chargement de la page', error);
+            }
+        })();
+    </script>
+</body>
+</html>

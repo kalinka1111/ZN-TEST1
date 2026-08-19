@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✨ Devenir Membre ZNK</title>
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+        --znk-bg-primary:#0042aa;
+        --znk-accent:#008cb4;
+        --znk-accent-hover:#00a3d7;
+        --znk-text-secondary:#53d5fd;
+        --znk-glass:#1a0a53;
+        --znk-border:#53d5fd;
+        --znk-gold:#ffd700;
+    }
+
+    html, body {
+        height:100%;
+        font-family:-apple-system, BlinkMacSystemFont,'Segoe UI', Roboto, sans-serif;
+        background:linear-gradient(180deg,#000000 0%, #2c1376 50%, #0042aa 100%);
+        color:#fff;
+        overflow-y:auto;
+    }
+
+    .wrap { max-width:960px; margin:0 auto; padding:28px 20px 60px; }
+
+    .hero {
+        text-align:center;
+        padding:26px 16px 30px;
+    }
+
+    .hero .badge {
+        display:inline-block;
+        background:linear-gradient(135deg, var(--znk-gold), #ffb347);
+        color:#000;
+        font-weight:700;
+        font-size:12px;
+        letter-spacing:1px;
+        padding:6px 16px;
+        border-radius:20px;
+        margin-bottom:14px;
+        box-shadow:0 4px 14px rgba(255,215,0,0.35);
+    }
+
+    .hero h1 {
+        font-size:30px;
+        font-weight:800;
+        margin-bottom:10px;
+        background:linear-gradient(135deg,#fff,var(--znk-text-secondary));
+        -webkit-background-clip:text;
+        background-clip:text;
+        -webkit-text-fill-color:transparent;
+    }
+
+    .hero p {
+        color:var(--znk-text-secondary);
+        max-width:560px;
+        margin:0 auto;
+        font-size:14px;
+        line-height:1.6;
+    }
+
+    .unlocks {
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        justify-content:center;
+        margin:22px 0 8px;
+    }
+
+    .unlock-chip {
+        background:rgba(255,255,255,0.06);
+        border:1px solid var(--znk-border);
+        border-radius:20px;
+        padding:8px 14px;
+        font-size:12px;
+        display:flex;
+        align-items:center;
+        gap:6px;
+    }
+
+    .cards {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:20px;
+        margin-top:30px;
+    }
+
+    @media (max-width:700px){ .cards { grid-template-columns:1fr; } }
+
+    .card {
+        background:var(--znk-glass);
+        border:1px solid var(--znk-border);
+        border-radius:18px;
+        padding:24px;
+        position:relative;
+        display:flex;
+        flex-direction:column;
+        transition:transform .25s ease, box-shadow .25s ease;
+    }
+
+    .card:hover { transform:translateY(-4px); box-shadow:0 12px 30px rgba(0,66,170,0.5); }
+
+    .card.plus { border-color:var(--znk-gold); }
+
+    .card .ribbon {
+        position:absolute;
+        top:-12px; right:18px;
+        background:linear-gradient(135deg,var(--znk-gold),#ffb347);
+        color:#000;
+        font-size:11px;
+        font-weight:800;
+        padding:5px 12px;
+        border-radius:10px;
+        box-shadow:0 4px 10px rgba(0,0,0,0.35);
+    }
+
+    .card h2 { font-size:18px; margin-bottom:4px; }
+    .card .price { font-size:34px; font-weight:800; color:var(--znk-text-secondary); margin:10px 0 2px; }
+    .card .price span { font-size:13px; font-weight:500; color:#c9d6ff; }
+    .card .desc { font-size:12px; color:#c9d6ff; margin-bottom:16px; }
+
+    .features { list-style:none; margin-bottom:20px; flex:1; }
+    .features li {
+        font-size:13px;
+        padding:7px 0;
+        border-bottom:1px solid rgba(255,255,255,0.08);
+        display:flex;
+        align-items:flex-start;
+        gap:8px;
+    }
+    .features li:last-child { border-bottom:none; }
+    .features li::before { content:'✅'; font-size:12px; }
+
+    .cta {
+        width:100%;
+        border:none;
+        padding:14px;
+        border-radius:12px;
+        font-weight:700;
+        font-size:14px;
+        cursor:pointer;
+        color:#fff;
+        background:linear-gradient(135deg, var(--znk-accent), var(--znk-accent-hover));
+        transition:all .2s ease;
+    }
+    .cta:hover { filter:brightness(1.1); transform:translateY(-1px); }
+    .card.plus .cta { background:linear-gradient(135deg,var(--znk-gold),#ffb347); color:#000; }
+
+    .cta:disabled { opacity:0.6; cursor:wait; }
+
+    .nota {
+        margin-top:30px;
+        background:rgba(255,255,255,0.05);
+        border:1px dashed var(--znk-border);
+        border-radius:12px;
+        padding:14px 18px;
+        font-size:12px;
+        color:var(--znk-text-secondary);
+        line-height:1.6;
+    }
+
+    .toast {
+        position:fixed;
+        top:18px; left:50%; transform:translateX(-50%);
+        background:linear-gradient(135deg,#238636,#2ea043);
+        color:#fff;
+        padding:12px 22px;
+        border-radius:20px;
+        font-size:13px;
+        font-weight:600;
+        box-shadow:0 8px 25px rgba(0,0,0,0.4);
+        z-index:999;
+        display:none;
+    }
+</style>
+</head>
+<body data-znk-protected>
+
+<div class="toast" id="toast"></div>
+
+<div class="wrap">
+    <div class="hero">
+        <div class="badge">⭐ OFFRE MEMBRE ZNK</div>
+        <h1>Devenez Membre ZNK</h1>
+        <p>
+            Débloquez l'intégralité de l'écosystème ZNK : Ma Télé, les Études,
+            et bien plus. Choisissez votre formule ci-dessous, réglez en toute
+            simplicité via ZNK Nomad, et votre nouvelle carte Membre est activée
+            instantanément.
+        </p>
+        <div class="unlocks">
+            <div class="unlock-chip">📺 Ma Télé</div>
+            <div class="unlock-chip">🎨 Études</div>
+            <div class="unlock-chip">🔓 Contenus exclusifs</div>
+            <div class="unlock-chip">🆔 Nouvelle ID Membre</div>
+        </div>
+    </div>
+
+    <div class="cards">
+        <!-- FICHE : Membre -->
+        <div class="card" id="cardMembre">
+            <h2>Membre</h2>
+            <div class="price">5 € <span>/ activation</span></div>
+            <div class="desc">L'essentiel pour rejoindre la communauté ZNK.</div>
+            <ul class="features">
+                <li>200 lignes de messages WhatsZNK</li>
+                <li>15 min de vidéo incluses</li>
+                <li>Accès à Ma Télé (aperçu débloqué)</li>
+                <li>Badge "Membre" sur votre profil</li>
+                <li>Nouvelle ID ZNK + Dashboard Membre</li>
+            </ul>
+            <button class="cta" onclick="jeDeviensMembre('member', this)">Je deviens membre →</button>
+        </div>
+
+        <!-- FICHE : Membre Plus -->
+        <div class="card plus" id="cardMembrePlus">
+            <div class="ribbon">POPULAIRE</div>
+            <h2>Membre Plus</h2>
+            <div class="price">10 € <span>/ activation</span></div>
+            <div class="desc">Sans limites, pour une expérience ZNK complète.</div>
+            <ul class="features">
+                <li>Messages WhatsZNK illimités</li>
+                <li>Vidéo illimitée</li>
+                <li>Accès complet à Ma Télé et aux Études</li>
+                <li>Badge "Membre Plus" mis en avant</li>
+                <li>Nouvelle ID ZNK + Dashboard Membre</li>
+            </ul>
+            <button class="cta" onclick="jeDeviensMembre('membre-plus', this)">Je deviens membre →</button>
+        </div>
+    </div>
+
+    <div class="nota">
+        💡 <strong>Comment ça marche :</strong> au clic sur "Je deviens membre", vous êtes
+        dirigé vers <strong>ZNK Nomad</strong> pour finaliser le paiement de la formule
+        choisie. Tant que le paiement n'est pas confirmé, vous restez connecté avec
+        votre ID visiteur classique (votre statut "Membre (en cours)" apparaît déjà
+        dans l'écran de connexion ZNK). Une fois le paiement confirmé, une nouvelle
+        ID Membre est créée automatiquement et votre nouveau Dashboard
+        <em>ZNKMembresDash</em> s'ouvre.
+    </div>
+</div>
+
+<script>
+    const ZNK_LEDGER_FALLBACK_KEY = 'znkNomadLedgerFallback';
+
+    const MEMBERSHIP_ITEMS = {
+        'member': { name: 'Membre', price: 5, desc: '200 lignes + 15mn vidéo', membershipType: 'member', isMembership: true },
+        'membre-plus': { name: 'Membre Plus', price: 10, desc: 'Illimité', membershipType: 'membre-plus', isMembership: true }
+    };
+
+    async function znkLedgerLoad() {
+        try {
+            if (window.electronAPI && window.electronAPI.znkNomadReadData) {
+                const raw = await window.electronAPI.znkNomadReadData();
+                if (raw) return JSON.parse(raw);
+            }
+        } catch (e) { console.warn('znkLedgerLoad:', e); }
+        try {
+            return JSON.parse(localStorage.getItem(ZNK_LEDGER_FALLBACK_KEY) || '{}');
+        } catch (e) { return {}; }
+    }
+
+    async function znkLedgerSave(ledger) {
+        const json = JSON.stringify(ledger);
+        try {
+            if (window.electronAPI && window.electronAPI.znkNomadWriteData) {
+                await window.electronAPI.znkNomadWriteData(json);
+            }
+        } catch (e) { console.warn('znkLedgerSave:', e); }
+        localStorage.setItem(ZNK_LEDGER_FALLBACK_KEY, json);
+    }
+
+    function getCurrentUser() {
+        try {
+            const stored = JSON.parse(localStorage.getItem('znkUserData') || 'null');
+            if (stored && stored.id) return stored;
+        } catch (e) {}
+        return { id: 'VI-INCONNU', email: '', prenom: '', nom: '' };
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
+    // 1/ Marque l'utilisateur "membre (en cours)" dans le ledger partagé,
+    // AVANT toute confirmation de paiement. auth-hub.html lit ce flag pour
+    // afficher le badge "Membre" en attente, tout en gardant l'ID visiteur
+    // classique tant que le paiement n'est pas confirmé (voir NOTA du cahier
+    // des charges "devenirmembre ZNK").
+    async function markPendingMembre(membershipType) {
+        const user = getCurrentUser();
+        const ledger = await znkLedgerLoad();
+        if (!ledger.users) ledger.users = {};
+        if (!ledger.users[user.id]) {
+            ledger.users[user.id] = { id: user.id, email: user.emailZnk || user.email || '', type: 'visitor' };
+        }
+        ledger.users[user.id].pendingMembre = true;
+        ledger.users[user.id].pendingMembreType = membershipType;
+        ledger.users[user.id].pendingMembreSince = new Date().toISOString();
+        await znkLedgerSave(ledger);
+    }
+
+    // 2/ "je deviens membre" > ouverture de nomad.html pour le paiement.
+    async function jeDeviensMembre(tier, btnEl) {
+        btnEl.disabled = true;
+        btnEl.textContent = 'Redirection vers ZNK Nomad…';
+
+        await markPendingMembre(tier);
+        showToast('✨ Statut "Membre (en cours)" enregistré — direction ZNK Nomad pour le paiement');
+
+        const item = MEMBERSHIP_ITEMS[tier];
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(item))));
+        const targetUrl = './nomad.html?buy=' + encoded;
+
+        setTimeout(() => {
+            // On tente d'abord de faire naviguer l'iframe module du dashboard
+            // parent (même mécanisme que les autres modules ZNK), avec repli
+            // sur une navigation directe si l'accès au parent est refusé.
+            try {
+                const parentIframe = window.parent && window.parent.document
+                    ? window.parent.document.getElementById('moduleIframe')
+                    : null;
+                if (parentIframe) {
+                    parentIframe.src = targetUrl;
+                    return;
+                }
+            } catch (e) { /* accès parent refusé : repli ci-dessous */ }
+            window.location.href = targetUrl;
+        }, 600);
+    }
+</script>
+</body>
+</html>

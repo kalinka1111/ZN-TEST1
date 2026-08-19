@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACTV - Interface Principale</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            font-family: 'Arial', sans-serif;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .main-container {
+            width: 100vw;
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* En-tête compact */
+        .central-screen {
+            width: 90%;
+            max-width: 1200px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            margin: 10px auto;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .connection-status,
+        .playlist-indicator {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Zone principale */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding: 10px 0 80px 0;
+        }
+
+        /* Grille des émissions */
+        .popular-shows {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-bottom: 50px;
+        }
+
+        .show-card {
+            /* Fond pastel = le cadre complet de l'émission (voir maquette) */
+            background: var(--cat-color, rgba(255, 255, 255, 0.05));
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .show-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            filter: brightness(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .show-card.now-playing {
+            border: 3px solid #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+        }
+
+        .show-thumbnail {
+            width: 100%;
+            padding-bottom: 56.25%; /* Ratio 16:9 */
+            background: #000;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.4);
+            box-sizing: border-box;
+        }
+
+        .show-thumbnail video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Contient toute la vidéo */
+            border-radius: 10px;
+        }
+
+        .show-thumbnail img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        /* Gradients par type */
+        .show-thumbnail.type-emission-znk-artistes {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .show-thumbnail.type-emission-znk-actu {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .show-thumbnail.type-serie-znk-les-reveurs {
+            background: linear-gradient(45deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .show-thumbnail.type-studios-effets {
+            background: linear-gradient(45deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .show-thumbnail.type-general {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .show-card:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .play-btn-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .play-btn-icon::before {
+            content: '▶';
+            margin-left: 3px;
+        }
+
+        .now-playing-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #00ff88;
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .show-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 15px 0 8px 0;
+        }
+
+        .show-stats {
+            font-size: 14px;
+            color: #cccccc;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Bouton unmute visible */
+        .sound-control {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border: 2px solid #00ff88;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 20;
+            transition: all 0.3s;
+        }
+
+        .sound-control:hover {
+            background: #00ff88;
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        .sound-control.muted::before {
+            content: '🔇 ';
+        }
+
+        .sound-control.unmuted::before {
+            content: '🔊 ';
+        }
+
+        /* Contrôle de volume général (unique, remplace le bouton par vidéo) */
+        .global-volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(29, 118, 45, 0.5);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .global-volume-control button {
+            background: none;
+            border: none;
+            color: #03e829;
+            font-size: 18px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .global-volume-control input[type="range"] {
+            width: 80px;
+            accent-color: #00ff88;
+            cursor: pointer;
+        }
+
+        /* Badge ACTV affiché sur chaque vidéo en lecture */
+        .video-badge-actv {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #00ff88;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        .video-badge-actv.large {
+            font-size: 14px;
+            padding: 5px 12px;
+            top: 14px;
+            right: 14px;
+        }
+
+        /* Badge nombre d'épisodes sur une carte d'émission */
+        .episodes-count-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #9f106f;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 12px;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Bandeau d'épisodes sous le lecteur principal */
+        .episodes-strip {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 15px 20px 20px;
+            background: rgba(0, 0, 0, 0.85);
+        }
+
+        .episode-chip {
+            flex: 0 0 140px;
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+            background: #111;
+        }
+
+        .episode-chip.active {
+            border-color: #00ff88;
+        }
+
+        .episode-chip .ep-thumb {
+            width: 100%;
+            padding-bottom: 56.25%;
+            position: relative;
+            background: #000;
+        }
+
+        .episode-chip .ep-thumb img,
+        .episode-chip .ep-thumb video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .episode-chip .ep-title {
+            font-size: 11px;
+            padding: 6px 8px;
+            color: #ddd;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .nav-ep-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .nav-ep-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-ep-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Logo ACTV */
+        /* Grand titre ACTV affiché en haut de la page */
+        .actv-hero-title {
+            text-align: center;
+            margin: 25px auto 5px;
+            animation: heroGlow 3s ease-in-out infinite alternate;
+        }
+
+        .actv-hero-title img {
+            max-height: 110px;
+            max-width: 90%;
+            height: auto;
+            width: auto;
+        }
+
+        @keyframes heroGlow {
+            from { filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.3)); }
+            to { filter: drop-shadow(0 0 25px rgba(79, 172, 254, 0.5)); }
+        }
+
+        .actv-logo {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 200;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Loading */
+        .loading-indicator {
+            text-align: center;
+            padding: 40px;
+            color: #00ff88;
+            font-size: 14px;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .show-card {
+            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .show-card:nth-child(1) { animation-delay: 0.1s; }
+        .show-card:nth-child(2) { animation-delay: 0.2s; }
+        .show-card:nth-child(3) { animation-delay: 0.3s; }
+        .show-card:nth-child(4) { animation-delay: 0.4s; }
+        .show-card:nth-child(5) { animation-delay: 0.5s; }
+        .show-card:nth-child(6) { animation-delay: 0.6s; }
+
+        /* Bouton "Gérer" sur chaque carte d'émission */
+        .manage-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 25;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .manage-btn:hover {
+            background: #00ff88;
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        /* Icônes édition/suppression sur les chips d'épisodes */
+        .ep-actions {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            display: flex;
+            gap: 4px;
+            z-index: 5;
+        }
+        .ep-action-btn {
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #fff;
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ep-action-btn:hover { background: #00ff88; color: #000; }
+        .ep-action-btn.danger:hover { background: #ef4444; color: #fff; }
+
+        /* Modale de gestion / édition */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #14141f;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 22px;
+        }
+        .modal-box h3 {
+            margin-bottom: 14px;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .manage-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .manage-row-thumb {
+            width: 64px;
+            height: 40px;
+            background: #000;
+            border-radius: 6px;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .manage-row-thumb video, .manage-row-thumb img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .manage-row-info { flex: 1; min-width: 0; }
+        .manage-row-title {
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .manage-row-meta { font-size: 11px; color: #999; margin-top: 2px; }
+        .manage-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .manage-icon-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .manage-icon-btn:hover { background: #00ff88; color: #000; }
+        .manage-icon-btn.danger:hover { background: #ef4444; color: #fff; }
+
+        .edit-form-group { margin-bottom: 14px; }
+        .edit-form-label {
+            display: block;
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+        .edit-form-input, .edit-form-select, .edit-form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .edit-form-textarea { min-height: 70px; resize: vertical; }
+        .edit-form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 18px;
+        }
+        .btn-secondary, .btn-primary {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
+        .btn-primary { background: #00ff88; color: #000; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.18); }
+        .btn-primary:hover { filter: brightness(1.1); }
+
+        /* ==========================================
+           RESPONSIVE (aucune media query n'existait avant)
+           ========================================== */
+        @media (max-width: 640px) {
+            .actv-hero-title img { max-height: 70px; }
+            .central-screen { height: auto; min-height: 60px; padding: 10px 14px; flex-wrap: wrap; gap: 8px; }
+            .global-volume-control input[type="range"] { width: 60px; }
+            .player-controls-row { justify-content: center; }
+            .nav-ep-btn { padding: 8px 12px; font-size: 12px; flex: 1 1 auto; text-align: center; }
+            .episode-chip { flex: 0 0 110px; }
+            .actv-logo { bottom: 14px; right: 14px; padding: 10px 16px; font-size: 14px; }
+            .popular-shows { grid-template-columns: 1fr; width: 94%; gap: 16px; }
+        }
+
+        /* Sécurité écrans très étroits : la grille auto-fit(300px) peut
+           déborder légèrement en dessous de ~340px de large. */
+        @media (max-width: 360px) {
+            .popular-shows { grid-template-columns: minmax(0, 1fr); width: 96%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="content-area">
+            <div class="actv-hero-title">
+                <img src="./icons/logo-actv.svg" alt="ACTV" onerror="this.onerror=null; this.src='./icons/logo-actv.png';">
+            </div>
+                <!-- En-tête -->
+            <div class="central-screen">
+                <div class="global-volume-control">
+                    <button id="globalMuteBtn" onclick="toggleGlobalMute()">🔇</button>
+                    <input type="range" id="globalVolumeSlider" min="0" max="100" value="80" oninput="onGlobalVolumeChange(this.value)">
+                </div>
+                <div class="playlist-indicator" id="playlistIndicator">
+                    <span>🎬 <span id="emissionCount">0</span> émissions</span>
+                </div>
+            </div>
+
+            <!-- Lecteur principal -->
+            <div id="mainPlayer" style="display: none; width: 90%; max-width: 1200px; margin: 20px auto; background: #000; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                <div style="padding: 18px 20px 8px; background: rgba(0,0,0,0.85);">
+                    <h2 id="mainPlayerTitle" style="margin-bottom: 6px;"></h2>
+                    <div id="mainPlayerStats" style="color: #999; font-size: 14px;"></div>
+                </div>
+                <div id="mainVideoFrame" style="position: relative; padding-bottom: 56.25%; background: #000;">
+                    <video id="mainVideo" controls controlsList="novolume nodownload noremoteplayback" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"></video>
+                    <div class="video-badge-actv large">ACTV</div>
+                </div>
+                <div style="padding: 20px; background: rgba(0,0,0,0.8);">
+                    <div class="player-controls-row">
+                        <button class="nav-ep-btn" id="prevEpBtn" onclick="prevEpisode()">⏮ Précédent</button>
+                        <button id="autoplayToggleBtn" class="nav-ep-btn" onclick="toggleAutoplay()">▶️ Lecture continue : ON</button>
+                        <button class="nav-ep-btn" id="nextEpBtn" onclick="nextEpisode()">Suivant ⏭</button>
+                    </div>
+                    <button onclick="closeMainPlayer()" style="margin-top: 15px; padding: 10px 20px; background: #ef4444; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;">
+                        ✕ Fermer
+                    </button>
+                </div>
+                <div class="episodes-strip" id="episodesStrip"></div>
+            </div>
+
+            <!-- Grille émissions -->
+            <div class="popular-shows" id="popularShows">
+                <div class="loading-indicator">📡 Chargement des émissions...</div>
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-icon">📺</div>
+                <div style="font-size: 24px; margin-bottom: 12px; color: #999;">Aucune émission disponible</div>
+                <div style="font-size: 14px; color: #666;">
+                    Créez vos émissions depuis actvAdminPublish.html
+                </div>
+            </div>
+        </div>
+
+        <div class="actv-logo">ACTV</div>
+
+        <!-- Modale : Gérer les émissions d'un show (liste + edit/delete) -->
+        <div class="modal-overlay" id="manageModal">
+            <div class="modal-box">
+                <h3>
+                    <span id="manageModalTitle">Gérer les émissions</span>
+                    <button class="modal-close" onclick="closeManageModal()">✕</button>
+                </h3>
+                <div id="manageModalList"></div>
+            </div>
+        </div>
+
+        <!-- Modale : Édition d'une émission -->
+        <div class="modal-overlay" id="editModal">
+            <div class="modal-box">
+                <h3>
+                    <span>✏️ Modifier l'émission</span>
+                    <button class="modal-close" onclick="closeEditModal()">✕</button>
+                </h3>
+                <div class="edit-form-group">
+                    <label class="edit-form-label">Titre</label>
+                    <input type="text" class="edit-form-input" id="editTitle">
+                </div>
+                <div class="edit-form-group">
+                    <label class="edit-form-label">Catégorie</label>
+                    <select class="edit-form-select" id="editType">
+                        <option value="emission-znk-artistes">Emission ZNK Artistes</option>
+                        <option value="emission-znk-actu">Emission ZNK Actualité</option>
+                        <option value="serie-znk-les-reveurs">Série ZNK Les Rêveurs</option>
+                        <option value="studios-effets">Studios Effets</option>
+                        <option value="general">Général</option>
+                    </select>
+                </div>
+                <div class="edit-form-group">
+                    <label class="edit-form-label">Description</label>
+                    <textarea class="edit-form-textarea" id="editDescription"></textarea>
+                </div>
+                <div style="display:flex; gap:14px;">
+                    <div class="edit-form-group" style="flex:1;">
+                        <label class="edit-form-label">Durée</label>
+                        <input type="text" class="edit-form-input" id="editDuration">
+                    </div>
+                    <div class="edit-form-group" style="flex:1;">
+                        <label class="edit-form-label">Vues</label>
+                        <input type="text" class="edit-form-input" id="editViews">
+                    </div>
+                </div>
+                <div class="edit-form-group">
+                    <label class="edit-form-label">Priorité d'affichage</label>
+                    <select class="edit-form-select" id="editPriority">
+                        <option value="high">Haute (Featured)</option>
+                        <option value="medium">Moyenne</option>
+                        <option value="low">Basse</option>
+                    </select>
+                </div>
+                <div class="edit-form-actions">
+                    <button class="btn-secondary" onclick="closeEditModal()">Annuler</button>
+                    <button class="btn-primary" onclick="saveEditEmission()">💾 Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation dans iframe (éviter loop)
+        function navigateInDashboard(url) {
+            if (window.parent && window.parent !== window && window.parent.location.href !== window.location.href) {
+                window.parent.postMessage({ type: 'navigate', url: url }, '*');
+            } else {
+                window.location.href = url;
+            }
+        }
+
+        // Libellés des catégories (doivent correspondre aux valeurs de znk-publish-studio.html)
+        const categoryLabels = {
+            'emission-znk-artistes': 'Emission ZNK Artistes',
+            'emission-znk-actu': 'Emission ZNK Actualité',
+            'serie-znk-les-reveurs': 'Série ZNK Les Rêveurs',
+            'studios-effets': 'Studios Effets',
+            'general': 'Général'
+        };
+
+        function getCategoryLabel(type) {
+            return categoryLabels[type] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Général');
+        }
+
+        // Couleur de cadre propre à chaque émission/catégorie (tons pastel)
+        const categoryColors = {
+            'emission-znk-artistes': '#d95000',
+            'emission-znk-actu': '#669c35',
+            'serie-znk-les-reveurs': '#fec700',
+            'studios-effets': '#ffd9a8',
+            'general': '#874efe'
+        };
+
+        function getCategoryColor(type) {
+            if (categoryColors[type]) return categoryColors[type];
+            // Repli : couleur pastel générée automatiquement pour toute nouvelle catégorie
+            let hash = 0;
+            for (let i = 0; i < type.length; i++) {
+                hash = type.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const hue = Math.abs(hash) % 360;
+            return `hsl(${hue}, 70%, 82%)`;
+        }
+
+        // État de l'application
+        const appState = {
+            emissions: [],   // liste brute des émissions publiées
+            shows: [],       // une "show" par émission publiée, avec sa propre liste de vidéos (épisodes)
+            currentShowIndex: -1,
+            currentEpisodeIndex: -1,
+            currentPlayingIndex: -1, // conservé pour compatibilité
+            globalMuted: true,
+            globalVolume: 0.8,
+            autoplayNext: true
+        };
+
+        // S'assure qu'une émission a bien un tableau .videos (épisodes).
+        // Les anciennes émissions (créées avant le pipeline multi-vidéos) n'ont
+        // que des champs à plat (videoUrl, thumbnail, ...) : on les enveloppe
+        // dans un tableau d'un seul épisode pour uniformiser tout le reste du code.
+        function normalizeEmission(emission) {
+            if (!Array.isArray(emission.videos) || emission.videos.length === 0) {
+                emission.videos = [{
+                    videoId: emission.videoId,
+                    title: emission.title,
+                    videoUrl: emission.videoUrl,
+                    videoPath: emission.videoPath,
+                    videoFilename: emission.videoFilename,
+                    videoPersistent: emission.videoPersistent,
+                    videoConverted: emission.videoConverted,
+                    thumbnail: emission.thumbnail,
+                    coverImage: emission.coverImage,
+                    views: emission.views,
+                    duration: emission.duration
+                }];
+            }
+            return emission;
+        }
+
+        // Une émission publiée = UN show, avec toutes ses vidéos comme épisodes.
+        // (Avant, on regroupait par catégorie ; maintenant chaque publication reste
+        // une entité à part entière, avec un nombre illimité de vidéos à l'intérieur.)
+        function buildShows() {
+            appState.shows = appState.emissions.map(emission => ({
+                type: emission.type || 'general',
+                label: emission.title || 'Sans titre',
+                emission: emission,     // référence vers l'émission brute (pour édition/suppression)
+                videos: emission.videos // épisodes de cette émission
+            }));
+
+            appState.shows.sort((a, b) => {
+                const ea = a.emission, eb = b.emission;
+                if (ea.priority === 'high' && eb.priority !== 'high') return -1;
+                if (ea.priority !== 'high' && eb.priority === 'high') return 1;
+                return new Date(eb.publishedAt || 0) - new Date(ea.publishedAt || 0);
+            });
+        }
+
+        // ===== Volume général (unique) — le volume natif par vidéo est masqué
+        // via controlsList="novolume" sur <video>, seul ce curseur commande le son.
+        function initGlobalVolume() {
+            try {
+                const saved = localStorage.getItem('znk_actv_volume_pref');
+                if (saved) {
+                    const pref = JSON.parse(saved);
+                    appState.globalMuted = !!pref.muted;
+                    appState.globalVolume = typeof pref.volume === 'number' ? pref.volume : 0.8;
+                }
+            } catch (e) { /* ignore */ }
+
+            document.getElementById('globalVolumeSlider').value = Math.round(appState.globalVolume * 100);
+            updateGlobalMuteBtn();
+        }
+
+        function saveGlobalVolumePref() {
+            localStorage.setItem('znk_actv_volume_pref', JSON.stringify({
+                muted: appState.globalMuted,
+                volume: appState.globalVolume
+            }));
+        }
+
+        function updateGlobalMuteBtn() {
+            const btn = document.getElementById('globalMuteBtn');
+            btn.textContent = appState.globalMuted ? '🔇' : '🔊';
+        }
+
+        // Le volume général ne s'applique QU'au lecteur principal.
+        // Les vignettes en aperçu restent toujours muettes (sinon toutes les vidéos
+        // de la grille joueraient leur son en même temps).
+        function applyGlobalVolumeToAllVideos() {
+            const mainVideo = document.getElementById('mainVideo');
+            if (mainVideo && mainVideo.src) {
+                mainVideo.muted = appState.globalMuted;
+                mainVideo.volume = appState.globalVolume;
+            }
+        }
+
+        function toggleGlobalMute() {
+            appState.globalMuted = !appState.globalMuted;
+            updateGlobalMuteBtn();
+            applyGlobalVolumeToAllVideos();
+            saveGlobalVolumePref();
+        }
+
+        function onGlobalVolumeChange(value) {
+            appState.globalVolume = Number(value) / 100;
+            if (appState.globalVolume > 0 && appState.globalMuted) {
+                appState.globalMuted = false;
+                updateGlobalMuteBtn();
+            }
+            applyGlobalVolumeToAllVideos();
+            saveGlobalVolumePref();
+        }
+
+        function toggleAutoplay() {
+            appState.autoplayNext = !appState.autoplayNext;
+            document.getElementById('autoplayToggleBtn').textContent =
+                appState.autoplayNext ? '▶️ Lecture continue : ON' : '⏸ Lecture continue : OFF';
+        }
+
+        // Charger émissions DEPUIS LE MANIFEST SYSTÈME
+   async function loadData() {
+    console.log('📡 Chargement des émissions ACTV...');
+
+    // Premier lancement : localStorage vide, on injecte le seed bundlé.
+    try {
+        if (!localStorage.getItem('znk_actv_emissions') && window.electronAPI && window.electronAPI.getSeedActvEmissions) {
+            const seedResult = await window.electronAPI.getSeedActvEmissions();
+            if (seedResult && seedResult.success && seedResult.json) {
+                localStorage.setItem('znk_actv_emissions', seedResult.json);
+                console.log('✅ [ACTV] Émissions initiales chargées depuis le pack bundlé');
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ [ACTV] seed émissions:', e);
+    }
+
+    try {
+        // 1. Charger depuis le manifest système si disponible
+        let videoManifest = [];
+        
+        if (window.znkManifest) {
+            const result = await window.znkManifest.loadVideos();
+            if (result.success) {
+                videoManifest = result.videos;
+                console.log(`✅ Manifest système: ${videoManifest.length} vidéos`);
+            }
+        }
+        
+        // 2. Fallback localStorage
+        if (videoManifest.length === 0) {
+            const manifestData = localStorage.getItem('znk_videos');
+            if (manifestData) {
+                const manifest = JSON.parse(manifestData);
+                videoManifest = manifest.videos || manifest || [];
+            }
+        }
+        
+        // 3. Charger les émissions ACTV
+        const emissionsData = localStorage.getItem('znk_actv_emissions');
+        
+        if (emissionsData) {
+            const allEmissions = JSON.parse(emissionsData);
+            
+            // Dédoublonner (par id d'émission en priorité, sinon par videoId pour les anciennes données)
+            const uniqueMap = new Map();
+            for (const emission of allEmissions) {
+                const key = emission.id || emission.videoId;
+                if (!uniqueMap.has(key) || emission.priority === 'high') {
+                    normalizeEmission(emission);
+                    // Enrichir CHAQUE épisode avec le manifest (chemin/persistance à jour)
+                    for (const ep of emission.videos) {
+                        const videoFromManifest = videoManifest.find(v => v.id === ep.videoId);
+                        if (videoFromManifest) {
+                            ep.videoUrl = videoFromManifest.persistentPath || videoFromManifest.path || videoFromManifest.url;
+                            ep.videoPersistent = videoFromManifest.persistent;
+                        }
+                        // Résolution dynamique (portable) : le chemin ci-dessus peut avoir
+                        // été figé sur une AUTRE machine/compte (cas d'un seed sur une
+                        // install neuve) — on tente de le recalculer pour CETTE machine
+                        // via get-video-url, qui cherche dans le vrai persistent-videos local.
+                        const fileNameHint = (videoFromManifest && videoFromManifest.fileName) || ep.videoFilename;
+                        if (window.electronAPI && window.electronAPI.getVideoUrl && ep.videoId) {
+                            try {
+                                const resolved = await window.electronAPI.getVideoUrl({ videoId: ep.videoId, fileName: fileNameHint, titleHint: ep.title });
+                                if (resolved && resolved.success && resolved.url) {
+                                    ep.videoUrl = resolved.url;
+                                    ep.videoPersistent = true;
+                                }
+                            } catch (e) {
+                                console.warn('⚠️ [ACTV] getVideoUrl:', ep.videoId, e);
+                            }
+                        }
+                    }
+                    // Champs à plat = épisode 1, gardés synchronisés pour compatibilité
+                    const first = emission.videos[0];
+                    emission.videoUrl = first.videoUrl;
+                    emission.videoPersistent = first.videoPersistent;
+
+                    uniqueMap.set(key, emission);
+                }
+            }
+            
+            appState.emissions = Array.from(uniqueMap.values());
+            appState.emissions.sort((a, b) => {
+                if (a.priority === 'high' && b.priority !== 'high') return -1;
+                if (a.priority !== 'high' && b.priority === 'high') return 1;
+                return new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0);
+            });
+            
+            console.log(`✅ ${appState.emissions.length} émissions`);
+
+            buildShows();
+            renderEmissions();
+        } else {
+            showEmptyState();
+        }
+    } catch (e) {
+        console.error('❌ Erreur:', e);
+        showEmptyState();
+    }
+}
+
+        // Render émissions (groupées par catégorie = "shows" avec épisodes compilés)
+        function renderEmissions() {
+            const container = document.getElementById('popularShows');
+            const emptyState = document.getElementById('emptyState');
+            const countDisplay = document.getElementById('emissionCount');
+
+            if (appState.emissions.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            countDisplay.textContent = appState.emissions.length;
+
+            container.innerHTML = appState.shows.map((show, showIndex) => {
+                const firstEpisode = show.videos[0];
+                let thumbnailContent = '';
+                let thumbnailClass = 'show-thumbnail';
+
+                if (firstEpisode.videoUrl) {
+                    let videoSrc = firstEpisode.videoUrl;
+                    if (!videoSrc.startsWith('http') && !videoSrc.startsWith('file://')) {
+                        videoSrc = videoSrc.replace(/\\/g, '/');
+                    }
+
+                    thumbnailContent = `
+                        <video 
+                            id="preview-video-${showIndex}" 
+                            muted 
+                            loop 
+                            playsinline
+                            preload="metadata"
+                            onerror="console.error('❌ Erreur vidéo preview ${showIndex}:', this.src)">
+                            <source src="${videoSrc}" type="video/mp4">
+                        </video>
+                        <div class="video-badge-actv">ACTV</div>
+                        <div class="play-overlay">
+                            <div class="play-btn-icon"></div>
+                        </div>
+                    `;
+                } else if (firstEpisode.thumbnail) {
+                    thumbnailContent = `
+                        <img src="${firstEpisode.thumbnail}" alt="${show.label}">
+                        <div class="play-overlay">
+                            <div class="play-btn-icon"></div>
+                        </div>
+                    `;
+                } else {
+                    thumbnailClass += ` type-${show.type}`;
+                    thumbnailContent = `
+                        <div class="play-overlay">
+                            <div class="play-btn-icon"></div>
+                        </div>
+                    `;
+                }
+
+                const isPlaying = showIndex === appState.currentShowIndex;
+                const badge = isPlaying ? '<div class="now-playing-badge">▶ EN COURS</div>' : '';
+                const episodesBadge = `<div class="episodes-count-badge">🎬 ${show.videos.length} ${show.videos.length > 1 ? 'épisodes' : 'épisode'}</div>`;
+                const catColor = getCategoryColor(show.type);
+
+                return `
+                    <div class="show-card ${isPlaying ? 'now-playing' : ''}" 
+                         style="--cat-color: ${catColor};"
+                         onclick="playShow(${showIndex}, ${isPlaying ? appState.currentEpisodeIndex : 0})" 
+                         id="show-${showIndex}">
+                        <button class="manage-btn" title="Gérer les émissions" onclick="event.stopPropagation(); openManageModal(${showIndex});">⚙️</button>
+                        <div class="show-title"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${catColor};margin-right:8px;"></span>${show.label}</div>
+                        <div class="${thumbnailClass}">
+                            ${thumbnailContent}
+                            ${episodesBadge}
+                            ${badge}
+                        </div>
+                        <div class="show-stats">
+                            <span>${firstEpisode.views || '0 vues'}</span>
+                            <span>${show.videos.length} ${show.videos.length > 1 ? 'vidéos' : 'vidéo'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Démarrer les previews en respectant le volume général (muted par défaut au premier chargement)
+            setTimeout(() => {
+                document.querySelectorAll('.show-thumbnail video').forEach(video => {
+                    video.muted = true; // requis par les navigateurs pour l'autoplay
+                    video.volume = 50;
+                    video.play().catch(() => {});
+                });
+            }, 300);
+
+            console.log(`✅ ${appState.shows.length} émissions (${appState.emissions.length} vidéos) affichées`);
+        }
+
+        // Play show avec lecteur principal + lecture continue (playlist par émission)
+        function playShow(showIndex, episodeIndex) {
+            episodeIndex = episodeIndex || 0;
+            if (showIndex < 0 || showIndex >= appState.shows.length) return;
+
+            const show = appState.shows[showIndex];
+            if (episodeIndex < 0 || episodeIndex >= show.videos.length) episodeIndex = 0;
+
+            appState.currentShowIndex = showIndex;
+            appState.currentEpisodeIndex = episodeIndex;
+            appState.currentPlayingIndex = showIndex; // compatibilité
+
+            const emission = show.videos[episodeIndex];
+
+            const mainPlayer = document.getElementById('mainPlayer');
+            const mainVideo = document.getElementById('mainVideo');
+            const mainTitle = document.getElementById('mainPlayerTitle');
+            const mainStats = document.getElementById('mainPlayerStats');
+
+            if (emission.videoUrl) {
+                let videoSrc = emission.videoUrl;
+                if (!videoSrc.startsWith('http') && !videoSrc.startsWith('file://')) {
+                    videoSrc = videoSrc.replace(/\\/g, '/');
+                }
+
+                mainVideo.src = videoSrc;
+
+                // Les vignettes de la grille sont volontairement muettes (volume 0),
+                // mais au clic pour lancer la lecture, le son doit être audible :
+                // si le volume général est encore muet ou à 0 (état initial par
+                // défaut), on force un minimum de 50%. Si l'utilisateur a déjà
+                // réglé un volume plus haut via la molette, on le respecte.
+                if (appState.globalMuted || appState.globalVolume <= 0) {
+                    appState.globalMuted = false;
+                    appState.globalVolume = Math.max(appState.globalVolume, 0.5);
+                    saveGlobalVolumePref();
+                    const slider = document.getElementById('globalVolumeSlider');
+                    if (slider) slider.value = Math.round(appState.globalVolume * 100);
+                    updateGlobalMuteBtn();
+                }
+
+                mainVideo.muted = appState.globalMuted;
+                mainVideo.volume = appState.globalVolume;
+                mainTitle.textContent = `${show.label} — ${emission.title || 'Sans titre'}`;
+                mainStats.textContent = `Épisode ${episodeIndex + 1}/${show.videos.length} • ${emission.views || '0 vues'} • ${emission.duration || 'N/A'}`;
+
+                mainPlayer.style.display = 'block';
+                mainPlayer.scrollIntoView({ behavior: 'smooth' });
+
+                // Lecture continue : à la fin de l'épisode, passer au suivant
+                mainVideo.onended = () => {
+                    if (appState.autoplayNext) {
+                        nextEpisode(true);
+                    }
+                };
+
+                mainVideo.play();
+            }
+
+            renderEpisodesStrip(show, showIndex, episodeIndex);
+            updateEpisodeNavButtons(show, episodeIndex);
+            renderEmissions();
+            showNotification(`▶ ${show.label} — ${emission.title || 'Sans titre'}`);
+        }
+
+        function renderEpisodesStrip(show, showIndex, activeEpisodeIndex) {
+            const strip = document.getElementById('episodesStrip');
+            if (show.videos.length <= 1) {
+                strip.innerHTML = '';
+                strip.style.display = 'none';
+                return;
+            }
+            strip.style.display = 'flex';
+            strip.innerHTML = show.videos.map((ep, epIndex) => {
+                let thumb = '';
+                if (ep.videoUrl) {
+                    let src = ep.videoUrl;
+                    if (!src.startsWith('http') && !src.startsWith('file://')) src = src.replace(/\\/g, '/');
+                    thumb = `<video muted preload="metadata"><source src="${src}" type="video/mp4"></video>`;
+                } else if (ep.thumbnail) {
+                    thumb = `<img src="${ep.thumbnail}" alt="${ep.title}">`;
+                }
+                return `
+                    <div class="episode-chip ${epIndex === activeEpisodeIndex ? 'active' : ''}" onclick="playShow(${showIndex}, ${epIndex})">
+                        <div class="ep-thumb">
+                            ${thumb}
+                            <div class="ep-actions">
+                                <button class="ep-action-btn" title="Renommer" onclick="event.stopPropagation(); renameEpisode(${showIndex}, ${epIndex});">✏️</button>
+                                <button class="ep-action-btn danger" title="Supprimer" onclick="event.stopPropagation(); deleteEpisode(${showIndex}, ${epIndex});">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="ep-title">Ép. ${epIndex + 1} — ${ep.title || 'Sans titre'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateEpisodeNavButtons(show, episodeIndex) {
+            document.getElementById('prevEpBtn').disabled = episodeIndex <= 0;
+            document.getElementById('nextEpBtn').disabled = episodeIndex >= show.videos.length - 1;
+        }
+
+        function nextEpisode(fromAutoplay) {
+            const show = appState.shows[appState.currentShowIndex];
+            if (!show) return;
+            const nextIndex = appState.currentEpisodeIndex + 1;
+            if (nextIndex < show.videos.length) {
+                playShow(appState.currentShowIndex, nextIndex);
+            } else if (fromAutoplay) {
+                showNotification(`✅ Fin de "${show.label}"`);
+            }
+        }
+
+        function prevEpisode() {
+            const show = appState.shows[appState.currentShowIndex];
+            if (!show) return;
+            const prevIndex = appState.currentEpisodeIndex - 1;
+            if (prevIndex >= 0) {
+                playShow(appState.currentShowIndex, prevIndex);
+            }
+        }
+
+        function closeMainPlayer() {
+            const mainPlayer = document.getElementById('mainPlayer');
+            const mainVideo = document.getElementById('mainVideo');
+
+            mainVideo.onended = null;
+            mainVideo.pause();
+            mainVideo.src = '';
+            mainPlayer.style.display = 'none';
+
+            appState.currentShowIndex = -1;
+            appState.currentEpisodeIndex = -1;
+            appState.currentPlayingIndex = -1;
+            renderEmissions();
+        }
+
+        function showEmptyState() {
+            document.getElementById('popularShows').innerHTML = '';
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('emissionCount').textContent = '0';
+        }
+
+        // ===== Gestion : suppression et édition des émissions publiées =====
+
+        // Persiste appState.emissions dans le localStorage, puis reconstruit et réaffiche tout
+        function persistEmissionsAndRefresh() {
+            try {
+                localStorage.setItem('znk_actv_emissions', JSON.stringify(appState.emissions));
+            } catch (e) {
+                console.error('Erreur sauvegarde émissions', e);
+            }
+            buildShows();
+            renderEmissions();
+        }
+
+        // Resynchronise les champs à plat (compatibilité) d'une émission sur son épisode 1
+        function syncFlatFields(emission) {
+            const first = emission.videos[0];
+            emission.videoId = first.videoId;
+            emission.videoUrl = first.videoUrl;
+            emission.videoPath = first.videoPath;
+            emission.videoFilename = first.videoFilename;
+            emission.videoPersistent = first.videoPersistent;
+            emission.videoConverted = first.videoConverted;
+            emission.thumbnail = first.thumbnail;
+            emission.coverImage = first.coverImage;
+            emission.episodeCount = emission.videos.length;
+        }
+
+        function openManageModal(showIndex) {
+            const show = appState.shows[showIndex];
+            if (!show) return;
+            const emission = show.emission;
+            document.getElementById('manageModalTitle').textContent = `Gérer — ${show.label}`;
+
+            const episodesHtml = show.videos.map((ep, epIndex) => {
+                let thumb = '';
+                if (ep.videoUrl) {
+                    let src = ep.videoUrl;
+                    if (!src.startsWith('http') && !src.startsWith('file://')) src = src.replace(/\\/g, '/');
+                    thumb = `<video muted preload="metadata"><source src="${src}" type="video/mp4"></video>`;
+                } else if (ep.thumbnail) {
+                    thumb = `<img src="${ep.thumbnail}" alt="">`;
+                }
+                return `
+                    <div class="manage-row">
+                        <div class="manage-row-thumb">${thumb}</div>
+                        <div class="manage-row-info">
+                            <div class="manage-row-title">Ép. ${epIndex + 1} — ${ep.title || 'Sans titre'}</div>
+                            <div class="manage-row-meta">${ep.duration || ''}</div>
+                        </div>
+                        <div class="manage-row-actions">
+                            <button class="manage-icon-btn" title="Renommer cette vidéo" onclick="renameEpisode(${showIndex}, ${epIndex})">✏️</button>
+                            <button class="manage-icon-btn danger" title="Supprimer cette vidéo" onclick="deleteEpisode(${showIndex}, ${epIndex})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('manageModalList').innerHTML = `
+                <div class="manage-row" style="background:rgba(0,255,136,0.06); border-color:rgba(0,255,136,0.3);">
+                    <div class="manage-row-info">
+                        <div class="manage-row-title">📁 ${show.label} — ${show.videos.length} vidéo${show.videos.length > 1 ? 's' : ''} au total</div>
+                        <div class="manage-row-meta">${getCategoryLabel(show.type)}${emission.priority === 'high' ? ' • ⭐ Haute priorité' : ''}</div>
+                    </div>
+                    <div class="manage-row-actions">
+                        <button class="manage-icon-btn" title="Modifier l'émission (titre, catégorie, description...)" onclick="openEditModal(${showIndex})">✏️</button>
+                        <button class="manage-icon-btn danger" title="Supprimer toute l'émission" onclick="deleteEntireShow(${showIndex})">🗑️</button>
+                    </div>
+                </div>
+                <div style="font-size:11px; color:#888; margin: 14px 0 8px; letter-spacing: 0.5px;">VIDÉOS DE CETTE ÉMISSION (${show.videos.length})</div>
+                ${episodesHtml}
+            `;
+
+            document.getElementById('manageModal').classList.add('open');
+        }
+        window.openManageModal = openManageModal;
+
+        function closeManageModal() {
+            document.getElementById('manageModal').classList.remove('open');
+        }
+        window.closeManageModal = closeManageModal;
+
+        // Supprime TOUTE l'émission (toutes ses vidéos) de ACTV
+        function deleteEntireShow(showIndex) {
+            const show = appState.shows[showIndex];
+            if (!show) return;
+
+            const confirmed = confirm(`Supprimer définitivement l'émission "${show.label}" (${show.videos.length} vidéo(s)) de ACTV ?\n\n(Les vidéos sources ne sont pas supprimées du disque, seule la publication ACTV est retirée.)`);
+            if (!confirmed) return;
+
+            if (showIndex === appState.currentShowIndex) closeMainPlayer();
+
+            appState.emissions = appState.emissions.filter(e => e !== show.emission);
+            persistEmissionsAndRefresh();
+            closeManageModal();
+            showNotification('🗑️ Émission supprimée');
+        }
+        window.deleteEntireShow = deleteEntireShow;
+
+        // Supprime UNE vidéo au sein d'une émission. Si c'est la dernière, supprime toute l'émission.
+        function deleteEpisode(showIndex, episodeIndex) {
+            const show = appState.shows[showIndex];
+            if (!show) return;
+            const emission = show.emission;
+
+            if (emission.videos.length <= 1) {
+                deleteEntireShow(showIndex);
+                return;
+            }
+
+            const ep = emission.videos[episodeIndex];
+            const confirmed = confirm(`Supprimer la vidéo "${ep.title || 'Sans titre'}" de l'émission "${show.label}" ?`);
+            if (!confirmed) return;
+
+            // Si cette vidéo est en cours de lecture, passer à une autre ou fermer le lecteur
+            if (showIndex === appState.currentShowIndex && episodeIndex === appState.currentEpisodeIndex) {
+                closeMainPlayer();
+            }
+
+            emission.videos.splice(episodeIndex, 1);
+            syncFlatFields(emission);
+            persistEmissionsAndRefresh();
+            showNotification('🗑️ Vidéo supprimée');
+
+            if (document.getElementById('manageModal').classList.contains('open')) {
+                openManageModal(showIndex);
+            }
+        }
+        window.deleteEpisode = deleteEpisode;
+
+        // Renomme une vidéo (épisode) individuelle au sein d'une émission
+        function renameEpisode(showIndex, episodeIndex) {
+            const show = appState.shows[showIndex];
+            if (!show) return;
+            const emission = show.emission;
+            const ep = emission.videos[episodeIndex];
+
+            const newTitle = prompt('Nouveau titre pour cette vidéo :', ep.title || '');
+            if (newTitle === null) return; // annulé
+            const trimmed = newTitle.trim();
+            if (!trimmed) { showNotification('❌ Le titre ne peut pas être vide'); return; }
+
+            ep.title = trimmed;
+            syncFlatFields(emission);
+            persistEmissionsAndRefresh();
+            showNotification('✅ Vidéo renommée');
+
+            if (document.getElementById('manageModal').classList.contains('open')) {
+                openManageModal(showIndex);
+            }
+            // Rafraîchir le lecteur si cette vidéo est en cours de lecture
+            if (showIndex === appState.currentShowIndex && episodeIndex === appState.currentEpisodeIndex) {
+                playShow(showIndex, episodeIndex);
+            }
+        }
+        window.renameEpisode = renameEpisode;
+
+        let editingShowIndex = null;
+
+        // Édite les métadonnées de l'ÉMISSION ENTIÈRE (titre, catégorie, description, durée, vues, priorité)
+        function openEditModal(showIndex) {
+            const show = appState.shows[showIndex];
+            if (!show) return;
+            const emission = show.emission;
+            editingShowIndex = showIndex;
+
+            document.getElementById('editTitle').value = emission.title || '';
+            document.getElementById('editType').value = emission.type || 'general';
+            document.getElementById('editDescription').value = emission.description || '';
+            document.getElementById('editDuration').value = emission.duration || '';
+            document.getElementById('editViews').value = emission.views || '';
+            document.getElementById('editPriority').value = emission.priority || 'medium';
+
+            document.getElementById('editModal').classList.add('open');
+        }
+        window.openEditModal = openEditModal;
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('open');
+            editingShowIndex = null;
+        }
+        window.closeEditModal = closeEditModal;
+
+        function saveEditEmission() {
+            if (editingShowIndex === null) return;
+            const show = appState.shows[editingShowIndex];
+            if (!show) return;
+            const emission = show.emission;
+
+            const newTitle = document.getElementById('editTitle').value.trim();
+            if (!newTitle) {
+                showNotification('❌ Le titre est requis');
+                return;
+            }
+
+            emission.title = newTitle;
+            emission.type = document.getElementById('editType').value;
+            emission.description = document.getElementById('editDescription').value;
+            emission.duration = document.getElementById('editDuration').value;
+            emission.views = document.getElementById('editViews').value;
+            emission.priority = document.getElementById('editPriority').value;
+
+            const wasPlayingIndex = editingShowIndex;
+            const wasPlayingEpisode = appState.currentEpisodeIndex;
+            const wasPlaying = editingShowIndex === appState.currentShowIndex;
+
+            persistEmissionsAndRefresh();
+            closeEditModal();
+            showNotification('✅ Émission mise à jour');
+
+            if (document.getElementById('manageModal').classList.contains('open')) {
+                openManageModal(wasPlayingIndex);
+            }
+            if (wasPlaying) {
+                playShow(wasPlayingIndex, wasPlayingEpisode);
+            }
+        }
+        window.saveEditEmission = saveEditEmission;
+
+        // Fermer les modales en cliquant sur l'overlay (hors de la boîte)
+        document.getElementById('manageModal').addEventListener('click', (e) => {
+            if (e.target.id === 'manageModal') closeManageModal();
+        });
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editModal') closeEditModal();
+        });
+
+        // Raccourcis clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                loadData();
+                showNotification('🔄 Actualisation...');
+            }
+        });
+
+        // Notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 15px 30px;
+                border-radius: 25px;
+                z-index: 1000;
+                font-size: 14px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Auto-refresh (30s) - DÉSACTIVÉ pour éviter la boucle
+        let autoRefreshInterval = null;
+        
+        function startAutoRefresh() {
+            if (autoRefreshInterval) return;
+            autoRefreshInterval = setInterval(() => {
+                const currentCount = appState.emissions.length;
+                const emissionsData = localStorage.getItem('znk_actv_emissions');
+                if (emissionsData) {
+                    const newEmissions = JSON.parse(emissionsData);
+                    if (newEmissions.length > currentCount) {
+                        loadData();
+                        showNotification(`🎬 ${newEmissions.length - currentCount} nouvelle(s) émission(s)`);
+                    }
+                }
+            }, 30000);
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            initGlobalVolume();
+            loadData();
+            // startAutoRefresh(); // Décommentez si besoin
+        });
+    </script>
+</body>
+</html>

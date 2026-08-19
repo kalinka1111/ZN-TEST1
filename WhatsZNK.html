@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📹 WHATSZNK - Studio Live</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #606060;
+            height: 100vh; 
+            overflow: hidden; 
+            color: white;
+        }
+        
+        /* Structure Responsive & iframe-friendly */
+        .app-container { 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw; 
+            flex-direction: row;
+        }
+
+        /* --- SIDEBAR CONTACTS --- */
+        .sidebar {
+            width: 220px; 
+            background: rgba(0,0,0,0.5);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex; 
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 15px;
+            font-weight: bold;
+            color: #96d35f;
+            font-size: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .contact { 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 15px; 
+            gap: 10px; 
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .contact:hover { 
+            background: rgba(255,255,255,0.1); 
+        }
+        
+        .contact.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-left-color: #96d35f;
+        }
+        
+        .avatar { 
+            width: 36px; 
+            height: 36px; 
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .contact-info {
+            flex: 1;
+        }
+        
+        .contact-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .contact-status {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #77bb41;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        /* --- ZONE CENTRALE --- */
+        .main-studio { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            min-width: 0;
+            overflow: hidden;
+        }
+        
+        .studio-header {
+            background: rgba(0,0,0,0.3);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .room-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .room-id {
+            font-size: 13px;
+            color: #96d35f;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        
+        .video-area { 
+            flex: 1; 
+            padding: 12px; 
+            display: grid; 
+            gap: 10px; 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .grid-1 { grid-template-columns: 1fr; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+
+        .video-box { 
+            background: #000; 
+            border-radius: 12px; 
+            border: 1px solid #333; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden;
+            position: relative;
+        }
+        
+        :root {
+            --vid-brightness: 1.35;
+            --vid-contrast: 1.0;
+            --vid-saturate: 1.05;
+            --vid-blur: 0px;
+            --vid-warmth: 0;
+        }
+
+        .video-box video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Correction d'image pilotée par les curseurs du panneau "✨ Image" */
+            filter:
+                brightness(var(--vid-brightness))
+                contrast(var(--vid-contrast))
+                saturate(var(--vid-saturate))
+                blur(var(--vid-blur))
+                sepia(var(--vid-warmth));
+        }
+
+        /* Panneau de réglages image */
+        .image-panel {
+            position: absolute;
+            bottom: 90px;
+            right: 20px;
+            background: rgba(20, 20, 20, 0.92);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 14px;
+            padding: 16px 18px;
+            width: 240px;
+            display: none;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .image-panel.open {
+            display: block;
+        }
+
+        .image-panel h4 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            color: #96d35f;
+            letter-spacing: 0.5px;
+        }
+
+        .image-panel label {
+            display: block;
+            font-size: 11px;
+            color: #ccc;
+            margin: 10px 0 2px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .image-panel input[type="range"] {
+            width: 100%;
+            accent-color: #96d35f;
+            cursor: pointer;
+        }
+
+        .image-panel-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .image-panel-actions button {
+            flex: 1;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 0;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-beauty {
+            background: linear-gradient(135deg, #d357fe, #ffd36e);
+            color: #241224;
+        }
+
+        .btn-reset-filters {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        
+        .video-label {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Multi-selector & Controls */
+        .multi-selector { 
+            position: absolute; 
+            top: 10px; 
+            right: 15px; 
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            padding: 6px; 
+            border-radius: 10px; 
+            display: flex; 
+            gap: 4px; 
+            z-index: 100;
+        }
+        
+        .mode-btn { 
+            padding: 6px 12px; 
+            border: none; 
+            background: rgba(255,255,255,0.1); 
+            color: white; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .mode-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .mode-btn.active { 
+            background: #96d35f;
+            color: #000;
+        }
+        
+        .controls { 
+            position: absolute; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            display: flex; 
+            gap: 12px; 
+            z-index: 10;
+        }
+        
+        .btn-ctrl { 
+            width: 48px; 
+            height: 48px; 
+            border-radius: 50%; 
+            border: none; 
+            cursor: pointer; 
+            background: rgba(255,255,255,0.2); 
+            color: white; 
+            font-size: 20px; 
+            backdrop-filter: blur(10px);
+            transition: all 0.2s;
+        }
+        
+        .btn-ctrl:hover {
+            transform: scale(1.1);
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .btn-ctrl.active {
+            background: #96d35f;
+            color: #000;
+        }
+        
+        .btn-ctrl.danger {
+            background: #ef4444;
+        }
+        
+        .btn-ctrl.danger:hover {
+            background: #dc2626;
+        }
+
+        /* Clavier */
+        .kb-area { 
+            background: rgba(0,0,0,0.6); 
+            padding: 12px; 
+            border-top: 1px solid rgba(255,255,255,0.1); 
+            overflow-x: auto;
+        }
+        
+        .kb-row { 
+            display: flex; 
+            gap: 6px; 
+            justify-content: center; 
+            margin-bottom: 6px; 
+            min-width: max-content;
+        }
+        
+        .key { 
+            width: 42px; 
+            height: 42px; 
+            background: rgba(255,255,255,0.05); 
+            border: 1px dashed rgba(255,255,255,0.2); 
+            border-radius: 8px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            cursor: pointer; 
+            transition: all 0.2s; 
+            font-size: 18px;
+        }
+        
+        .key:hover {
+            background: rgba(255,255,255,0.1);
+            transform: scale(1.05);
+        }
+        
+        .key-ia { 
+            background: linear-gradient(45deg, #96d35f, #fecb3e) !important; 
+            border: none !important;
+        }
+
+        /* --- CHAT SIDEBAR --- */
+        .chat-sidebar { 
+            width: 320px; 
+            background: rgba(0,0,0,0.4); 
+            border-left: 1px solid rgba(255,255,255,0.1); 
+            display: flex; 
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .messages { 
+            flex: 1; 
+            padding: 12px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px;
+        }
+        
+        .msg { 
+            padding: 10px 12px; 
+            border-radius: 12px; 
+            max-width: 85%; 
+            font-size: 13px; 
+            animation: pop 0.3s;
+            word-wrap: break-word;
+        }
+        
+        .sent { 
+            align-self: flex-end; 
+            background: #96d35f; 
+            color: #000;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .received { 
+            align-self: flex-start; 
+            background: #333;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .znkia { 
+            border: 1px solid gold; 
+            color: gold; 
+            background: rgba(255,215,0,0.1); 
+            font-style: italic;
+        }
+
+        /* Zone Ecriture */
+        .input-box { 
+            padding: 12px; 
+            background: rgba(0,0,0,0.3); 
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        #userInput { 
+            width: 100%; 
+            background: white; 
+            border: 2px solid #96d35f; 
+            padding: 10px 12px; 
+            border-radius: 10px; 
+            color: black; 
+            outline: none; 
+            font-size: 14px; 
+            font-weight: 500;
+        }
+
+        /* --- RESPONSIVE (IFRAME & MOBILE) --- */
+        @media (max-width: 1200px) {
+            .sidebar { width: 180px; }
+            .chat-sidebar { width: 280px; }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar { width: 70px; }
+            .contact-name, .contact-status { display: none; }
+            .sidebar-header { font-size: 12px; text-align: center; }
+            .chat-sidebar { width: 250px; }
+            .key { width: 36px; height: 36px; font-size: 16px; }
+        }
+
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; }
+            .sidebar { 
+                width: 100%; 
+                height: 60px; 
+                flex-direction: row; 
+                overflow-x: auto;
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            .sidebar-header { display: none; }
+            .contact { padding: 10px; }
+            .chat-sidebar { 
+                width: 100%; 
+                max-height: 35vh;
+                border-left: none;
+                border-top: 1px solid rgba(255,255,255,0.1);
+            }
+            .video-area { min-height: 250px; }
+            .multi-selector { top: 5px; right: 5px; }
+            .controls { bottom: 10px; gap: 8px; }
+            .btn-ctrl { width: 40px; height: 40px; font-size: 16px; }
+        }
+
+        /* Effets */
+        .particle { 
+            position: fixed; 
+            pointer-events: none; 
+            z-index: 9999; 
+            animation: fly 2s ease-out forwards;
+        }
+        
+        @keyframes fly { 
+            0% { transform: translateY(0) scale(1); opacity: 1; } 
+            100% { transform: translateY(-300px) rotate(360deg) scale(0); opacity: 0; } 
+        }
+        
+        @keyframes pop { 
+            from { opacity: 0; transform: scale(0.9); } 
+            to { opacity: 1; transform: scale(1); } 
+        }
+        
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .loading-content {
+            text-align: center;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: #96d35f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Connection status */
+        .connection-status {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            background: rgba(0,0,0,0.7);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 100;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+        
+        .status-indicator.connected {
+            background: #77bb41;
+            animation: pulse-dot 2s infinite;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+    </style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div class="loading" id="loadingScreen">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <div>Connexion à WhatsZNK...</div>
+    </div>
+</div>
+
+<div class="app-container">
+    <!-- Sidebar Contacts -->
+    <aside class="sidebar">
+        <div class="sidebar-header">📹 WHATSZNK</div>
+        <div id="contactsList">
+            <!-- Populated by JS -->
+        </div>
+    </aside>
+
+    <!-- Main Studio -->
+    <main class="main-studio">
+        <!-- Header -->
+        <div class="studio-header">
+            <div class="room-info">
+                <div class="connection-status">
+                    <div class="status-indicator" id="statusIndicator"></div>
+                    <span id="statusText">Déconnecté</span>
+                </div>
+            </div>
+            <div class="room-id" id="roomDisplay">Room: -</div>
+        </div>
+
+        <!-- Multi-selector -->
+        <div class="multi-selector">
+            <button class="mode-btn" onclick="setGrid(1)">1</button>
+            <button class="mode-btn" onclick="setGrid(2)">2</button>
+            <button class="mode-btn" onclick="setGrid(3)">3</button>
+            <button class="mode-btn active" onclick="setGrid(4)">4</button>
+        </div>
+
+        <!-- Video Grid -->
+        <div class="video-area grid-4" id="vGrid">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Panneau de réglages image (luminosité / embellissement) -->
+        <div class="image-panel" id="imagePanel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="margin:0;">✨ RÉGLAGES IMAGE</h4>
+                <button onclick="toggleImagePanel()" title="Fermer" style="background:none; border:none; color:#ccc; font-size:16px; cursor:pointer; line-height:1; padding:0 0 0 8px;">✕</button>
+            </div>
+
+            <label>Luminosité <span id="valBrightness">135%</span></label>
+            <input type="range" id="sliderBrightness" min="50" max="200" value="135" oninput="updateImageFilters()">
+
+            <label>Contraste <span id="valContrast">100%</span></label>
+            <input type="range" id="sliderContrast" min="50" max="200" value="100" oninput="updateImageFilters()">
+
+            <label>Saturation <span id="valSaturate">105%</span></label>
+            <input type="range" id="sliderSaturate" min="0" max="200" value="105" oninput="updateImageFilters()">
+
+            <label>Adoucissement <span id="valSoften">0%</span></label>
+            <input type="range" id="sliderSoften" min="0" max="100" value="0" oninput="updateImageFilters()">
+
+            <div class="image-panel-actions">
+                <button class="btn-beauty" onclick="applyBeautyPreset()">💄 Mode Beauté</button>
+                <button class="btn-reset-filters" onclick="resetImageFilters()">↺ Reset</button>
+            </div>
+        </div>
+
+        <!-- Keyboard -->
+        <div class="kb-area">
+            <div class="kb-row">
+                <div class="key key-ia" onclick="action('❤️', 'heart')">❤️</div>
+                <div class="key key-ia" onclick="action('💭', 'sparkle')">💭</div>
+                <div class="key" onclick="action('🌸', 'flower')">🌸</div>
+                <div class="key" onclick="action('🌈', 'rainbow')">🌈</div>
+                <div id="ph-horiz" style="display:flex; gap:6px;"></div>
+            </div>
+            <div class="kb-row" style="margin-bottom:0;">
+                <div class="key" style="flex:1; max-width: 280px;" onclick="addChar(' ')">ESPACE</div>
+                <div class="key" onclick="backspace()">⌫</div>
+                <div class="key key-ia" onclick="sendMessage()">🚀</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Chat Sidebar -->
+    <aside class="chat-sidebar">
+        <div class="chat-header">💬 Messages</div>
+        <div class="messages" id="chatFlow"></div>
+        <div class="input-box">
+            <input type="text" id="userInput" placeholder="Écrivez ici..." onkeypress="if(event.key==='Enter') sendMessage()">
+        </div>
+    </aside>
+</div>
+
+<script>
+// ==================== IDENTITÉ ZNK RÉELLE ====================
+// Backend configurable : par défaut localhost:5000, mais peut être surchargé
+// via ?backend=http://IP:PORT dans l'URL — utile pour tester depuis un autre
+// device (iPhone, etc.) sur le même réseau Wi-Fi. Mémorisé une fois défini.
+const ZNK_BACKEND_STORAGE_KEY = 'znk_backend_url';
+
+function znkResolveBackendUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('backend');
+    if (fromUrl) {
+        localStorage.setItem(ZNK_BACKEND_STORAGE_KEY, fromUrl);
+        return fromUrl;
+    }
+    return localStorage.getItem(ZNK_BACKEND_STORAGE_KEY) || 'http://localhost:5000';
+}
+
+const ZNK_BACKEND_URL = znkResolveBackendUrl();
+// Si l'app tourne dans Electron avec ZNK_REGISTRY_URL réglé, synchronise
+// znk_backend_url dessus (effectif au prochain chargement de cette page).
+if (window.electronAPI && window.electronAPI.getRegistryUrl) {
+    window.electronAPI.getRegistryUrl().then(url => {
+        if (url && localStorage.getItem('znk_backend_url') !== url) {
+            localStorage.setItem('znk_backend_url', url);
+        }
+    }).catch(() => {});
+}
+const ZNK_ACCOUNT_KEY = 'znk_account';
+const ZNK_SESSION_KEY = 'znk_userData';
+
+function znkLoadIdentity() {
+    const session = sessionStorage.getItem(ZNK_SESSION_KEY);
+    if (session) {
+        try { return JSON.parse(session); } catch (e) { /* ignore */ }
+    }
+    const account = localStorage.getItem(ZNK_ACCOUNT_KEY);
+    if (account) {
+        try { return JSON.parse(account); } catch (e) { /* ignore */ }
+    }
+    return null;
+}
+
+const znkIdentity = znkLoadIdentity();
+const myIdZNK = znkIdentity ? (znkIdentity.idZNK || znkIdentity.id) : null;
+
+// ==================== CLÉ API ZNK (auth auprès du backend local) ====================
+// Provisionnée une seule fois par idZNK auprès du backend, puis mise en cache
+// localement. Nécessaire pour toutes les routes protégées (identity, messages, p2p).
+const ZNK_API_KEY_PREFIX = 'znk_api_key_';
+
+function znkGetCachedApiKey() {
+    if (!myIdZNK) return null;
+    return localStorage.getItem(ZNK_API_KEY_PREFIX + myIdZNK);
+}
+
+function znkSetCachedApiKey(key) {
+    if (!myIdZNK) return;
+    localStorage.setItem(ZNK_API_KEY_PREFIX + myIdZNK, key);
+}
+
+let znkApiKey = znkGetCachedApiKey();
+
+async function znkEnsureApiKey() {
+    if (znkApiKey || !myIdZNK) return znkApiKey;
+    try {
+        const response = await fetch(`${ZNK_BACKEND_URL}/api/auth/provision`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idZNK: myIdZNK })
+        });
+        const data = await response.json();
+        if (data.api_key) {
+            znkApiKey = data.api_key;
+            znkSetCachedApiKey(znkApiKey);
+        }
+    } catch (e) {
+        console.warn('⚠️ Impossible de provisionner la clé API:', e);
+    }
+    return znkApiKey;
+}
+
+/** Fetch authentifié : ajoute automatiquement le header X-ZNK-Key */
+async function znkFetch(url, options = {}) {
+    const headers = { ...(options.headers || {}) };
+    if (znkApiKey) headers['X-ZNK-Key'] = znkApiKey;
+    return fetch(url, { ...options, headers });
+}
+
+// ==================== CONFIGURATION ====================
+const CONFIG = {
+    serverUrl: 'ws://localhost:3001', // Signalisation vidéo WebRTC - non branché pour l'instant
+    roomId: 'room_' + Date.now().toString(36),
+    userId: myIdZNK || ('anon_' + Math.random().toString(36).substr(2, 9))
+};
+
+// ==================== STATE ====================
+let whatsznk = null;
+let cameraEnabled = true;
+let micEnabled = true;
+let localStream = null;
+let currentContactId = null; // idZNK du contact actuellement affiché dans le chat
+let conversationsCache = { inbox: [], sent: [] };
+
+// ==================== DOM ELEMENTS ====================
+const chat = document.getElementById('chatFlow');
+const input = document.getElementById('userInput');
+const vGrid = document.getElementById('vGrid');
+const statusIndicator = document.getElementById('statusIndicator');
+const statusText = document.getElementById('statusText');
+const roomDisplay = document.getElementById('roomDisplay');
+const loadingScreen = document.getElementById('loadingScreen');
+
+// ==================== INITIALIZATION ====================
+async function init() {
+    try {
+        // Get user media
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: true
+        });
+
+        // Setup grid with local video
+        setGrid(1);
+        
+        // Add local stream to first video box
+        const firstBox = vGrid.querySelector('.video-box');
+        if (firstBox) {
+            const video = document.createElement('video');
+            video.srcObject = localStream;
+            video.autoplay = true;
+            video.muted = true;
+            video.playsInline = true;
+            firstBox.innerHTML = '';
+            firstBox.appendChild(video);
+            
+            const label = document.createElement('div');
+            label.className = 'video-label';
+            label.textContent = 'Vous';
+            firstBox.appendChild(label);
+        }
+
+        // Charger les réglages image (luminosité, embellissement) sauvegardés
+        loadImageFilterPrefs();
+
+        // Hide loading
+        loadingScreen.style.display = 'none';
+        
+        // Update status
+        updateStatus(true);
+        roomDisplay.textContent = `Room: ${CONFIG.roomId}`;
+        
+        // Enregistrer l'identité auprès du backend P2P local, puis charger les vrais contacts
+        if (myIdZNK) {
+            await znkEnsureApiKey();
+            await registerIdentity();
+            await loadContacts();
+            await refreshConversation();
+            setInterval(loadContacts, 10000);       // qui est joignable en ce moment
+            setInterval(refreshConversation, 5000);  // nouveaux messages
+        } else {
+            console.warn('⚠️ Aucune identité ZNK trouvée — connectez-vous via auth-hub.html');
+            loadContacts();
+        }
+        
+        // Setup keyboard
+        setupKeyboard();
+        
+        console.log('✅ WhatsZNK initialisé');
+        
+    } catch (error) {
+        console.error('❌ Erreur initialisation:', error);
+        loadingScreen.innerHTML = '<div class="loading-content"><div>❌ Erreur d\'accès caméra/micro</div><div style="font-size:12px; margin-top:10px;">Vérifiez les permissions</div></div>';
+    }
+}
+
+async function registerIdentity() {
+    try {
+        await znkFetch(`${ZNK_BACKEND_URL}/api/identity/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idZNK: myIdZNK })
+        });
+    } catch (e) {
+        console.warn('⚠️ Backend ZNK injoignable (localhost:5000) - démarrez server.py', e);
+    }
+}
+
+// ==================== GRID MANAGEMENT ====================
+function setGrid(num) {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    if(event) event.target.classList.add('active');
+    
+    vGrid.className = `video-area grid-${num}`;
+    vGrid.innerHTML = '';
+    
+    for(let i=1; i<=num; i++) {
+        const div = document.createElement('div');
+        div.className = 'video-box';
+        div.id = `video-box-${i}`;
+        
+        if(i === 1 && localStream) {
+            const video = document.createElement('video');
+            video.srcObject = localStream;
+            video.autoplay = true;
+            video.muted = true;
+            video.playsInline = true;
+            div.appendChild(video);
+            
+            const label = document.createElement('div');
+            label.className = 'video-label';
+            label.textContent = 'Vous';
+            div.appendChild(label);
+        } else {
+            div.innerHTML = `<div class="video-label">User ${i}</div>`;
+        }
+        
+        vGrid.appendChild(div);
+    }
+    
+    // Add controls
+    const ctrl = document.createElement('div');
+    ctrl.className = 'controls';
+    ctrl.innerHTML = `
+        <button class="btn-ctrl ${cameraEnabled ? 'active' : ''}" onclick="toggleCamera()" title="Caméra">📹</button>
+        <button class="btn-ctrl ${micEnabled ? 'active' : ''}" onclick="toggleMicrophone()" title="Micro">🎤</button>
+        <button class="btn-ctrl" onclick="openCameraCore()" title="Camera Core">🎨</button>
+        <button class="btn-ctrl" onclick="toggleImagePanel()" title="Réglages image">✨</button>
+        <button class="btn-ctrl danger" onclick="leaveCall()" title="Quitter">📞</button>
+    `;
+    vGrid.appendChild(ctrl);
+}
+
+// ==================== CAMERA CONTROLS ====================
+function toggleCamera() {
+    cameraEnabled = !cameraEnabled;
+    
+    if(localStream) {
+        localStream.getVideoTracks().forEach(track => {
+            track.enabled = cameraEnabled;
+        });
+    }
+    
+    event.target.classList.toggle('active', cameraEnabled);
+    event.target.textContent = cameraEnabled ? '📹' : '🚫';
+}
+
+function toggleMicrophone() {
+    micEnabled = !micEnabled;
+    
+    if(localStream) {
+        localStream.getAudioTracks().forEach(track => {
+            track.enabled = micEnabled;
+        });
+    }
+    
+    event.target.classList.toggle('active', micEnabled);
+    event.target.textContent = micEnabled ? '🎤' : '🔇';
+}
+
+function openCameraCore() {
+    window.open('znk-camera-core-local.html', 'CameraCore', 'width=1400,height=900');
+}
+
+// ==================== FILTRES IMAGE (luminosité / embellissement) ====================
+function toggleImagePanel() {
+    document.getElementById('imagePanel').classList.toggle('open');
+}
+
+// Fermeture automatique du panneau si on clique en dehors de lui
+// (et en dehors du bouton ✨ qui sert à l'ouvrir/fermer)
+document.addEventListener('click', (e) => {
+    const panel = document.getElementById('imagePanel');
+    if (!panel || !panel.classList.contains('open')) return;
+
+    const clickedInsidePanel = panel.contains(e.target);
+    const clickedToggleBtn = e.target.closest('.btn-ctrl[title="Réglages image"]');
+
+    if (!clickedInsidePanel && !clickedToggleBtn) {
+        panel.classList.remove('open');
+    }
+});
+
+function updateImageFilters() {
+    const brightness = document.getElementById('sliderBrightness').value;
+    const contrast = document.getElementById('sliderContrast').value;
+    const saturate = document.getElementById('sliderSaturate').value;
+    const soften = document.getElementById('sliderSoften').value; // 0-100 -> blur px + léger flou
+
+    document.getElementById('valBrightness').textContent = `${brightness}%`;
+    document.getElementById('valContrast').textContent = `${contrast}%`;
+    document.getElementById('valSaturate').textContent = `${saturate}%`;
+    document.getElementById('valSoften').textContent = `${soften}%`;
+
+    const root = document.documentElement.style;
+    root.setProperty('--vid-brightness', brightness / 100);
+    root.setProperty('--vid-contrast', contrast / 100);
+    root.setProperty('--vid-saturate', saturate / 100);
+    root.setProperty('--vid-blur', `${(soften / 100) * 1.2}px`); // max ~1.2px, effet peau lissée subtil
+
+    saveImageFilterPrefs();
+}
+
+function applyBeautyPreset() {
+    // Preset "beauté" : image plus lumineuse, teint plus chaud, léger lissage
+    document.getElementById('sliderBrightness').value = 118;
+    document.getElementById('sliderContrast').value = 106;
+    document.getElementById('sliderSaturate').value = 118;
+    document.getElementById('sliderSoften').value = 30;
+    updateImageFilters();
+    document.documentElement.style.setProperty('--vid-warmth', 0.08);
+}
+
+function resetImageFilters() {
+    document.getElementById('sliderBrightness').value = 135;
+    document.getElementById('sliderContrast').value = 100;
+    document.getElementById('sliderSaturate').value = 105;
+    document.getElementById('sliderSoften').value = 0;
+    updateImageFilters();
+    document.documentElement.style.setProperty('--vid-warmth', 0);
+}
+
+function saveImageFilterPrefs() {
+    try {
+        localStorage.setItem('znk_whatszapp_image_filters', JSON.stringify({
+            brightness: document.getElementById('sliderBrightness').value,
+            contrast: document.getElementById('sliderContrast').value,
+            saturate: document.getElementById('sliderSaturate').value,
+            soften: document.getElementById('sliderSoften').value
+        }));
+    } catch (e) { /* ignore */ }
+}
+
+function loadImageFilterPrefs() {
+    try {
+        const saved = localStorage.getItem('znk_whatszapp_image_filters');
+        if (saved) {
+            const pref = JSON.parse(saved);
+            document.getElementById('sliderBrightness').value = pref.brightness ?? 135;
+            document.getElementById('sliderContrast').value = pref.contrast ?? 100;
+            document.getElementById('sliderSaturate').value = pref.saturate ?? 105;
+            document.getElementById('sliderSoften').value = pref.soften ?? 0;
+        }
+    } catch (e) { /* ignore */ }
+    updateImageFilters();
+}
+
+function leaveCall() {
+    if(confirm('Voulez-vous vraiment quitter?')) {
+        if(localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        window.close();
+    }
+}
+
+// ==================== CONTACTS ====================
+async function loadContacts() {
+    const contactsList = document.getElementById('contactsList');
+
+    if (!myIdZNK) {
+        contactsList.innerHTML = '<div style="padding:15px; font-size:12px; color:#9ca3af;">Connectez-vous pour voir vos contacts.</div>';
+        return;
+    }
+
+    let peers = [];
+    try {
+        const response = await znkFetch(`${ZNK_BACKEND_URL}/api/p2p/peers`);
+        if (response.ok) {
+            const data = await response.json();
+            peers = data.peers || [];
+        }
+    } catch (e) {
+        console.warn('⚠️ Impossible de charger les pairs P2P:', e);
+    }
+
+    if (peers.length === 0) {
+        contactsList.innerHTML = '<div style="padding:15px; font-size:12px; color:#9ca3af;">Aucun contact joignable sur le réseau local pour l\'instant.</div>';
+        return;
+    }
+
+    contactsList.innerHTML = '';
+    peers.forEach((peer, i) => {
+        const div = document.createElement('div');
+        div.className = 'contact' + (peer.id_znk === currentContactId ? ' active' : '');
+        div.onclick = () => selectContact(peer.id_znk);
+        div.innerHTML = `
+            <div class="avatar">👤</div>
+            <div class="contact-info">
+                <div class="contact-name">${peer.id_znk}</div>
+                <div class="contact-status"><span class="status-dot"></span>En ligne (local)</div>
+            </div>
+        `;
+        contactsList.appendChild(div);
+    });
+
+    // Si aucun contact sélectionné, on ouvre le premier par défaut
+    if (!currentContactId && peers.length > 0) {
+        selectContact(peers[0].id_znk);
+    }
+}
+
+function selectContact(idZNK) {
+    currentContactId = idZNK;
+    document.querySelectorAll('.contact').forEach(el => el.classList.remove('active'));
+    chat.innerHTML = '';
+    refreshConversation();
+}
+
+// ==================== KEYBOARD ====================
+function setupKeyboard() {
+    const ph = document.getElementById('ph-horiz');
+    const demoIcons = ['🌟','💎','🔥','🚀','🛸','💾','🎸','📸'];
+    
+    demoIcons.forEach(icon => {
+        const k = document.createElement('div');
+        k.className = 'key';
+        k.textContent = icon;
+        k.onclick = () => action(icon, 'sparkle');
+        ph.appendChild(k);
+    });
+}
+
+function action(emoji, type) {
+    input.value += emoji;
+    launchEffect(type);
+    if(emoji === '❤️' || emoji === '💭') triggerZNKia(emoji);
+    input.focus();
+}
+
+function addChar(c) { 
+    input.value += c; 
+    input.focus(); 
+}
+
+function backspace() { 
+    input.value = input.value.slice(0, -1); 
+    input.focus(); 
+}
+
+// ==================== EFFECTS ====================
+function launchEffect(type) {
+    for(let i=0; i<12; i++) {
+        setTimeout(() => {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = (Math.random() * 100) + 'vw';
+            p.style.top = '70vh';
+            p.style.fontSize = '22px';
+            p.textContent = type === 'heart' ? '❤️' : (type === 'flower' ? '🌸' : '✨');
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 2000);
+        }, i * 50);
+    }
+}
+
+// ==================== CHAT ====================
+async function sendMessage() {
+    if(!input.value.trim()) return;
+
+    const text = input.value;
+    input.value = "";
+
+    if (!currentContactId) {
+        alert('⚠️ Sélectionnez un contact joignable avant d\'envoyer un message.');
+        return;
+    }
+
+    // Affichage optimiste immédiat
+    const m = document.createElement('div');
+    m.className = 'msg sent';
+    m.textContent = text;
+    chat.appendChild(m);
+    chat.scrollTop = chat.scrollHeight;
+
+    try {
+        const response = await znkFetch(`${ZNK_BACKEND_URL}/api/messages/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: currentContactId, subject: '', body: text, canal: 'whatszapp' })
+        });
+        const result = await response.json();
+        if (!result.delivered) {
+            const notice = document.createElement('div');
+            notice.style.cssText = 'font-size:10px; color:#9ca3af; text-align:center; margin:4px 0;';
+            notice.textContent = '⏳ En attente — sera livré dès que ce contact sera en ligne';
+            chat.appendChild(notice);
+            chat.scrollTop = chat.scrollHeight;
+        }
+    } catch (e) {
+        console.warn('⚠️ Backend ZNK injoignable (localhost:5000):', e);
+    }
+}
+
+async function refreshConversation() {
+    if (!currentContactId) return;
+
+    try {
+        const [inboxRes, sentRes] = await Promise.all([
+            znkFetch(`${ZNK_BACKEND_URL}/api/messages/inbox`),
+            znkFetch(`${ZNK_BACKEND_URL}/api/messages/sent`)
+        ]);
+        const inboxData = await inboxRes.json();
+        const sentData = await sentRes.json();
+
+        const received = (inboxData.messages || [])
+            .filter(m => m.canal === 'whatszapp' && m.from === currentContactId)
+            .map(m => ({ ...m, direction: 'received' }));
+
+        const sent = (sentData.messages || [])
+            .filter(m => m.canal === 'whatszapp' && m.to === currentContactId)
+            .map(m => ({ ...m, direction: 'sent' }));
+
+        const conversation = [...received, ...sent].sort((a, b) => a.timestamp - b.timestamp);
+
+        chat.innerHTML = '';
+        conversation.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'msg ' + (m.direction === 'sent' ? 'sent' : 'received');
+            div.textContent = m.corps;
+            chat.appendChild(div);
+        });
+        chat.scrollTop = chat.scrollHeight;
+    } catch (e) {
+        console.warn('⚠️ Impossible de charger la conversation:', e);
+    }
+}
+
+function triggerZNKia(type) {
+    setTimeout(() => {
+        const z = document.createElement('div');
+        z.className = 'msg received znkia';
+        z.textContent = type === '❤️' ? 
+            "ZNKia : Un moment spécial ?" : 
+            "ZNKia : Je vous écoute.";
+        chat.appendChild(z);
+        chat.scrollTop = chat.scrollHeight;
+    }, 1000);
+}
+
+// ==================== STATUS ====================
+function updateStatus(connected) {
+    if(connected) {
+        statusIndicator.classList.add('connected');
+        statusText.textContent = 'Connecté';
+    } else {
+        statusIndicator.classList.remove('connected');
+        statusText.textContent = 'Déconnecté';
+    }
+}
+
+// ==================== CAMERA CORE INTEGRATION ====================
+window.addEventListener('message', (event) => {
+    // Receive stream from Camera Core
+    if(event.data.type === 'camera-core-stream') {
+        console.log('📹 Stream reçu de Camera Core');
+        // TODO: Replace local stream with Camera Core stream
+    }
+});
+
+// ==================== START ====================
+document.addEventListener('DOMContentLoaded', init);
+
+// Expose API for Dashboard
+window.WhatsZNK = {
+    config: CONFIG,
+    toggleCamera,
+    toggleMicrophone,
+    sendMessage,
+    leaveCall
+};
+</script>
+</body>
+</html>

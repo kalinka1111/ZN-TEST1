@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>©ZNK - Le Mur</title>
+    <style>
+        :root {
+            --znk-bg-primary: #0f0f23;
+            --znk-bg-secondary: #1a1a2e;
+            --znk-bg-card: #16213e;
+            --znk-accent: #4a9eff;
+            --znk-accent-hover: #2d7ae0;
+            --znk-text-primary: #ffffff;
+            --znk-text-secondary: #b8c5d6;
+            --znk-text-muted: #8b949e;
+            --znk-border: #30363d;
+            --znk-success: #238636;
+            --znk-warning: #d29922;
+            --znk-danger: #da3633;
+            --znk-glass: rgba(22, 33, 62, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--znk-bg-primary);
+            color: var(--znk-text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Titre LE WALL (comme le logo hero d'ACTV) */
+        .wall-hero-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            text-align: center;
+            margin: 10px auto 25px;
+            animation: wallHeroGlow 3s ease-in-out infinite alternate;
+        }
+
+        .wall-hero-title img {
+            max-height: 60px;
+            width: auto;
+            height: auto;
+        }
+
+        .wall-hero-title span {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: var(--znk-text-primary);
+        }
+
+        @keyframes wallHeroGlow {
+            from { filter: drop-shadow(0 0 10px rgba(74, 158, 255, 0.3)); }
+            to { filter: drop-shadow(0 0 22px rgba(74, 158, 255, 0.6)); }
+        }
+
+        @media (max-width: 768px) {
+            .wall-hero-title img { max-height: 44px; }
+            .wall-hero-title span { font-size: 24px; letter-spacing: 2px; }
+        }
+
+        /* Module Landing Vidéo */
+        .video-landing {
+            width: 100%;
+            height: 200px;
+            background: var(--znk-bg-card);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--znk-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .video-landing:hover {
+            border-color: var(--znk-accent);
+            box-shadow: 0 8px 32px rgba(74, 158, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .video-landing video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-landing-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #2d1b69 100%);
+            position: relative;
+        }
+
+        .video-overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(74, 158, 255, 0.2) 0%, transparent 70%);
+            animation: videoPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes videoPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .video-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .video-text {
+            font-size: 14px;
+            color: var(--znk-text-secondary);
+            z-index: 2;
+            position: relative;
+        }
+
+        .upload-video-btn {
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: rgba(74, 158, 255, 0.2);
+            border: 1px solid var(--znk-accent);
+            color: var(--znk-accent);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 13px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .upload-video-btn:hover {
+            background: rgba(74, 158, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .video-controls {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .video-control-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: white;
+            font-size: 16px;
+        }
+
+        .video-control-btn:hover {
+            background: rgba(74, 158, 255, 0.8);
+            border-color: var(--znk-accent);
+            transform: scale(1.1);
+        }
+
+        /* Profil artiste */
+        .artist-profile {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .artist-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--znk-accent), #2d7ae0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin: 0 auto 12px;
+            border: 3px solid rgba(74, 158, 255, 0.3);
+            box-shadow: 0 0 30px rgba(74, 158, 255, 0.4);
+            overflow: hidden;
+        }
+
+        .artist-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .artist-stats {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 12px;
+            border-top: 1px solid var(--znk-border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--znk-accent);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--znk-text-muted);
+            margin-top: 4px;
+        }
+
+        /* Onglets */
+        .tabs-container {
+            display: flex;
+            gap: 8px;
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--znk-text-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .tab-btn.active {
+            background: var(--znk-accent);
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--znk-text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Créer publication */
+        .create-post {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .create-post-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .create-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--znk-accent), #2d7ae0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .create-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .create-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--znk-border);
+            border-radius: 12px;
+            padding: 12px;
+            color: var(--znk-text-primary);
+            font-size: 14px;
+            resize: vertical;
+            min-height: 70px;
+            font-family: inherit;
+        }
+
+        .create-input:focus {
+            outline: none;
+            border-color: var(--znk-accent);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .create-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .media-btn {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--znk-border);
+            color: var(--znk-text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .media-btn:hover {
+            background: rgba(74, 158, 255, 0.1);
+            border-color: var(--znk-accent);
+            color: var(--znk-accent);
+        }
+
+        .publish-btn {
+            margin-left: auto;
+            background: linear-gradient(135deg, var(--znk-accent), var(--znk-accent-hover));
+            color: white;
+            font-weight: 600;
+        }
+
+        .publish-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+        }
+
+        /* Posts */
+        .feed-post {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feed-post:hover {
+            border-color: var(--znk-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(74, 158, 255, 0.15);
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .post-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--znk-accent), #2d7ae0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .post-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .post-info {
+            flex: 1;
+        }
+
+        .post-author {
+            font-weight: 600;
+            color: var(--znk-text-primary);
+            margin-bottom: 2px;
+            font-size: 14px;
+        }
+
+        .post-time {
+            color: var(--znk-text-muted);
+            font-size: 11px;
+        }
+
+        .post-delete {
+            color: var(--znk-danger);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 16px;
+            background: none;
+            border: none;
+        }
+
+        .post-delete:hover {
+            background: rgba(218, 54, 51, 0.1);
+        }
+
+        .post-content {
+            margin-bottom: 12px;
+            color: var(--znk-text-secondary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+
+        .post-media {
+            background: var(--znk-bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+            border: 1px solid var(--znk-border);
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--znk-border);
+            color: var(--znk-text-muted);
+            font-size: 12px;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .action-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid var(--znk-border);
+            color: var(--znk-text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+
+        .action-btn:hover {
+            background: rgba(74, 158, 255, 0.1);
+            color: var(--znk-accent);
+            border-color: var(--znk-accent);
+        }
+
+        .action-btn.liked {
+            color: #e0245e;
+            border-color: #e0245e;
+            background: rgba(224, 36, 94, 0.1);
+        }
+
+        /* Status indicator */
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-offline {
+            background: rgba(139, 148, 158, 0.2);
+            border: 1px solid var(--znk-text-muted);
+            color: var(--znk-text-muted);
+        }
+
+        .status-online {
+            background: rgba(35, 134, 54, 0.2);
+            border: 1px solid var(--znk-success);
+            color: var(--znk-success);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .notification.success {
+            background: var(--znk-success);
+            color: white;
+        }
+
+        .notification.warning {
+            background: var(--znk-warning);
+            color: white;
+        }
+
+        .notification.error {
+            background: var(--znk-danger);
+            color: white;
+        }
+
+        .notification.info {
+            background: var(--znk-accent);
+            color: white;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--znk-text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        /* Community feed */
+        .community-post {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .community-post:hover {
+            border-color: var(--znk-accent);
+            transform: translateY(-2px);
+        }
+
+        .pub-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .pub-badge.fulgurance {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .pub-badge.audio {
+            background: rgba(147, 51, 234, 0.1);
+            border-color: #9333ea;
+            color: #9333ea;
+        }
+
+        .pub-badge.code {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--znk-bg-card);
+            border-radius: 12px;
+            font-size: 11px;
+            color: var(--znk-text-secondary);
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .media-preview {
+            display: none;
+            position: relative;
+            margin-top: 10px;
+            border: 1px solid var(--znk-border);
+            border-radius: 12px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            align-items: center;
+            gap: 10px;
+        }
+
+        .media-preview.active { display: flex; }
+
+        .media-preview img, .media-preview video {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        .media-preview .mp-info { flex: 1; min-width: 0; }
+
+        .media-preview .mp-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .media-preview .mp-note {
+            font-size: 11px;
+            color: var(--znk-text-muted);
+            margin-top: 2px;
+        }
+
+        .media-preview .mp-remove {
+            background: none;
+            border: none;
+            color: var(--znk-text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .media-preview .mp-remove:hover { color: var(--znk-danger); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 12px;
+            }
+
+            .video-landing {
+                height: 160px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Connection Status -->
+    <div class="connection-status status-offline" id="connectionStatus">
+        <div class="status-dot" style="background: var(--znk-text-muted);"></div>
+        <span>Mode Local</span>
+    </div>
+
+    <div class="main-container">
+        <!-- Titre LE WALL -->
+        <div class="wall-hero-title">
+            <img src="./icons/wall.svg" alt="LE WALL" onerror="this.onerror=null; this.src='./icons/wall.png';">
+            <span>LE WALL</span>
+        </div>
+
+        <!-- Onglets -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('my-posts')">
+                📝 Mes Publications
+            </button>
+            <button class="tab-btn" onclick="switchTab('community')">
+                🌐 Communauté ZNK
+            </button>
+        </div>
+
+        <!-- Contenu Onglet: Mes Publications -->
+        <div class="tab-content active" id="tab-my-posts">
+            <!-- Créer une publication -->
+            <div class="create-post">
+                <div class="create-post-header">
+                    <div class="create-avatar" id="createAvatar">
+                        <img id="createAvatarImg" style="display:none;" alt="Avatar">
+                    </div>
+                    <textarea 
+                        class="create-input" 
+                        id="postInput" 
+                        placeholder="Partagez vos créations, idées ou projets..."></textarea>
+                </div>
+                <div class="media-preview" id="mediaPreview">
+                    <div id="mediaPreviewThumb"></div>
+                    <div class="mp-info">
+                        <div class="mp-name" id="mediaPreviewName"></div>
+                        <div class="mp-note" id="mediaPreviewNote"></div>
+                    </div>
+                    <button class="mp-remove" onclick="removeAttachedMedia()" title="Retirer">✕</button>
+                </div>
+
+                <div class="create-actions">
+                    <button class="media-btn" onclick="attachMedia('video')">
+                        <span>🎥</span> Vidéo
+                    </button>
+                    <button class="media-btn" onclick="attachMedia('audio')">
+                        <span>🎵</span> Audio
+                    </button>
+                    <button class="media-btn" onclick="attachMedia('image')">
+                        <span>🖼️</span> Image
+                    </button>
+                    <button class="media-btn" id="monetizeToggleBtn" onclick="toggleMonetizePanel()">
+                        <span>💰</span> Vendre
+                    </button>
+                    <button class="media-btn publish-btn" onclick="publishPost()">
+                        <span>📤</span> Publier
+                    </button>
+                </div>
+
+                <!-- Panneau monétisation : concert / whatsznk / oeuvre / copyright / cours -->
+                <div id="monetizePanel" style="display:none; margin-top:10px; padding:12px; border:1px solid var(--znk-border, rgba(0,212,255,0.25)); border-radius:10px; background: rgba(0,212,255,0.05);">
+                    <div style="font-size:12px; font-weight:600; margin-bottom:8px; color:#00d4ff;">💰 Ajouter une offre à cette publication</div>
+                    <select id="monetizeType" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; background:#111; color:#fff; border:1px solid #333;" onchange="onMonetizeTypeChange()">
+                        <option value="">Aucune vente</option>
+                        <option value="concert">🎵 Place de concert</option>
+                        <option value="whatsznk">💬 Abonnement WhatsZNK</option>
+                        <option value="artwork">🎨 Œuvre (peinture, NFT, musique...)</option>
+                        <option value="copyright">© Copyright</option>
+                        <option value="lesson">💃 Cours (danse, etc.)</option>
+                    </select>
+                    <input type="text" id="monetizeName" placeholder="Nom de l'offre (ex: Concert Live Yaoundé)" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; background:#111; color:#fff; border:1px solid #333;">
+                    <input type="number" id="monetizePrice" placeholder="Prix (€)" min="0" step="0.01" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; background:#111; color:#fff; border:1px solid #333;">
+                    <input type="date" id="monetizeDate" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; background:#111; color:#fff; border:1px solid #333; display:none;">
+                    <div style="font-size:10px; color:#aaa;">La commission ZNK et le soutien projets s'ajoutent au prix affiché, à la charge de l'acheteur.</div>
+                </div>
+            </div>
+
+            <!-- Liste des posts -->
+            <div id="feedPosts"></div>
+        </div>
+
+        <!-- Contenu Onglet: Communauté -->
+        <div class="tab-content" id="tab-community">
+            <div id="communityFeed"></div>
+        </div>
+    </div>
+
+    <input type="file" id="postImageInput" accept="image/*" style="display:none;" onchange="handlePostImageUpload(event)">
+    <input type="file" id="postVideoInput" accept="video/*" style="display:none;" onchange="handlePostVideoUpload(event)">
+    <input type="file" id="postAudioInput" accept="audio/*" style="display:none;" onchange="handlePostAudioUpload(event)">
+
+    <script>
+        // ========================================
+        // VARIABLES GLOBALES
+        // ========================================
+        let currentUser = null;
+        let selectedMedia = null;
+        let selectedMonetization = null;
+        const MAX_POSTS = 10;
+        let isOnline = false;
+        let postsCountValue = 0;
+
+        // ========================================
+        // PERSISTANCE ELECTRON (même API que main.js / preload.js)
+        // ========================================
+        const znkApi = window.electronAPI || null;
+        const isElectron = !!(znkApi && znkApi.getPathForFile);
+
+        async function persistVideoFile(file) {
+            if (isElectron && znkApi.makeVideoPersistent && znkApi.getVideoUrl) {
+                try {
+                    const realPath = znkApi.getPathForFile(file);
+                    if (realPath) {
+                        const mediaId = `post_${Date.now()}`;
+                        const persistRes = await znkApi.makeVideoPersistent({ sourcePath: realPath, videoId: mediaId, fileName: file.name });
+                        if (persistRes && persistRes.success) {
+                            const urlRes = await znkApi.getVideoUrl({ videoId: mediaId, fileName: persistRes.fileName || file.name });
+                            const src = (urlRes && urlRes.success) ? urlRes.url : persistRes.url;
+                            return { src, persistent: true };
+                        }
+                    }
+                } catch (e) { console.warn('persistVideoFile: repli base64 —', e); }
+            }
+            const src = await readFileAsDataUrl(file);
+            return { src, persistent: false };
+        }
+
+        async function persistImageFile(file) {
+            if (isElectron && znkApi.makeMaterialPersistent) {
+                try {
+                    const realPath = znkApi.getPathForFile(file);
+                    if (realPath) {
+                        const mediaId = `post_${Date.now()}`;
+                        const res = await znkApi.makeMaterialPersistent({ sourcePath: realPath, materialId: mediaId, fileName: file.name, type: 'post-image' });
+                        if (res && res.success) return { src: res.url, persistent: true };
+                    }
+                } catch (e) { console.warn('persistImageFile: repli base64 —', e); }
+            }
+            const src = await readFileAsDataUrl(file);
+            return { src, persistent: false };
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Lecture du fichier échouée'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ========================================
+        // DETECTION CONNECTION
+        // ========================================
+        function checkConnection() {
+            isOnline = navigator.onLine;
+            updateConnectionStatus();
+            
+            if (isOnline) {
+                // Tenter de sync avec le serveur P2P
+                syncWithP2P();
+            }
+        }
+
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            const dotEl = statusEl.querySelector('.status-dot');
+            const textEl = statusEl.querySelector('span');
+
+            if (isOnline) {
+                statusEl.className = 'connection-status status-online';
+                dotEl.style.background = 'var(--znk-success)';
+                textEl.textContent = 'En ligne • Mode P2P';
+            } else {
+                statusEl.className = 'connection-status status-offline';
+                dotEl.style.background = 'var(--znk-text-muted)';
+                textEl.textContent = 'Mode Local';
+            }
+        }
+
+        window.addEventListener('online', checkConnection);
+        window.addEventListener('offline', checkConnection);
+
+        // ========================================
+        // GESTION PROFIL UTILISATEUR (léger, pour l'avatar de saisie)
+        // ========================================
+        function loadUserProfile() {
+            const stored = localStorage.getItem('znkUserData');
+            
+            if (stored) {
+                try {
+                    const user = JSON.parse(stored);
+                    currentUser = user;
+                    
+                    const fullName = `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Utilisateur ZNK';
+                    
+                    if (user.avatar) {
+                        const createImg = document.getElementById('createAvatarImg');
+                        createImg.src = user.avatar;
+                        createImg.style.display = 'block';
+                    } else {
+                        document.getElementById('createAvatar').textContent = getInitials(fullName);
+                    }
+                    
+                    loadUserStats();
+                } catch (e) {
+                    console.error('Erreur chargement profil:', e);
+                    useDefaultProfile();
+                }
+            } else {
+                useDefaultProfile();
+            }
+        }
+
+        function useDefaultProfile() {
+            currentUser = {
+                prenom: 'Utilisateur',
+                nom: 'ZNK',
+                id: 'ZNK-000000',
+                emailZnk: '@user.znk'
+            };
+            
+            document.getElementById('createAvatar').textContent = 'UZ';
+        }
+
+        // Compteur de publications conservé en mémoire (pas d'affichage stats sur le Mur)
+        function loadUserStats() {
+            const stats = JSON.parse(localStorage.getItem('znkUserStats') || '{}');
+            postsCountValue = stats.posts || 0;
+        }
+
+        function saveUserStats() {
+            const stats = JSON.parse(localStorage.getItem('znkUserStats') || '{}');
+            stats.posts = postsCountValue;
+            localStorage.setItem('znkUserStats', JSON.stringify(stats));
+        }
+
+        function getInitials(name) {
+            const parts = name.split(' ').filter(p => p.length > 0);
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        // ========================================
+        // GESTION PUBLICATIONS
+        // ========================================
+        function publishPost() {
+            const input = document.getElementById('postInput');
+            const content = input.value.trim();
+            
+            if (!content && !selectedMedia) {
+                showNotification('⚠️ Écrivez quelque chose ou ajoutez un média', 'warning');
+                return;
+            }
+
+            const monetizeTypeSelected = document.getElementById('monetizeType').value;
+            if (monetizeTypeSelected) {
+                selectedMonetization = collectMonetizationFromForm();
+                if (!selectedMonetization) return; // offre invalide, message déjà affiché
+            } else {
+                selectedMonetization = null;
+            }
+            
+            let posts = JSON.parse(localStorage.getItem('znkUserPosts') || '[]');
+            
+            if (posts.length >= MAX_POSTS) {
+                posts = posts.slice(0, MAX_POSTS - 1);
+            }
+            
+            const newPost = {
+                id: Date.now(),
+                content: content,
+                media: selectedMedia,
+                author: currentUser ? `${currentUser.prenom} ${currentUser.nom}`.trim() : 'Utilisateur ZNK',
+                authorId: currentUser?.id || 'ZNK-000000',
+                avatar: currentUser?.avatar || null,
+                timestamp: Date.now(),
+                likes: 0,
+                comments: 0,
+                shares: 0,
+                likedByUser: false,
+                visibility: 'public',
+                monetization: selectedMonetization
+            };
+            
+            posts.unshift(newPost);
+            localStorage.setItem('znkUserPosts', JSON.stringify(posts));
+            
+            postsCountValue += 1;
+            saveUserStats();
+            
+            input.value = '';
+            selectedMedia = null;
+            selectedMonetization = null;
+            document.getElementById('mediaPreview').classList.remove('active');
+            document.getElementById('monetizePanel').style.display = 'none';
+            document.getElementById('monetizeType').value = '';
+            document.getElementById('monetizeName').value = '';
+            document.getElementById('monetizePrice').value = '';
+            document.getElementById('monetizeDate').value = '';
+            
+            loadPosts();
+            showNotification('✅ Publication créée avec succès !', 'success');
+            
+            // Si en ligne, sync vers P2P
+            if (isOnline) {
+                syncPostToP2P(newPost);
+            }
+        }
+
+        function attachMedia(type) {
+            if (type === 'video') document.getElementById('postVideoInput').click();
+            else if (type === 'image') document.getElementById('postImageInput').click();
+            else if (type === 'audio') document.getElementById('postAudioInput').click();
+        }
+
+        async function handlePostImageUpload(event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showNotification('⚠️ Veuillez sélectionner une image', 'warning');
+                return;
+            }
+            try {
+                const { src, persistent } = await persistImageFile(file);
+                selectedMedia = { type: 'image', icon: '🖼️', title: file.name, src, persistent };
+                showMediaPreview();
+                showNotification(persistent ? '🖼️ Image attachée (fichier persistant)' : '🖼️ Image attachée', 'success');
+            } catch (e) {
+                console.error('handlePostImageUpload:', e);
+                showNotification('❌ Échec de l\'ajout de l\'image', 'warning');
+            }
+        }
+
+        async function handlePostVideoUpload(event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            if (!file.type.startsWith('video/')) {
+                showNotification('⚠️ Veuillez sélectionner une vidéo', 'warning');
+                return;
+            }
+            try {
+                const { src, persistent } = await persistVideoFile(file);
+                selectedMedia = { type: 'video', icon: '🎥', title: file.name, src, persistent };
+                showMediaPreview();
+                showNotification(persistent ? '🎥 Vidéo attachée (fichier persistant)' : '🎥 Vidéo attachée', 'success');
+            } catch (e) {
+                console.error('handlePostVideoUpload:', e);
+                showNotification('❌ Échec de l\'ajout de la vidéo', 'warning');
+            }
+        }
+
+        async function handlePostAudioUpload(event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            if (!file.type.startsWith('audio/')) {
+                showNotification('⚠️ Veuillez sélectionner un fichier audio', 'warning');
+                return;
+            }
+            try {
+                const src = await readFileAsDataUrl(file);
+                selectedMedia = { type: 'audio', icon: '🎵', title: file.name, src, persistent: false };
+                showMediaPreview();
+                showNotification('🎵 Audio attaché', 'success');
+            } catch (e) {
+                console.error('handlePostAudioUpload:', e);
+                showNotification('❌ Échec de l\'ajout de l\'audio', 'warning');
+            }
+        }
+
+        function showMediaPreview() {
+            const box = document.getElementById('mediaPreview');
+            const thumb = document.getElementById('mediaPreviewThumb');
+            const name = document.getElementById('mediaPreviewName');
+            const note = document.getElementById('mediaPreviewNote');
+
+            if (!selectedMedia) { box.classList.remove('active'); return; }
+
+            if (selectedMedia.type === 'image') {
+                thumb.innerHTML = `<img src="${selectedMedia.src}" alt="">`;
+            } else if (selectedMedia.type === 'video') {
+                thumb.innerHTML = `<video src="${selectedMedia.src}" muted></video>`;
+            } else {
+                thumb.innerHTML = `<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(255,255,255,0.05);border-radius:8px;">${selectedMedia.icon}</div>`;
+            }
+            name.textContent = selectedMedia.title;
+            note.textContent = selectedMedia.persistent ? '✅ Fichier persistant' : 'Intégré à la publication';
+            box.classList.add('active');
+        }
+
+        function removeAttachedMedia() {
+            selectedMedia = null;
+            document.getElementById('mediaPreview').classList.remove('active');
+        }
+
+        // ========================================
+        // MONÉTISATION D'UNE PUBLICATION (concert, œuvre, copyright, cours...)
+        // ========================================
+        function toggleMonetizePanel() {
+            const panel = document.getElementById('monetizePanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function onMonetizeTypeChange() {
+            const type = document.getElementById('monetizeType').value;
+            document.getElementById('monetizeDate').style.display = (type === 'concert') ? 'block' : 'none';
+        }
+
+        function collectMonetizationFromForm() {
+            const type = document.getElementById('monetizeType').value;
+            if (!type) return null;
+
+            const name = document.getElementById('monetizeName').value.trim();
+            const price = parseFloat(document.getElementById('monetizePrice').value);
+            const date = document.getElementById('monetizeDate').value || null;
+
+            if (!name || isNaN(price) || price <= 0) {
+                showNotification('⚠️ Renseignez un nom et un prix valides pour l\'offre', 'warning');
+                return null;
+            }
+
+            return { type, name, price, date };
+        }
+
+        function loadPosts() {
+            const posts = JSON.parse(localStorage.getItem('znkUserPosts') || '[]');
+            const feedContainer = document.getElementById('feedPosts');
+            
+            if (posts.length === 0) {
+                feedContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>Aucune publication pour le moment</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Commencez à partager vos créations !</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            feedContainer.innerHTML = posts.map(post => createPostHTML(post)).join('');
+        }
+
+        function createPostHTML(post) {
+            const initials = getInitials(post.author);
+            const timeAgo = formatTimeAgo(post.timestamp);
+            
+            return `
+                <div class="feed-post" data-post-id="${post.id}">
+                    <div class="post-header">
+                        <div class="post-avatar">
+                            ${post.avatar ? `<img src="${post.avatar}" alt="Avatar">` : initials}
+                        </div>
+                        <div class="post-info">
+                            <div class="post-author">${post.author}</div>
+                            <div class="post-time">${timeAgo}</div>
+                        </div>
+                        <button class="post-delete" onclick="deletePost(${post.id})">🗑️</button>
+                    </div>
+
+                    <div class="post-content">${post.content}</div>
+
+                    ${post.media ? `
+                        <div class="post-media">
+                            ${post.media.src && post.media.type === 'image' ? `<img src="${post.media.src}" alt="" style="width:100%;border-radius:10px;display:block;">` : ''}
+                            ${post.media.src && post.media.type === 'video' ? `<video src="${post.media.src}" controls style="width:100%;border-radius:10px;display:block;"></video>` : ''}
+                            ${post.media.src && post.media.type === 'audio' ? `<audio src="${post.media.src}" controls style="width:100%;"></audio>` : ''}
+                            ${!post.media.src ? `
+                                <div style="font-size: 32px; margin-bottom: 6px;">${post.media.icon}</div>
+                                <div style="font-weight: 600; margin-bottom: 4px; font-size: 13px;">${post.media.title}</div>
+                                <div style="color: var(--znk-text-secondary); font-size: 12px;">${post.media.info || ''}</div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+
+                    ${post.monetization ? `
+                        <div class="post-media" style="border-color: rgba(255,215,0,0.4); background: rgba(255,215,0,0.06);">
+                            <div style="font-weight:700; color:#FFD700; margin-bottom:4px; font-size:13px;">${znkMonetizeIcon(post.monetization.type)} ${post.monetization.name}</div>
+                            <div style="font-size:12px; color:#ddd;">Prix: ${post.monetization.price.toFixed(2)} €${post.monetization.date ? ` • Date: ${post.monetization.date}` : ''}</div>
+                            <button class="media-btn publish-btn" style="margin-top:8px;" onclick="buyItem(${post.id})">🎟️ Participer / Acheter</button>
+                        </div>
+                    ` : ''}
+
+                    <div class="post-stats">
+                        <span>${post.likes} likes</span>
+                        <span>${post.comments} commentaires</span>
+                        <span>${post.shares} partages</span>
+                    </div>
+
+                    <div class="post-actions">
+                        <button class="action-btn ${post.likedByUser ? 'liked' : ''}" onclick="likePost(${post.id})">
+                            <span>❤️</span> J'aime
+                        </button>
+                        <button class="action-btn">
+                            <span>💬</span> Commenter
+                        </button>
+                        <button class="action-btn">
+                            <span>📤</span> Partager
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function znkMonetizeIcon(type) {
+            return { concert: '🎵', whatsznk: '💬', artwork: '🎨', copyright: '©', lesson: '💃' }[type] || '💰';
+        }
+
+        // ========================================
+        // ZNK NOMAD LEDGER - portefeuille partagé hors-ligne (fichier séparé,
+        // voir main.js / preload.js : znk-nomad:read-data / write-data)
+        // Fallback localStorage si electronAPI absent (test navigateur).
+        // ========================================
+        const ZNK_LEDGER_FALLBACK_KEY = 'znkNomadLedgerFallback';
+
+        async function znkLedgerLoad() {
+            try {
+                if (window.electronAPI && window.electronAPI.znkNomadReadData) {
+                    const raw = await window.electronAPI.znkNomadReadData();
+                    if (raw) return JSON.parse(raw);
+                }
+            } catch (e) { console.warn('znkLedgerLoad:', e); }
+            try {
+                return JSON.parse(localStorage.getItem(ZNK_LEDGER_FALLBACK_KEY) || '{}');
+            } catch (e) { return {}; }
+        }
+
+        async function znkLedgerSave(ledger) {
+            const json = JSON.stringify(ledger);
+            try {
+                if (window.electronAPI && window.electronAPI.znkNomadWriteData) {
+                    await window.electronAPI.znkNomadWriteData(json);
+                }
+            } catch (e) { console.warn('znkLedgerSave:', e); }
+            localStorage.setItem(ZNK_LEDGER_FALLBACK_KEY, json);
+        }
+
+        function znkGetWallet(ledger, userId, defaults) {
+            if (!ledger.wallets) ledger.wallets = {};
+            if (!ledger.wallets[userId]) {
+                ledger.wallets[userId] = Object.assign({ balance: 50, betis: 0, iban: '', compte: '', om: '' }, defaults || {});
+            }
+            return ledger.wallets[userId];
+        }
+
+        function znkGetConfig(ledger) {
+            if (!ledger.config) ledger.config = { commission: 5, supportRate: 1 };
+            return ledger.config;
+        }
+
+        // Achat déclenché depuis une publication du mur (concert, œuvre, copyright, cours...)
+        // Tout se passe hors connexion : lecture/écriture du fichier ledger local uniquement.
+        async function buyItem(postId) {
+            const posts = JSON.parse(localStorage.getItem('znkUserPosts') || '[]');
+            const post = posts.find(p => p.id === postId);
+            if (!post || !post.monetization) return;
+
+            const item = post.monetization;
+            const ledger = await znkLedgerLoad();
+            const config = znkGetConfig(ledger);
+            const commission = (item.price * config.commission) / 100;
+            const support = (item.price * config.supportRate) / 100;
+            const total = item.price + commission + support;
+
+            const buyerId = currentUser?.id || 'ZNK-000000';
+            const buyerName = currentUser ? `${currentUser.prenom} ${currentUser.nom}`.trim() : 'Utilisateur ZNK';
+
+            if (buyerId === post.authorId) {
+                showNotification('⚠️ Vous ne pouvez pas acheter votre propre offre', 'warning');
+                return;
+            }
+
+            const confirmMsg = `Confirmer l'achat "${item.name}" ?\n` +
+                `Prix: ${item.price.toFixed(2)} €\n` +
+                `Commission ZNK (${config.commission}%): ${commission.toFixed(2)} €\n` +
+                `Soutien projets (${config.supportRate}%): ${support.toFixed(2)} €\n` +
+                `TOTAL: ${total.toFixed(2)} €`;
+            if (!confirm(confirmMsg)) return;
+
+            const buyerWallet = znkGetWallet(ledger, buyerId, { name: buyerName });
+            if (buyerWallet.balance < total) {
+                showNotification('❌ Solde insuffisant dans votre Nomad', 'error');
+                return;
+            }
+
+            const sellerWallet = znkGetWallet(ledger, post.authorId, { name: post.author });
+            const znkSystemWallet = znkGetWallet(ledger, 'ZNK_SYSTEM', { name: 'ZNK System' });
+
+            // Débit acheteur / crédit artiste (prix plein) / crédit ZNK (commission + soutien)
+            buyerWallet.balance -= total;
+            sellerWallet.balance += item.price;
+            znkSystemWallet.balance += commission + support;
+
+            const transaction = {
+                id: `TX-${Date.now()}`,
+                date: new Date().toISOString(),
+                postId: post.id,
+                type: item.type,
+                itemName: item.name,
+                eventDate: item.date || null,
+                price: item.price,
+                commission: commission,
+                support: support,
+                total: total,
+                buyerId: buyerId,
+                buyerName: buyerName,
+                sellerId: post.authorId,
+                sellerName: post.author,
+                sellerAccount: { iban: sellerWallet.iban, compte: sellerWallet.compte, om: sellerWallet.om }
+            };
+            if (!ledger.transactions) ledger.transactions = [];
+            ledger.transactions.unshift(transaction);
+
+            await znkLedgerSave(ledger);
+
+            // Affiche les coordonnées de paiement de l'artiste (IBAN / compte / OM), si renseignées
+            const acc = transaction.sellerAccount;
+            const accInfo = (acc.iban || acc.compte || acc.om)
+                ? `\n\nCoordonnées de ${post.author}:\nIBAN: ${acc.iban || '—'}\nCompte bancaire: ${acc.compte || '—'}\nMobile Money: ${acc.om || '—'}`
+                : `\n\n${post.author} n'a pas encore renseigné ses coordonnées de paiement dans son Nomad.`;
+
+            showNotification(`✅ Achat confirmé: ${item.name}`, 'success');
+            alert(`Achat confirmé !${accInfo}\n\nRetrouvez cette transaction dans votre Nomad > Historique.`);
+        }
+
+        function likePost(postId) {
+            const posts = JSON.parse(localStorage.getItem('znkUserPosts') || '[]');
+            const updatedPosts = posts.map(post => {
+                if (post.id === postId) {
+                    return {
+                        ...post,
+                        likes: post.likedByUser ? post.likes - 1 : post.likes + 1,
+                        likedByUser: !post.likedByUser
+                    };
+                }
+                return post;
+            });
+            
+            localStorage.setItem('znkUserPosts', JSON.stringify(updatedPosts));
+            loadPosts();
+        }
+
+        function deletePost(postId) {
+            if (!confirm('Supprimer cette publication ?')) return;
+            
+            const posts = JSON.parse(localStorage.getItem('znkUserPosts') || '[]');
+            const updatedPosts = posts.filter(p => p.id !== postId);
+            localStorage.setItem('znkUserPosts', JSON.stringify(updatedPosts));
+            
+            postsCountValue = Math.max(0, postsCountValue - 1);
+            saveUserStats();
+            
+            loadPosts();
+            showNotification('🗑️ Publication supprimée', 'info');
+        }
+
+        // ========================================
+        // COMMUNAUTE P2P
+        // ========================================
+        function loadCommunityFeed() {
+            const feedContainer = document.getElementById('communityFeed');
+            
+            if (!isOnline) {
+                feedContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌐</div>
+                        <p>Mode hors ligne</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Connectez-vous à Internet pour accéder à la communauté ZNK</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Simuler des publications de la communauté
+            const communityPosts = [
+                {
+                    id: 'pub_001',
+                    author: 'Alice_ZNK',
+                    title: 'Architecture en couches : ma découverte',
+                    content: 'J\'ai découvert que séparer l\'UI, la logique métier et les données permet de créer des applications plus maintenables...',
+                    type: 'fulgurance',
+                    tags: ['architecture', 'design'],
+                    timestamp: Date.now() - 7200000,
+                    likes: 23,
+                    downloads: 145,
+                    size: '2.3 MB'
+                },
+                {
+                    id: 'pub_002',
+                    author: 'Bob_Creator',
+                    title: 'Nouvelle composition musicale',
+                    content: 'Voici ma dernière création, fusion de jazz et électro',
+                    type: 'audio',
+                    tags: ['musique', 'jazz', 'électro'],
+                    timestamp: Date.now() - 14400000,
+                    likes: 45,
+                    downloads: 89,
+                    size: '5.1 MB'
+                },
+                {
+                    id: 'pub_003',
+                    author: 'Charlie_Dev',
+                    title: 'Pattern Observer en JavaScript',
+                    content: 'Implémentation propre du pattern Observer pour la gestion d\'événements',
+                    type: 'code',
+                    tags: ['javascript', 'patterns'],
+                    timestamp: Date.now() - 21600000,
+                    likes: 67,
+                    downloads: 234,
+                    size: '0.8 MB'
+                }
+            ];
+
+            feedContainer.innerHTML = communityPosts.map(pub => createCommunityPostHTML(pub)).join('');
+        }
+
+        function createCommunityPostHTML(pub) {
+            const initials = getInitials(pub.author);
+            const timeAgo = formatTimeAgo(pub.timestamp);
+            const badgeClass = pub.type;
+            const badgeIcon = {
+                'fulgurance': '💎 Fulgurance',
+                'audio': '🎵 Audio',
+                'code': '💻 Code',
+                'video': '📹 Vidéo'
+            }[pub.type] || '📄 Document';
+
+            return `
+                <div class="community-post">
+                    <div class="post-header">
+                        <div class="post-avatar" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                            ${initials}
+                        </div>
+                        <div class="post-info">
+                            <div class="post-author">${pub.author}</div>
+                            <div class="post-time">${timeAgo}</div>
+                        </div>
+                        <span class="pub-badge ${badgeClass}">${badgeIcon}</span>
+                    </div>
+
+                    <h4 style="font-weight: 700; margin-bottom: 8px;">${pub.title}</h4>
+                    <p style="color: var(--znk-text-secondary); font-size: 14px; margin-bottom: 12px;">${pub.content}</p>
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px; font-size: 12px; color: var(--znk-text-muted);">
+                        <span>📦 ${pub.size}</span>
+                        <span>⬇️ ${pub.downloads}</span>
+                        <span>❤️ ${pub.likes}</span>
+                    </div>
+
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+                        ${pub.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+
+                    <div style="display: flex; gap: 8px;">
+                        <button class="action-btn" onclick="previewCommunityPost('${pub.id}')">
+                            <span>👁️</span> Aperçu
+                        </button>
+                        <button class="action-btn" style="background: var(--znk-accent); color: white; border-color: var(--znk-accent);" onclick="downloadCommunityPost('${pub.id}', '${pub.size}')">
+                            <span>⬇️</span> Télécharger
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function previewCommunityPost(pubId) {
+            showNotification('👁️ Aperçu en cours...', 'info');
+        }
+
+        function downloadCommunityPost(pubId, size) {
+            showNotification(`⬇️ Téléchargement de ${size}...`, 'info');
+            
+            setTimeout(() => {
+                showNotification('✅ Contenu téléchargé et ajouté à votre bibliothèque!', 'success');
+            }, 2000);
+        }
+
+        // ========================================
+        // SYNC P2P (SI ONLINE)
+        // ========================================
+        async function syncWithP2P() {
+            // Simulation de sync avec le serveur P2P
+            console.log('🔄 Synchronisation P2P...');
+            
+            // Charger le feed communauté
+            loadCommunityFeed();
+        }
+
+        async function syncPostToP2P(post) {
+            if (!isOnline) return;
+            
+            console.log('📤 Envoi vers P2P:', post);
+            
+            // Simulation d'upload
+            showNotification('📤 Publication partagée sur le réseau P2P', 'success');
+        }
+
+        // ========================================
+        // GESTION ONGLETS
+        // ========================================
+        function switchTab(tabName) {
+            // Désactiver tous les onglets
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Activer l'onglet sélectionné
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // Charger le contenu si nécessaire
+            if (tabName === 'community') {
+                loadCommunityFeed();
+            }
+        }
+
+        // ========================================
+        // UTILITAIRES
+        // ========================================
+        function formatTimeAgo(timestamp) {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (seconds < 60) return 'À l\'instant';
+            if (seconds < 3600) return `Il y a ${Math.floor(seconds / 60)}m`;
+            if (seconds < 86400) return `Il y a ${Math.floor(seconds / 3600)}h`;
+            return `Il y a ${Math.floor(seconds / 86400)}j`;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // ========================================
+        // INITIALISATION
+        // ========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 ZNK Social Profile Initialisé');
+            
+            // Charger le profil utilisateur
+            loadUserProfile();
+            
+            // Charger les posts
+            loadPosts();
+            
+            // Vérifier la connexion
+            checkConnection();
+            
+            console.log('✅ Prêt à l\'emploi');
+        });
+    </script>
+</body>
+</html>

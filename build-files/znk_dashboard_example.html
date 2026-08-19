@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon img {
+            width: 24px;
+            height: 24px;
+            filter: brightness(0) invert(1);
+        }
+
+        .logo-text {
+            font-size: 1.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Menu */
+        .menu {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .menu-section {
+            margin-bottom: 30px;
+        }
+
+        .menu-section-title {
+            padding: 0 20px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .sidebar.collapsed .menu-section-title {
+            display: none;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-item.active {
+            background: rgba(102, 126, 234, 0.2);
+            border-left: 3px solid #667eea;
+        }
+
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .menu-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .menu-label {
+            font-size: 0.95em;
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .menu-label {
+            display: none;
+        }
+
+        .menu-badge {
+            margin-left: auto;
+            background: #e74c3c;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        .sidebar.collapsed .menu-badge {
+            display: none;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            height: 70px;
+            background: #1a1a2e;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .search-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 300px;
+        }
+
+        .search-box input {
+            background: none;
+            border: none;
+            color: #fff;
+            outline: none;
+            width: 100%;
+        }
+
+        .search-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.5;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .mode-indicator {
+            background: rgba(102, 126, 234, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-indicator.dev {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+
+        .mode-indicator.build {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: #0f0f0f;
+        }
+
+        .content-header {
+            margin-bottom: 30px;
+        }
+
+        .content-title {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .content-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1em;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .stat-card-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-card-icon img {
+            width: 28px;
+            height: 28px;
+        }
+
+        .stat-card-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-card-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9em;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon" id="logoIcon">
+                    <!-- Icon chargé dynamiquement -->
+                </div>
+                <div class="logo-text">ZNK237</div>
+            </div>
+            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        </div>
+
+        <nav class="menu" id="menu">
+            <div class="loading">Chargement du menu</div>
+        </nav>
+
+        <div style="padding: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <div id="adapterInfo" style="font-size: 0.85em; color: rgba(255, 255, 255, 0.6);">
+                Chargement...
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Rechercher...">
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="mode-indicator" id="modeIndicator">
+                    <span>⏳</span>
+                    <span>Chargement...</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h1 class="content-title">Dashboard</h1>
+                <p class="content-subtitle">Vue d'ensemble de votre système ZNK237</p>
+            </div>
+
+            <div class="cards-grid" id="statsCards">
+                <div class="loading">Chargement des statistiques</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Configuration du menu
+        const menuStructure = [
+            {
+                section: 'Principal',
+                items: [
+                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', active: true },
+                    { id: 'analytics', label: 'Analytiques', icon: 'analytics' },
+                    { id: 'reports', label: 'Rapports', icon: 'reports' }
+                ]
+            },
+            {
+                section: 'Gestion',
+                items: [
+                    { id: 'users', label: 'Utilisateurs', icon: 'users', badge: 12 },
+                    { id: 'teams', label: 'Équipes', icon: 'teams' },
+                    { id: 'projects', label: 'Projets', icon: 'projects', badge: 5 }
+                ]
+            },
+            {
+                section: 'Configuration',
+                items: [
+                    { id: 'settings', label: 'Paramètres', icon: 'settings' },
+                    { id: 'security', label: 'Sécurité', icon: 'security' },
+                    { id: 'integrations', label: 'Intégrations', icon: 'integrations' }
+                ]
+            }
+        ];
+
+        // Configuration des cartes stats
+        const statsConfig = [
+            { icon: 'users', label: 'Utilisateurs actifs', value: '1,234' },
+            { icon: 'projects', label: 'Projets en cours', value: '42' },
+            { icon: 'reports', label: 'Rapports générés', value: '89' },
+            { icon: 'analytics', label: 'Performance', value: '95%' }
+        ];
+
+        // Fonctions
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        async function initializeApp() {
+            try {
+                // 1. Charger le mode
+                await loadModeIndicator();
+
+                // 2. Charger le logo
+                await loadLogo();
+
+                // 3. Charger le menu
+                await loadMenu();
+
+                // 4. Charger les stats
+                await loadStats();
+
+                // 5. Charger l'info adaptateur
+                await loadAdapterInfo();
+
+            } catch (error) {
+                console.error('Erreur initialisation:', error);
+                showError(error.message);
+            }
+        }
+
+        async function loadModeIndicator() {
+            const mode = await window.znkIcons.getMode();
+            const indicator = document.getElementById('modeIndicator');
+            
+            const isDev = mode.isDev;
+            const className = isDev ? 'dev' : 'build';
+            const icon = isDev ? '🔧' : '📦';
+            const text = mode.mode;
+
+            indicator.className = `mode-indicator ${className}`;
+            indicator.innerHTML = `<span>${icon}</span><span>${text}</span>`;
+        }
+
+        async function loadLogo() {
+            const logoIcon = await window.znkIcons.resolve('logo');
+            
+            if (logoIcon) {
+                document.getElementById('logoIcon').innerHTML = 
+                    `<img src="${logoIcon}" alt="Logo" />`;
+            }
+        }
+
+        async function loadMenu() {
+            const menuEl = document.getElementById('menu');
+            menuEl.innerHTML = '';
+
+            for (const section of menuStructure) {
+                // Section title
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'menu-section';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'menu-section-title';
+                titleDiv.textContent = section.section;
+                sectionDiv.appendChild(titleDiv);
+
+                // Items
+                for (const item of section.items) {
+                    const iconUrl = await window.znkIcons.resolve(item.icon);
+                    
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = `menu-item ${item.active ? 'active' : ''}`;
+                    itemDiv.id = `menu-${item.id}`;
+                    
+                    itemDiv.innerHTML = `
+                        <div class="menu-icon">
+                            <img src="${iconUrl || ''}" alt="${item.label}" />
+                        </div>
+                        <span class="menu-label">${item.label}</span>
+                        ${item.badge ? `<span class="menu-badge">${item.badge}</span>` : ''}
+                    `;
+                    
+                    itemDiv.addEventListener('click', () => selectMenuItem(item.id));
+                    sectionDiv.appendChild(itemDiv);
+                }
+
+                menuEl.appendChild(sectionDiv);
+            }
+        }
+
+        async function loadStats() {
+            const statsEl = document.getElementById('statsCards');
+            statsEl.innerHTML = '';
+
+            for (const stat of statsConfig) {
+                const iconUrl = await window.znkIcons.resolve(stat.icon);
+                
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                
+                card.innerHTML = `
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon">
+                            <img src="${iconUrl || ''}" alt="${stat.label}" />
+                        </div>
+                    </div>
+                    <div class="stat-card-value">${stat.value}</div>
+                    <div class="stat-card-label">${stat.label}</div>
+                `;
+                
+                statsEl.appendChild(card);
+            }
+        }
+
+        async function loadAdapterInfo() {
+            const mode = await window.znkIcons.getMode();
+            const integrity = await window.znkIcons.checkIntegrity();
+            
+            const infoEl = document.getElementById('adapterInfo');
+            infoEl.innerHTML = `
+                <div style="margin-bottom: 5px;">
+                    <strong>📁 ${mode.config.iconsPath}</strong>
+                </div>
+                <div style="margin-bottom: 5px;">
+                    📄 ${mode.config.manifestFile}
+                </div>
+                <div>
+                    🎨 ${integrity.iconsFound} icônes
+                </div>
+            `;
+        }
+
+        function selectMenuItem(itemId) {
+            // Désactiver tous les items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Activer l'item cliqué
+            const item = document.getElementById(`menu-${itemId}`);
+            if (item) {
+                item.classList.add('active');
+            }
+            
+            console.log('Menu sélectionné:', itemId);
+        }
+
+        function showError(message) {
+            const contentArea = document.querySelector('.content-area');
+            contentArea.innerHTML = `
+                <div style="text-align: center; padding: 50px;">
+                    <div style="font-size: 3em; margin-bottom: 20px;">❌</div>
+                    <h2>Erreur</h2>
+                    <p style="color: rgba(255, 255, 255, 0.6); margin-top: 10px;">
+                        ${message}
+                    </p>
+                </div>
+            `;
+        }
+
+        // Initialiser au chargement
+        window.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>

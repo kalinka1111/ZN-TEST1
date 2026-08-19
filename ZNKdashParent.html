@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>©ZNK - Dashboard Membre-Parent</title>
+    <style>
+        /* ==========================================
+           RESET & VARIABLES
+           ========================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --znk-bg-primary: #919191;
+            --znk-bg-secondary: #aaaaaa;
+            --znk-bg-card: #606060;
+            --znk-accent: #7b219f;
+            --znk-accent-hover: #7a7a7a;
+            --znk-text-primary: #ffffff;
+            --znk-text-secondary: #c0c0c0;
+            --znk-text-muted: #aaaaaa;
+            --znk-border: #aaaaaa;
+            --znk-glass: #1a0a53;
+            --znk-success: #d357fe;
+            --znk-warning: #d29922;
+            --znk-danger: #da3633;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #002e7a 0%, #1a1f35 50%, #606060 100%);
+            color: var(--znk-text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: var(--znk-glass);
+            backdrop-filter: blur(40px);
+            border-bottom: 1px solid var(--znk-border);
+            padding: 12px 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--znk-accent);
+            cursor: pointer;
+        }
+
+        .search-container {
+            position: relative;
+            width: 280px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 16px 8px 40px;
+            background: var(--znk-bg-card);
+            border: 1px solid var(--znk-border);
+            border-radius: 20px;
+            color: var(--znk-text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--znk-accent);
+            box-shadow: 0 0 0 2px #0042aa;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--znk-bg-card);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background: var(--znk-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px #d357fe;
+        }
+
+        .header-btn img {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+        }
+
+        /* Variante rectangulaire pour le bouton Studios : plus large,
+           coins arrondis au lieu du cercle, pour se démarquer des
+           autres icônes rondes du header (messages, notifications...) */
+        .header-btn.studio {
+            width: 77px;
+            height: 45px;
+            border-radius: 12px;
+        }
+
+        .header-btn.studio img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .user-avatar-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--znk-accent), #667eea);
+            border: 2px solid #606060;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .user-avatar-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px #606060;
+        }
+
+        .user-avatar-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* LAYOUT PRINCIPAL */
+        .main-layout {
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: 120px 1fr 380px;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1700px;
+            margin-left: auto;
+            margin-right: auto;
+            transition: grid-template-columns 0.3s ease;
+            height: calc(100vh - 84px);
+        }
+
+        .main-layout.no-sidebar-right {
+            grid-template-columns: 120px 1fr;
+        }
+
+        /* SIDEBAR GAUCHE */
+        .sidebar-left {
+            position: sticky;
+            top: 80px;
+            height: fit-content;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 12px;
+            color: var(--znk-text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: #606060;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px #606060;
+        }
+
+        .icon-placeholder {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #606060, rgba(16,185,129,0.06));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #606060;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .icon-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: inherit;
+        }
+
+        .icon-placeholder[data-role="user-p"] {
+            cursor: pointer;
+            border: 2px solid #606060;
+        }
+
+        .icon-placeholder[data-role="user-profile"]:hover {
+            border-color: var(--znk-accent);
+            box-shadow: 0 0 20px #606060;
+        }
+
+        /* MODULE CONTAINER */
+        .module-container {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #moduleContainer {
+            width: 100%;
+            flex: 1;
+            overflow: hidden;
+            padding: 0;
+            position: relative;
+        }
+
+        #moduleContainer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 12px;
+            display: block;
+        }
+
+        .module-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--znk-border);
+            border-top-color: var(--znk-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner-text {
+            margin-top: 16px;
+            color: var(--znk-text-secondary);
+            font-size: 14px;
+        }
+
+        /* SIDEBAR DROITE */
+        .sidebar-right {
+            position: sticky;
+            top: 80px;
+            height: fit-content;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-right.hidden {
+            display: none;
+        }
+
+        .widget {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .widget-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--znk-accent);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .widget-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+        }
+
+        .widget-item:hover { background: #606060; }
+
+        .widget-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--znk-accent), #7a7a7a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        .widget-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .widget-info { flex: 1; }
+        .widget-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+        .widget-desc { font-size: 11px; color: var(--znk-text-muted); }
+
+        .widget-open-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 9px;
+            background: var(--znk-bg-card);
+            border: 1px solid var(--znk-border);
+            color: var(--znk-text-primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .widget-open-btn:hover {
+            background: var(--znk-accent);
+            border-color: var(--znk-accent);
+        }
+
+        .widget-avatar { position: relative; flex-shrink: 0; }
+
+        .widget-online-dot {
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--znk-success);
+            border: 2px solid var(--znk-glass);
+        }
+
+        .widget-count-badge {
+            margin-left: auto;
+            background: rgba(35, 134, 54, 0.15);
+            color: var(--znk-success);
+            border: 1px solid var(--znk-success);
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .widget-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .widget-title-row .widget-title { margin-bottom: 0; }
+
+        .contact-field {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--znk-border);
+            border-radius: 10px;
+            padding: 9px 12px;
+            color: var(--znk-text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            margin-bottom: 8px;
+        }
+
+        .contact-field:focus {
+            outline: none;
+            border-color: var(--znk-accent);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        textarea.contact-field {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        /* ==========================================
+           RESPONSIVE
+           ========================================== */
+
+        /* TABLETTE : on garde 3 colonnes mais on resserre */
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 100px 1fr 320px;
+                gap: 16px;
+            }
+        }
+
+        /* TABLETTE PORTRAIT / PETITE TABLETTE : sidebar droite passe sous le contenu */
+        @media (max-width: 1024px) {
+            .main-layout,
+            .main-layout.no-sidebar-right {
+                grid-template-columns: 90px 1fr;
+                height: auto;
+            }
+            .sidebar-right {
+                position: static;
+                max-height: none;
+                grid-column: 1 / -1;
+            }
+            .module-container { min-height: 70vh; }
+        }
+
+        /* MOBILE : tout en colonne, nav en bas, sidebar droite masquée par défaut */
+        @media (max-width: 768px) {
+            body { overflow-x: hidden; }
+
+            .header { padding: 10px 12px; }
+            .logo { font-size: 18px; }
+            .search-container { display: none; }
+            .header-btn { width: 40px; height: 40px; }
+            .header-btn img { width: 22px; height: 22px; }
+            .header-btn.studio { width: 56px; height: 36px; }
+            .user-avatar-btn { width: 38px; height: 38px; }
+            #statTime { display: none; }
+            .header-right { gap: 6px; }
+
+            .main-layout {
+                margin-top: 56px;
+                grid-template-columns: 1fr;
+                padding: 12px 12px 84px 12px; /* padding-bottom = place pour la nav fixe en bas */
+                gap: 12px;
+                height: auto;
+                min-height: calc(100dvh - 56px);
+            }
+            .main-layout.no-sidebar-right { grid-template-columns: 1fr; }
+
+            .sidebar-left {
+                position: fixed;
+                bottom: 0; left: 0; right: 0; top: auto;
+                width: 100%; height: auto; z-index: 900;
+                background: var(--znk-glass);
+                backdrop-filter: blur(20px);
+                border-top: 1px solid var(--znk-border);
+                padding: 6px 8px;
+                display: flex;
+                flex-direction: row;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .sidebar-left .nav-section {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                margin-bottom: 0;
+                border: none;
+                background: transparent;
+                padding: 4px;
+                gap: 8px;
+            }
+            .icon-placeholder { width: 46px; height: 46px; }
+
+            .module-container { min-height: 60vh; border-radius: 12px; }
+
+            .sidebar-right {
+                grid-column: 1 / -1;
+                /* !important nécessaire : le JS de loadModule() met un style inline
+                   display:block sur cette sidebar pour certains modules (profil, mur).
+                   Sur mobile on ne veut jamais l'afficher, faute de place. */
+                display: none !important;
+            }
+        }
+
+        /* TRES PETIT ECRAN */
+        @media (max-width: 420px) {
+            .logo { font-size: 16px; }
+            .header-btn { width: 36px; height: 36px; }
+            .header-btn.studio { width: 50px; height: 34px; }
+            .icon-placeholder { width: 42px; height: 42px; }
+            .widget { padding: 14px; }
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #606060; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--znk-accent); }
+    </style>
+    <!-- ZNK P2P Manager -->
+<script src="/js/znk-p2p-manager.js"></script>
+<script>
+    // Initialiser le manager P2P global
+    let znkP2P = null;
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        znkP2P = new ZNKP2PManager({
+            apiUrl: 'https://api.znk.app/v1'  // Votre URL API
+        });
+        
+        console.log('📡 P2P Manager initialisé');
+        
+        // Afficher les stats dans la console
+        const stats = znkP2P.getStats();
+        console.log('📊 Stats P2P:', stats);
+    });
+</script>
+<script src="./ZNKAuthSystem/znk-session.js"></script>
+<script src="./ZNKAuthSystem/znk-user-widget.js"></script>
+</head>
+<body data-znk-protected>
+
+    <header class="header">
+        <div class="header-left">
+            <div class="logo" onclick="goHome()">ZNK PARENT<span style="color:#d357fe;font-size:12px;font-weight:600;vertical-align:middle;margin-left:4px;">+ PARENT</span></div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Rechercher...">
+            </div>
+        </div>
+        <div class="header-right">
+        
+            <button class="header-btn" onclick="openMessaging()" title="Messages">
+                <img src="./icons/message.svg" alt="Messages" onerror="this.outerHTML='<span style=font-size:20px>💬</span>'">
+            </button>
+            <button class="header-btn" onclick="openNotifications()" title="Notifications">
+                <img src="./icons/notifications.svg" alt="Notifications" onerror="this.outerHTML='<span style=font-size:20px>🔔</span>'">
+            </button>       
+              <button class="header-btn" onclick="openNomad()"  title="nomad">
+                <img src="./icons/nomad.svg" alt="nomad" onerror="this.outerHTML='<span style=font-size:20px>⚙️</span>'">
+            </button>
+            <button class="header-btn" onclick="openEnfantsPicker()" title="Mes enfants">
+                <img src="./icons/parents.svg" alt="Mes enfants" onerror="this.outerHTML='<span style=font-size:20px>👨‍👩‍👧</span>'">
+            </button>
+            <div style="display:flex;align-items:center;gap:8px">
+                <div id="statTime" style="color:var(--znk-text-secondary); font-size:13px; min-width:64px; text-align:right">--:--</div>
+                <div class="user-avatar-btn" id="userAvatar" onclick="openUserInfos()" title="Infos utilisateur">
+                    <img src="./icons/settings.svg" alt="Paramètres" onerror="this.outerHTML='<span style=font-size:20px>⚙️</span>'">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <aside class="sidebar-left">
+            <nav class="nav-section">
+                <div class="nav-link active" onclick="loadModule('user-profile')" title="Profil Utilisateur" id="profileNavLink">
+                    <span class="icon-placeholder" data-role="user-profile" id="sidebarProfileIcon">
+                        <img src="./icons/user-profile.svg" alt="Profil" onerror="this.outerHTML='<span style=font-size:28px>👤</span>'">
+                    </span>
+                </div>
+               
+            </nav>
+            <nav class="nav-section">
+                 <div class="nav-link" onclick="openEnfantsPicker()" title="Mes enfants">
+                    <span class="icon-placeholder" data-role="enfants">
+                        <img src="./icons/parents.svg" alt="Mes enfants" onerror="this.outerHTML='<span style=font-size:28px>👨‍👩‍👧</span>'">
+                    </span>
+                </div>
+                  <div class="nav-link" onclick="loadModule('artflow-etudes')" title="artflow-etudes">
+                    <span class="icon-placeholder" data-role="artflow-etudes">
+                        <img src="./icons/artflow-etudes.svg" alt="artflow-etudes" onerror="this.outerHTML='<span style=font-size:28px>📻</span>'">
+                    </span>
+                </div>
+                       <div class="nav-link" onclick="loadModule('fida-social')" title="fida-social">
+                    <span class="icon-placeholder" data-role="gap">
+                        <img src="./icons/fida-social.svg" alt="fida-social" onerror="this.outerHTML='<span style=font-size:28px>📻</span>'">
+                    </span>
+                    </div>
+                    <div class="nav-link" onclick="loadModule('elevesArt')" title="Galerie ART ETUDES">
+                    <span class="icon-placeholder" data-role="elevesArt">
+                        <img src="./icons/elevesArt.svg" alt="elevesArt" onerror="this.outerHTML='<span style=font-size:28px>📺</span>'">
+                    </span>
+                    </div>
+               
+                <div class="nav-link" onclick="loadModule('whatsznk')" title="WhatsZNK">
+                    <span class="icon-placeholder" data-role="whatsznk">
+                        <img src="./icons/whatsznk.svg" alt="WhatsZNK" onerror="this.outerHTML='<span style=font-size:28px>💬</span>'">
+                    </span>          
+                </div>
+            
+               </nav>
+        </aside>
+
+        <main class="module-container">
+            <div id="moduleContainer">
+                <div class="module-loading">
+                    <div style="font-size: 64px; margin-bottom: 24px;">🎯</div>
+                    <h2 style="font-size: 24px; margin-bottom: 12px;">ZNK Dashboard</h2>
+                    <p style="color: var(--znk-text-secondary); text-align: center; max-width: 400px;">
+                        Sélectionnez un module pour commencer
+                    </p>
+                </div>
+            </div>
+        </main>
+
+        <aside class="sidebar-right">
+            <!-- Publications FIDA-Social -->
+            <div class="widget">
+                <h3 class="widget-title">📡 Publications FIDA-Social</h3>
+                <div id="fidaSocialPreview">
+                    <div class="widget-item">
+                        <div class="widget-info"><div class="widget-desc">Chargement...</div></div>
+                    </div>
+                </div>
+                <button class="widget-open-btn" onclick="loadModule('fida-social')">Voir toutes les publications</button>
+            </div>
+
+            <!-- Ma Télé -->
+            <div class="widget">
+                <h3 class="widget-title">📺 Ma Télé</h3>
+                <div class="widget-item">
+                    <div class="widget-info"><div class="widget-desc">Émissions, séries et directs ZNK</div></div>
+                </div>
+                <button class="widget-open-btn" onclick="loadModule('ma-tele')">Ouvrir Ma Télé</button>
+            </div>
+
+            <!-- Utilisateurs connectés -->
+            <div class="widget">
+                <div class="widget-title-row">
+                    <h3 class="widget-title" style="margin-bottom:0;">🟢 Utilisateurs connectés</h3>
+                    <span class="widget-count-badge" id="onlineUsersCount">0</span>
+                </div>
+                <div id="onlineUsersList" style="margin-top:12px;"></div>
+            </div>
+
+            <!-- Contactez-moi -->
+            <div class="widget">
+                <h3 class="widget-title">✉️ Contactez-moi</h3>
+                <form id="contactForm" onsubmit="return sendContactMessage(event)">
+                    <input type="text" class="contact-field" id="contactName" placeholder="Votre nom" required>
+                    <input type="email" class="contact-field" id="contactEmail" placeholder="Votre email" required>
+                    <textarea class="contact-field" id="contactMessage" placeholder="Votre message..." required></textarea>
+                    <button type="submit" class="widget-open-btn" style="background:linear-gradient(135deg, var(--znk-accent), var(--znk-accent-hover)); border:none;">📤 Envoyer</button>
+                </form>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Sélecteur d'enfant : s'affiche quand plusieurs enfants sont reliés,
+         avant d'ouvrir l'espace études de l'un d'eux. -->
+    <div id="enfantsPickerOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:var(--znk-glass); border:1px solid var(--znk-border); border-radius:16px; padding:20px; width:320px; max-width:90vw;">
+            <h3 style="color:var(--znk-text-primary); margin-bottom:12px; font-size:16px;">👨‍👩‍👧 Choisir un enfant</h3>
+            <div id="enfantsPickerList"></div>
+            <button onclick="closeEnfantsPicker()" style="margin-top:14px; width:100%; padding:10px; border-radius:10px; border:1px solid var(--znk-border); background:transparent; color:var(--znk-text-secondary); cursor:pointer;">Annuler</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration des modules - CHEMINS SIMPLIFIÉS COMME STUDIOS
+        const MODULES_CONFIG = {
+            'user-profile': { name: 'Mon Profil', path: './modules/user-profile.html' },
+             'elevesArt': { name: 'Galerie ART. ETUDES', path: './elevesArt.html' },
+             'infos-user': { name: 'Infos Utilisateur', path: './infos-user.html' },   
+             'nomad': { name: 'Nomad', path: './modules/nomad.html' },          
+             'email': { name: 'Email', path: './modules/email.html' },
+            'messages': { name: 'Messages', path: '' },
+            'etudes': { name: 'Etudes', path: './modules-etudes/etudes.html' },               
+             'artflow-etudes': { name: 'Artflow Etudes', path: './artflow-etudes.html' },
+             'fida-social': { name: 'FIDA', path: './fida-social.html' },
+              'gallery': { name: 'Gallery', path: './gallery.html' },
+            'whatsznk': { name: 'WhatsZNK', path: './whatsznk.html' },
+            'parents': { name: 'Parents', path: './modules-etudes/parents.html' },
+            // Espace études de l'enfant sélectionné (voir openEnfantEtudes()) :
+            // znk_eleve_session est positionné juste avant le chargement de ce module.
+            'etudes-enfant': { name: 'Espace de mon enfant', path: './ZNKartEtudesDash.html' }
+            
+        };
+
+      // Charger un module - AVEC GESTION SIDEBAR DROITE
+function loadModule(moduleName) {
+    console.log('📂 Chargement du module:', moduleName);
+    
+    const container = document.getElementById('moduleContainer');
+    const sidebarRight = document.querySelector('.sidebar-right');
+    const mainLayout = document.querySelector('.main-layout');
+    
+    // DIAGNOSTIC COMPLET
+    console.log('🔍 Diagnostic sidebar droite:');
+    console.log('  - sidebarRight existe?', !!sidebarRight);
+    console.log('  - mainLayout existe?', !!mainLayout);
+    if (sidebarRight) {
+        console.log('  - Classes actuelles:', sidebarRight.className);
+        console.log('  - Style display actuel:', sidebarRight.style.display);
+        console.log('  - Computed display:', window.getComputedStyle(sidebarRight).display);
+    }
+    
+    // AFFICHER la sidebar droite pour user-profile ET le Mur
+    if (moduleName === 'user-profile' || moduleName === 'wall') {
+        console.log('👤 Profil/Mur détecté - Affichage sidebar droite');
+        
+        if (sidebarRight) {
+            // Retirer TOUTES les classes qui pourraient masquer
+            sidebarRight.classList.remove('hidden');
+            sidebarRight.classList.remove('d-none');
+            
+            // Forcer l'affichage avec !important via style inline
+            sidebarRight.style.display = 'block';
+            sidebarRight.style.visibility = 'visible';
+            sidebarRight.style.opacity = '1';
+            
+            console.log('✅ Sidebar droite affichée');
+            console.log('  - Nouvelles classes:', sidebarRight.className);
+            console.log('  - Nouveau display:', sidebarRight.style.display);
+
+            loadOnlineUsers();
+            loadFidaSocialPreview();
+        } else {
+            console.error('❌ .sidebar-right introuvable dans le DOM!');
+        }
+        
+        if (mainLayout) {
+            mainLayout.classList.remove('no-sidebar-right');
+            console.log('✅ Classe no-sidebar-right retirée du main-layout');
+        }
+    } else {
+        console.log('📦 Autre module - Masquage sidebar droite');
+        
+        if (sidebarRight) {
+            sidebarRight.classList.add('hidden');
+            sidebarRight.style.display = 'none';
+        }
+        if (mainLayout) {
+            mainLayout.classList.add('no-sidebar-right');
+        }
+    }
+
+    const moduleConfig = MODULES_CONFIG[moduleName];
+    if (!moduleConfig) {
+        console.error(`❌ Module ${moduleName} non trouvé dans la config`);
+        container.innerHTML = `
+            <div class="module-loading">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                <div style="color: var(--znk-text-secondary);">Module "${moduleName}" non trouvé</div>
+            </div>
+        `;
+        return;
+    }
+
+    console.log('✅ Config trouvée:', moduleConfig);
+
+    // Afficher le loader
+    container.innerHTML = `
+        <div class="module-loading">
+            <div class="spinner"></div>
+            <div class="spinner-text">Chargement de ${moduleConfig.name}...</div>
+        </div>
+    `;
+
+            // Charger le module après un court délai
+            //
+            // Modules qui ont besoin de window.electronAPI (ex: video-converter,
+            // audio-manager, et par défaut tous les autres) doivent être chargés en
+            // <webview> avec leur PROPRE preload : une <iframe> classique ne reçoit
+            // jamais le preload de la fenêtre parente dans Electron.
+            //
+            // Comportement : webview (avec electronAPI) PAR DÉFAUT pour tout module.
+            // Pour désactiver explicitement sur un module qui n'en a pas besoin,
+            // ajoute `needsElectronAPI: false` dans sa config dans MODULES_CONFIG.
+            setTimeout(async () => {
+                console.log('🔄 Création du module vers:', moduleConfig.path);
+
+                const needsElectronAPI = moduleConfig.needsElectronAPI !== false;
+
+                if (needsElectronAPI && window.electronAPI && typeof window.electronAPI.getPreloadPath === 'function') {
+                    try {
+                        const preloadUrl = await window.electronAPI.getPreloadPath();
+                        container.innerHTML = `
+                            <webview
+                                id="moduleIframe"
+                                src="${moduleConfig.path}"
+                                preload="${preloadUrl}"
+                                webpreferences="contextIsolation=yes, nodeIntegration=no"
+                                style="width:100%; height:100%; border:none; border-radius:12px;"
+                                title="${moduleConfig.name}"
+                            ></webview>
+                        `;
+                        const wv = document.getElementById('moduleIframe');
+                        wv.addEventListener('dom-ready', () => console.log('✅ Webview prête:', '${moduleName}'));
+                        wv.addEventListener('did-fail-load', (e) => console.error('❌ Erreur chargement webview:', '${moduleName}', e));
+                    } catch (err) {
+                        console.error('❌ Impossible de récupérer le chemin du preload, fallback iframe:', err);
+                        container.innerHTML = `
+                            <iframe 
+                                id="moduleIframe"
+                                src="${moduleConfig.path}" 
+                                style="width:100%; height:100%; border:none; border-radius:12px;"
+                                title="${moduleConfig.name}"
+                                sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+                                onload="console.log('✅ Iframe chargée:', '${moduleName}')"
+                                onerror="console.error('❌ Erreur chargement iframe:', '${moduleName}')"
+                            ></iframe>
+                        `;
+                    }
+                } else {
+                    container.innerHTML = `
+                        <iframe 
+                            id="moduleIframe"
+                            src="${moduleConfig.path}" 
+                            style="width:100%; height:100%; border:none; border-radius:12px;"
+                            title="${moduleConfig.name}"
+                            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+                            onload="console.log('✅ Iframe chargée:', '${moduleName}')"
+                            onerror="console.error('❌ Erreur chargement iframe:', '${moduleName}')"
+                        ></iframe>
+                    `;
+                }
+                setActiveModule(moduleName);
+            }, 300);
+        }
+
+        function setActiveModule(moduleName) {
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            const el = document.querySelector(`.nav-link [data-role="${moduleName}"]`);
+            if (el && el.closest('.nav-link')) {
+                el.closest('.nav-link').classList.add('active');
+            }
+        }
+
+        // ========================================
+        // WIDGETS SIDEBAR DROITE (visibles sur user-profile & wall)
+        // ========================================
+        function getWidgetInitials(name) {
+            const parts = String(name).split(' ').filter(p => p.length > 0);
+            if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            return String(name).substring(0, 2).toUpperCase();
+        }
+
+        // Utilisateurs connectés (simulation P2P - à remplacer par la vraie présence réseau)
+        function loadOnlineUsers() {
+            const listEl = document.getElementById('onlineUsersList');
+            const countEl = document.getElementById('onlineUsersCount');
+            if (!listEl) return;
+
+            let currentUser = null;
+            try { currentUser = JSON.parse(localStorage.getItem('znkUserData') || 'null'); } catch (e) {}
+            const myName = currentUser ? `${currentUser.prenom || ''} ${currentUser.nom || ''}`.trim() : '';
+
+            const onlineUsers = [
+                { name: 'Alice_ZNK', status: 'En studio' },
+                { name: 'Bob_Creator', status: 'Écoute une radio' },
+                { name: 'Charlie_Dev', status: 'En ligne' },
+                { name: myName || 'Vous', status: 'C\'est vous' }
+            ];
+
+            listEl.innerHTML = onlineUsers.map(u => `
+                <div class="widget-item">
+                    <div class="widget-avatar">${getWidgetInitials(u.name)}<div class="widget-online-dot"></div></div>
+                    <div class="widget-info">
+                        <div class="widget-name">${u.name}</div>
+                        <div class="widget-desc">${u.status}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            if (countEl) countEl.textContent = onlineUsers.length;
+        }
+
+        // Contactez-moi
+        function sendContactMessage(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('contactName').value.trim();
+            const email = document.getElementById('contactEmail').value.trim();
+            const message = document.getElementById('contactMessage').value.trim();
+
+            if (!name || !email || !message) return false;
+
+            let currentUser = null;
+            try { currentUser = JSON.parse(localStorage.getItem('znkUserData') || 'null'); } catch (e) {}
+
+            const contactMessages = JSON.parse(localStorage.getItem('znkContactMessages') || '[]');
+            contactMessages.unshift({
+                id: Date.now(),
+                name, email, message,
+                to: currentUser?.id || 'ZNK-000000',
+                timestamp: Date.now()
+            });
+            localStorage.setItem('znkContactMessages', JSON.stringify(contactMessages));
+
+            document.getElementById('contactForm').reset();
+            console.log('✅ Message de contact envoyé');
+            return false;
+        }
+
+        // Aperçu des dernières publications FIDA-Social
+        function loadFidaSocialPreview() {
+            const el = document.getElementById('fidaSocialPreview');
+            if (!el) return;
+
+            let posts = [];
+            try { posts = JSON.parse(localStorage.getItem('fidaSocialPosts') || '[]'); } catch (e) {}
+
+            if (!posts.length) {
+                el.innerHTML = `
+                    <div class="widget-item">
+                        <div class="widget-info"><div class="widget-desc">Aucune publication récente</div></div>
+                    </div>
+                `;
+                return;
+            }
+
+            el.innerHTML = posts.slice(0, 3).map(p => `
+                <div class="widget-item" onclick="loadModule('fida-social')">
+                    <div class="widget-avatar">${getWidgetInitials(p.author || 'ZNK')}</div>
+                    <div class="widget-info">
+                        <div class="widget-name">${p.author || 'Membre ZNK'}</div>
+                        <div class="widget-desc">${(p.content || p.title || '').substring(0, 40)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // NAVIGATION
+        function goHome() { 
+            loadModule('user-profile'); 
+        }
+        
+        function openNomad() {
+            console.log('🧭 Ouverture de nomad');
+            loadModule('nomad');
+        }
+
+        // ========================================
+        // MES ENFANTS : liste les enfants reliés au compte membre-parent
+        // (accountData.enfants, capturés à l'inscription via un code
+        // d'invitation) et ouvre l'espace études (ZNKartEtudesDash.html) de
+        // l'enfant choisi, en s'appuyant sur la même session que celle lue
+        // par ce dashboard côté élève (znk_eleve_session).
+        // ========================================
+        function getEnfants() {
+            const user = window.ZNKSession ? window.ZNKSession.getCurrentUser() : null;
+            return (user && user.enfants) || [];
+        }
+
+        function openEnfantsPicker() {
+            const enfants = getEnfants();
+
+            if (enfants.length === 0) {
+                alert('Aucun enfant relié à ce compte pour le moment. Reliez un enfant via son code d\'invitation depuis l\'inscription, ou contactez l\'enseignant.');
+                return;
+            }
+
+            // Un seul enfant relié : on ouvre directement son espace,
+            // pas besoin de faire choisir.
+            if (enfants.length === 1) {
+                openEnfantEtudes(enfants[0]);
+                return;
+            }
+
+            const listEl = document.getElementById('enfantsPickerList');
+            listEl.innerHTML = enfants.map((e, index) => `
+                <div onclick="openEnfantEtudes(${index})" style="padding:12px; margin-bottom:8px; background:rgba(255,255,255,0.05); border-radius:10px; cursor:pointer; transition:background .2s;"
+                     onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                    <div style="color:var(--znk-text-primary); font-weight:600; font-size:14px;">${e.prenom} ${e.nom}</div>
+                    <div style="color:var(--znk-text-secondary); font-size:11px; margin-top:2px;">${e.niveau || ''}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('enfantsPickerOverlay').style.display = 'flex';
+        }
+
+        function closeEnfantsPicker() {
+            document.getElementById('enfantsPickerOverlay').style.display = 'none';
+        }
+
+        // Accepte soit un index dans getEnfants() (depuis le picker), soit
+        // directement un objet enfant (cas d'un enfant unique).
+        function openEnfantEtudes(enfantOrIndex) {
+            const enfants = getEnfants();
+            const enfant = (typeof enfantOrIndex === 'number') ? enfants[enfantOrIndex] : enfantOrIndex;
+            if (!enfant) return;
+
+            // ZNKartEtudesDash.html lit 'znk_eleve_session' pour savoir quel
+            // élève afficher (voir eleveRaw = localStorage.getItem('znk_eleve_session')).
+            // On y positionne les infos de l'enfant choisi, avec un indicateur
+            // de vue parent, avant d'ouvrir le module.
+            localStorage.setItem('znk_eleve_session', JSON.stringify({
+                loginId: enfant.loginId,
+                profId: enfant.profId,
+                prenom: enfant.prenom,
+                nom: enfant.nom,
+                niveau: enfant.niveau,
+                vueParent: true
+            }));
+
+            closeEnfantsPicker();
+            loadModule('etudes-enfant');
+        }
+
+        function openStudios() { 
+            window.location.href = './ZNKStudiosDash.html'; 
+        }
+        
+        function openMessaging() { 
+            loadModule('email');
+        }
+        
+        function openNotifications() { 
+            console.log('Notifications opened'); 
+        }
+        
+       function openSettings() { 
+            console.log('⚙️ Ouverture des informations utilisateur');
+            loadModule('infos--user');
+        }
+        // Pour l'avatar cliqué dans le header
+        function openUserInfos() { 
+            console.log('👤 Ouverture infos utilisateur depuis avatar');
+            loadModule('infos-user');
+        }
+
+        // Charger les icônes depuis le manifest
+        async function applyIconsFromManifest() {
+            try {
+                const manifestPath = './icons/icons-intro-manifest.json';
+                console.log('🔍 Chargement manifest depuis:', manifestPath);
+                
+                const res = await fetch(manifestPath);
+                if (!res.ok) {
+                    console.warn('⚠️ Manifest non trouvé:', manifestPath);
+                    console.log('Utilisation des placeholders par défaut');
+                    return;
+                }
+                
+                const data = await res.json();
+                const icons = Array.isArray(data.icons) ? data.icons : Object.values(data.icons || {});
+
+                console.log('📦 Manifest chargé avec', icons.length, 'icônes');
+
+                icons.forEach(ic => {
+                    const candidates = [ic.id, ic.name, ic.filename, ic.src, ic.role].filter(Boolean);
+                    candidates.forEach(c => {
+                        const role = String(c).replace(/\.(png|jpg|jpeg|svg)$/i, '').toLowerCase();
+                        
+                        // Appliquer aux placeholders
+                        const elements = document.querySelectorAll(`.icon-placeholder[data-role="${role}"]`);
+                        elements.forEach(el => {
+                            let iconSrc = ic.src || ic.filename || ic.path;
+                            
+                            if (iconSrc && !iconSrc.startsWith('./') && !iconSrc.startsWith('http')) {
+                                iconSrc = `./icons/${iconSrc}`;
+                            } else if (!iconSrc) {
+                                iconSrc = `./icons/${role}.svg`;
+                            }
+                            
+                            el.innerHTML = `<img src="${iconSrc}" alt="${role}">`;
+                            el.style.background = 'transparent';
+                            el.style.border = 'none';
+                            console.log('✓ Icône sidebar appliquée:', role, '->', iconSrc);
+                        });
+
+                        // Appliquer aux images header
+                        const headerImgs = document.querySelectorAll(`.header-btn img[alt="${role}"]`);
+                        headerImgs.forEach(img => {
+                            let iconSrc = ic.src || ic.filename || ic.path;
+                            if (iconSrc && !iconSrc.startsWith('./') && !iconSrc.startsWith('http')) {
+                                iconSrc = `./icons/${iconSrc}`;
+                            }
+                            if (iconSrc) {
+                                img.src = iconSrc;
+                                console.log('✓ Icône header appliquée:', role, '->', iconSrc);
+                            }
+                        });
+                    });
+                });
+                
+                console.log('✅ Toutes les icônes ont été appliquées');
+            } catch (e) {
+                console.error('❌ Erreur chargement manifest:', e);
+                console.log('Utilisation des placeholders par défaut');
+            }
+        }
+// Fonction pour garantir la persistance des vidéos ACTV
+function ensureACTVPersistence() {
+    // Récupération des vidéos depuis le stockage local
+    const savedVideos = localStorage.getItem('actv_published_videos');
+    
+    if (savedVideos) {
+        const videoData = JSON.parse(savedVideos);
+        console.log('✅ Vidéos ACTV restaurées:', videoData.length, 'vidéos');
+        
+        // Réinjecter les vidéos dans la section appropriée
+        displaySavedVideos(videoData);
+    } else {
+        console.log('ℹ️ Aucune vidéo ACTV sauvegardée trouvée');
+    }
+}
+
+// Affiche les vidéos sauvegardées dans la section ACTV
+function displaySavedVideos(videos) {
+    const actvContainer = document.querySelector('.actv-videos-container') || 
+                        document.getElementById('actvVideosSection');
+    
+    if (!actvContainer) {
+        console.warn('⚠️ Section ACTV non trouvée');
+        return;
+    }
+    
+    // Conserver les vidéos existantes avant d'ajouter
+    const existingHTML = actvContainer.innerHTML;
+    
+    // Ajouter les vidéos sauvegardées
+    let newContent = '';
+    
+    videos.forEach(video => {
+        newContent += `
+            <div class="video-item" data-id="${video.id || Date.now()}">
+                <div class="video-thumbnail" style="background-image: url('${video.thumbnail || 'assets/default-thumb.jpg'}')">
+                    <div class="video-duration">${video.duration || '00:00'}</div>
+                    <div class="video-play-button">▶️</div>
+                </div>
+                <div class="video-info">
+                    <h3 class="video-title">${video.title || 'Vidéo sans titre'}</h3>
+                    <p class="video-description">${video.description || 'Aucune description'}</p>
+                    <div class="video-meta">
+                        <span class="video-views">${video.views || '0'} vues</span>
+                        <span class="video-date">${video.date || new Date().toLocaleDateString()}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Ne remplacer que si nous avons du contenu à ajouter
+    if (newContent) {
+        // Vérifier si le contenu existe déjà pour éviter la duplication
+        if (!existingHTML.includes(newContent)) {
+            actvContainer.innerHTML = existingHTML + newContent;
+        }
+    }
+}
+
+// Fonction pour sauvegarder une nouvelle vidéo
+function saveACTVVideo(videoData) {
+    // Récupérer les vidéos existantes
+    const savedVideos = localStorage.getItem('actv_published_videos');
+    let videos = [];
+    
+    if (savedVideos) {
+        videos = JSON.parse(savedVideos);
+    }
+    
+    // Ajouter la nouvelle vidéo
+    videos.push({
+        id: videoData.id || Date.now(),
+        title: videoData.title,
+        description: videoData.description,
+        thumbnail: videoData.thumbnail,
+        duration: videoData.duration,
+        views: videoData.views || '0',
+        date: videoData.date || new Date().toLocaleDateString()
+    });
+    
+    // Sauvegarder dans localStorage
+    localStorage.setItem('actv_published_videos', JSON.stringify(videos));
+    console.log('✅ Nouvelle vidéo ACTV sauvegardée');
+    
+    // Afficher la nouvelle vidéo
+    displaySavedVideos([videoData]);
+}
+
+// Ajouter au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    // Restaurer les vidéos ACTV
+    ensureACTVPersistence();
+    
+    // Observer les changements de module pour s'assurer que les vidéos ACTV restent visibles
+    const moduleContainer = document.getElementById('moduleContainer');
+    
+    if (moduleContainer) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    // Vérifier si nous sommes dans le module ACTV
+                    const actvElement = document.querySelector('[data-module="actv"]') || 
+                                       document.querySelector('.actv-container');
+                    
+                    if (actvElement) {
+                        console.log('🔄 Module ACTV détecté, restauration des vidéos');
+                        ensureACTVPersistence();
+                    }
+                }
+            });
+        });
+        
+        observer.observe(moduleContainer, { childList: true, subtree: true });
+    }
+});
+        // UTILS
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('statTime').textContent = now.toLocaleTimeString('fr-FR', {
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+window.addEventListener('message', (event) => {
+    if (event.data.type === 'navigate') {
+        const iframe = document.getElementById('mainIframe'); // ou votre ID
+        if (iframe) {
+            iframe.src = event.data.url;
+        }
+    }
+});
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 ZNK Admin Dashboard Initialisé');
+            console.log('📍 Location:', window.location.href);
+            console.log('📋 Modules disponibles:', Object.keys(MODULES_CONFIG));
+            
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Charger les icônes
+            applyIconsFromManifest();
+            
+            // Charger automatiquement le profil utilisateur au démarrage
+            loadModule('user-profile');
+
+            // Afficher la photo de l'utilisateur dans l'avatar du header,
+            // si elle a été définie dans les paramètres (infos-user.html).
+            applyHeaderAvatar();
+            
+            console.log('✅ Dashboard prêt à l\'emploi');
+        });
+
+        async function applyHeaderAvatar() {
+            try {
+                if (!window.ZNKSession) return;
+                await window.ZNKSession.ready;
+                const user = window.ZNKSession.getCurrentUser();
+                if (user && user.avatar) {
+                    const img = document.querySelector('#userAvatar img');
+                    if (img) img.src = user.avatar;
+                }
+            } catch (e) { console.warn('⚠️ Avatar header: ZNKSession indisponible:', e); }
+        }
+    </script>
+</body>
+</html>

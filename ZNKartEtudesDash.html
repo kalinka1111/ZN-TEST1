@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>©ZNK - Dashboard Etudes</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root{
+            --znk-bg-primary: #606060;
+            --znk-bg-secondary: #7a7a7a;
+            --znk-bg-end: #444444;
+            --znk-bg-card: #606060;
+            --znk-accent: #606060;
+            --znk-accent-hover: #606060;
+            --znk-text-primary: #ffffff;
+            --znk-text-secondary: #e32400;
+            --znk-text-muted: #f5ec00;
+            --znk-border: #606060;
+            --znk-glass: #102336;
+        }
+
+        body{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, var(--znk-bg-primary) 0%, var(--znk-bg-secondary) 50%, var(--znk-bg-end) 100%);
+            transition: background .3s ease;
+            color: var(--znk-text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header{
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--znk-border);
+            padding: 12px 16px;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px #606060;
+        }
+
+        .header-left{ display:flex; align-items:center; gap:12px; }
+        .logo{ font-size:24px; font-weight:700; color:var(--znk-accent); cursor:pointer; }
+
+        .search-container{ position:relative; width:280px; }
+        .search-input{
+            width:100%;
+            padding:8px 16px 8px 35px;
+            background:var(--znk-bg-card);
+            border:1px solid var(--znk-border);
+            border-radius:20px;
+            color:var(--znk-text-primary);
+            font-size:14px;
+            outline:none;
+            transition:all 0.2s ease;
+        }
+        .search-input:focus{ border-color:var(--znk-accent); box-shadow: 0 0 0 2px #606060; }
+
+        .header-right{ display:flex; align-items:center; gap:8px; }
+        .header-btn{
+            width:65px; height:65px; border-radius:50%;
+            background:var(--znk-bg-card); border:none; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            transition:all 0.2s ease; overflow:hidden; position:relative;
+        }
+        .header-btn:hover{
+            background:var(--znk-accent); transform:translateY(-2px); box-shadow:0 4px 12px #102336;
+        }
+        .header-btn img{ width:53px; height:53px; object-fit:contain; }
+
+        .niveau-selector{ position:relative; }
+        .niveau-btn{
+            height:45px; padding:0 16px; border-radius:20px;
+            background:var(--znk-bg-card); border:none; cursor:pointer;
+            display:flex; align-items:center; gap:8px; color:var(--znk-text-primary);
+            font-size:13px; font-weight:600; transition:all 0.2s ease;
+        }
+        .niveau-btn:hover{ background:var(--znk-accent); transform:translateY(-2px); }
+        .niveau-icon-static{ width:22px; height:22px; object-fit:contain; flex-shrink:0; }
+        .niveau-menu{
+            position:absolute; top:60px; right:0;
+            background:var(--znk-bg-card); border:1px solid var(--znk-border);
+            border-radius:12px; padding:8px; min-width:220px; display:none; z-index:2000;
+            box-shadow:0 8px 24px #606060;
+        }
+        .niveau-menu.active{ display:block; }
+        .niveau-option{ display:flex; align-items:center; gap:10px; padding:12px; border-radius:8px; cursor:pointer; margin-bottom:4px; transition:all .2s ease; font-size:13px; }
+        .niveau-option:hover{ background:rgba(255,255,255,0.06); }
+        .niveau-option.active{ background:var(--znk-accent); font-weight:700; }
+        .niveau-option .niveau-auto-tag{ font-size:10px; opacity:0.7; margin-left:auto; }
+
+        .user-avatar-btn{
+            width:48px; height:48px; border-radius:50%;
+            background: linear-gradient(135deg, var(--znk-accent), #7a7a7a);
+            border:2px solid #606060; cursor:pointer; display:flex; align-items:center; justify-content:center;
+            transition:all .2s ease; overflow:hidden;
+        }
+        .user-avatar-btn:hover{ transform:scale(1.1); box-shadow:0 0 20px #606060; }
+        .user-avatar-btn img{ width:100%; height:100%; object-fit:cover; }
+
+        /* MAIN LAYOUT
+           Default: two columns (left nav + main content).
+           Right sidebar only appears when .show-sidebar-right class is present on .main-layout.
+        */
+        .main-layout{
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1700px;
+            margin-left: auto; margin-right: auto;
+            transition: grid-template-columns 0.3s ease;
+            height: calc(100vh - 84px);
+        }
+
+        /* When active, show right sidebar */
+        .main-layout.show-sidebar-right{
+            grid-template-columns: 120px 1fr 380px;
+        }
+
+        .sidebar-left{
+            position: sticky; top: 80px;
+            height: fit-content; max-height: calc(100vh - 100px); overflow-y: auto;
+        }
+
+        .nav-section{
+            background: var(--znk-glass); backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border); border-radius: 16px; padding: 16px; margin-bottom: 16px;
+            display:flex; flex-direction:column; gap:12px;
+        }
+        .nav-link{
+            display:flex; align-items:center; justify-content:center;
+            padding:8px; border-radius:12px; color:var(--znk-text-secondary);
+            text-decoration:none; transition:all .3s ease; cursor:pointer; position:relative;
+        }
+        .nav-link:hover, .nav-link.active{ background:#606060; transform:scale(1.05); box-shadow:0 4px 12px #606060; }
+
+        .icon-placeholder{
+            width:70px; height:70px; aspect-ratio:1/1; flex-shrink:0; border-radius:12px;
+            background: linear-gradient(135deg, #606060, #785700);
+            display:flex; align-items:center; justify-content:center; border:1px solid #606060; overflow:hidden;
+            transition:all .3s ease;
+        }
+        .icon-placeholder img{ width:100%; height:100%; object-fit:contain; border-radius:inherit; }
+
+        .module-container{
+            background: var(--znk-glass); backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border); border-radius: 16px; overflow: hidden;
+            height: 100%; display:flex; flex-direction:column;
+        }
+
+        /* Ensure iframe can size correctly inside flex container */
+        #moduleContainer{
+            width:100%; flex:1; overflow:hidden; padding:0; position:relative; min-height:0;
+        }
+        #moduleContainer iframe{ width:100%; height:100%; border:none; border-radius:12px; display:block; }
+        /* Chromium ne donne pas de display par défaut correct à <webview> (reste "inline"),
+           ce qui peut fausser sa taille réelle et donc le breakpoint mobile (700px) déclenché
+           en JS dans les modules enfants (ex: dessin-kids.html) -> panneaux latéraux masqués
+           à tort. On force explicitement une taille fiable, comme recommandé par Electron. */
+        #moduleContainer webview{ width:100%; height:100%; border:none; border-radius:12px; display:flex; }
+
+        .module-loading{ display:flex; align-items:center; justify-content:center; flex-direction:column; height:100%; width:100%; }
+        .spinner{ width:40px; height:40px; border:4px solid var(--znk-border); border-top-color:var(--znk-accent); border-radius:50%; animation:spin 1s linear infinite; }
+        @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+        .spinner-text{ margin-top:16px; color:var(--znk-text-secondary); font-size:14px; }
+
+        /* Right sidebar hidden by default. When .show is present it becomes visible. */
+        .sidebar-right{
+            position: sticky; top:80px; height: fit-content; max-height: calc(100vh - 100px);
+            overflow-y: auto; transition: all .3s ease; display: none;
+        }
+        .sidebar-right.show{ display: block; }
+
+        .widget{
+            background: var(--znk-glass); backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border); border-radius: 16px; padding: 20px; margin-bottom: 16px;
+        }
+        .widget-title{ font-size:14px; font-weight:600; color:var(--znk-accent); margin-bottom:15px; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:space-between; }
+        .widget-subtitle{ font-size:11px; color:var(--znk-text-muted); font-weight:400; }
+        .widget-item{ display:flex; align-items:center; gap:12px; padding:10px; border-radius:8px; cursor:pointer; transition:all .2s ease; margin-bottom:4px; border:1px solid transparent; }
+        .widget-item:hover{ background:#606060; border-color:var(--znk-border); transform:translateX(4px); }
+        .widget-avatar{ width:40px; height:40px; border-radius:50%; background: linear-gradient(135deg, var(--znk-accent), #606060); display:flex; align-items:center; justify-content:center; font-weight:600; color:white; font-size:14px; overflow:hidden; flex-shrink:0; }
+        .widget-avatar img{ width:100%; height:100%; object-fit:cover; }
+        .widget-info{ flex:1; min-width:0; }
+        .widget-name{ font-size:13px; font-weight:600; margin-bottom:3px; color:var(--znk-text-primary); }
+        .widget-desc{ font-size:11px; color:var(--znk-text-muted); display:flex; align-items:center; gap:4px; }
+        .badge{ display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; background:var(--znk-accent); color:#606060; }
+
+        .stats-bar{ display:flex; gap:16px; padding:12px; background:#606060; border-radius:8px; margin-top:12px; }
+        .stat-item{ text-align:center; flex:1; }
+        .stat-value{ font-size:18px; font-weight:700; color:var(--znk-accent); }
+        .stat-label{ font-size:10px; color:var(--znk-text-muted); text-transform:uppercase; }
+
+        @media (max-width:1200px){
+            .main-layout.show-sidebar-right{ grid-template-columns: 120px 1fr 320px; }
+        }
+
+        @media (max-width:768px){
+            .main-layout, .main-layout.show-sidebar-right{ grid-template-columns: 1fr; padding:12px; gap:12px; padding-bottom:90px; }
+            .sidebar-left{
+                position: fixed; bottom: 0; left: 0; right: 0; top: auto; width: 100%; height: auto; max-height: 80px; z-index: 900;
+                background: var(--znk-glass); border-top:1px solid var(--znk-border); backdrop-filter: blur(20px);
+            }
+            .nav-section{ flex-direction:row; flex-wrap:wrap; justify-content:center; margin-bottom:0; padding:8px; }
+            .icon-placeholder{ width:50px; height:50px; aspect-ratio:1/1; flex-shrink:0; }
+            .search-container, #statTime{ display:none; }
+            .sidebar-right{ display:none !important; }
+        }
+
+        ::-webkit-scrollbar{ width:8px; height:8px; }
+        ::-webkit-scrollbar-track{ background:#606060; border-radius:10px; }
+        ::-webkit-scrollbar-thumb{ background:#606060; border-radius:10px; }
+        ::-webkit-scrollbar-thumb:hover{ background:var(--znk-accent); }
+    </style>
+    <!-- ZNK P2P Manager -->
+<script src="./js/znk-p2p-manager.js"></script>
+<script src="./ZNKAuthSystem/znk-session.js"></script>
+<script>
+    // Initialiser le manager P2P global
+    let znkP2P = null;
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        znkP2P = new ZNKP2PManager({
+            apiUrl: 'https://api.znk.app/v1'  // Votre URL API
+        });
+        
+        console.log('📡 P2P Manager initialisé');
+        
+        // Afficher les stats dans la console
+        const stats = znkP2P.getStats();
+        console.log('📊 Stats P2P:', stats);
+
+        // P2P actif par classe : on rejoint une salle scopée niveau + professeur,
+        // pour que seuls les élèves de la même classe se découvrent entre eux.
+        joinP2PRoomForCurrentClass();
+    });
+
+    // Calcule un identifiant de "classe" et rejoint la salle P2P correspondante.
+    // NOTE: adaptez joinRoom/setRoom au nom réel de la méthode exposée par
+    // votre ZNKP2PManager (js/znk-p2p-manager.js) — non fourni ici.
+    function joinP2PRoomForCurrentClass() {
+        if (!znkP2P) return;
+        try {
+            const accountRaw = localStorage.getItem('znk_account');
+            const account = accountRaw ? JSON.parse(accountRaw) : null;
+            const eleveRaw = localStorage.getItem('znk_eleve_session');
+            const eleve = eleveRaw ? JSON.parse(eleveRaw) : null;
+
+            const groupe = (typeof currentNiveauGroupe === 'function' && currentNiveauGroupe()) || 'general';
+            const profId = (eleve && eleve.profId) || (account && account.role === 'enseignant' && account.idZNK) || 'sans-prof';
+            const roomId = `classe-${groupe}-${profId}`;
+
+            if (typeof znkP2P.joinRoom === 'function') {
+                znkP2P.joinRoom(roomId);
+            } else if (typeof znkP2P.setRoom === 'function') {
+                znkP2P.setRoom(roomId);
+            } else {
+                console.warn('ZNKP2PManager ne fournit pas encore de joinRoom/setRoom : à implémenter dans znk-p2p-manager.js pour activer le P2P par classe.', roomId);
+            }
+            console.log('📡 Salle P2P (classe) :', roomId);
+        } catch (e) {
+            console.warn('Impossible de déterminer la salle P2P de la classe', e);
+        }
+    }
+</script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo" onclick="goHome()">ZNK Art Etudes</div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Rechercher...">
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button class="header-btn" onclick="loadModule('parents')" title="PARENTS">
+                <img src="./icons/parents.svg" alt="Parents" onerror="this.outerHTML='<span style=font-size:20px>👨‍👩‍👧</span>'">
+            </button>
+            <button class="header-btn" onclick="loadModule('whatsznk')" title="WhatsZNK">
+                <img src="./icons/whatsznk1.svg" alt="WhatsZNK1"onerror="this.outerHTML='<span style=font-size:20px>📚</span>'">
+            </button>
+
+            <div class="niveau-selector">
+                <button class="niveau-btn" onclick="toggleNiveauMenu()" title="Changer de niveau">
+                    <img class="niveau-icon-static" src="./icons/niveau.svg" alt="Niveau"
+                         onerror="this.onerror=null;this.src='./icons/niveau.png';this.onerror=function(){this.style.display='none';};">
+                    <span id="niveauBtnIcon">🎓</span>
+                    <span id="niveauBtnLabel">Niveau</span>
+                </button>
+                <div class="niveau-menu" id="niveauMenu">
+                    <div class="niveau-option" data-niveau="maternelle" onclick="setNiveauOverride('maternelle')">
+                        <span>🎨</span><span>Maternelle</span>
+                    </div>
+                    <div class="niveau-option" data-niveau="primaire" onclick="setNiveauOverride('primaire')">
+                        <span>📚</span><span>Primaire</span>
+                    </div>
+                    <div class="niveau-option" data-niveau="college" onclick="setNiveauOverride('college')">
+                        <span>🎓</span><span>Collège</span>
+                    </div>
+                    <div class="niveau-option" data-niveau="lycee" onclick="setNiveauOverride('lycee')">
+                        <span>🏫</span><span>Lycée</span>
+                    </div>
+                    <div class="niveau-option" data-niveau="" onclick="setNiveauOverride('')">
+                        <span>↺</span><span>Auto (niveau du compte)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- L'ancien sélecteur de thème manuel (Gris/Purple/Blue/Green -> fichiers séparés)
+                 a été retiré : la couleur suit désormais automatiquement le niveau choisi
+                 dans le sélecteur "Niveau" ci-dessus (voir NIVEAU_THEMES / applyNiveauTheme). -->
+
+            <div style="display:flex;align-items:center;gap:8px">
+                <div id="statTime" style="color:var(--znk-text-secondary); font-size:13px; min-width:64px; text-align:right">--:--</div>
+                <div class="user-avatar-btn" id="userAvatar" onclick="openUserInfos()" title="Infos utilisateur">
+                    <img src="./icons/settings.svg" alt="Paramètres" onerror="this.outerHTML='<span style=font-size:20px>⚙️</span>'">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-layout" id="mainLayout">
+        <aside class="sidebar-left">
+            <nav class="nav-section">
+                <div class="nav-link active" onclick="loadModule('user-profile')" title="Profil Utilisateur" id="profileNavLink">
+                    <span class="icon-placeholder" data-role="user-profile" id="sidebarProfileIcon">
+                        <img src="./icons/default-avatar.svg" alt="Profil" onerror="this.outerHTML='<span style=font-size:28px>👤</span>'">
+                    </span>
+                </div>
+                  <div class="nav-link" onclick="loadModule('hub-artetudes')" title="SMARTPHONE">
+                    <span class="icon-placeholder" data-role="hub-artetudes">
+                        <img src="./icons/hub-artetudes.svg" alt="Hub-ArtEtudes" onerror="this.outerHTML='<span style=font-size:28px>🌍</span>'">
+                    </span>
+                </div>   
+                <div class="nav-link" onclick="loadModule('etudes')" title="ETUDES">
+                    <span class="icon-placeholder" data-role="etudes">
+                        <img src="./icons/etudes.svg" alt="Etudes" onerror="this.outerHTML='<span style=font-size:28px>🌍</span>'">
+                    </span>
+                </div>               
+            
+                <div class="nav-link" onclick="loadModule('dessin')" title="Dessin">
+                    <span class="icon-placeholder" data-role="dessin">
+                        <img src="./icons/dessin.svg" alt="DESSIN" onerror="this.outerHTML='<span style=font-size:28px>🎨</span>'">
+                    </span>
+                </div>
+                 <div class="nav-link" onclick="loadModule('livremoi')" title="LIVREmoi">
+                    <span class="icon-placeholder" data-role="livremoi">
+                        <img src="./icons/livremoi.svg" alt="LIVREmoi" onerror="this.outerHTML='<span style=font-size:28px>📖</span>'">
+                    </span>
+                </div>
+                 <div class="nav-link" onclick="loadModule('music-studio')" title="music-studio">
+                    <span class="icon-placeholder" data-role="livremoi">
+                        <img src="./icons/music-studio.svg" alt="music-studio" onerror="this.outerHTML='<span style=font-size:28px>📖</span>'">
+                    </span>
+                </div>
+
+                <div class="nav-link" onclick="loadModule('carnet')" title="Carnet de Croquis">
+                    <span class="icon-placeholder" data-role="carnet">
+                        <img src="./icons/carnet.svg" alt="Carnet de Croquis" onerror="this.outerHTML='<span style=font-size:28px>📔</span>'">
+                    </span>
+                </div>
+                 <div class="nav-link" onclick="loadModule('elevesart')" title="Galerie des Artistes">
+                    <span class="icon-placeholder" data-role="elevesart">
+                        <img src="./icons/elevesart.svg" alt="Galerie des Artistes" onerror="this.outerHTML='<span style=font-size:28px>🖼️</span>'">
+                    </span>
+                </div>
+
+                <div class="nav-link" onclick="loadModule('librairie')" title="ZNK Librairie">
+                    <span class="icon-placeholder" data-role="librairie">
+                        <img src="./icons/librairie.svg" alt="ZNK Librairie" onerror="this.outerHTML='<span style=font-size:28px>📚</span>'">
+                    </span>
+                </div>
+               
+                <div class="nav-link" onclick="loadModule('actv')" title="ACTV">
+                    <span class="icon-placeholder" data-role="actv">
+                        <img src="./icons/actv.svg" alt="ACTV" onerror="this.outerHTML='<span style=font-size:28px>📺</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('radio')" title="Radio">
+                    <span class="icon-placeholder" data-role="radio">
+                        <img src="./icons/radio.svg" alt="Radio" onerror="this.outerHTML='<span style=font-size:28px>📻</span>'">
+                    </span>
+                </div>
+                   <div class="nav-link" onclick="loadModule('classe')" title="Ma Classe">
+                    <span class="icon-placeholder" data-role="classe">
+                        <img src="./icons/classe.svg" alt="Ma Classe" onerror="this.outerHTML='<span style=font-size:28px>🏫</span>'">
+                    </span>
+                </div>
+               
+            </nav>
+        </aside>
+
+        <main class="module-container">
+            <div id="moduleContainer">
+                <div class="module-loading">
+                    <div style="font-size: 64px; margin-bottom: 24px;">🎯</div>
+                    <h2 style="font-size: 24px; margin-bottom: 12px;">ZNK Dashboard</h2>
+                    <p style="color: var(--znk-text-secondary); text-align: center; max-width: 400px;">
+                        Sélectionnez un module pour commencer
+                    </p>
+                </div>
+            </div>
+        </main>
+
+        <aside class="sidebar-right" id="sidebarRight" aria-hidden="true">
+            <div class="widget">
+                <h3 class="widget-title">
+                    Mes Statistiques
+                    <span class="widget-subtitle">Cette semaine</span>
+                </h3>
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Leçons</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">8h</div>
+                        <div class="stat-label">Temps</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">95%</div>
+                        <div class="stat-label">Score</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3 class="widget-title">Accès rapide</h3>
+                <div class="widget-item" onclick="loadModule('maternelle')">
+                    <div class="widget-avatar" style="background: linear-gradient(135deg, #a96800, #fec700);">
+                        <span>🦄</span>
+                    </div>
+                    <div class="widget-info">
+                        <div class="widget-name">Maternelle</div>
+                        <div class="widget-desc">
+                            <span>15 enfants</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+    <script>
+        const MODULES_CONFIG = {
+            'user-profile': { name: 'Mon Profil', path: './modules/user-profile.html' },
+             'hub-artetudes': { name: 'hub-artetudes', path: './hub-artetudes.html', openAsHub: true },
+            'parents': { name: 'Parents', path: './modules-etudes/parents.html' },
+            'whatsznk': { name: 'WhatsZNK', path: './WhatsZNK1.html' },
+            'parametres': { name: 'Paramètres', path: './parametres.html' },
+            'infos-user': { name: 'Infos', path: './infos-user.html' },
+            'dessin': { name: 'DESSIN', path: './modules-etudes/dessin-kids.html' },
+             'music-studio': { name: 'music-studio', path: './modules/music-studio.html' },
+            'carnet': { name: 'Carnet de Croquis', path: './modules-etudes/mesCroquis.html' },          
+            'actv': { name: 'ACTV', path: './actv.html' },
+            'radio': { name: 'Radio', path: './radio.html' },
+            'elevesart': { name: 'Galerie des Artistes', path: './elevesArt.html' },
+            'livremoi': { name: 'LIVREmoi', path: './modules-etudes/ZNK-LIVREmoi.html' },
+            'librairie': { name: 'ZNK Librairie', path: './modules-etudes/ZNKLibrairie.html' },
+            'etudes': { name: 'ETUDES', path: './modules-etudes/etudes.html' },
+            'terminal-professeurs': { name: 'terminal-professeurs', path: './modules-etudes/terminal-professeurs.html' },
+            'terminal-lecons': { name: 'terminal-lecons', path: './modules-etudes/terminal-lecons.html' },
+            'professeur': { name: 'Professeur', path: './modules-etudes/professeur.html' },
+            // Connexion au serveur de classe du prof sur le réseau de l'école
+            // (znk-classroom-*.js) : devoirs + soumissions, fonctionne hors-ligne.
+            'classe': { name: 'Ma Classe', path: './modules-etudes/classe-eleve.html' }
+        };
+
+        document.addEventListener('click', (e) => {
+            const niveauSelector = document.querySelector('.niveau-selector');
+            const niveauMenu = document.getElementById('niveauMenu');
+            if (niveauSelector && !niveauSelector.contains(e.target)) niveauMenu.classList.remove('active');
+        });
+
+        // ===== Gestion du niveau (routage automatique vers ArtEtudes-*.html) =====
+
+        // Correspondance niveau précis (saisi à l'inscription) -> groupe de niveau
+        const NIVEAU_TO_GROUPE = {
+            ps: 'maternelle', ms: 'maternelle', gs: 'maternelle',
+            cp: 'primaire', ce1: 'primaire', ce2: 'primaire', cm1: 'primaire', cm2: 'primaire',
+            '6eme': 'college', '5eme': 'college', '4eme': 'college', '3eme': 'college',
+            seconde: 'lycee', premiere: 'lycee', terminale: 'lycee'
+        };
+
+        const NIVEAU_GROUPE_LABELS = {
+            maternelle: { icon: '🎨', label: 'Maternelle' },
+            primaire: { icon: '📚', label: 'Primaire' },
+            college: { icon: '🎓', label: 'Collège' },
+            lycee: { icon: '🏫', label: 'Lycée' }
+        };
+
+        // ===== Thème (couleurs) par niveau =====
+        // Remplace l'ancien système "1 fichier HTML par couleur" (changeTheme() +
+        // dash-etudes-purple.html / -blue.html / -green.html) : une seule couche de
+        // variables CSS, appliquée dynamiquement selon le même "groupe de niveau" que
+        // celui qui route déjà ARTETUDES_FILES ci-dessous. lycee = thème par défaut
+        // (valeurs actuelles de :root, inchangées).
+        const NIVEAU_THEMES = {
+            maternelle: { // purple
+                bgPrimary: '#2d1b4e', bgSecondary: '#4a2d7a', bgEnd: '#1e1033',
+                bgCard: '#3a2463', accent: '#9b6dff', accentHover: '#b48cff',
+                textSecondary: '#c9b3ff', textMuted: '#a794d1', border: '#5a3d8a', glass: '#1e1033'
+            },
+            primaire: { // orange/ambre chaud (plus de vert)
+                bgPrimary: '#2e2620', bgSecondary: '#a96800', bgEnd: '#232323',
+                bgCard: '#a96800', accent: '#ffaa00', accentHover: '#ffd9a8',
+                textSecondary: '#ffaa00', textMuted: '#d1b68c', border: '#6b5942', glass: '#232323'
+            },
+            college: { // blue
+                bgPrimary: '#0f2740', bgSecondary: '#164066', bgEnd: '#081b2e',
+                bgCard: '#123252', accent: '#2f8fe0', accentHover: '#56a8ec',
+                textSecondary: '#a9d4f5', textMuted: '#7fa9c9', border: '#1f5c8c', glass: '#081b2e'
+            },
+            lycee: { // gris (thème par défaut de :root, repris tel quel)
+                bgPrimary: '#606060', bgSecondary: '#7a7a7a', bgEnd: '#444444',
+                bgCard: '#606060', accent: '#606060', accentHover: '#606060',
+                textSecondary: '#e32400', textMuted: '#f5ec00', border: '#606060', glass: '#102336'
+            }
+        };
+
+        // Applique les variables CSS du thème correspondant au groupe de niveau donné
+        // (fallback silencieux sur "lycee" si le groupe est inconnu/absent).
+        function applyNiveauTheme(groupe) {
+            const theme = NIVEAU_THEMES[groupe] || NIVEAU_THEMES.lycee;
+            const root = document.documentElement.style;
+            root.setProperty('--znk-bg-primary', theme.bgPrimary);
+            root.setProperty('--znk-bg-secondary', theme.bgSecondary);
+            root.setProperty('--znk-bg-end', theme.bgEnd);
+            root.setProperty('--znk-bg-card', theme.bgCard);
+            root.setProperty('--znk-accent', theme.accent);
+            root.setProperty('--znk-accent-hover', theme.accentHover);
+            root.setProperty('--znk-text-secondary', theme.textSecondary);
+            root.setProperty('--znk-text-muted', theme.textMuted);
+            root.setProperty('--znk-border', theme.border);
+            root.setProperty('--znk-glass', theme.glass);
+        }
+
+        // Fichiers dashboard-études par niveau. Le fallback (etudes.html) sert pour le
+        // supérieur / niveau inconnu / niveau non encore déterminé.
+        const ARTETUDES_FILES = {
+            maternelle: './modules-etudes/ArtEtudes-maternelle.html',
+            primaire:   './modules-etudes/ArtEtudes-primaire.html',
+            college:    './modules-etudes/ArtEtudes-college.html',
+            lycee:      './modules-etudes/ArtEtudes-lycee.html'
+        };
+
+        // Détecte le niveau de l'utilisateur connecté à partir des données d'inscription.
+        // Hiérarchie : élève connecté via le compte prof > compte "études" direct > niveau
+        // enseigné par le professeur (par défaut, tant qu'il n'a pas choisi une classe précise).
+        function detectAccountNiveauGroupe() {
+            try {
+                // Élève connecté via un login prof (à adapter selon votre flux auth-hub réel :
+                // stockez ici l'élève actif sous cette clé au moment de la connexion)
+                const eleveSession = localStorage.getItem('znk_eleve_session');
+                if (eleveSession) {
+                    const eleve = JSON.parse(eleveSession);
+                    if (eleve.niveauGroupe) return eleve.niveauGroupe;
+                    if (eleve.niveau && NIVEAU_TO_GROUPE[eleve.niveau]) return NIVEAU_TO_GROUPE[eleve.niveau];
+                }
+
+                const accountRaw = localStorage.getItem('znk_account');
+                if (accountRaw) {
+                    const account = JSON.parse(accountRaw);
+                    if (account.role === 'ecole' && account.niveau && NIVEAU_TO_GROUPE[account.niveau]) {
+                        return NIVEAU_TO_GROUPE[account.niveau];
+                    }
+                    if (account.role === 'enseignant' && account.niveauEnseigne && NIVEAU_TO_GROUPE[account.niveauEnseigne]) {
+                        return NIVEAU_TO_GROUPE[account.niveauEnseigne];
+                    }
+                }
+            } catch (e) {
+                console.warn('Impossible de déterminer le niveau du compte', e);
+            }
+            return null;
+        }
+
+        // Chemin du module ETUDES à charger : priorité au niveau choisi manuellement
+        // (bouton "Niveau" du header), sinon niveau détecté automatiquement, sinon fallback.
+        function getEtudesPath() {
+            const override = localStorage.getItem('znk_niveau_override');
+            const groupe = override || detectAccountNiveauGroupe();
+            return ARTETUDES_FILES[groupe] || './modules-etudes/etudes.html';
+        }
+
+        function currentNiveauGroupe() {
+            return localStorage.getItem('znk_niveau_override') || detectAccountNiveauGroupe();
+        }
+
+        function toggleNiveauMenu() {
+            document.getElementById('niveauMenu').classList.toggle('active');
+        }
+
+        // Choix manuel du niveau (utile pour un enseignant multi-classes, ou pour dépanner
+        // un compte sans niveau détecté). '' = retour au mode automatique.
+        function setNiveauOverride(groupe) {
+            if (groupe) {
+                localStorage.setItem('znk_niveau_override', groupe);
+            } else {
+                localStorage.removeItem('znk_niveau_override');
+            }
+            updateNiveauBtnLabel();
+            applyNiveauTheme(currentNiveauGroupe());
+            document.getElementById('niveauMenu').classList.remove('active');
+
+            // Si le module ETUDES est déjà ouvert, on le recharge avec le nouveau niveau
+            const activeLink = document.querySelector('.nav-link.active');
+            if (activeLink && activeLink.getAttribute('onclick') === "loadModule('etudes')") {
+                loadModule('etudes');
+            }
+
+            // Le P2P est actif par classe : on rejoint la salle correspondant au nouveau niveau
+            joinP2PRoomForCurrentClass();
+        }
+
+        function updateNiveauBtnLabel() {
+            const groupe = currentNiveauGroupe();
+            const isOverride = !!localStorage.getItem('znk_niveau_override');
+            const info = NIVEAU_GROUPE_LABELS[groupe];
+
+            document.getElementById('niveauBtnIcon').textContent = info ? info.icon : '🎓';
+            document.getElementById('niveauBtnLabel').textContent = info ? info.label : 'Niveau';
+
+            document.querySelectorAll('.niveau-option').forEach(opt => {
+                const optGroupe = opt.getAttribute('data-niveau');
+                opt.classList.toggle('active', isOverride ? optGroupe === groupe : optGroupe === '');
+            });
+        }
+
+        /**
+         * Core: show the right column ONLY for the user-profile module.
+         * - When moduleName === 'user-profile' we add:
+         *     mainLayout.classList.add('show-sidebar-right')
+         *     sidebarRight.classList.add('show')
+         * - For all other modules we remove the above classes so the layout becomes 2-column again.
+         *
+         * Also we set aria-hidden attribute appropriately to help accessibility and to avoid layout glitches.
+         */
+        function loadModule(moduleName){
+            const moduleConfigCheck = MODULES_CONFIG[moduleName];
+
+            // Un "hub" (mockup téléphone plein écran, avec sa propre barre de retour)
+            // n'est pas conçu pour être encapsulé comme un widget dans la colonne
+            // centrale à côté des sidebars — sa mise en page (hauteur 100vh, cadre
+            // téléphone) suppose qu'il occupe la fenêtre entière. On le charge donc
+            // en navigation complète plutôt qu'en <webview>/<iframe> intégré.
+            if (moduleConfigCheck && moduleConfigCheck.openAsHub) {
+                window.location.href = moduleConfigCheck.path;
+                return;
+            }
+
+            const container = document.getElementById('moduleContainer');
+            const sidebarRight = document.getElementById('sidebarRight');
+            const mainLayout = document.getElementById('mainLayout');
+
+            if (moduleName === 'user-profile') {
+                if (mainLayout) mainLayout.classList.add('show-sidebar-right');
+                if (sidebarRight) { sidebarRight.classList.add('show'); sidebarRight.setAttribute('aria-hidden', 'false'); }
+            } else {
+                if (mainLayout) mainLayout.classList.remove('show-sidebar-right');
+                if (sidebarRight) { sidebarRight.classList.remove('show'); sidebarRight.setAttribute('aria-hidden', 'true'); }
+                
+            }
+
+            // Le module ETUDES pointe vers un fichier différent selon le niveau de
+            // l'utilisateur connecté (routage automatique + override manuel via le bouton "Niveau")
+            const moduleConfig = moduleName === 'etudes'
+                ? { name: 'ETUDES', path: getEtudesPath(), needsElectronAPI: MODULES_CONFIG.etudes.needsElectronAPI }
+                : MODULES_CONFIG[moduleName];
+            if (!moduleConfig) {
+                container.innerHTML = `<div class="module-loading"><div style="font-size:48px">⚠️</div><div>Module introuvable</div></div>`;
+                setActiveModule(null);
+                return;
+            }
+
+            container.innerHTML = `<div class="module-loading"><div class="spinner"></div><div class="spinner-text">Chargement de ${moduleConfig.name}...</div></div>`;
+
+            // Modules qui ont besoin de window.electronAPI (ex: terminal-professeurs, et
+            // par défaut tous les autres) doivent être chargés en <webview> avec leur PROPRE
+            // preload : une <iframe> classique ne reçoit jamais le preload de la fenêtre
+            // parente dans Electron.
+            //
+            // Comportement : webview (avec electronAPI) PAR DÉFAUT pour tout module.
+            // Pour désactiver explicitement sur un module qui n'en a pas besoin,
+            // ajoute `needsElectronAPI: false` dans sa config dans MODULES_CONFIG.
+            setTimeout(async () => {
+                const needsElectronAPI = moduleConfig.needsElectronAPI !== false;
+
+                if (needsElectronAPI && window.electronAPI && typeof window.electronAPI.getPreloadPath === 'function') {
+                    try {
+                        const preloadUrl = await window.electronAPI.getPreloadPath();
+                        container.innerHTML = `
+                            <webview
+                                src="${moduleConfig.path}"
+                                preload="${preloadUrl}"
+                                webpreferences="contextIsolation=yes, nodeIntegration=no"
+                                style="width:100%; height:100%; border:none;"
+                                title="${moduleConfig.name}"
+                            ></webview>
+                        `;
+                        window.__activeWebview = container.querySelector('webview');
+                        // Gestionnaire de permission DÉDIÉ à la webview : les demandes
+                        // (micro, caméra) faites par une PAGE À L'INTÉRIEUR d'une <webview>
+                        // ont besoin de cet event 'permissionrequest' sur l'élément webview
+                        // lui-même — le session.setPermissionRequestHandler global (main.js)
+                        // ne suffit pas toujours selon la partition utilisée par la webview.
+                        window.__activeWebview.addEventListener('permissionrequest', (event) => {
+                            if (event.permission === 'media' || event.permission === 'audioCapture' || event.permission === 'micCapture') {
+                                event.request.allow();
+                            } else {
+                                event.request.deny();
+                            }
+                        });
+                        // keydown sur document ne voit JAMAIS les touches pressées quand le
+                        // focus est dans la webview (autre process de rendu) — before-input-event
+                        // sur l'élément <webview> lui-même est le seul qui intercepte réellement,
+                        // avant que la webview ne traite la touche. Même piège que le bug
+                        // "isolated world" déjà rencontré sur les panneaux de diagnostic.
+                        window.__activeWebview.addEventListener('before-input-event', (event, input) => {
+                            const wantsDevtools = input.key === 'F12' ||
+                                ((input.meta || input.control) && input.shift && input.key && input.key.toLowerCase() === 'i');
+                            if (wantsDevtools) {
+                                window.__activeWebview.openDevTools();
+                            }
+                        });
+                    } catch (err) {
+                        console.error('❌ Impossible de récupérer le chemin du preload, fallback iframe:', err);
+                        container.innerHTML = `<iframe src="${moduleConfig.path}" title="${moduleConfig.name}"></iframe>`;
+                    }
+                } else {
+                    container.innerHTML = `<iframe src="${moduleConfig.path}" title="${moduleConfig.name}"></iframe>`;
+                }
+                setActiveModule(moduleName);
+            }, 250);
+        }
+
+        // F12 (ou Cmd/Ctrl+Shift+I) ouvre les DevTools de la <webview> ACTIVE, pas du
+        // dashboard — les deux ont des process de rendu séparés dans Electron, donc
+        // le DevTools du dashboard ne montre jamais ce qui se passe dans un module.
+        document.addEventListener('keydown', (e) => {
+            const wantsDevtools = e.key === 'F12' || ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'i');
+            if (!wantsDevtools) return;
+            if (window.__activeWebview && typeof window.__activeWebview.openDevTools === 'function') {
+                e.preventDefault();
+                window.__activeWebview.openDevTools();
+            }
+        });
+
+        function setActiveModule(moduleName){
+            // clear previous active
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+
+            if (!moduleName) return;
+
+            // Find the placeholder inside nav-link with matching data-role
+            const el = document.querySelector(`.nav-link [data-role="${moduleName}"]`);
+            if (el && el.closest('.nav-link')){
+                el.closest('.nav-link').classList.add('active');
+            } else {
+                // fallback: if there's a nav-link with onclick containing the moduleName, mark it active
+                const possible = Array.from(document.querySelectorAll('.nav-link')).find(n => {
+                    const onclick = n.getAttribute('onclick') || '';
+                    return onclick.indexOf(`loadModule('${moduleName}')`) !== -1;
+                });
+                if (possible) possible.classList.add('active');
+            }
+        }
+
+        function goHome(){ loadModule('user-profile'); }
+        function openUserInfos(){ loadModule('infos-user'); }
+
+        // Apply icons from manifest (kept compatible with previous behavior)
+        async function applyIconsFromManifest(){
+            try {
+                const manifestPath = './icons/icons-intro-manifest.json';
+                const res = await fetch(manifestPath);
+                if (!res.ok) return;
+                const data = await res.json();
+                const icons = Array.isArray(data.icons) ? data.icons : Object.values(data.icons || {});
+                icons.forEach(ic => {
+                    const candidates = [ic.id, ic.name, ic.filename, ic.src, ic.role].filter(Boolean);
+                    candidates.forEach(c => {
+                        const role = String(c).replace(/\.(png|jpg|jpeg|svg)$/i, '').toLowerCase();
+                        const elements = document.querySelectorAll(`.icon-placeholder[data-role="${role}"]`);
+                        elements.forEach(el => {
+                            let iconSrc = ic.src || ic.filename || ic.path;
+                            if (iconSrc && !iconSrc.startsWith('./') && !iconSrc.startsWith('http')) iconSrc = `./icons/${iconSrc}`;
+                            else if (!iconSrc) iconSrc = `./icons/${role}.svg`;
+                            el.innerHTML = `<img src="${iconSrc}" alt="${role}">`;
+                            el.style.background = 'transparent';
+                            el.style.border = 'none';
+                        });
+                    });
+                });
+            } catch (e) {
+                console.warn('Erreur chargement manifest:', e);
+            }
+        }
+
+        function updateTime(){
+            const t = document.getElementById('statTime');
+            if (t) t.textContent = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize
+            updateTime();
+            setInterval(updateTime, 1000);
+            applyIconsFromManifest();
+            updateNiveauBtnLabel();
+            applyNiveauTheme(currentNiveauGroupe());
+
+            // Load profile at start so the right column appears on first view
+            loadModule('user-profile');
+
+            // Afficher la photo de l'utilisateur dans l'avatar du header,
+            // si elle a été définie dans les paramètres (infos-user.html).
+            applyHeaderAvatar();
+        });
+
+        async function applyHeaderAvatar() {
+            try {
+                if (!window.ZNKSession) return;
+                await window.ZNKSession.ready;
+                const user = window.ZNKSession.getCurrentUser();
+                if (user && user.avatar) {
+                    const img = document.querySelector('#userAvatar img');
+                    if (img) img.src = user.avatar;
+                }
+            } catch (e) { console.warn('⚠️ Avatar header: ZNKSession indisponible:', e); }
+        }
+    </script>
+</body>
+</html>

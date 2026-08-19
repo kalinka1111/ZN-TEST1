@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>©ZNK Studios - Dashboard Studios</title>
+    <style>
+        /* ==========================================
+           RESET & VARIABLES
+           ========================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --znk-bg-primary: #0f0f23;
+            --znk-bg-secondary: #004d65;
+            --znk-bg-card: #00364a;
+            --znk-accent: #0bbeab;
+            --znk-accent-hover: #004d65;
+            --znk-text-primary: #ffffff;
+            --znk-text-secondary: #008cb4;
+            --znk-text-muted: #006d8f;
+            --znk-border: #004d65;
+            --znk-glass: rgba(0, 0, 0, 0.3);
+            --znk-success: #238636;
+            --znk-warning: #d29922;
+            --znk-danger: #da3633;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #004d65 0%, #1a1f35 50%, #133d62 100%);
+            color: var(--znk-text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--znk-border);
+            padding: 12px 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--znk-accent);
+            cursor: pointer;
+        }
+
+        .search-container {
+            position: relative;
+            width: 280px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 16px 8px 40px;
+            background: var(--znk-bg-card);
+            border: 1px solid var(--znk-border);
+            border-radius: 20px;
+            color: var(--znk-text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--znk-accent);
+            box-shadow: 0 0 0 2px #0f807b;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--znk-bg-card);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background: var(--znk-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px #0f807b;
+        }
+
+        .header-btn img {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+        }
+
+        /* LAYOUT PRINCIPAL */
+        .main-layout {
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: 120px 1fr 380px;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1700px;
+            margin-left: auto;
+            margin-right: auto;
+            transition: grid-template-columns 0.3s ease;
+            height: calc(100vh - 84px);
+        }
+
+        .main-layout.no-sidebar-right {
+            grid-template-columns: 120px 1fr;
+        }
+
+        /* SIDEBAR GAUCHE */
+        .sidebar-left {
+            position: sticky;
+            top: 80px;
+            height: fit-content;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 12px;
+            color: var(--znk-text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: linear-gradient(135deg, rgba(11, 190, 171, 0.2), rgba(0, 77, 101, 0.3));
+            transform: scale(1.05);
+            box-shadow: 0 7px 15px rgba(15, 128, 123, 0.3);
+        }
+
+        .icon-placeholder {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(35, 49, 66, 0.12), rgba(16,185,129,0.06));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #1e2121;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .icon-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: inherit;
+        }
+
+        /* MODULE CONTAINER */
+        .module-container {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #moduleContainer {
+            width: 100%;
+            flex: 1;
+            overflow: hidden;
+            padding: 0;
+            position: relative;
+        }
+
+        #moduleContainer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 12px;
+            display: block;
+        }
+
+        .module-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--znk-border);
+            border-top-color: var(--znk-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner-text {
+            margin-top: 16px;
+            color: var(--znk-text-secondary);
+            font-size: 14px;
+        }
+
+        /* SIDEBAR DROITE */
+        .sidebar-right {
+            position: sticky;
+            top: 80px;
+            height: fit-content;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-right.hidden {
+            display: none;
+        }
+
+        .widget {
+            background: var(--znk-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--znk-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .widget-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--znk-accent);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1400px) {
+            .main-layout {
+                grid-template-columns: 120px 1fr;
+            }
+            .sidebar-right {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 80px 1fr;
+                padding: 12px;
+                gap: 12px;
+            }
+            .icon-placeholder {
+                width: 55px;
+                height: 55px;
+            }
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #0f807b;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--znk-accent);
+        }
+
+        /* Message d'erreur */
+        .error-message {
+            padding: 20px;
+            background: rgba(218, 54, 51, 0.1);
+            border: 1px solid var(--znk-danger);
+            border-radius: 12px;
+            color: var(--znk-text-primary);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo" onclick="window.location.href='./index.html'">©ZNK Studios</div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Rechercher...">
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button class="header-btn" onclick="goBackToDashboard()" title="Retour au Dashboard">
+                <img src="./icons/retour-dash.svg" alt="dashboard-user" onerror="this.outerHTML='<span style=font-size:28px>👥</span>'">
+            </button>         
+        </div>
+    </header>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <div class="main-layout">
+        <!-- SIDEBAR GAUCHE -->
+        <aside class="sidebar-left">
+            <!-- PROFIL UTILISATEUR - RETOUR VERS ARCHIVES -->
+            <nav class="nav-section">
+                <div class="nav-link active" onclick="loadModule('archives')" title="📂 Mes Archives" id="profileNavLink">
+                    <span class="icon-placeholder" data-role="archives" id="sidebarArchivesIcon">
+                        <img src="./icons/archives.svg" alt="Archives" onerror="this.outerHTML='<span style=font-size:28px>📂</span>'">
+                    </span>
+                </div>
+            </nav>
+
+            <!-- PAGE 1 (partie 1) -->
+            <nav class="nav-section">
+                <div class="nav-link" onclick="loadModule('artflow-publish-studio')" title="Artflow Publish Studio">
+                    <span class="icon-placeholder" data-role="artflow-publish-studio">
+                        <img src="./icons/artflow-publish-studio.svg" alt="Artflow Publish Studio" onerror="this.outerHTML='<span style=font-size:28px>🎨</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('expo-manager')" title="Expo Manager">
+                    <span class="icon-placeholder" data-role="expo-manager">
+                        <img src="./icons/expo-manager.svg" alt="Expo Manager" onerror="this.outerHTML='<span style=font-size:28px>🖼️</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('user-publish-radio')" title="User Publish Radio">
+                    <span class="icon-placeholder" data-role="user-publish-radio">
+                        <img src="./icons/user-publish-radio.svg" alt="User Publish Radio" onerror="this.outerHTML='<span style=font-size:28px>📻</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('icon-maker')" title="Icon Maker">
+                    <span class="icon-placeholder" data-role="icon-maker">
+                        <img src="./icons/icon-maker.svg" alt="Icon Maker" onerror="this.outerHTML='<span style=font-size:28px>🔷</span>'">
+                    </span>
+                </div>
+            </nav>
+
+            <!-- PAGE 1 (partie 2) -->
+            <nav class="nav-section">
+                <div class="nav-link" onclick="loadModule('affiche')" title="Affiche Studio">
+                    <span class="icon-placeholder" data-role="affiche">
+                        <img src="./icons/affiche.svg" alt="Affiche Studio" onerror="this.outerHTML='<span style=font-size:28px>🖼️</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('dessin')" title="Dessin Studio">
+                    <span class="icon-placeholder" data-role="dessin">
+                        <img src="./icons/dessin.svg" alt="Dessin" onerror="this.outerHTML='<span style=font-size:28px>✏️</span>'">
+                    </span>
+                </div>
+                 <div class="nav-link" onclick="loadModule('music-studio')" title="Music Studio">
+                    <span class="icon-placeholder" data-role="music-studio">
+                        <img src="./icons/music-studio.svg" alt="Music-studio" onerror="this.outerHTML='<span style=font-size:28px>✏️</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('live')" title="LIVE">
+                    <span class="icon-placeholder" data-role="live">
+                        <img src="./icons/Live.svg" alt="Live" onerror="this.outerHTML='<span style=font-size:28px>📡</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('livremoi')" title="LIVRE MOI">
+                    <span class="icon-placeholder" data-role="livremoi">
+                        <img src="./icons/livremoi.svg" alt="Livre moi" onerror="this.outerHTML='<span style=font-size:28px>📖</span>'">
+                    </span>
+                </div>
+            </nav>
+
+            <!-- PAGE 1 (fin) + DOCK -->
+            <nav class="nav-section">
+                <div class="nav-link" onclick="loadModule('znk-scenario')" title="Scenario">
+                    <span class="icon-placeholder" data-role="znk-scenario">
+                        <img src="./icons/ZNKScenario.svg" alt="Scenario" onerror="this.outerHTML='<span style=font-size:28px>📝</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('ma-tele')" title="Ma tele">
+                    <span class="icon-placeholder" data-role="ma-tele">
+                        <img src="./icons/ma-tele.svg" alt="Ma tele" onerror="this.outerHTML='<span style=font-size:28px>📺</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('ma-radio')" title="Ma Radio">
+                    <span class="icon-placeholder" data-role="ma-radio">
+                        <img src="./icons/ma-radio.svg" alt="Ma Radio" onerror="this.outerHTML='<span style=font-size:28px>📻</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('mon-expo')" title="Mon Expo">
+                    <span class="icon-placeholder" data-role="mon-expo">
+                        <img src="./icons/ZNKexpos.svg" alt="Mon Expo" onerror="this.outerHTML='<span style=font-size:28px>🏛️</span>'">
+                    </span>
+                </div>
+            </nav>
+
+            <!-- PAGE 2 -->
+            <nav class="nav-section">
+                <div class="nav-link" onclick="loadModule('znk-mouvement')" title="ZNKMouvement">
+                    <span class="icon-placeholder" data-role="znk-mouvement">
+                        <img src="./icons/ZNKMouvement.svg" alt="ZNKMouvement" onerror="this.outerHTML='<span style=font-size:28px>🎞️</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('znk-anim')" title="ZNKAnim">
+                    <span class="icon-placeholder" data-role="znk-anim">
+                        <img src="./icons/ZNKAnim.svg" alt="ZNKAnim" onerror="this.outerHTML='<span style=font-size:28px>🎬</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('znk-fadevideo')" title="ZNKFadeVideo">
+                    <span class="icon-placeholder" data-role="znk-fadevideo">
+                        <img src="./icons/ZNKFadeVideo.svg" alt="ZNKFadeVideo" onerror="this.outerHTML='<span style=font-size:28px>🎥</span>'">
+                    </span>           
+                  </div>
+                <div class="nav-link" onclick="loadModule('ZNKVitesseVideo')" title="ZNKVitesseVideo">
+                    <span class="icon-placeholder" data-role="ZNKVitesseVideo">
+                        <img src="./icons/ZNKVitesseVideo.svg" alt="ZNKVitesseVideo" onerror="this.outerHTML='<span style=font-size:28px>🎥</span>'">
+                    </span>
+                </div>
+                <div class="nav-link" onclick="loadModule('znk-transitions')" title="ZNKTransitions">
+                    <span class="icon-placeholder" data-role="znk-transitions">
+                        <img src="./icons/ZNKTransitions.svg" alt="ZNKTransitions" onerror="this.outerHTML='<span style=font-size:28px>🔀</span>'">
+                    </span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- MODULE CONTAINER -->
+        <div class="module-container">
+            <div id="moduleContainer">
+                <div class="module-loading">
+                    <div style="font-size: 64px; margin-bottom: 24px;">🎬</div>
+                    <h2 style="font-size: 24px; margin-bottom: 12px;">ZNK Studios</h2>
+                    <p style="color: var(--znk-text-secondary); text-align: center; max-width: 400px;">
+                        Cliquez sur une icône pour ouvrir un studio de création
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR DROITE -->
+        <aside class="sidebar-right" id="sidebarRight">
+            <!-- Le widget du fichier sélectionné sera inséré ici dynamiquement -->
+        </aside>
+    </div>
+
+    <script>
+        function goBackToDashboard() {
+            window.history.back();
+        }
+
+        // Récupérer le statut de l'utilisateur depuis localStorage
+        const userStatus = localStorage.getItem('userStatus');
+
+        // Fonction pour rediriger vers le dashboard approprié selon le statut
+        function redirectToDashboard() {
+            switch(userStatus) {
+                case 'visiteur':
+                    window.location.href = 'ZNKvisiteurDash.html';
+                    break;
+                case 'membre':
+                    window.location.href = 'ZNKmembresDash.html';
+                    break;
+                case 'artiste':
+                    window.location.href = 'ZNKartEtudes.html';
+                    break;
+                case 'admin':
+                    window.location.href = 'ZNKadminDash.html';
+                    break;
+                default:
+                    window.location.href = 'ZNKvisiteurDash.html';
+                    console.warn('Statut utilisateur non trouvé, redirection vers visiteur');
+            }
+        }
+    </script>
+
+    <script>
+        // Configuration des modules
+        const MODULES_CONFIG = {
+            'archives': { name: 'Mes Archives', path: './modules/archives.html' },
+            'artflow-publish-studio': { name: 'Artflow Publish Studio', path: './modules/artflow-publish-studio.html' },
+            'expo-manager': { name: 'Expo Manager', path: './modules/expo-manager.html' },
+            'user-publish-radio': { name: 'User Publish Radio', path: './user-publish-radio.html' },
+            'icon-maker': { name: 'Icon Maker', path: './modules/icon-maker.html' },
+            'affiche': { name: 'Affiche Studio', path: './modules/affiche.html' },
+            'dessin': { name: 'Dessin Studio', path: './modules/dessin.html' },
+             'music-studio': { name: 'Music Studio', path: './modules/music-studio.html' },
+            'live': { name: 'LIVE', path: './modules/Live.html' },
+            'livremoi': { name: 'LIVRE MOI', path: './modules-etudes/ZNK-LIVREmoi.html' },
+            'znk-scenario': { name: 'Scenario', path: './modules/ZNKScenario.html' },
+            'ma-tele': { name: 'Ma tele', path: './modules/ma-tele.html' },
+            'ma-radio': { name: 'Ma Radio', path: './modules/ma-radio.html' },
+            'mon-expo': { name: 'Mon Expo', path: './modules/mon-expo.html' },
+            'znk-mouvement': { name: 'ZNKMouvement', path: './modules/ZNKMouvement.html' },
+            'ZNKVitesseVideo': { name: 'ZNKVitesseVideo', path: './modules/ZNKVitesseVideo.html' },
+            'znk-anim': { name: 'ZNKAnim', path: './modules/ZNKAnim.html' },
+            'znk-fadevideo': { name: 'ZNKFadeVideo', path: './modules/ZNKFadeVideo.html' },
+            'znk-transitions': { name: 'ZNKTransitions', path: './modules/ZNKTransitions.html' }
+        };
+
+        // Charger un module
+        async function loadModule(moduleName) {
+            const container = document.getElementById('moduleContainer');
+            const sidebarRight = document.querySelector('.sidebar-right');
+            const mainLayout = document.querySelector('.main-layout');
+            
+            if (sidebarRight) sidebarRight.classList.add('hidden');
+            if (mainLayout) mainLayout.classList.add('no-sidebar-right');
+
+            const moduleConfig = MODULES_CONFIG[moduleName];
+            if (!moduleConfig) {
+                console.error(`Module ${moduleName} non trouvé`);
+                container.innerHTML = `
+                    <div class="module-loading">
+                        <div class="error-message">
+                            <h3>⚠️ Module non trouvé</h3>
+                            <p>Le module "${moduleName}" n'existe pas dans la configuration.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Afficher le spinner de chargement
+            container.innerHTML = `
+                <div class="module-loading">
+                    <div class="spinner"></div>
+                    <div class="spinner-text">Chargement de ${moduleConfig.name}...</div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                container.innerHTML = `
+                    <iframe 
+                        src="${moduleConfig.path}" 
+                        style="width:100%; height:100%; border:none; border-radius:12px;"
+                        title="${moduleConfig.name}"
+                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+                    ></iframe>
+                `;
+                setActiveModule(moduleName);
+            }, 300);
+        }
+
+        function setActiveModule(moduleName) {
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            const el = document.querySelector(`.nav-link [data-role="${moduleName}"]`);
+            if (el && el.closest('.nav-link')) {
+                el.closest('.nav-link').classList.add('active');
+            }
+        }
+
+        // Afficher le fichier sélectionné dans la sidebar droite
+        function displaySelectedFileInSidebar() {
+            const selectedFileData = sessionStorage.getItem('znk_selected_file');
+            
+            if (!selectedFileData) {
+                console.log('Aucun fichier sélectionné');
+                return;
+            }
+            
+            const file = JSON.parse(selectedFileData);
+            const sidebarRight = document.getElementById('sidebarRight');
+            
+            const currentFileWidget = document.createElement('div');
+            currentFileWidget.className = 'widget';
+            currentFileWidget.innerHTML = `
+                <div class="widget-title">📂 Fichier en cours</div>
+                <div style="background: var(--znk-bg-card); border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--znk-accent), #0bbeab); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                            ${getFileIcon(file.type)}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; font-size: 14px; color: var(--znk-text-primary); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                ${file.name}
+                            </div>
+                            <div style="font-size: 12px; color: var(--znk-text-muted);">
+                                ${formatFileSize(file.size)}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="editCurrentFile()" style="flex: 1; padding: 8px; background: var(--znk-accent); border: none; border-radius: 6px; color: white; font-size: 12px; font-weight: 600; cursor: pointer;">
+                            ✏️ Éditer
+                        </button>
+                        <button onclick="clearCurrentFile()" style="padding: 8px 12px; background: var(--znk-bg-card); border: 1px solid var(--znk-border); border-radius: 6px; color: var(--znk-text-secondary); font-size: 12px; cursor: pointer;">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="font-size: 11px; color: var(--znk-text-muted); text-align: center;">
+                    Importé depuis Archives
+                </div>
+            `;
+            
+            sidebarRight.insertBefore(currentFileWidget, sidebarRight.firstChild);
+            console.log('✅ Fichier affiché dans la sidebar:', file.name);
+        }
+
+        // Fonctions utilitaires
+        function getFileIcon(type) {
+            const icons = {
+                'video': '🎥',
+                'audio': '🎵',
+                'image': '🖼️',
+                'document': '📄',
+                'workflow': '⚙️',
+                'other': '📎'
+            };
+            return icons[type] || '📎';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function editCurrentFile() {
+            const file = JSON.parse(sessionStorage.getItem('znk_selected_file'));
+            alert(`Ouverture de ${file.name} pour édition...`);
+        }
+
+        function clearCurrentFile() {
+            sessionStorage.removeItem('znk_selected_file');
+            location.reload();
+        }
+
+        // Charger les icônes depuis le manifest
+        async function applyIconsFromManifest() {
+            try {
+                const manifestPath = '/icons/icons-intro-manifest.json';
+                console.log('Chargement manifest depuis:', manifestPath);
+                
+                const res = await fetch(manifestPath);
+                if (!res.ok) {
+                    console.warn('Manifest non trouvé:', manifestPath);
+                    console.log('Utilisation des placeholders par défaut');
+                    return;
+                }
+                
+                const data = await res.json();
+                const icons = Array.isArray(data.icons) ? data.icons : Object.values(data.icons || {});
+
+                console.log('Manifest chargé avec', icons.length, 'icônes');
+
+                icons.forEach(ic => {
+                    const candidates = [ic.id, ic.name, ic.filename, ic.src].filter(Boolean);
+                    candidates.forEach(c => {
+                        const role = String(c).replace(/\.(png|jpg|jpeg|svg)$/i, '').toLowerCase();
+                        
+                        const elements = document.querySelectorAll(`.icon-placeholder[data-role="${role}"]`);
+                        elements.forEach(el => {
+                            let iconSrc = ic.src || ic.filename || ic.path;
+                            
+                            if (iconSrc && !iconSrc.startsWith('../../') && !iconSrc.startsWith('http')) {
+                                iconSrc = `./icons/${iconSrc}`;
+                            } else if (!iconSrc) {
+                                iconSrc = `./icons/${role}.png`;
+                            }
+                            
+                            el.innerHTML = `<img src="${iconSrc}" alt="${role}">`;
+                            console.log('Icône sidebar appliquée:', role, '->', iconSrc);
+                        });
+                    });
+                });
+                
+                console.log('✅ Toutes les icônes ont été appliquées');
+            } catch (e) {
+                console.error('Erreur chargement manifest:', e);
+                console.log('Utilisation des placeholders par défaut');
+            }
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('✅ ZNK Studios Dashboard chargé');
+            
+            // Charger les icônes du manifest
+            applyIconsFromManifest();
+            
+            // Afficher le fichier sélectionné si présent
+            displaySelectedFileInSidebar();
+            
+            // Charger automatiquement le module archives au démarrage
+            loadModule('archives');
+
+            // Écouter les messages de sauvegarde depuis les studios
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'ZNK_SAVE_TO_ARCHIVES') {
+        const file = event.data.file;
+        console.log('📥 Fichier à sauvegarder dans Archives:', file);
+        
+        // Stocker dans sessionStorage pour que archives.html puisse le récupérer
+        const existingArchives = JSON.parse(sessionStorage.getItem('znk_archives') || '[]');
+        existingArchives.push(file);
+        sessionStorage.setItem('znk_archives', JSON.stringify(existingArchives));
+        
+        // Notification
+        showNotification('✅ Fichier sauvegardé dans Archives !');
+    }
+});
+
+function showNotification(message) {
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    notif.textContent = message;
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+        notif.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}// Écouter les messages de sauvegarde depuis les studios
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'ZNK_SAVE_TO_ARCHIVES') {
+        const file = event.data.file;
+        console.log('📥 Fichier à sauvegarder dans Archives:', file);
+        
+        // Stocker dans sessionStorage pour que archives.html puisse le récupérer
+        const existingArchives = JSON.parse(sessionStorage.getItem('znk_archives') || '[]');
+        existingArchives.push(file);
+        sessionStorage.setItem('znk_archives', JSON.stringify(existingArchives));
+        
+        // Notification
+        showNotification('✅ Fichier sauvegardé dans Archives !');
+    }
+});
+
+function showNotification(message) {
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    notif.textContent = message;
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+        notif.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
+            
+            console.log('🎬 Studios prêts à l\'emploi');
+        });
+    </script>
+</body>
+</html>

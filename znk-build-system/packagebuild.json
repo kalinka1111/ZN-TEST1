@@ -1,0 +1,148 @@
+{
+  "name": "znk237-app",
+  "version": "2.0.0",
+  "description": "ZNK237 System - Application complète multi-dashboards",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "clean": "rm -rf dist build node_modules package-lock.json && npm install"
+  },
+  "keywords": [
+    "znk",
+    "dashboards",
+    "electron"
+  ],
+  "author": "ZNK Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.znk.znk237-app",
+    "productName": "ZNK237 System",
+    "directories": {
+      "output": "../ZNK237-BUILD"
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "auth-hub.html",
+      "inscription.html",
+      "ZNKadminDash.html",
+      "ZNKMembresDash.html",
+      "ZNKartEtudesDash.html",
+      "ZNKvisiteurDash.html",
+      "ZNKStudioDash.html",
+      "modules/**/*",
+      "icons/**/*",
+      "assets/**/*",
+      "js/**/*",
+      "ui/**/*",
+      "datas/**/*",
+      "manifest.json",
+      "backend/**/*.py",
+      "backend/**/*.json",
+      "server/**/*",
+      "!**/*.md",
+      "!**/*.sh",
+      "!logs",
+      "!.pids",
+      "!dist",
+      "!build",
+      "!node_modules",
+      "!frontend",
+      "!dropbox",
+      "!electron"
+    ],
+    "extraResources": [
+      {
+        "from": ".",
+        "to": "app",
+        "filter": [
+          "**/*.html",
+          "modules/**/*",
+          "icons/**/*",
+          "assets/**/*",
+          "js/**/*",
+          "ui/**/*",
+          "datas/**/*",
+          "manifest.json"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "icon": "assets/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "title": "${productName} ${version}",
+      "icon": "assets/icon.icns",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ZNK237 System"
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Office"
+    }
+  },
+  "dependencies": {
+    "fluent-ffmpeg": "^2.1.3"
+  }
+}

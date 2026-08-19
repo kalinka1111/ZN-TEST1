@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNK — Scénario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    /* ---- châssis applicatif (repris de ZNKAffiche) ---- */
+    --bg-app:#15171b;
+    --bg-header:#1b1d22;
+    --bg-panel:#1b1d22;
+    --bg-panel-alt:#23262c;
+    --bg-canvas:#0d0e10;
+    --border:#d29d00;
+    --border-strong:#a77b00;
+    --text-primary:#e8e9eb;
+    --text-secondary:#d9a441;
+    --text-muted:#83868f;
+    --accent:#77bb41;
+    --accent-soft:rgba(119,187,65,0.14);
+    --danger:#b5442f;
+
+    /* ---- page / feuillet (le document lui-même) ---- */
+    --paper:#F7F5EF;
+    --paper-line:#e4e0d4;
+    --ink:#2A2A28;
+    --ink-soft:#6b6f76;
+    --accent-doc:#A3332C;
+    --accent-doc-dark:#7d2620;
+    --steel:#3A4750;
+    --line:#d7d3c6;
+
+    --font-mono:'Courier Prime','Courier New',monospace;
+    --font-serif:'Playfair Display',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-ui);
+    background:var(--bg-app);
+    color:var(--text-primary);
+    overflow-x:hidden;
+  }
+  button{font-family:var(--font-ui);cursor:pointer;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:6px;}
+  ::-webkit-scrollbar-track{background:var(--bg-panel);}
+
+  /* ================= HEADER ================= */
+  .header{
+    position:fixed;top:0;left:0;right:0;z-index:1000;
+    height:64px;
+    background:var(--bg-header);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;gap:18px;
+    box-shadow:0 1px 0 rgba(0,0,0,0.4);
+  }
+  .brandline{display:flex;align-items:center;gap:18px;flex:1;min-width:0;}
+  .logo{
+    font-family:var(--font-serif);font-weight:700;font-size:19px;color:#F2F1EC;
+    white-space:nowrap;letter-spacing:0.3px;flex-shrink:0;
+  }
+  .header-titles{display:flex;gap:14px;overflow-x:auto;flex:1;min-width:0;}
+  .header-titles .tfield{display:flex;flex-direction:column;gap:2px;min-width:120px;}
+  .header-titles span.hlabel{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);}
+  .header-titles input{
+    background:transparent;border:none;border-bottom:1px solid #3C4249;
+    color:#F2F1EC;font-family:var(--font-ui);font-weight:600;font-size:13.5px;
+    padding:3px 2px;outline:none;min-width:110px;
+  }
+  .header-titles input::placeholder{color:#5c6169;font-weight:400;}
+  .header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .save-indicator{font-size:10.5px;color:var(--text-muted);white-space:nowrap;}
+  .drawer-btn{display:none;}
+
+  /* ================= APP GRID ================= */
+  .main-interface{
+    margin-top:64px;
+    display:grid;
+    grid-template-columns:252px 1fr;
+    grid-template-rows:54px 1fr;
+    height:calc(100vh - 64px);
+    gap:1px;
+    background:var(--border);
+  }
+
+  /* ---- toolbar ---- */
+  .toolbar{
+    grid-column:1/-1;
+    background:var(--bg-panel-alt);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:10px;
+    padding:0 14px;overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+  .tool-group{display:flex;gap:6px;border-right:1px solid var(--border-strong);padding-right:12px;margin-right:4px;flex-shrink:0;}
+  .tool-group:last-child{border-right:none;}
+  .tool-btn{
+    background:var(--bg-panel-alt);border:1px solid var(--border-strong);color:var(--text-primary);
+    padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;letter-spacing:0.2px;
+    white-space:nowrap;transition:all .15s ease;
+  }
+  .tool-btn:hover{background:var(--accent-soft);border-color:var(--accent);}
+  .tool-btn.primary{background:var(--accent);border-color:var(--accent);color:#0e1a06;}
+  .tool-btn.primary:hover{filter:brightness(1.08);}
+  .tool-btn.ghost{background:transparent;color:var(--text-secondary);}
+  .tool-btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .tool-btn.small{padding:5px 9px;font-size:11px;}
+  .tool-btn.recording{background:var(--danger);border-color:var(--danger);color:#fff;animation:pulseRec 1.1s ease-in-out infinite;}
+  @keyframes pulseRec{0%,100%{opacity:1;}50%{opacity:0.6;}}
+
+  /* ---- panneau gauche (dans la grille) ---- */
+  .tools-panel{
+    background:var(--bg-panel);overflow-y:auto;padding:16px 14px;
+    border-right:1px solid var(--border);
+  }
+  .panel-section{margin-bottom:22px;}
+  .section-title{
+    color:var(--text-secondary);font-size:11px;font-weight:700;margin-bottom:10px;
+    text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border-strong);padding-bottom:6px;
+  }
+  .empty-mini{color:var(--text-muted);font-size:11.5px;padding:8px 2px;font-style:italic;}
+  .hint{font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.5;}
+
+  /* ---- panneau droit : tiroir flottant (ouvert via les boutons du header) ---- */
+  .panel-backdrop{
+    position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);
+    z-index:1300;opacity:0;pointer-events:none;transition:opacity .2s ease;
+  }
+  .panel-backdrop.open{opacity:1;pointer-events:auto;}
+  .properties-panel{
+    position:fixed;top:64px;right:0;bottom:0;width:340px;max-width:90vw;
+    background:var(--bg-panel);border-left:1px solid var(--border);
+    overflow-y:auto;padding:16px 14px;z-index:1400;
+    box-shadow:-12px 0 30px rgba(0,0,0,0.5);
+    transform:translateX(100%);transition:transform .25s ease;
+  }
+  .properties-panel.open{transform:translateX(0);}
+  .props-panel-head{
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+  }
+  .props-panel-head span{
+    font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;
+  }
+
+  /* -- personnages -- */
+  .char-add-row{display:flex;gap:6px;margin-bottom:10px;}
+  .char-add-row input{
+    flex:1;background:var(--bg-panel-alt);border:1px solid var(--border-strong);border-radius:5px;
+    color:var(--text-primary);font-size:12px;padding:6px 8px;outline:none;
+  }
+  .char-add-row input::placeholder{color:var(--text-muted);}
+  .char-chip{
+    display:flex;align-items:center;gap:6px;background:var(--bg-panel-alt);
+    border:1px solid var(--border-strong);border-radius:20px;padding:5px 6px 5px 12px;
+    margin-bottom:6px;font-size:12px;
+  }
+  .char-chip:hover{border-color:var(--accent);}
+  .char-name{cursor:pointer;flex:1;color:var(--text-primary);font-weight:600;letter-spacing:0.2px;}
+  .char-name:hover{color:var(--accent);}
+  .char-count{background:var(--border-strong);color:#171200;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;}
+  .char-rm{background:none;border:none;color:var(--text-muted);font-size:14px;line-height:1;padding:0 2px;}
+  .char-rm:hover{color:var(--danger);}
+
+  /* -- nav scènes -- */
+  .nav-item{
+    padding:7px 9px;border-radius:5px;font-size:11.8px;color:var(--text-primary);
+    cursor:pointer;margin-bottom:2px;border:1px solid transparent;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-mono);
+  }
+  .nav-item:hover{background:var(--bg-panel-alt);border-color:var(--border-strong);color:var(--accent);}
+
+  /* -- stats -- */
+  #statsBox{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text-primary);}
+  #statsBox .stat-row{display:flex;justify-content:space-between;background:var(--bg-panel-alt);padding:6px 10px;border-radius:5px;border:1px solid var(--border-strong);}
+  #statsBox .stat-row b{color:var(--text-secondary);}
+
+  /* -- syntaxe rapide -- */
+  .syntax-box{font-size:11px;color:var(--text-muted);line-height:1.7;background:var(--bg-panel-alt);border:1px solid var(--border-strong);border-radius:6px;padding:10px;}
+  .syntax-box code{color:var(--text-secondary);font-family:var(--font-mono);}
+
+  /* ================= CANVAS (scènes) ================= */
+  .canvas-area{
+    background:var(--bg-canvas);overflow-y:auto;padding:26px 30px 60px 30px;
+  }
+  h2.section-title-main{
+    font-family:var(--font-serif);font-weight:700;font-size:22px;margin:0 0 4px 0;color:#F2F1EC;
+  }
+  p.section-sub{font-size:12.5px;color:var(--text-muted);margin:0 0 22px 0;max-width:760px;line-height:1.6;}
+
+  #sceneList{display:flex;flex-direction:column;gap:18px;margin-bottom:20px;}
+  .scene-card{
+    border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);
+    padding:18px 18px 16px 18px;box-shadow:0 8px 22px rgba(0,0,0,0.4);
+  }
+  .scene-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;}
+  .scene-num{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--accent-doc);letter-spacing:0.5px;}
+  .scene-status{font-size:10.5px;padding:2px 8px;border-radius:20px;background:#efece2;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.4px;}
+  .scene-status.ok{background:#E3E9E1;color:#4c6b46;}
+  .scene-status.pending{background:#F3E6D3;color:#8A6420;}
+
+  .heading-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+  input.heading-input{
+    flex:1;min-width:220px;
+    font-family:var(--font-mono);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;
+    background:#fbfaf6;border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:13px;color:var(--ink);
+  }
+  .heading-quick{display:flex;gap:5px;flex-wrap:wrap;}
+  .heading-quick button{font-family:var(--font-mono);}
+
+  .toolbar-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .doc-btn{
+    background:var(--paper);border:1px solid var(--ink);color:var(--ink);font-size:11.5px;font-weight:600;
+    padding:6px 11px;border-radius:3px;letter-spacing:0.2px;
+  }
+  .doc-btn:hover{background:var(--ink);color:var(--paper);}
+  .doc-btn.ghost{border-color:var(--line);color:var(--ink-soft);background:transparent;}
+  .doc-btn.ghost:hover{background:var(--steel);color:#fff;border-color:var(--steel);}
+  .doc-btn:disabled{opacity:0.4;cursor:not-allowed;background:var(--paper);color:var(--ink-soft);}
+  .doc-btn.recording{background:var(--accent-doc);border-color:var(--accent-doc-dark);color:#fff;animation:pulseRec 1.1s ease-in-out infinite;}
+
+  textarea.scene-body{
+    font-family:var(--font-mono);font-size:14px;line-height:1.65;width:100%;resize:vertical;
+    border:1px solid var(--line);background:#fff;border-radius:4px;padding:10px 12px;color:var(--ink);
+  }
+  .scene-images{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .scene-images img{width:56px;height:56px;object-fit:cover;border-radius:3px;border:1px solid var(--line);}
+  .rm-img{border:none;background:var(--accent-doc);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:16px;padding:0;margin-left:-24px;margin-top:-4px;cursor:pointer;}
+
+  .empty{
+    border:1px dashed var(--line);border-radius:6px;padding:44px 20px;text-align:center;
+    color:var(--ink-soft);font-size:13.5px;background:var(--paper);
+  }
+  .add-scene-bottom{margin-top:6px;}
+
+  /* ================= PROPERTIES PANEL (mise en forme / titre / export) ================= */
+  details.pp{
+    border:1px solid var(--border-strong);border-radius:6px;margin-bottom:12px;
+    background:var(--bg-panel-alt);overflow:hidden;
+  }
+  details.pp summary{
+    padding:10px 12px;cursor:pointer;font-weight:700;font-size:11.5px;color:var(--text-secondary);
+    list-style:none;text-transform:uppercase;letter-spacing:0.05em;
+  }
+  details.pp summary::-webkit-details-marker{display:none;}
+  details.pp summary::before{content:'▸ ';color:var(--border-strong);}
+  details.pp[open] summary::before{content:'▾ ';}
+  details.pp[open] summary{border-bottom:1px solid var(--border-strong);}
+  .pp-body{padding:12px;display:flex;flex-direction:column;gap:14px;}
+
+  .field{display:flex;flex-direction:column;gap:6px;}
+  label.field-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);font-weight:600;}
+  select,.pp-body input[type=text],.pp-body input[type=number],.pp-body textarea{
+    font-family:var(--font-ui);border:1px solid var(--border-strong);background:var(--bg-panel);
+    border-radius:4px;padding:7px 9px;font-size:12.5px;color:var(--text-primary);width:100%;
+  }
+  .pp-body textarea{font-family:var(--font-mono);font-size:12px;line-height:1.5;resize:vertical;}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-primary);}
+
+  .layout-preview,.tp-preview-wrap{
+    border:1px solid var(--border-strong);border-radius:4px;background:#000;padding:14px;
+    display:flex;justify-content:center;overflow:auto;
+  }
+  #layoutPreviewPage{background:#fff;box-shadow:0 4px 14px rgba(0,0,0,0.4);transform-origin:top center;}
+  .swatch-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .swatch{width:26px;height:26px;border-radius:4px;border:2px solid transparent;cursor:pointer;}
+  .swatch.sel{border-color:var(--accent);}
+  #tpPreviewPage{
+    background:#fff;box-shadow:0 8px 22px rgba(0,0,0,0.4);width:220px;height:311px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:22px;position:relative;transform-origin:top center;
+  }
+
+  .flip-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;}
+  #flipStage{
+    width:100%;max-width:280px;aspect-ratio:3/4;background:#fff;border:1px solid var(--line);border-radius:3px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.4);padding:0;display:flex;flex-direction:column;overflow:hidden;
+  }
+  #flipStage .flip-pad{padding:20px 18px;display:flex;flex-direction:column;flex:1;overflow-y:auto;font-family:var(--font-mono);font-size:11px;line-height:1.5;}
+  #flipStage .flip-page-num{font-size:9px;color:var(--ink-soft);text-align:center;margin-top:auto;padding-top:8px;flex:none;font-family:var(--font-ui);}
+  .sp-heading{font-weight:700;text-transform:uppercase;margin:0 0 10px 0;letter-spacing:0.3px;}
+  .sp-action{margin:0 0 10px 0;white-space:pre-wrap;}
+  .sp-character{font-weight:700;text-transform:uppercase;text-align:center;margin:12px 0 0 0;letter-spacing:0.3px;}
+  .sp-parenthetical{text-align:center;font-style:italic;color:var(--ink-soft);margin:0;font-size:10.5px;}
+  .sp-dialogue{width:78%;margin:2px auto 10px auto;white-space:pre-wrap;text-align:left;}
+  .sp-transition{text-align:right;font-weight:700;text-transform:uppercase;margin:10px 0;letter-spacing:0.3px;}
+  .sp-image{display:block;margin:10px auto;border-radius:3px;max-width:100%;}
+  .flip-controls{display:flex;align-items:center;gap:12px;}
+  .flip-controls span{font-size:11.5px;color:var(--text-muted);}
+
+  footer.savebar{display:none;}
+
+  /* ================= RESPONSIVE ================= */
+  @media (max-width:980px){
+    .main-interface{
+      display:flex;flex-direction:column;height:auto;
+      grid-template-columns:unset;grid-template-rows:unset;
+    }
+    .toolbar{order:1;}
+    .canvas-area{order:2;height:auto;}
+    .tools-panel{order:3;border-right:none;border-top:1px solid var(--border);height:auto;max-height:none;}
+    .header-titles{overflow-x:auto;}
+  }
+  @media (max-width:560px){
+    .logo{font-size:16px;}
+    .header-titles .tfield{min-width:96px;}
+    .properties-panel{width:100%;max-width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="brandline">
+      <div class="logo">ZNK — Scénario</div>
+      <div class="header-titles">
+        <div class="tfield"><span class="hlabel">Titre</span><input type="text" id="titleInput" placeholder="Titre du scénario"></div>
+        <div class="tfield"><span class="hlabel">Auteur</span><input type="text" id="authorInput" placeholder="Nom de l'auteur"></div>
+        <div class="tfield"><span class="hlabel">Genre</span><input type="text" id="genreInput" placeholder="Drame, comédie…"></div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="save-indicator" id="saveIndicator">Enregistré automatiquement</span>
+    </div>
+  </header>
+
+  <div class="main-interface">
+
+    <div class="toolbar">
+      <div class="tool-group">
+        <button class="tool-btn" id="openLayoutBtn">📐 Mise en forme</button>
+        <button class="tool-btn" id="openTitlePageBtn">📄 Page titre</button>
+        <button class="tool-btn" id="openExportPanelBtn">🎬 Aperçu export</button>
+      </div>
+      <div class="tool-group">
+        <button class="tool-btn primary" id="exportPdfBtn">⬇ Export PDF</button>
+        <button class="tool-btn ghost" id="saveHtmlBtn">💾 Sauver Html</button>
+      </div>
+    </div>
+
+    <!-- ===== PANNEAU GAUCHE : Personnages / Scènes / Stats ===== -->
+    <aside class="tools-panel" id="toolsPanel">
+      <div class="panel-section">
+        <div class="section-title">Personnages</div>
+        <div class="char-add-row">
+          <input type="text" id="newCharInput" placeholder="Ajouter un nom…">
+          <button id="addCharBtn" class="tool-btn small">+</button>
+        </div>
+        <div id="charList"></div>
+        <p class="hint">Clique un nom pour l'insérer directement dans la scène où tu écris. La liste se complète aussi automatiquement avec chaque <code>@NOM</code> déjà présent dans le texte.</p>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">Scènes</div>
+        <div id="sceneNavList"></div>
+      </div>
+
+      <div class="panel-section" id="statsSection">
+        <div class="section-title">Statistiques</div>
+        <div id="statsBox"></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">Syntaxe rapide</div>
+        <div class="syntax-box">
+          <code>@NOM</code> — nom de personnage<br>
+          <code>(indication)</code> — jeu / ton<br>
+          <code>&gt;TRANSITION</code> — coupe, fondu…<br>
+          ligne vide — nouveau bloc d'action
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== CENTRE : les scènes, écrites/dictées ===== -->
+    <main class="canvas-area">
+      <h2 class="section-title-main">Le scénario, scène par scène</h2>
+      <p class="section-sub">Chaque scène commence par un intitulé (INT./EXT. — LIEU — JOUR/NUIT), puis son contenu : dictée à voix haute (reconnue hors-ligne) ou saisie manuelle. Personnages, indications et transitions sont reconnus automatiquement à la mise en forme, et se règlent en direct dans le panneau de droite.</p>
+      <div id="sceneList"></div>
+      <button class="tool-btn primary add-scene-bottom" id="addSceneBtn">+ Nouvelle scène</button>
+      <input type="file" id="sceneImageAddInput" accept="image/*" style="display:none" multiple>
+      <p class="hint" style="margin-top:18px;">Astuce de saisie — dans le texte d'une scène : une ligne commençant par <b>@</b> devient un nom de personnage (ex. <code>@CLAIRE</code>) ; une ligne entre parenthèses devient une indication de jeu ; une ligne commençant par <b>&gt;</b> devient une transition (ex. <code>&gt;COUPE À :</code>).</p>
+    </main>
+
+  </div>
+
+    <!-- ===== PANNEAU DROIT (tiroir) : Mise en forme / Page de titre / Aperçu & export ===== -->
+    <aside class="properties-panel" id="propsPanel">
+      <div class="props-panel-head">
+        <span>Réglages</span>
+        <button class="tool-btn small ghost" id="closePropsBtn">✕ Fermer</button>
+      </div>
+
+      <details class="pp" id="layoutDetails" open>
+        <summary>📐 Mise en forme</summary>
+        <div class="pp-body">
+          <div class="field">
+            <label class="field-label">Format de page</label>
+            <select id="fmtSelect">
+              <option value="letter">US Letter — standard scénario</option>
+              <option value="A4">A4 (21 × 29,7 cm)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Police</label>
+            <select id="fontSelect">
+              <option value="Courier Prime">Courier Prime — standard scénario</option>
+              <option value="Courier New">Courier New</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Taille du texte : <span id="fsOut">12</span> pt</label>
+            <input type="range" id="fsRange" min="10" max="14" value="12">
+          </div>
+          <div class="field">
+            <label class="field-label">Marge gauche : <span id="mgOut">38</span> mm</label>
+            <input type="range" id="mgRange" min="25" max="45" value="38">
+          </div>
+          <div class="field">
+            <label class="field-label">Numérotation</label>
+            <div class="checkline"><input type="checkbox" id="numCheck" checked><span>Numéroter les scènes (1., 2., 3…)</span></div>
+          </div>
+          <div class="layout-preview">
+            <div id="layoutPreviewPage"></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="pp" id="titlePageDetails">
+        <summary>📄 Page de titre</summary>
+        <div class="pp-body">
+          <div class="field">
+            <label class="field-label">Fond de la page de titre</label>
+            <div class="swatch-row" id="tpSwatches"></div>
+          </div>
+          <div class="field">
+            <label class="field-label">Mention (facultatif)</label>
+            <input type="text" id="draftInput" placeholder="ex. Premier jet — Août 2026">
+          </div>
+          <div class="field">
+            <label class="field-label">Coordonnées (bas de page)</label>
+            <textarea id="contactArea" rows="4" placeholder="Nom&#10;Email&#10;Téléphone&#10;Agent / représentation"></textarea>
+          </div>
+          <div class="tp-preview-wrap">
+            <div id="tpPreviewPage"></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="pp" id="exportDetails">
+        <summary>🎬 Aperçu &amp; export</summary>
+        <div class="pp-body">
+          <p class="hint" style="margin-top:0;">Le script se lit ici, mis en forme comme sur la page. Le PDF (bouton en haut) est prêt pour la lecture ou le tournage.</p>
+          <div class="flip-wrap">
+            <div id="flipStage"></div>
+            <div class="flip-controls">
+              <button class="tool-btn small" id="flipPrev">← Préc.</button>
+              <span id="flipPos">—</span>
+              <button class="tool-btn small" id="flipNext">Suiv. →</button>
+            </div>
+          </div>
+          <p class="hint" style="text-align:center;">Le .html téléchargé est un script feuilletable autonome (identique au PDF), à ouvrir sans connexion.</p>
+          <button class="tool-btn ghost" id="publishLibBtn" style="width:100%;">☁ Publier dans ZNK Librairie</button>
+          <p class="hint" style="text-align:center;" id="publishHint">Publier envoie ce script au serveur ZNK et le rend visible par tous dans ZNK Librairie.</p>
+        </div>
+      </details>
+
+    </aside>
+
+    <div class="panel-backdrop" id="panelBackdrop"></div>
+
+  <footer class="savebar" id="saveIndicatorOld"></footer>
+</div>
+
+<script>
+/* =========================================================================
+   ZNK-Scénario — prototype standalone
+   -------------------------------------------------------------------------
+   Reprend le même mécanisme que ZNK-LIVREmoi : obtention du texte de chaque
+   scène par dictée vocale (transcrite hors-ligne via faster-whisper /
+   whisper.cpp côté server.py, aucune donnée audio envoyée à un tiers) ou
+   saisie manuelle, et insertion d'images au point d'insertion du curseur via
+   des repères [[img:ID]]. La différence porte sur la mise en forme : chaque
+   scène possède un intitulé (slug line) distinct, et le corps du texte est
+   interprété avec une syntaxe légère (@PERSONNAGE, (indication), >TRANSITION)
+   pour produire une mise en page proche des standards de scénario, à la fois
+   à l'écran, en PDF et dans le .html exporté.
+   ========================================================================= */
+const WHISPER_ENDPOINT = '/api/transcribe-audio'; // local uniquement (whisper.cpp tourne chez l'utilisateur)
+
+// ---- Contenu PARTAGÉ (visible par tous les utilisateurs) --------------------
+const ZNK_CLOUD_URL = (function(){
+  try{ return localStorage.getItem('znk_cloud_url') || ''; }catch(e){ return ''; }
+})(); // ex: 'https://cloud.znk-app.com' — laisser vide = local uniquement
+function znkCloudPath(path){ return (ZNK_CLOUD_URL || '') + path; }
+
+const STORAGE_KEY = 'znk-scenario-script';
+
+function defaultScript(){
+  return {
+    title:'', author:'', genre:'',
+    scenes:[],
+    characters:[], // roster ajouté manuellement, en plus des @NOM détectés dans le texte
+    layout:{ format:'letter', font:'Courier Prime', fontSize:12, marginLeft:38, numbering:true },
+    titlePage:{ bgColor:'#ffffff', draft:'', contact:'' }
+  };
+}
+let script = loadScript();
+
+function loadScript(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return Object.assign(defaultScript(), JSON.parse(raw));
+  }catch(e){}
+  return defaultScript();
+}
+function newSceneObject(){
+  return { id:'s'+Date.now()+Math.random().toString(36).slice(2,6), heading:'', corrected:'', manual:false, images:[], transcribing:false };
+}
+let saveTimer=null;
+function saveScript(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(script));
+  const ind=document.getElementById('saveIndicator');
+  ind.textContent='Enregistré ✓';
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{ind.textContent='Enregistré automatiquement';},1400);
+}
+
+/* ---------- header fields ---------- */
+const titleInput=document.getElementById('titleInput');
+const authorInput=document.getElementById('authorInput');
+const genreInput=document.getElementById('genreInput');
+titleInput.value=script.title; authorInput.value=script.author; genreInput.value=script.genre||'';
+titleInput.addEventListener('input',()=>{script.title=titleInput.value;saveScript();renderTitlePage();});
+authorInput.addEventListener('input',()=>{script.author=authorInput.value;saveScript();renderTitlePage();});
+genreInput.addEventListener('input',()=>{script.genre=genreInput.value;saveScript();});
+
+/* ---------- boutons du header : ouvrir la bonne section du panneau droit (tiroir) ---------- */
+const propsPanel=document.getElementById('propsPanel');
+const panelBackdrop=document.getElementById('panelBackdrop');
+function openPanelSection(id){
+  document.querySelectorAll('.properties-panel details.pp').forEach(d=>{ d.open = (d.id===id); });
+  propsPanel.classList.add('open');
+  panelBackdrop.classList.add('open');
+  const target=document.getElementById(id);
+  if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function closePropsPanel(){
+  propsPanel.classList.remove('open');
+  panelBackdrop.classList.remove('open');
+}
+document.getElementById('openLayoutBtn').addEventListener('click',()=>openPanelSection('layoutDetails'));
+document.getElementById('openTitlePageBtn').addEventListener('click',()=>openPanelSection('titlePageDetails'));
+document.getElementById('openExportPanelBtn').addEventListener('click',()=>openPanelSection('exportDetails'));
+document.getElementById('closePropsBtn').addEventListener('click', closePropsPanel);
+panelBackdrop.addEventListener('click', closePropsPanel);
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closePropsPanel(); });
+
+/* ---------- SCENES ---------- */
+const sceneList=document.getElementById('sceneList');
+const sceneImageAddInput=document.getElementById('sceneImageAddInput');
+let pendingTargetSceneId=null;
+let activeSceneId=null; // dernière scène où le curseur/focus était actif — cible des insertions rapides
+
+function addNewScene(){
+  const sc=newSceneObject();
+  script.scenes.push(sc);
+  saveScript();
+  renderScenes();
+  activeSceneId=sc.id;
+  setTimeout(()=>{
+    const el=document.querySelector('[data-scene-id="'+sc.id+'"]');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    const ta=document.querySelector('[data-scene-id="'+sc.id+'"] textarea.scene-body');
+    if(ta) ta.focus();
+  },60);
+}
+document.getElementById('addSceneBtn').addEventListener('click', addNewScene);
+
+function getActiveSceneAndTa(){
+  if(!script.scenes.length) return null;
+  let sc=script.scenes.find(s=>s.id===activeSceneId);
+  if(!sc){ sc=script.scenes[script.scenes.length-1]; activeSceneId=sc.id; }
+  const ta=document.querySelector('[data-scene-id="'+sc.id+'"] textarea.scene-body');
+  return {sc, ta};
+}
+
+function fileToDataUrl(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=()=>rej(new Error('lecture impossible'));
+    r.readAsDataURL(file);
+  });
+}
+
+// Chaque image ajoutée devient un repère [[img:ID]] inséré dans le texte, à
+// l'endroit où était le curseur au moment de cliquer sur "+ Images" — même
+// principe que pour la voix. pendingImageInsertion est capturé au clic,
+// avant l'ouverture du sélecteur de fichiers.
+let pendingImageInsertion=null; // {start, end}
+
+sceneImageAddInput.addEventListener('change', async (e)=>{
+  const files=Array.from(e.target.files||[]);
+  const sc=script.scenes.find(p=>p.id===pendingTargetSceneId);
+  if(sc){
+    const insertion=pendingImageInsertion || {start:(sc.corrected||'').length, end:(sc.corrected||'').length};
+    pendingImageInsertion=null;
+    let cursor=insertion.start, cursorEnd=insertion.end;
+    for(const f of files){
+      const src=await fileToDataUrl(f);
+      const id='img'+Date.now()+Math.random().toString(36).slice(2,6);
+      sc.images.push({id, src, widthPct:100});
+      const token='[[img:'+id+']]';
+      sc.corrected=insertTextAtPosition(sc.corrected||'', token, cursor, cursorEnd);
+      cursor=cursor+token.length+1; cursorEnd=cursor; // les suivantes s'insèrent juste après
+    }
+  }
+  saveScript();
+  renderScenes();
+  sceneImageAddInput.value='';
+});
+
+/* Transcription vocale (Whisper). Dans l'app Electron ZNK, la transcription
+   tourne 100% en local via whisper.cpp (main.js: handler IPC
+   'transcribe-audio', exposé ici par preload.js sous
+   window.electronAPI.transcribeAudio) — aucune connexion requise. Les repli
+   znkFetch/fetch ci-dessous ne servent que si ce module est un jour testé
+   hors de l'app Electron (navigateur seul, avec un vrai serveur derrière
+   WHISPER_ENDPOINT). */
+async function transcribeVoice(audioDataUrl){
+  if(window.electronAPI && typeof window.electronAPI.transcribeAudio==='function'){
+    const result=await window.electronAPI.transcribeAudio(audioDataUrl);
+    if(result && result.success) return result.text || '';
+    throw new Error((result && result.error) || 'transcription locale indisponible');
+  }
+  if(typeof window.znkFetch==='function'){
+    const resp=await window.znkFetch(WHISPER_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({audio:audioDataUrl})
+    });
+    if(resp && resp.ok){ const data=await resp.json(); return data.text || ''; }
+  }
+  const resp2=await fetch(WHISPER_ENDPOINT,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({audio:audioDataUrl})
+  });
+  if(resp2.ok){ const data2=await resp2.json(); return data2.text || ''; }
+  throw new Error("serveur ZNK (Whisper) injoignable — écris le texte toi-même ci-dessous");
+}
+
+function blobToDataUrl(blob){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=()=>rej(new Error('lecture audio impossible'));
+    r.readAsDataURL(blob);
+  });
+}
+
+/* ---------- enregistrement micro (lecture à voix haute) ---------- */
+// Le son n'est jamais conservé : il sert uniquement à produire le texte, puis
+// il est jeté. Le texte transcrit s'insère à l'endroit où était le curseur au
+// moment de démarrer l'enregistrement (pas systématiquement à la fin).
+let activeRecorder=null;
+let activeRecorderSceneId=null;
+let activeChunks=[];
+let pendingInsertion=null; // {sceneId, start, end} — position du curseur au clic sur 🎙️
+
+function startRecording(sceneId, insertion){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    alert("Micro non disponible dans ce navigateur/contexte.");
+    return;
+  }
+  pendingInsertion = insertion || {sceneId, start:0, end:0};
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    activeChunks=[];
+    activeRecorderSceneId=sceneId;
+    const mimeType = (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/webm')) ? 'audio/webm' : '';
+    activeRecorder = mimeType ? new MediaRecorder(stream,{mimeType}) : new MediaRecorder(stream);
+    activeRecorder.addEventListener('dataavailable', e=>{ if(e.data && e.data.size>0) activeChunks.push(e.data); });
+    activeRecorder.addEventListener('stop', async ()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(activeChunks, {type: activeRecorder.mimeType || 'audio/webm'});
+      const chunkCount=activeChunks.length;
+      const insertionAtStop=pendingInsertion;
+      activeRecorder=null; activeRecorderSceneId=null; pendingInsertion=null;
+      if(blob.size>0){
+        await transcribeAndInsert(insertionAtStop, blob);
+      } else {
+        renderScenes();
+        alert("Aucun son n'a été capté (0 fragment audio reçu du micro, blob vide). "+
+              "Le micro a répondu mais n'a livré aucune donnée — vérifie qu'aucune autre "+
+              "app n'utilise le micro en exclusif, et réessaie. (chunks reçus : "+chunkCount+")");
+      }
+    });
+    activeRecorder.start();
+    renderScenes();
+  }).catch(err=>{
+    alert("Impossible d'accéder au micro : "+err.message);
+  });
+}
+
+function stopRecording(){
+  if(activeRecorder && activeRecorder.state==='recording'){ activeRecorder.stop(); }
+}
+
+async function transcribeAndInsert(insertion, blob){
+  const sc=script.scenes.find(p=>p.id===insertion.sceneId);
+  if(!sc) return;
+  sc.transcribing=true; renderScenes();
+  try{
+    const dataUrl=await blobToDataUrl(blob); // temporaire, en mémoire — jamais sauvegardé
+    const text=await transcribeVoice(dataUrl);
+    if(text){
+      const original=sc.corrected||'';
+      const start=Math.max(0, Math.min(insertion.start, original.length));
+      const end=Math.max(start, Math.min(insertion.end, original.length));
+      sc.corrected=insertTextAtPosition(original, text, start, end);
+    }
+  }catch(err){
+    alert("Transcription vocale indisponible : "+err.message);
+  }finally{
+    sc.transcribing=false;
+    saveScript(); renderScenes();
+  }
+}
+
+function insertTextAtPosition(original, insertText, start, end){
+  const before=original.slice(0,start);
+  const after=original.slice(end);
+  const needSpaceBefore = before && !/\s$/.test(before) && !/\n$/.test(before);
+  const needSpaceAfter = after && !/^\s/.test(after);
+  return before + (needSpaceBefore?' ':'') + insertText + (needSpaceAfter?' ':'') + after;
+}
+
+// Crée (ou rejoint) la scène suivante et y démarre directement l'enregistrement —
+// pour quand un passage lu doit continuer sur une nouvelle scène plutôt que la
+// scène en cours. Choix volontairement manuel.
+function recordOnNextScene(currentSceneId){
+  const idx=script.scenes.findIndex(p=>p.id===currentSceneId);
+  let nextScene=script.scenes[idx+1];
+  if(!nextScene){
+    nextScene=newSceneObject();
+    script.scenes.push(nextScene);
+    saveScript();
+  }
+  renderScenes();
+  setTimeout(()=>{
+    const el=document.querySelector('[data-scene-id="'+nextScene.id+'"]');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    startRecording(nextScene.id, {sceneId:nextScene.id, start:0, end:0});
+  }, 60);
+}
+
+/* Insertion d'un gabarit de mise en forme (personnage / indication /
+   transition) à la position du curseur dans le corps de texte d'une scène. */
+function insertTemplateAtCursor(sc, ta, template, placeholderLen){
+  const start=ta.selectionStart, end=ta.selectionEnd;
+  const original=sc.corrected||'';
+  const before=original.slice(0,start);
+  const needNlBefore = before && !/\n\n$/.test(before) ? (before.endsWith('\n')?'\n':'\n\n') : '';
+  const insertText=needNlBefore+template+'\n';
+  sc.corrected=insertTextAtPosition(original, insertText, start, end);
+  saveScript(); renderScenes();
+  activeSceneId=sc.id;
+  setTimeout(()=>{
+    const newTa=document.querySelector('[data-scene-id="'+sc.id+'"] textarea.scene-body');
+    if(newTa){
+      newTa.focus();
+      const pos=start+needNlBefore.length+(placeholderLen!=null?template.length-placeholderLen:template.length);
+      newTa.selectionStart=newTa.selectionEnd=Math.min(pos, newTa.value.length);
+    }
+  },30);
+}
+
+/* Indication de jeu : insère juste "( )", curseur entre les parenthèses. */
+function insertParentheticalTemplate(sc, ta){
+  const start=ta.selectionStart, end=ta.selectionEnd;
+  const original=sc.corrected||'';
+  const before=original.slice(0,start);
+  const needNlBefore = before && !/\n\n$/.test(before) ? (before.endsWith('\n')?'\n':'\n\n') : '';
+  const template='( )';
+  const insertText=needNlBefore+template+'\n';
+  sc.corrected=insertTextAtPosition(original, insertText, start, end);
+  saveScript(); renderScenes();
+  activeSceneId=sc.id;
+  setTimeout(()=>{
+    const newTa=document.querySelector('[data-scene-id="'+sc.id+'"] textarea.scene-body');
+    if(newTa){
+      newTa.focus();
+      const pos=start+needNlBefore.length+2; // entre "(" et ")"
+      newTa.selectionStart=newTa.selectionEnd=Math.min(pos, newTa.value.length);
+    }
+  },30);
+}
+
+/* ---------- insertion d'un personnage dans la scène active (utilisée uniquement
+   par le panneau "Personnages" de la colonne de gauche — seul point d'entrée
+   pour insérer un nom de personnage) ---------- */
+function withActiveScene(cb){
+  let target=getActiveSceneAndTa();
+  if(!target){ addNewScene(); target=getActiveSceneAndTa(); }
+  if(!target || !target.ta){ alert("Clique d'abord dans le texte d'une scène."); return; }
+  cb(target.sc, target.ta);
+}
+
+/* ---------- Personnages (panneau clic-à-insérer) ---------- */
+const charList=document.getElementById('charList');
+const newCharInput=document.getElementById('newCharInput');
+const addCharBtn=document.getElementById('addCharBtn');
+
+function collectCharacters(){
+  const counts={};
+  (script.characters||[]).forEach(n=>{
+    const key=(n||'').trim().toUpperCase();
+    if(key && !(key in counts)) counts[key]=0;
+  });
+  script.scenes.forEach(sc=>{
+    const blocks=parseScreenplayBlocks(sc.corrected||'');
+    blocks.forEach(b=>{
+      if(b.type==='character' && b.text){
+        const key=b.text.trim().toUpperCase();
+        if(key) counts[key]=(counts[key]||0)+1;
+      }
+    });
+  });
+  return Object.keys(counts).sort().map(name=>({name, count:counts[name]}));
+}
+
+function insertCharacterByName(name){
+  if(!name) return;
+  withActiveScene((sc,ta)=>{
+    const start=ta.selectionStart, end=ta.selectionEnd;
+    const original=sc.corrected||'';
+    const before=original.slice(0,start);
+    const needNlBefore = before && !/\n\n$/.test(before) ? (before.endsWith('\n')?'\n':'\n\n') : '';
+    const heading='@'+name.toUpperCase();
+    const dialogueLine=': " "';
+    const template=heading+'\n'+dialogueLine;
+    const insertText=needNlBefore+template+'\n';
+    sc.corrected=insertTextAtPosition(original, insertText, start, end);
+    saveScript(); renderScenes();
+    activeSceneId=sc.id;
+    setTimeout(()=>{
+      const newTa=document.querySelector('[data-scene-id="'+sc.id+'"] textarea.scene-body');
+      if(newTa){
+        newTa.focus();
+        // curseur juste après le premier guillemet, entre les deux " "
+        const pos=start+needNlBefore.length+heading.length+1+dialogueLine.indexOf('"')+1;
+        newTa.selectionStart=newTa.selectionEnd=Math.min(pos, newTa.value.length);
+      }
+    },30);
+  });
+}
+
+function renderCharList(){
+  charList.innerHTML='';
+  const chars=collectCharacters();
+  if(!chars.length){
+    charList.innerHTML='<div class="empty-mini">Aucun personnage pour l\'instant.</div>';
+    return;
+  }
+  chars.forEach(c=>{
+    const chip=document.createElement('div');
+    chip.className='char-chip';
+    const nameSpan=document.createElement('span');
+    nameSpan.className='char-name';
+    nameSpan.textContent=c.name;
+    nameSpan.title='Insérer @'+c.name+' : " " dans la scène active';
+    nameSpan.addEventListener('click',()=>insertCharacterByName(c.name));
+    chip.appendChild(nameSpan);
+    if(c.count){
+      const badge=document.createElement('span');
+      badge.className='char-count';
+      badge.textContent=c.count;
+      badge.title=c.count+' réplique(s) déjà écrites';
+      chip.appendChild(badge);
+    }
+    const rm=document.createElement('button');
+    rm.className='char-rm';
+    rm.type='button';
+    rm.textContent='×';
+    rm.title='Retirer ce nom de la liste ajoutée manuellement';
+    rm.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      script.characters=(script.characters||[]).filter(n=>(n||'').trim().toUpperCase()!==c.name);
+      saveScript(); renderCharList();
+    });
+    chip.appendChild(rm);
+    charList.appendChild(chip);
+  });
+}
+function addCharacterFromInput(){
+  const v=newCharInput.value.trim();
+  if(!v) return;
+  script.characters=script.characters||[];
+  if(!script.characters.some(n=>(n||'').trim().toUpperCase()===v.toUpperCase())){
+    script.characters.push(v);
+    saveScript();
+  }
+  newCharInput.value='';
+  renderCharList();
+}
+addCharBtn.addEventListener('click', addCharacterFromInput);
+newCharInput.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); addCharacterFromInput(); } });
+
+/* ---------- Navigation scènes (panneau gauche) ---------- */
+const sceneNavList=document.getElementById('sceneNavList');
+function renderSceneNav(){
+  sceneNavList.innerHTML='';
+  if(!script.scenes.length){
+    sceneNavList.innerHTML='<div class="empty-mini">Aucune scène.</div>';
+    return;
+  }
+  script.scenes.forEach((sc,idx)=>{
+    const item=document.createElement('div');
+    item.className='nav-item';
+    item.textContent=(idx+1)+'. '+(sc.heading||'SANS INTITULÉ');
+    item.title=sc.heading||'Scène sans intitulé';
+    item.addEventListener('click',()=>{
+      const el=document.querySelector('[data-scene-id="'+sc.id+'"]');
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      activeSceneId=sc.id;
+    });
+    sceneNavList.appendChild(item);
+  });
+}
+
+/* ---------- Statistiques (panneau gauche) ---------- */
+const statsBox=document.getElementById('statsBox');
+function renderStats(){
+  const words=script.scenes.reduce((acc,sc)=>{
+    const t=(sc.corrected||'').trim();
+    return acc + (t ? t.split(/\s+/).filter(Boolean).length : 0);
+  },0);
+  const pagesApprox=Math.max(1, Math.round(words/220));
+  statsBox.innerHTML =
+    '<div class="stat-row"><span>Scènes</span><b>'+script.scenes.length+'</b></div>'+
+    '<div class="stat-row"><span>Personnages</span><b>'+collectCharacters().length+'</b></div>'+
+    '<div class="stat-row"><span>Mots</span><b>'+words+'</b></div>'+
+    '<div class="stat-row"><span>≈ pages</span><b>'+pagesApprox+'</b></div>';
+}
+
+function renderScenes(){
+  sceneList.innerHTML='';
+  if(script.scenes.length===0){
+    sceneList.innerHTML='<div class="empty">Aucune scène pour l\'instant. Ajoute la première scène du scénario.</div>';
+    renderSceneNav(); renderCharList(); renderStats();
+    return;
+  }
+  script.scenes.forEach((sc,idx)=>{
+    const card=document.createElement('div');
+    card.className='scene-card';
+    card.dataset.sceneId=sc.id;
+
+    const head=document.createElement('div');
+    head.className='scene-head';
+    const num=document.createElement('div');
+    num.className='scene-num';
+    num.textContent='SCÈNE '+(idx+1);
+    head.appendChild(num);
+
+    const status=document.createElement('span');
+    status.className='scene-status'+(sc.corrected?' ok':'');
+    status.textContent = sc.corrected ? 'texte prêt'
+      : sc.transcribing ? 'transcription en cours…'
+      : (activeRecorderSceneId===sc.id) ? 'enregistrement…'
+      : 'vide';
+    head.appendChild(status);
+    card.appendChild(head);
+
+    // ---- ligne d'intitulé (slug line) ----
+    const hRow=document.createElement('div');
+    hRow.className='heading-row';
+    const hInput=document.createElement('input');
+    hInput.type='text';
+    hInput.className='heading-input';
+    hInput.placeholder='INT. LIEU — JOUR';
+    hInput.value=sc.heading||'';
+    hInput.addEventListener('focus',()=>{ activeSceneId=sc.id; });
+    hInput.addEventListener('input',()=>{
+      const pos=hInput.selectionStart;
+      sc.heading=hInput.value.toUpperCase();
+      hInput.value=sc.heading;
+      hInput.selectionStart=hInput.selectionEnd=pos;
+      saveScript();
+      renderSceneNav();
+    });
+    hRow.appendChild(hInput);
+
+    const quick=document.createElement('div');
+    quick.className='heading-quick';
+    ['INT.','EXT.','— JOUR','— NUIT','— CONTINU'].forEach(tok=>{
+      const b=document.createElement('button');
+      b.className='doc-btn ghost';
+      b.style.padding='5px 9px'; b.style.fontSize='11px';
+      b.textContent=tok;
+      b.type='button';
+      b.addEventListener('click',()=>{
+        const pos=hInput.selectionStart!=null?hInput.selectionStart:hInput.value.length;
+        const before=hInput.value.slice(0,pos), after=hInput.value.slice(pos);
+        const sep=(before && !/\s$/.test(before))?' ':'';
+        hInput.value=(before+sep+tok+' '+after).toUpperCase();
+        sc.heading=hInput.value;
+        saveScript();
+        renderSceneNav();
+        hInput.focus();
+      });
+      quick.appendChild(b);
+    });
+    hRow.appendChild(quick);
+    card.appendChild(hRow);
+
+    // ---- barre d'outils (voix / images / gabarits) ----
+    const toolbar=document.createElement('div');
+    toolbar.className='toolbar-row';
+
+    const ta=document.createElement('textarea');
+    ta.rows=6;
+    ta.className='scene-body';
+    ta.placeholder="Action, dialogues… (dictée ou saisie manuelle)\n\n@NOM-DU-PERSONNAGE\n(indication de jeu)\nSa réplique ici.\n\n>COUPE À :";
+    ta.value=sc.corrected||'';
+    ta.addEventListener('focus',()=>{ activeSceneId=sc.id; });
+    ta.addEventListener('input',()=>{ sc.corrected=ta.value; sc.manual=true; saveScript(); renderCharList(); renderStats(); });
+
+    const voiceBtn=document.createElement('button');
+    voiceBtn.className='doc-btn'+(activeRecorderSceneId===sc.id?' recording':'');
+    const isRecordingThisScene = activeRecorderSceneId===sc.id;
+    voiceBtn.textContent = isRecordingThisScene ? '⏹ Arrêter l\'enregistrement'
+      : sc.transcribing ? 'Transcription en cours…'
+      : '🎙️ Dicter cette scène';
+    voiceBtn.type='button';
+    voiceBtn.disabled = sc.transcribing || (activeRecorderSceneId!==null && !isRecordingThisScene);
+    voiceBtn.addEventListener('click', ()=>{
+      activeSceneId=sc.id;
+      if(isRecordingThisScene){ stopRecording(); }
+      else{
+        startRecording(sc.id, { sceneId: sc.id, start: ta.selectionStart, end: ta.selectionEnd });
+      }
+    });
+    toolbar.appendChild(voiceBtn);
+
+    const nextSceneBtn=document.createElement('button');
+    nextSceneBtn.className='doc-btn ghost';
+    nextSceneBtn.type='button';
+    nextSceneBtn.textContent='↳ Scène suivante';
+    nextSceneBtn.title='Continuer la dictée sur la scène suivante (la crée si besoin)';
+    nextSceneBtn.disabled = sc.transcribing || activeRecorderSceneId!==null;
+    nextSceneBtn.addEventListener('click', ()=>{ recordOnNextScene(sc.id); });
+    toolbar.appendChild(nextSceneBtn);
+
+    const parenBtn=document.createElement('button');
+    parenBtn.className='doc-btn ghost';
+    parenBtn.type='button';
+    parenBtn.textContent='( ) Indication';
+    parenBtn.title='Insère une indication de jeu entre parenthèses';
+    parenBtn.addEventListener('click', ()=>{ activeSceneId=sc.id; insertParentheticalTemplate(sc, ta); });
+    toolbar.appendChild(parenBtn);
+
+    const transBtn=document.createElement('button');
+    transBtn.className='doc-btn ghost';
+    transBtn.type='button';
+    transBtn.textContent='→ Transition';
+    transBtn.title='Insère une transition (ex. COUPE À :)';
+    transBtn.addEventListener('click', ()=>{ activeSceneId=sc.id; insertTemplateAtCursor(sc, ta, '>COUPE À :', 0); });
+    toolbar.appendChild(transBtn);
+
+    const imgBtn=document.createElement('button');
+    imgBtn.className='doc-btn ghost';
+    imgBtn.type='button';
+    imgBtn.textContent='+ Images';
+    imgBtn.title='Insère la ou les images à la position du curseur dans le texte';
+    imgBtn.addEventListener('click',()=>{
+      activeSceneId=sc.id;
+      pendingTargetSceneId=sc.id;
+      pendingImageInsertion={ start: ta.selectionStart, end: ta.selectionEnd };
+      sceneImageAddInput.click();
+    });
+    toolbar.appendChild(imgBtn);
+
+    const delBtn=document.createElement('button');
+    delBtn.className='doc-btn ghost';
+    delBtn.type='button';
+    delBtn.textContent='Supprimer la scène';
+    delBtn.addEventListener('click',()=>{
+      script.scenes=script.scenes.filter(p=>p.id!==sc.id);
+      saveScript(); renderScenes();
+    });
+    toolbar.appendChild(delBtn);
+
+    card.appendChild(toolbar);
+    card.appendChild(ta);
+
+    if(sc.images.length){
+      const imgsWrap=document.createElement('div');
+      imgsWrap.className='scene-images';
+      sc.images.forEach((imgObj,i)=>{
+        if(imgObj.widthPct==null) imgObj.widthPct=100;
+
+        const col=document.createElement('div');
+        col.style.display='flex';
+        col.style.flexDirection='column';
+        col.style.alignItems='center';
+        col.style.gap='4px';
+
+        const imWrap=document.createElement('div');
+        imWrap.style.position='relative';
+        const im=document.createElement('img'); im.src=imgObj.src;
+        im.title=(sc.corrected||'').includes('[[img:'+imgObj.id+']]') ? 'Placée dans le texte (référence / storyboard)' : 'Non placée (repère absent du texte)';
+        imWrap.appendChild(im);
+        const rm=document.createElement('button');
+        rm.className='rm-img'; rm.textContent='×'; rm.type='button';
+        rm.style.margin='0'; rm.style.position='absolute'; rm.style.top='-6px'; rm.style.right='-6px';
+        rm.addEventListener('click',()=>{
+          sc.images.splice(i,1);
+          sc.corrected=(sc.corrected||'').split('[[img:'+imgObj.id+']]').join('').replace(/ {2,}/g,' ');
+          saveScript(); renderScenes();
+        });
+        imWrap.appendChild(rm);
+        col.appendChild(imWrap);
+
+        const sizeRow=document.createElement('div');
+        sizeRow.style.display='flex'; sizeRow.style.alignItems='center'; sizeRow.style.gap='4px';
+        const range=document.createElement('input');
+        range.type='range'; range.min='20'; range.max='100'; range.step='5';
+        range.value=imgObj.widthPct;
+        range.style.width='56px';
+        range.title="Taille de l'image dans le document";
+        const pctLabel=document.createElement('span');
+        pctLabel.style.fontSize='10px'; pctLabel.style.color='var(--ink-soft)'; pctLabel.style.minWidth='28px';
+        pctLabel.textContent=imgObj.widthPct+'%';
+        range.addEventListener('input',()=>{ pctLabel.textContent=range.value+'%'; });
+        range.addEventListener('change',()=>{
+          imgObj.widthPct=Number(range.value);
+          saveScript(); renderFlip();
+        });
+        sizeRow.appendChild(range); sizeRow.appendChild(pctLabel);
+        col.appendChild(sizeRow);
+
+        imgsWrap.appendChild(col);
+      });
+      card.appendChild(imgsWrap);
+    }
+
+    sceneList.appendChild(card);
+  });
+
+  renderSceneNav();
+  renderCharList();
+  renderStats();
+}
+renderScenes();
+
+/* ---------- LAYOUT ---------- */
+const fmtSelect=document.getElementById('fmtSelect');
+const fontSelect=document.getElementById('fontSelect');
+const fsRange=document.getElementById('fsRange');
+const mgRange=document.getElementById('mgRange');
+const numCheck=document.getElementById('numCheck');
+const fsOut=document.getElementById('fsOut');
+const mgOut=document.getElementById('mgOut');
+
+fmtSelect.value=script.layout.format;
+fontSelect.value=script.layout.font;
+fsRange.value=script.layout.fontSize; fsOut.textContent=script.layout.fontSize;
+mgRange.value=script.layout.marginLeft; mgOut.textContent=script.layout.marginLeft;
+numCheck.checked=script.layout.numbering!==false;
+
+[fmtSelect,fontSelect].forEach(el=>el.addEventListener('change',()=>{
+  script.layout.format=fmtSelect.value;
+  script.layout.font=fontSelect.value;
+  saveScript(); renderLayoutPreview(); renderFlip();
+}));
+fsRange.addEventListener('input',()=>{ fsOut.textContent=fsRange.value; script.layout.fontSize=Number(fsRange.value); saveScript(); renderLayoutPreview(); renderFlip(); });
+mgRange.addEventListener('input',()=>{ mgOut.textContent=mgRange.value; script.layout.marginLeft=Number(mgRange.value); saveScript(); renderLayoutPreview(); });
+numCheck.addEventListener('change',()=>{ script.layout.numbering=numCheck.checked; saveScript(); renderLayoutPreview(); renderFlip(); });
+
+const FORMATS={ letter:{w:216,h:279}, A4:{w:210,h:297} };
+function renderLayoutPreview(){
+  const f=FORMATS[script.layout.format];
+  const scale=0.62;
+  const el=document.getElementById('layoutPreviewPage');
+  el.style.width=(f.w*scale)+'px';
+  el.style.height=(f.h*scale)+'px';
+  el.style.fontFamily=script.layout.font+', monospace';
+  el.style.fontSize=Math.max(9,script.layout.fontSize*0.72)+'px';
+  el.style.lineHeight='1.6';
+  el.style.padding='16px 16px 16px '+(script.layout.marginLeft*scale*0.6)+'px';
+  el.style.overflow='hidden';
+  const num=script.layout.numbering!==false ? '1. ' : '';
+  const sampleHeading=(script.scenes[0]&&script.scenes[0].heading) || 'INT. APPARTEMENT DE CLAIRE — JOUR';
+  const sampleBody=(script.scenes[0]&&script.scenes[0].corrected) || "Une pièce simple, baignée de lumière. CLAIRE range des cartons.\n\n@CLAIRE\n(sans lever les yeux)\nOn ne part jamais vraiment d'un endroit.";
+  const blocks=parseScreenplayBlocks(sampleBody);
+  el.innerHTML='<div class="sp-heading">'+num+escapeHtml(sampleHeading)+'</div>'+renderBlocksHtml(blocks);
+}
+renderLayoutPreview();
+
+/* ---------- TITLE PAGE ---------- */
+const tpColors=['#ffffff','#f2efe6','#111214'];
+const tpSwatches=document.getElementById('tpSwatches');
+tpColors.forEach(c=>{
+  const sw=document.createElement('div');
+  sw.className='swatch'+(script.titlePage.bgColor===c?' sel':'');
+  sw.style.background=c;
+  sw.style.border=(c==='#ffffff')?'1px solid var(--line)':sw.style.border;
+  sw.addEventListener('click',()=>{
+    script.titlePage.bgColor=c;
+    document.querySelectorAll('#tpSwatches .swatch').forEach(s=>s.classList.remove('sel'));
+    sw.classList.add('sel');
+    saveScript(); renderTitlePage(); renderFlip();
+  });
+  tpSwatches.appendChild(sw);
+});
+
+const draftInput=document.getElementById('draftInput');
+const contactArea=document.getElementById('contactArea');
+draftInput.value=script.titlePage.draft||'';
+contactArea.value=script.titlePage.contact||'';
+draftInput.addEventListener('input',()=>{ script.titlePage.draft=draftInput.value; saveScript(); renderTitlePage(); renderFlip(); });
+contactArea.addEventListener('input',()=>{ script.titlePage.contact=contactArea.value; saveScript(); renderTitlePage(); renderFlip(); });
+
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+function renderTitlePage(){
+  const el=document.getElementById('tpPreviewPage');
+  const dark = script.titlePage.bgColor==='#111214';
+  el.style.background=script.titlePage.bgColor;
+  el.style.color = dark ? '#F2F1EC' : '#1c1c1a';
+  el.style.border = (script.titlePage.bgColor==='#ffffff') ? '1px solid var(--line)' : 'none';
+  el.innerHTML=`
+    <div style="font-family:var(--font-ui);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.55;position:absolute;top:12px;right:14px;">${escapeHtml(script.titlePage.draft||'')}</div>
+    <div style="font-family:var(--font-mono);font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:1px;line-height:1.3;">${escapeHtml(script.title||'Titre du scénario')}</div>
+    <div style="font-family:var(--font-ui);font-size:9px;margin-top:16px;opacity:0.8;">Un scénario de</div>
+    <div style="font-family:var(--font-ui);font-weight:600;font-size:11px;margin-top:5px;">${escapeHtml(script.author||'')}</div>
+    <div style="font-family:var(--font-ui);font-size:9px;opacity:0.6;font-style:italic;margin-top:6px;">${escapeHtml(script.genre||'')}</div>
+    <div style="font-family:var(--font-mono);font-size:8px;line-height:1.6;opacity:0.7;position:absolute;left:14px;bottom:12px;text-align:left;white-space:pre-wrap;">${escapeHtml(script.titlePage.contact||'')}</div>
+  `;
+}
+renderTitlePage();
+
+/* ---------- MISE EN FORME SCÉNARIO (parseur léger) ---------- */
+// Découpe le texte d'une scène en segments ordonnés {type:'text'|'image', ...}
+// en respectant la position des repères [[img:ID]] — même principe que
+// ZNK-LIVREmoi, réutilisé par l'aperçu feuilletable, le PDF ET le .html
+// exporté (buildStandaloneHtml réutilise ces mêmes fonctions via .toString()).
+function splitSceneIntoSegments(sc){
+  const text=sc.corrected||'';
+  const byId={};
+  (sc.images||[]).forEach(im=>{ byId[im.id]=im; });
+  const segments=[];
+  const re=/\[\[img:([a-z0-9]+)\]\]/gi;
+  let lastIndex=0, m;
+  while((m=re.exec(text))){
+    if(m.index>lastIndex) segments.push({type:'text', value:text.slice(lastIndex,m.index)});
+    const im=byId[m[1]];
+    if(im) segments.push({type:'image', src:im.src, id:im.id, widthPct:im.widthPct||100});
+    lastIndex=re.lastIndex;
+  }
+  if(lastIndex<text.length) segments.push({type:'text', value:text.slice(lastIndex)});
+  if(segments.length===0) segments.push({type:'text', value:''});
+  return segments;
+}
+
+// Interprète un bloc de texte brut selon une syntaxe légère de scénario :
+// lignes en @NOM -> personnage (les lignes suivantes deviennent dialogue
+// jusqu'à une ligne vide, une transition ou une autre scène) ; lignes entre
+// parenthèses -> indication de jeu ; lignes commençant par > -> transition ;
+// tout le reste -> action.
+function parseScreenplayBlocks(text){
+  const lines=(text||'').split('\n');
+  const blocks=[];
+  let mode='action';
+  let actionBuf=[];
+  function flushAction(){
+    if(actionBuf.length){
+      blocks.push({type:'action', text:actionBuf.join('\n')});
+      actionBuf=[];
+    }
+  }
+  for(const raw of lines){
+    const t=raw.trim();
+    if(t===''){ flushAction(); mode='action'; continue; }
+    if(t.charAt(0)==='@'){
+      flushAction();
+      blocks.push({type:'character', text:t.slice(1).trim()});
+      mode='dialogue';
+      continue;
+    }
+    if(/^\(.*\)$/.test(t)){
+      flushAction();
+      blocks.push({type:'parenthetical', text:t});
+      continue;
+    }
+    if(t.charAt(0)==='>'){
+      flushAction();
+      blocks.push({type:'transition', text:t.slice(1).trim()});
+      mode='action';
+      continue;
+    }
+    if(mode==='dialogue'){
+      blocks.push({type:'dialogue', text:t});
+    } else {
+      actionBuf.push(raw);
+    }
+  }
+  flushAction();
+  return blocks;
+}
+
+function renderBlocksHtml(blocks){
+  return blocks.map(b=>{
+    if(b.type==='action') return '<div class="sp-action">'+escapeHtml(b.text)+'</div>';
+    if(b.type==='character') return '<div class="sp-character">'+escapeHtml(b.text)+'</div>';
+    if(b.type==='parenthetical') return '<div class="sp-parenthetical">'+escapeHtml(b.text)+'</div>';
+    if(b.type==='dialogue') return '<div class="sp-dialogue">'+escapeHtml(b.text)+'</div>';
+    if(b.type==='transition') return '<div class="sp-transition">'+escapeHtml(b.text)+'</div>';
+    return '';
+  }).join('');
+}
+
+/* ---------- EXPORT / FLIPBOOK ---------- */
+let flipIndex=0;
+function flipPagesData(){
+  const arr=[{type:'title'}];
+  script.scenes.forEach((s,i)=>arr.push({type:'scene',data:s,num:i+1}));
+  arr.push({type:'end'});
+  return arr;
+}
+function renderFlip(){
+  const arr=flipPagesData();
+  if(flipIndex<0) flipIndex=0;
+  if(flipIndex>=arr.length) flipIndex=arr.length-1;
+  const item=arr[flipIndex];
+  const stage=document.getElementById('flipStage');
+  stage.style.fontFamily=script.layout.font+', monospace';
+  if(item.type==='title'){
+    const dark=script.titlePage.bgColor==='#111214';
+    stage.style.background=script.titlePage.bgColor;
+    stage.style.color=dark?'#F2F1EC':'#1c1c1a';
+    stage.innerHTML=`
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:30px;position:relative;">
+        <div style="font-family:var(--font-ui);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.55;position:absolute;top:16px;right:18px;">${escapeHtml(script.titlePage.draft||'')}</div>
+        <div style="font-family:var(--font-mono);font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:1px;line-height:1.3;">${escapeHtml(script.title||'Titre du scénario')}</div>
+        <div style="font-family:var(--font-ui);font-size:11px;margin-top:22px;opacity:0.8;">Un scénario de</div>
+        <div style="font-family:var(--font-ui);font-weight:600;font-size:13px;margin-top:6px;">${escapeHtml(script.author||'')}</div>
+        <div style="font-family:var(--font-ui);font-size:10px;opacity:0.6;font-style:italic;margin-top:8px;">${escapeHtml(script.genre||'')}</div>
+        <div style="font-family:var(--font-mono);font-size:9px;line-height:1.6;opacity:0.7;position:absolute;left:20px;bottom:18px;text-align:left;white-space:pre-wrap;">${escapeHtml(script.titlePage.contact||'')}</div>
+      </div>`;
+  } else if(item.type==='end'){
+    stage.style.background='#111214';
+    stage.style.color='#F2F1EC';
+    stage.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--font-mono);font-weight:700;letter-spacing:2px;font-size:16px;">FIN</div>`;
+  } else {
+    stage.style.background='#fff';
+    stage.style.color='var(--ink)';
+    const num=script.layout.numbering!==false ? (item.num+'. ') : '';
+    const segments=splitSceneIntoSegments(item.data);
+    const body=segments.map(seg => seg.type==='image'
+      ? `<img class="sp-image" src="${seg.src}" style="width:${seg.widthPct}%;">`
+      : renderBlocksHtml(parseScreenplayBlocks(seg.value))
+    ).join('');
+    stage.innerHTML=`<div class="flip-pad"><div class="sp-heading">${num}${escapeHtml(item.data.heading||'SCÈNE SANS INTITULÉ')}</div>${body}<div class="flip-page-num">— ${item.num} —</div></div>`;
+  }
+  document.getElementById('flipPos').textContent=(flipIndex+1)+' / '+arr.length;
+}
+document.getElementById('flipPrev').addEventListener('click',()=>{ flipIndex--; renderFlip(); });
+document.getElementById('flipNext').addEventListener('click',()=>{ flipIndex++; renderFlip(); });
+renderFlip();
+
+/* Reconvertit une image quelconque en JPEG propre via un <canvas> — jsPDF
+   échoue silencieusement sur certains formats/profils, ce qui faisait
+   "disparaître" des images sans erreur visible. Cap à 1600px sur le plus
+   grand côté pour garder des PDF raisonnables. */
+function normalizeImageForPdf(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const maxDim=1600;
+        let w=img.naturalWidth, h=img.naturalHeight;
+        if(!w||!h) throw new Error('dimensions image invalides');
+        if(Math.max(w,h)>maxDim){
+          const scale=maxDim/Math.max(w,h);
+          w=Math.round(w*scale); h=Math.round(h*scale);
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.fillStyle='#ffffff';
+        ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img,0,0,w,h);
+        resolve({ dataUrl: canvas.toDataURL('image/jpeg',0.87), width:w, height:h });
+      }catch(err){ reject(err); }
+    };
+    img.onerror=()=>reject(new Error('image illisible ou format non supporté'));
+    img.src=dataUrl;
+  });
+}
+
+document.getElementById('exportPdfBtn').addEventListener('click', async ()=>{
+  if(!window.jspdf){ alert('Le générateur de PDF n\'a pas pu se charger (connexion nécessaire pour ce prototype).'); return; }
+  const { jsPDF } = window.jspdf;
+  const f=FORMATS[script.layout.format];
+  const doc=new jsPDF({ unit:'mm', format:[f.w,f.h] });
+  const marginL=script.layout.marginLeft;
+  const marginR=25, marginTop=25, marginBottom=22;
+  const usableWidth=f.w-marginL-marginR;
+  const fontSize=script.layout.fontSize;
+  const lineH=fontSize*0.53; // approx. mm par ligne en Courier
+
+  const exportBtn=document.getElementById('exportPdfBtn');
+  const originalLabel=exportBtn.textContent;
+  exportBtn.disabled=true;
+  exportBtn.textContent='Préparation du PDF…';
+
+  try{
+    const failedImages=[];
+
+    // ---- Page de titre ----
+    doc.setFillColor(script.titlePage.bgColor);
+    doc.rect(0,0,f.w,f.h,'F');
+    const dark=script.titlePage.bgColor==='#111214';
+    doc.setTextColor(dark?245:20, dark?245:20, dark?245:18);
+    doc.setFont('courier','bold');
+    doc.setFontSize(20);
+    doc.text((script.title||'Titre du scénario').toUpperCase(), f.w/2, f.h*0.42, {align:'center'});
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(11);
+    doc.text('Un scénario de', f.w/2, f.h*0.42+14, {align:'center'});
+    doc.setFont('helvetica','bold');
+    doc.text(script.author||'', f.w/2, f.h*0.42+21, {align:'center'});
+    if(script.genre){
+      doc.setFont('helvetica','italic');
+      doc.setFontSize(9);
+      doc.text(script.genre, f.w/2, f.h*0.42+28, {align:'center'});
+    }
+    if(script.titlePage.draft){
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8);
+      doc.text(script.titlePage.draft, f.w-marginR, marginTop-8, {align:'right'});
+    }
+    if(script.titlePage.contact){
+      doc.setFont('courier','normal');
+      doc.setFontSize(8);
+      const cLines=doc.splitTextToSize(script.titlePage.contact, 60);
+      doc.text(cLines, marginL-8, f.h-marginBottom-4);
+    }
+
+    // ---- Scènes ----
+    doc.setFont('courier','normal');
+    for(const [i,sc] of script.scenes.entries()){
+      doc.addPage([f.w,f.h]);
+      doc.setFillColor(255,255,255);
+      doc.rect(0,0,f.w,f.h,'F');
+      doc.setTextColor(20,20,18);
+      let cursorY=marginTop;
+      const footerLimit=f.h-marginBottom;
+
+      const num=script.layout.numbering!==false ? (i+1)+'.  ' : '';
+      doc.setFont('courier','bold');
+      doc.setFontSize(fontSize);
+      const headingLines=doc.splitTextToSize(num+(sc.heading||'SCÈNE SANS INTITULÉ').toUpperCase(), usableWidth);
+      doc.text(headingLines, marginL, cursorY);
+      cursorY+=headingLines.length*lineH+lineH*0.6;
+
+      const segments=splitSceneIntoSegments(sc);
+      for(const seg of segments){
+        if(seg.type==='image'){
+          try{
+            const norm=await normalizeImageForPdf(seg.src);
+            const targetWidth=usableWidth*((seg.widthPct||100)/100)*0.85;
+            let dispW=targetWidth, dispH=dispW*(norm.height/norm.width);
+            const maxH=f.h-marginTop-marginBottom-10;
+            if(dispH>maxH){ dispH=maxH; dispW=dispH*(norm.width/norm.height); }
+            if(cursorY+dispH>footerLimit){
+              doc.addPage([f.w,f.h]);
+              doc.setFillColor(255,255,255);
+              doc.rect(0,0,f.w,f.h,'F');
+              cursorY=marginTop;
+            }
+            const ix=marginL+(usableWidth-dispW)/2;
+            doc.addImage(norm.dataUrl, 'JPEG', ix, cursorY, dispW, dispH);
+            cursorY+=dispH+lineH;
+          }catch(err){
+            failedImages.push('une image de la scène '+(i+1));
+          }
+          continue;
+        }
+        const blocks=parseScreenplayBlocks(seg.value);
+        for(const b of blocks){
+          if(!b.text) continue;
+          let x=marginL, w=usableWidth, align='left', font=['courier','normal'];
+          if(b.type==='character'){ x=marginL+45; w=usableWidth-45; align='left'; font=['courier','bold']; }
+          else if(b.type==='parenthetical'){ x=marginL+35; w=usableWidth-45; align='left'; font=['courier','italic']; }
+          else if(b.type==='dialogue'){ x=marginL+25; w=usableWidth-45; align='left'; font=['courier','normal']; }
+          else if(b.type==='transition'){ x=marginL; w=usableWidth; align='right'; font=['courier','bold']; }
+          const content = (b.type==='character'||b.type==='transition') ? b.text.toUpperCase() : b.text;
+          doc.setFont(font[0],font[1]);
+          doc.setFontSize(fontSize);
+          const lines=doc.splitTextToSize(content, w);
+          if(cursorY+lines.length*lineH>footerLimit){
+            doc.addPage([f.w,f.h]);
+            doc.setFillColor(255,255,255);
+            doc.rect(0,0,f.w,f.h,'F');
+            cursorY=marginTop;
+          }
+          doc.text(lines, align==='right'?x+w:x, cursorY, {align});
+          cursorY+=lines.length*lineH+(b.type==='character'?lineH*0.15:lineH*0.7);
+        }
+      }
+
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(140,140,140);
+      doc.text(String(i+1), f.w/2, f.h-10, {align:'center'});
+    }
+
+    // ---- Fin ----
+    doc.addPage([f.w,f.h]);
+    doc.setFillColor(17,18,20);
+    doc.rect(0,0,f.w,f.h,'F');
+    doc.setTextColor(245,245,240);
+    doc.setFont('courier','bold');
+    doc.setFontSize(16);
+    doc.text('FIN', f.w/2, f.h/2, {align:'center'});
+
+    doc.save((script.title||'mon-scenario').replace(/[^a-z0-9\-]+/gi,'_')+'.pdf');
+
+    if(failedImages.length){
+      alert('Le PDF est prêt, mais '+failedImages.length+' image(s) n\'ont pas pu être incluses : '+failedImages.join(', ')+'. Réessaie avec une image différente pour celles-ci.');
+    }
+  }finally{
+    exportBtn.disabled=false;
+    exportBtn.textContent=originalLabel;
+  }
+});
+
+function buildStandaloneHtml(){
+  const title=escapeHtml(script.title||'Mon scénario');
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F5EF; --ink:#2A2A28; --ink-soft:#6b6f76; --line:#d7d3c6;
+    --font-mono:'Courier Prime','Courier New',monospace; --font-ui:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-ui); background:#191b1f; color:var(--ink);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    position:relative;
+  }
+  .doc-header{ position:fixed; top:18px; left:22px; z-index:5; color:#F2F1EC; line-height:1.3; }
+  .doc-header .doc-title{ font-family:var(--font-mono); font-weight:700; font-size:16px; margin:0; letter-spacing:0.5px; }
+  .doc-header .doc-author{ font-family:var(--font-ui); font-size:11px; opacity:0.75; margin:0; }
+  .flip-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+  #flipStage{
+    width:360px;height:480px;background:#fff;border:1px solid var(--line);border-radius:3px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    padding:0;display:flex;flex-direction:column;overflow:hidden;
+  }
+  #flipStage .flip-pad{padding:26px 24px;display:flex;flex-direction:column;flex:1;overflow-y:auto;font-family:var(--font-mono);font-size:12.5px;line-height:1.55;}
+  #flipStage .flip-page-num{font-size:10px;color:var(--ink-soft);text-align:center;margin-top:auto;padding-top:10px;flex:none;font-family:var(--font-ui);}
+  .sp-heading{font-weight:700;text-transform:uppercase;margin:0 0 10px 0;letter-spacing:0.3px;}
+  .sp-action{margin:0 0 10px 0;white-space:pre-wrap;}
+  .sp-character{font-weight:700;text-transform:uppercase;text-align:center;margin:12px 0 0 0;letter-spacing:0.3px;}
+  .sp-parenthetical{text-align:center;font-style:italic;color:var(--ink-soft);margin:0;font-size:11.5px;}
+  .sp-dialogue{width:70%;margin:2px auto 10px auto;white-space:pre-wrap;text-align:left;}
+  .sp-transition{text-align:right;font-weight:700;text-transform:uppercase;margin:10px 0;letter-spacing:0.3px;}
+  .sp-image{display:block;margin:10px auto;border-radius:3px;}
+  .flip-controls{display:flex;align-items:center;gap:14px;}
+  .flip-controls span{font-size:13px;color:#c9ccd2;}
+  .btn{
+    background:var(--paper);border:1px solid var(--ink);color:var(--ink);
+    font-family:var(--font-ui);font-size:13px;padding:8px 14px;border-radius:20px;
+    cursor:pointer;transition:all .15s;
+  }
+  .btn:hover{background:var(--ink);color:var(--paper);}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+</style>
+</head>
+<body>
+  <div class="doc-header">
+    <p class="doc-title">${title}</p>
+    <p class="doc-author">${escapeHtml(script.author||'')}</p>
+  </div>
+  <div class="flip-wrap">
+    <div id="flipStage"></div>
+    <div class="flip-controls">
+      <button class="btn" id="flipPrev">← Précédent</button>
+      <span id="flipPos">—</span>
+      <button class="btn" id="flipNext">Suivant →</button>
+    </div>
+  </div>
+<script>
+const script = ${JSON.stringify(script).replace(/</g,'\\u003c')};
+let flipIndex = 0;
+${escapeHtml.toString()}
+${splitSceneIntoSegments.toString()}
+${parseScreenplayBlocks.toString()}
+${renderBlocksHtml.toString()}
+${flipPagesData.toString()}
+${renderFlip.toString()}
+document.getElementById('flipPrev').addEventListener('click',()=>{ flipIndex--; renderFlip(); });
+document.getElementById('flipNext').addEventListener('click',()=>{ flipIndex++; renderFlip(); });
+renderFlip();
+<\/script>
+</body>
+</html>`;
+}
+
+document.getElementById('saveHtmlBtn').addEventListener('click', ()=>{
+  const html=buildStandaloneHtml();
+  const blob=new Blob([html], {type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=(script.title||'mon-scenario').replace(/[^a-z0-9\-]+/gi,'_')+'.html';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ---------- publication dans ZNK Librairie ----------
+   Même principe que ZNK-LIVREmoi : routes /api/scripts côté server.py
+   (Flask), un fichier JSON par scénario, stocké côté serveur (persistant,
+   visible par tous ceux qui accèdent au serveur — VPS ou réseau local).
+   L'id est généré une fois côté client puis réutilisé : republier met à jour
+   le même fichier. */
+function ensureScriptId(){
+  if(!script.id){ script.id='s'+Date.now()+Math.random().toString(36).slice(2,8); saveScript(); }
+  return script.id;
+}
+document.getElementById('publishLibBtn').addEventListener('click', async ()=>{
+  const btn=document.getElementById('publishLibBtn');
+  if(!script.scenes.length){ alert('Ajoute au moins une scène avant de publier ce scénario dans ZNK Librairie.'); return; }
+
+  const id=ensureScriptId();
+  const original=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='Publication…';
+  try{
+    const response=await fetch(znkCloudPath(`/api/scripts/${id}`), {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(script)
+    });
+    if(!response.ok) throw new Error('HTTP '+response.status);
+    const result=await response.json();
+    if(result.publishedAt){ script.publishedAt=result.publishedAt; saveScript(); }
+    btn.textContent='Publié ✓';
+  }catch(e){
+    console.warn('⚠️ Serveur ZNK injoignable pour la publication:', e);
+    btn.textContent='Échec — serveur injoignable';
+  }finally{
+    setTimeout(()=>{ btn.textContent=original; btn.disabled=false; },2200);
+  }
+});
+</script>
+</body>
+</html>

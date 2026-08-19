@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXPO Manager</title>
+<style>
+    :root {
+        --bg-card: #1c1c1c;
+        --accent: #929292;
+        --accent-hover: #cd853f;
+        --text: #ffffff;
+        --text-dim: #c0c0c0;
+        --border: #3a3a3a;
+        --success: #238636;
+        --danger: #da3633;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #0d0d0d;
+        color: var(--text);
+        padding: 24px;
+        min-height: 100vh;
+    }
+    .app-header {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        margin-bottom: 4px;
+    }
+    .brand {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        font-family: Georgia, 'Times New Roman', serif;
+        font-style: italic;
+        font-size: 15px;
+        letter-spacing: 1px;
+        color: var(--accent-hover);
+        white-space: nowrap;
+        user-select: none;
+    }
+    h1 { font-size: 20px; font-weight: 600; text-align: center; }
+    .subtitle { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; text-align: center; }
+    .panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .panel h2 { font-size: 15px; margin-bottom: 16px; color: var(--accent-hover); }
+    label { display:block; font-size: 12px; color: var(--text-dim); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: .5px; }
+    input[type=text], input[type=number], textarea, select {
+        width: 100%;
+        background: #111;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        font-family: inherit;
+    }
+    select {
+        cursor:pointer; appearance:none; -webkit-appearance:none;
+        background-image: linear-gradient(45deg, transparent 50%, var(--accent-hover) 50%), linear-gradient(135deg, var(--accent-hover) 50%, transparent 50%);
+        background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+        background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+    }
+    input[type=color]{ width:60px; height:38px; padding:2px; background:#111; border:1px solid var(--border); border-radius:8px; cursor:pointer; }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent-hover); }
+    textarea { resize: vertical; min-height: 70px; }
+    .row { display:flex; gap:16px; flex-wrap:wrap; }
+    .row > div { flex:1; min-width:180px; }
+
+    .image-drop {
+        margin-top: 6px; border: 2px dashed var(--border); border-radius: 10px;
+        padding: 14px; text-align: center; cursor: pointer; position: relative; transition: border-color .2s;
+    }
+    .image-drop:hover { border-color: var(--accent-hover); }
+    .image-drop img, .image-drop video { max-width: 100%; max-height: 140px; border-radius: 6px; margin-top: 8px; display:block; margin-left:auto; margin-right:auto; }
+    .image-drop input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .image-drop .hint { font-size: 12px; color: var(--text-dim); }
+
+    .btn { border: none; border-radius: 8px; padding: 11px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform .15s; letter-spacing: .3px; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, #8b4513, #cd853f); color: #fff; }
+    .btn-secondary { background: #2a2a2a; color: #ddd; }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 6px 10px; font-size: 12px; }
+    .btn-small { background: #2a2a2a; color: #ddd; padding: 6px 10px; font-size: 12px; }
+    .btn-block { width:100%; margin-top:18px; }
+
+    .layout { display: grid; grid-template-columns: 400px 1fr; gap: 24px; align-items: start; }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .card {
+        background: #151515; border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+        display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center;
+    }
+    .card .thumb {
+        width: 64px; height: 64px; border-radius: 8px; object-fit: cover;
+        background: linear-gradient(45deg, #8b4513, #cd853f); display:flex; align-items:center; justify-content:center; font-size:22px;
+    }
+    .card .info .title { font-weight: 600; font-size: 13px; }
+    .card .info .meta { font-size: 11px; color: var(--text-dim); margin-top:2px; }
+    .card .actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .empty { color: var(--text-dim); font-size: 13px; text-align:center; padding: 40px 0; }
+    .status { font-size: 12px; color: var(--success); margin-top: 10px; min-height: 16px; }
+    .top-actions { display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px; flex-wrap: wrap; gap:10px; }
+    .note { font-size: 12px; color: var(--text-dim); line-height:1.6; margin-top:10px; }
+    .type-toggle { display:flex; gap:8px; margin-top:6px; }
+    .type-toggle button { flex:1; padding:9px; border-radius:8px; border:1px solid var(--border); background:#111; color:var(--text-dim); font-size:12px; cursor:pointer; }
+    .type-toggle button.active { background: var(--accent-hover); color:#fff; border-color: var(--accent-hover); }
+
+    #modeBadge { display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; background:#222; border:1px solid var(--border); margin-bottom:16px; }
+
+    .quality-profiles { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:6px; }
+    .quality-profiles .qp { padding:9px 6px; border-radius:8px; background:#111; border:2px solid var(--border); text-align:center; cursor:pointer; font-size:11px; color:var(--text-dim); }
+    .quality-profiles .qp.selected { border-color: var(--success); color:#fff; background: rgba(35,134,54,0.15); }
+
+    .progress-track { margin-top:10px; height:6px; background:rgba(0,0,0,0.4); border-radius:4px; overflow:hidden; display:none; }
+    .progress-track.active { display:block; }
+    .progress-fill { height:100%; width:0%; background:linear-gradient(90deg,#cd853f,#238636); transition:width .25s; }
+    .upload-note { font-size:11px; color:var(--text-dim); margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+    <div class="brand">ZNK Gallery</div>
+    <h1>🎬 EXPO Manager</h1>
+</div>
+<div class="subtitle">Compose des expositions au format "corridor défilant" — toiles, vidéos, textes libres, cadres et espacements.</div>
+<div id="modeBadge">⚙️ Détection...</div>
+
+<div class="panel" id="settingsPanel">
+    <h2>Réglages de l'exposition</h2>
+    <div class="row">
+        <div>
+            <label style="margin-top:0;">Titre (grand logo en haut)</label>
+            <input type="text" id="sTitle" placeholder="ex: ZNK">
+        </div>
+        <div>
+            <label style="margin-top:0;">Sous-titre</label>
+            <input type="text" id="sSubtitle" placeholder="ex: Présente ses artistes">
+        </div>
+    </div>
+    <div class="row">
+        <div>
+            <label style="margin-top:0;">Nom de l'artiste (affiché sur chaque œuvre au clic)</label>
+            <input type="text" id="sArtist" placeholder="ex: Zaza">
+        </div>
+    </div>
+    <div class="row">
+        <div>
+            <label>Police du titre</label>
+            <select id="sDisplayFont"></select>
+        </div>
+        <div>
+            <label>Police des textes / légendes</label>
+            <select id="sBodyFont"></select>
+        </div>
+        <div style="flex:0 0 100px;">
+            <label>Accent</label>
+            <input type="color" id="sAccent" value="#b08d57">
+        </div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="saveSettings()">Enregistrer les réglages</button>
+    <div class="status" id="settingsStatus"></div>
+</div>
+
+<div class="layout">
+    <div class="panel">
+        <h2 id="formTitle">Ajouter une toile / vidéo</h2>
+        <input type="hidden" id="editId">
+
+        <label style="margin-top:0;">Type de média</label>
+        <div class="type-toggle">
+            <button type="button" id="typeImageBtn" class="active" onclick="setMediaType('image')">🖼️ Image</button>
+            <button type="button" id="typeVideoBtn" onclick="setMediaType('video')">🎞️ Vidéo</button>
+        </div>
+
+        <div id="qualityProfiles" style="display:none;">
+            <label style="margin-top:0;">Qualité de conversion (vidéo)</label>
+            <div class="quality-profiles">
+                <div class="qp selected" data-profile="light" onclick="selectQualityProfile('light')">🪶 LIGHT<br><small>720p</small></div>
+                <div class="qp" data-profile="medium" onclick="selectQualityProfile('medium')">⚡ MEDIUM<br><small>1080p</small></div>
+                <div class="qp" data-profile="high" onclick="selectQualityProfile('high')">💎 HIGH<br><small>1080p+</small></div>
+            </div>
+        </div>
+
+        <label>Fichier (image, SVG ou vidéo)</label>
+        <div class="image-drop" id="dropZone">
+            <div class="hint" id="dropHint">Cliquer pour choisir un fichier.</div>
+            <img id="preview" style="display:none;">
+            <video id="previewVideo" style="display:none;" muted controls></video>
+            <input type="file" id="fMedia" accept="image/*,video/*">
+            <div class="progress-track" id="uploadProgress"><div class="progress-fill" id="uploadProgressFill"></div></div>
+        </div>
+        <div class="upload-note" id="uploadNote"></div>
+
+        <label>ou chemin / URL du fichier (ex: ./videos/clip1.mp4, ./images/icone.svg, https://...)</label>
+        <input type="text" id="fSrcUrl" placeholder="./videos/clip1.mp4 ou https://...">
+
+        <label>Orientation (utile surtout pour les vidéos)</label>
+        <select id="fOrientation">
+            <option value="horizontal">Horizontale</option>
+            <option value="vertical">Verticale</option>
+        </select>
+
+        <label>Encadrement</label>
+        <select id="fFrame">
+            <option value="none">Sans cadre</option>
+            <option value="gold-classic">Doré classique</option>
+            <option value="black-modern">Noir moderne</option>
+            <option value="white-gallery">Blanc galerie</option>
+            <option value="wood-rustic">Bois rustique</option>
+            <option value="silver-line">Filet argenté</option>
+            <option value="screen">Écran / projection (vidéo)</option>
+        </select>
+
+        <label>Titre de l'œuvre (affiché seulement au clic)</label>
+        <input type="text" id="fTitle" placeholder="ex: Marée basse">
+
+        <label>Prix (optionnel — affiché seulement au clic)</label>
+        <input type="text" id="fPrice" placeholder="ex: 450€ ou Prix sur demande">
+
+        <label>Texte (optionnel — récit, légende, ou rien du tout)</label>
+        <textarea id="fCaption" placeholder="Laisser vide pour aucun texte affiché sous cette pièce..."></textarea>
+
+        <label>Espace après cette pièce (px, avant la suivante)</label>
+        <input type="number" id="fGap" value="100" min="0" step="10">
+
+        <button class="btn btn-primary btn-block" id="saveBtn" onclick="savePanel()">Ajouter au corridor</button>
+        <button class="btn btn-secondary btn-block" id="cancelBtn" onclick="resetForm()" style="display:none;">Annuler la modification</button>
+        <div class="status" id="statusMsg"></div>
+    </div>
+
+    <div class="panel">
+        <div class="top-actions">
+            <h2 style="margin:0;">Pièces du corridor (<span id="countLabel">0</span>)</h2>
+            <button class="btn btn-small" onclick="publishExpo()">🔄 Publier vers la page</button>
+        </div>
+        <div class="note">Utilise ↑ / ↓ pour réordonner les pièces — c'est cet ordre qui définit le sens du défilement, et le champ "espace après" au-dessus qui définit la distance jusqu'à la suivante.</div>
+        <div class="list" id="panelList" style="margin-top:14px;"></div>
+    </div>
+</div>
+
+<script>
+const DISPLAY_FONTS = ['Fraunces','Playfair Display','Cormorant Garamond','Bodoni Moda','DM Serif Display','Libre Caslon Display','Italiana','Marcellus','Instrument Serif'];
+const BODY_FONTS = ['Inter','Space Grotesk','Work Sans','IBM Plex Sans','Jost','EB Garamond','Cormorant','Manrope'];
+const FRAME_NAMES = {
+    'none':'Sans cadre','gold-classic':'Doré classique','black-modern':'Noir moderne',
+    'white-gallery':'Blanc galerie','wood-rustic':'Bois rustique','silver-line':'Filet argenté','screen':'Écran / projection'
+};
+const INDEX_KEY = 'znk_expo_index';
+const MEDIA_MANIFEST_KEY = 'znk_expo_media';
+const GALLERY_MANIFEST_KEY = 'znk_gallery_manifest'; // clé lue par ZNKExpos.html
+// Config backend unifiée avec WhatsZNK.html / user-profile.html / ZNKExpos.html :
+// même clé de stockage (znk_backend_url) et même paramètre ?backend=.
+function znkResolveBackendUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('backend');
+    if (fromUrl) {
+        localStorage.setItem('znk_backend_url', fromUrl);
+        return fromUrl;
+    }
+    return localStorage.getItem('znk_backend_url') || 'http://localhost:5000';
+}
+const ZNK_BACKEND_URL = znkResolveBackendUrl();
+// Si l'app tourne dans Electron avec ZNK_REGISTRY_URL réglé, synchronise
+// znk_backend_url dessus (effectif au prochain chargement de cette page).
+if (window.electronAPI && window.electronAPI.getRegistryUrl) {
+    window.electronAPI.getRegistryUrl().then(url => {
+        if (url && localStorage.getItem('znk_backend_url') !== url) {
+            localStorage.setItem('znk_backend_url', url);
+        }
+    }).catch(() => {});
+}
+
+// ---------- Identité ZNK (même mécanisme que WhatsZNK.html) ----------
+// Une exposition = un artiste = un compte. Le nom est pré-rempli depuis le
+// profil connecté, mais reste éditable au cas où le profil n'a pas de nom.
+const ZNK_ACCOUNT_KEY = 'znk_account';
+const ZNK_SESSION_KEY = 'znk_userData';
+
+function znkLoadIdentity() {
+    try {
+        const session = sessionStorage.getItem(ZNK_SESSION_KEY);
+        if (session) return JSON.parse(session);
+    } catch (e) { /* ignore */ }
+    try {
+        const account = localStorage.getItem(ZNK_ACCOUNT_KEY);
+        if (account) return JSON.parse(account);
+    } catch (e) { /* ignore */ }
+    return null;
+}
+
+const znkIdentity = znkLoadIdentity();
+const myIdZNK = znkIdentity ? (znkIdentity.idZNK || znkIdentity.id) : null;
+const myDefaultArtistName = znkIdentity
+    ? (znkIdentity.name || znkIdentity.pseudo || znkIdentity.username || znkIdentity.displayName || myIdZNK || '')
+    : '';
+
+// ---------- Pont Electron (identique à znk-publish-studio.html) ----------
+// Permet, quand l'app tourne dans ZNK (Electron), de rendre les fichiers
+// persistants sur disque et de ne stocker qu'un chemin/URL dans le manifest —
+// au lieu d'embarquer le fichier en base64 dans localStorage.
+const znkApi = window.znkApi || window.electronAPI || (window.require ? (function () {
+    try {
+        const { ipcRenderer } = require('electron');
+        return {
+            convertVideo: (p) => ipcRenderer.invoke('convert-video', p),
+            onConversionProgress: (cb) => {
+                const h = (e, d) => cb(d);
+                ipcRenderer.on('conversion-progress', h);
+                return () => ipcRenderer.removeListener('conversion-progress', h);
+            },
+            makeVideoPersistent: (opts) => ipcRenderer.invoke('make-video-persistent', opts),
+            getVideoUrl: (opts) => ipcRenderer.invoke('get-video-url', opts),
+            // Images/SVG/documents : même handler que terminal-lecons.html, un seul appel
+            // (contrairement à la vidéo, il renvoie directement { success, persistentPath, url }).
+            makeMaterialPersistent: (opts) => ipcRenderer.invoke('make-material-persistent', opts),
+            getPathForFile: (file) => {
+                try {
+                    const { webUtils } = require('electron');
+                    return webUtils.getPathForFile(file);
+                } catch (e) { return file && file.path ? file.path : null; }
+            }
+        };
+    } catch (e) { return null; }
+})() : null);
+const isElectron = !!znkApi;
+
+(function initModeBadge(){
+    const badge = document.getElementById('modeBadge');
+    if (isElectron) {
+        badge.textContent = '✅ Mode Electron — fichiers rendus persistants sur disque';
+        badge.style.color = '#9ef0c8';
+    } else {
+        badge.textContent = '⚠️ Mode navigateur — fichiers intégrés temporairement (base64) ; ouvrez ceci depuis l\'app ZNK pour un stockage persistant';
+        badge.style.color = '#ffd6a5';
+    }
+})();
+
+function upsertMediaManifest(entry){
+    try {
+        const raw = localStorage.getItem(MEDIA_MANIFEST_KEY);
+        const media = raw ? JSON.parse(raw) : [];
+        const idx = media.findIndex(m => m.id === entry.id);
+        if (idx >= 0) media[idx] = { ...media[idx], ...entry };
+        else media.push(entry);
+        localStorage.setItem(MEDIA_MANIFEST_KEY, JSON.stringify(media));
+    } catch (e) { console.error('Erreur manifest znk_expo_media', e); }
+}
+
+let selectedQualityProfile = 'light';
+function selectQualityProfile(p){
+    selectedQualityProfile = p;
+    document.querySelectorAll('.quality-profiles .qp').forEach(el => el.classList.toggle('selected', el.dataset.profile === p));
+}
+
+let currentExpoId = null;
+let expoData = null;
+let currentMediaSrc = null;
+let currentMediaType = 'image';
+
+function populateFontSelects(){
+    document.getElementById('sDisplayFont').innerHTML = DISPLAY_FONTS.map(f => `<option value="${f}">${f}</option>`).join('');
+    document.getElementById('sBodyFont').innerHTML = BODY_FONTS.map(f => `<option value="${f}">${f}</option>`).join('');
+}
+
+function loadIndex(){
+    try { return JSON.parse(localStorage.getItem(INDEX_KEY) || '[]'); }
+    catch(e){ return []; }
+}
+function saveIndex(index){ localStorage.setItem(INDEX_KEY, JSON.stringify(index)); }
+
+function loadExpo(id){
+    try {
+        const raw = localStorage.getItem('znk_expo_' + id);
+        if (raw) return JSON.parse(raw);
+    } catch(e){ console.error(e); }
+    return null;
+}
+function persistExpo(){
+    localStorage.setItem('znk_expo_' + currentExpoId, JSON.stringify(expoData));
+    // Le manifest d'index (znk_expo_index) reste à jour même sans UI de
+    // sélection : c'est lui que lit gallery-manager.html (admin) pour
+    // retrouver toutes les expositions des comptes lors de la curation.
+    const index = loadIndex();
+    const entry = index.find(e => e.id === currentExpoId);
+    if (entry) {
+        entry.title = expoData.title;
+    } else {
+        index.push({ id: currentExpoId, title: expoData.title });
+    }
+    saveIndex(index);
+}
+
+function renderAll(){
+    document.getElementById('sTitle').value = expoData.title || '';
+    document.getElementById('sSubtitle').value = expoData.subtitle || '';
+    document.getElementById('sArtist').value = expoData.artist || myDefaultArtistName || '';
+    document.getElementById('sDisplayFont').value = expoData.displayFont || 'Fraunces';
+    document.getElementById('sBodyFont').value = expoData.bodyFont || 'Inter';
+    document.getElementById('sAccent').value = expoData.accent || '#b08d57';
+    renderList();
+    resetForm();
+}
+
+function saveSettings(){
+    if (!expoData) return;
+    expoData.title = document.getElementById('sTitle').value.trim() || 'ZNK Expos';
+    expoData.subtitle = document.getElementById('sSubtitle').value.trim();
+    expoData.artist = document.getElementById('sArtist').value.trim();
+    expoData.artistId = expoData.artistId || myIdZNK || null;
+    expoData.displayFont = document.getElementById('sDisplayFont').value;
+    expoData.bodyFont = document.getElementById('sBodyFont').value;
+    expoData.accent = document.getElementById('sAccent').value;
+    persistExpo();
+    showSettingsStatus('✅ Réglages enregistrés. Clique "Publier vers la page" pour appliquer.');
+}
+
+function setMediaType(type){
+    currentMediaType = type;
+    document.getElementById('typeImageBtn').classList.toggle('active', type === 'image');
+    document.getElementById('typeVideoBtn').classList.toggle('active', type === 'video');
+    document.getElementById('fMedia').accept = type === 'video' ? 'video/*' : 'image/*,.svg';
+    document.getElementById('qualityProfiles').style.display = (type === 'video' && isElectron) ? 'block' : 'none';
+    document.getElementById('dropHint').textContent = isElectron
+        ? 'Cliquer pour choisir un fichier — il sera rendu persistant sur disque automatiquement.'
+        : 'Cliquer pour choisir un fichier (intégré temporairement en base64, mode navigateur).';
+}
+
+function setUploadProgress(pct){
+    const track = document.getElementById('uploadProgress');
+    const fill = document.getElementById('uploadProgressFill');
+    if (pct === null) { track.classList.remove('active'); fill.style.width = '0%'; return; }
+    track.classList.add('active');
+    fill.style.width = Math.round(pct) + '%';
+}
+
+function setUploadNote(msg){ document.getElementById('uploadNote').textContent = msg || ''; }
+
+document.getElementById('fMedia').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const isVideo = file.type.startsWith('video/');
+    setMediaType(isVideo ? 'video' : 'image');
+    document.getElementById('fSrcUrl').value = '';
+
+    // Mode Electron : on essaie de rendre le fichier persistant sur disque
+    // et de ne stocker qu'un chemin/URL, comme le fait déjà znk-publish-studio.html pour les vidéos.
+    if (isElectron) {
+        const realPath = znkApi.getPathForFile ? znkApi.getPathForFile(file) : (file.path || null);
+
+        if (isVideo && realPath && znkApi.convertVideo && znkApi.makeVideoPersistent && znkApi.getVideoUrl) {
+            try {
+                setUploadNote('🔄 Conversion en cours...');
+                let offProgress = znkApi.onConversionProgress ? znkApi.onConversionProgress((data) => {
+                    setUploadProgress(data.progress || 0);
+                }) : null;
+
+                const conv = await znkApi.convertVideo({ filePath: realPath, fileName: file.name, profile: selectedQualityProfile });
+                if (typeof offProgress === 'function') offProgress();
+                if (!conv || !conv.success) throw new Error((conv && conv.error) || 'Conversion échouée');
+
+                setUploadNote('💾 Enregistrement persistant...');
+                const mediaId = `expomedia_${Date.now()}`;
+                const persistRes = await znkApi.makeVideoPersistent({ sourcePath: conv.outputPath, videoId: mediaId });
+                const urlRes = await znkApi.getVideoUrl({ videoId: mediaId, fileName: conv.outputFileName });
+                const fileUrl = (urlRes && urlRes.success) ? urlRes.url : `file://${(conv.outputPath || '').replace(/\\/g, '/')}`;
+                const persistentPath = (persistRes && persistRes.persistentPath) ? persistRes.persistentPath : conv.outputPath;
+
+                currentMediaSrc = persistentPath || fileUrl;
+                upsertMediaManifest({ id: mediaId, type: 'video', filename: conv.outputFileName, path: persistentPath, url: fileUrl, addedAt: new Date().toISOString() });
+
+                showPreview(currentMediaSrc, true);
+                const probe = document.createElement('video');
+                probe.src = currentMediaSrc;
+                probe.onloadedmetadata = () => {
+                    document.getElementById('fOrientation').value = probe.videoHeight > probe.videoWidth ? 'vertical' : 'horizontal';
+                };
+                setUploadProgress(null);
+                setUploadNote('✅ Vidéo persistante — chemin enregistré dans le manifest.');
+                return;
+            } catch (err) {
+                console.error('Erreur pipeline vidéo', err);
+                setUploadProgress(null);
+                setUploadNote('❌ Échec de la conversion/persistance : ' + err.message + ' — repli sur base64.');
+                // on continue vers le repli base64 ci-dessous
+            }
+        } else if (!isVideo && realPath) {
+            // Images/SVG/icônes : même handler que terminal-lecons.html pour les
+            // matériels de leçon — un seul appel qui copie le fichier dans un
+            // dossier persistant de l'app et renvoie directement son URL.
+            try {
+                if (znkApi.makeMaterialPersistent) {
+                    const mediaId = `expomedia_${Date.now()}`;
+                    const res = await znkApi.makeMaterialPersistent({ sourcePath: realPath, materialId: mediaId, fileName: file.name, type: 'expo-image' });
+                    if (res && res.success) {
+                        currentMediaSrc = res.url || `file://${res.persistentPath.replace(/\\/g, '/')}`;
+                        upsertMediaManifest({ id: mediaId, type: 'image', filename: res.fileName, path: res.persistentPath, url: res.url, addedAt: new Date().toISOString() });
+                        showPreview(currentMediaSrc, false);
+                        setUploadNote('✅ Image rendue persistante (dossier matériels de l\'app).');
+                        return;
+                    }
+                    throw new Error((res && res.error) || 'make-material-persistent a échoué');
+                }
+                // Pas de makeMaterialPersistent disponible : on référence directement le fichier réel.
+                currentMediaSrc = `file://${realPath.replace(/\\/g, '/')}`;
+                showPreview(currentMediaSrc, false);
+                setUploadNote('✅ Image référencée depuis son fichier réel (pas de copie).');
+                return;
+            } catch (err) {
+                console.error('Erreur référencement image', err);
+                setUploadNote('⚠️ Repli sur base64 pour cette image : ' + err.message);
+                // repli base64 ci-dessous
+            }
+        }
+    }
+
+    // Repli navigateur (ou si le pont Electron n'a pas de méthode disponible) : base64 en mémoire.
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        currentMediaSrc = ev.target.result;
+        showPreview(currentMediaSrc, isVideo);
+        if (isVideo) {
+            const probe = document.createElement('video');
+            probe.src = currentMediaSrc;
+            probe.onloadedmetadata = () => {
+                document.getElementById('fOrientation').value = probe.videoHeight > probe.videoWidth ? 'vertical' : 'horizontal';
+            };
+        }
+        if (!isElectron) setUploadNote('⚠️ Intégré en base64 (mode navigateur) — évitez pour les vidéos lourdes.');
+    };
+    reader.readAsDataURL(file);
+});
+
+document.getElementById('fSrcUrl').addEventListener('input', (e) => {
+    if (e.target.value.trim()) {
+        currentMediaSrc = null;
+        document.getElementById('fMedia').value = '';
+        showPreview(e.target.value.trim(), currentMediaType === 'video');
+    }
+});
+
+function showPreview(src, isVideo){
+    const img = document.getElementById('preview');
+    const vid = document.getElementById('previewVideo');
+    if (isVideo) {
+        img.style.display = 'none';
+        vid.src = src; vid.style.display = 'block';
+    } else {
+        vid.style.display = 'none';
+        img.src = src; img.style.display = 'block';
+    }
+}
+
+function savePanel(){
+    if (!expoData) { alert('Créez ou sélectionnez une exposition d\'abord.'); return; }
+    const urlVal = document.getElementById('fSrcUrl').value.trim();
+    const src = urlVal || currentMediaSrc;
+    const orientation = document.getElementById('fOrientation').value;
+    const frame = document.getElementById('fFrame').value;
+    const title = document.getElementById('fTitle').value.trim();
+    const price = document.getElementById('fPrice').value.trim();
+    const caption = document.getElementById('fCaption').value;
+    const gapAfter = parseInt(document.getElementById('fGap').value, 10) || 0;
+    const editId = document.getElementById('editId').value;
+
+    if (editId) {
+        const p = expoData.panels.find(x => x.id === editId);
+        if (p) {
+            p.type = currentMediaType; p.orientation = orientation; p.frame = frame; p.title = title; p.price = price; p.caption = caption; p.gapAfter = gapAfter;
+            if (src) p.src = src;
+        }
+    } else {
+        expoData.panels.push({ id: `panel_${Date.now()}`, type: currentMediaType, src: src || '', orientation, frame, title, price, caption, gapAfter });
+    }
+
+    persistExpo();
+    renderList();
+    resetForm();
+    showStatus('✅ Enregistré. Clique "Publier vers la page" pour appliquer.');
+}
+
+function renderList(){
+    const list = document.getElementById('panelList');
+    const panels = expoData ? expoData.panels : [];
+    document.getElementById('countLabel').textContent = panels.length;
+
+    if (!panels.length) {
+        list.innerHTML = '<div class="empty">Aucune pièce pour le moment.</div>';
+        return;
+    }
+
+    list.innerHTML = panels.map((p, index) => {
+        let thumb;
+        if (p.type === 'video') thumb = `<div class="thumb">🎞️</div>`;
+        else if (p.src) thumb = `<img class="thumb" src="${p.src}" alt="">`;
+        else thumb = `<div class="thumb">🎨</div>`;
+
+        return `
+        <div class="card">
+            ${thumb}
+            <div class="info">
+                <div class="title">${p.title ? escapeHtml(p.title) : (p.type === 'video' ? 'Vidéo' : 'Image') + ' · ' + escapeHtml(FRAME_NAMES[p.frame] || 'Sans cadre')}</div>
+                <div class="meta">${p.orientation === 'vertical' ? 'Verticale' : 'Horizontale'} · espace après: ${p.gapAfter ?? 100}px${p.price ? ' · ' + escapeHtml(p.price) : ''}${p.caption ? ' · texte ✓' : ''}</div>
+            </div>
+            <div class="actions">
+                <button class="btn btn-small" onclick="movePanel(${index}, -1)" title="Monter">↑</button>
+                <button class="btn btn-small" onclick="movePanel(${index}, 1)" title="Descendre">↓</button>
+                <button class="btn btn-small" onclick="editPanel('${p.id}')">Modifier</button>
+                <button class="btn btn-danger" onclick="deletePanel('${p.id}')">Suppr.</button>
+            </div>
+        </div>
+    `;
+    }).join('');
+}
+
+function editPanel(id){
+    const p = expoData.panels.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('editId').value = p.id;
+    setMediaType(p.type || 'image');
+    currentMediaSrc = (p.src && p.src.startsWith('data:')) ? p.src : null;
+    document.getElementById('fSrcUrl').value = (p.src && !p.src.startsWith('data:')) ? p.src : '';
+    if (p.src) showPreview(p.src, p.type === 'video');
+    document.getElementById('fOrientation').value = p.orientation || 'horizontal';
+    document.getElementById('fFrame').value = p.frame || 'none';
+    document.getElementById('fTitle').value = p.title || '';
+    document.getElementById('fPrice').value = p.price || '';
+    document.getElementById('fCaption').value = p.caption || '';
+    document.getElementById('fGap').value = p.gapAfter ?? 100;
+
+    document.getElementById('formTitle').textContent = 'Modifier la pièce';
+    document.getElementById('saveBtn').textContent = 'Enregistrer les modifications';
+    document.getElementById('cancelBtn').style.display = 'block';
+    window.scrollTo({ top: 300, behavior: 'smooth' });
+}
+
+function deletePanel(id){
+    if (!confirm('Supprimer cette pièce du corridor ?')) return;
+    expoData.panels = expoData.panels.filter(p => p.id !== id);
+    persistExpo();
+    renderList();
+    showStatus('🗑️ Pièce supprimée. Pense à publier.');
+}
+
+function movePanel(index, dir){
+    const newIndex = index + dir;
+    if (newIndex < 0 || newIndex >= expoData.panels.length) return;
+    [expoData.panels[index], expoData.panels[newIndex]] = [expoData.panels[newIndex], expoData.panels[index]];
+    persistExpo();
+    renderList();
+}
+
+function resetForm(){
+    document.getElementById('editId').value = '';
+    document.getElementById('fSrcUrl').value = '';
+    document.getElementById('fOrientation').value = 'horizontal';
+    document.getElementById('fFrame').value = 'none';
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fPrice').value = '';
+    document.getElementById('fCaption').value = '';
+    document.getElementById('fGap').value = 100;
+    document.getElementById('fMedia').value = '';
+    document.getElementById('preview').style.display = 'none';
+    document.getElementById('previewVideo').style.display = 'none';
+    setUploadProgress(null);
+    setUploadNote('');
+    currentMediaSrc = null;
+    setMediaType('image');
+    document.getElementById('formTitle').textContent = 'Ajouter une toile / vidéo';
+    document.getElementById('saveBtn').textContent = 'Ajouter au corridor';
+    document.getElementById('cancelBtn').style.display = 'none';
+}
+
+async function publishExpo(){
+    persistExpo();
+    // Publie uniquement l'exposition sous son propre ID (znk_expo_<id>), déjà fait
+    // par persistExpo(). La galerie collective (znk_gallery_manifest) n'est PAS
+    // touchée ici : c'est gallery-manager.html (outil réservé à l'Admin) qui décide
+    // seul quelles expositions rejoignent la galerie, via son roster de curation.
+    if (window.parent) {
+        window.parent.postMessage({ type: 'publish_expo', data: expoData }, '*');
+    }
+    // expo-manager.html peut être imbriqué (ZNKMembresDash > ZNKStudiosDash >
+    // expo-manager). window.parent ne remonte que d'un niveau (vers
+    // ZNKStudiosDash) ; pour atteindre directement ZNKMembresDash.html et lui
+    // demander d'afficher le module ZNKExpos, on vise window.top, qui pointe
+    // toujours vers la fenêtre la plus haute de la hiérarchie d'iframes.
+    if (window.top && window.top !== window) {
+        window.top.postMessage({ type: 'znk_navigate', module: 'ZNKExpos' }, '*');
+    }
+
+    // Publication serveur : rend l'exposition persistante au redémarrage de
+    // l'app ET visible par les autres membres via le réseau (VPS), contrairement
+    // au localStorage qui reste propre à cette machine/session.
+    try {
+        const response = await fetch(`${ZNK_BACKEND_URL}/api/expos/${encodeURIComponent(currentExpoId)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(expoData)
+        });
+        if (!response.ok) throw new Error('Réponse serveur non OK');
+        showStatus('🔄 Publié ! Visible par les autres membres.');
+    } catch (e) {
+        console.warn('⚠️ Publication serveur impossible, exposition conservée en local seulement:', e);
+        showStatus('⚠️ Publié en local seulement (serveur injoignable) — redirection...');
+    }
+}
+
+function showStatus(msg){ const el = document.getElementById('statusMsg'); el.textContent = msg; setTimeout(() => el.textContent = '', 5000); }
+function showSettingsStatus(msg){ const el = document.getElementById('settingsStatus'); el.textContent = msg; setTimeout(() => el.textContent = '', 5000); }
+function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str == null ? '' : str; return d.innerHTML; }
+
+// Initialisation
+// Une exposition = un artiste = un compte : l'identifiant de l'exposition
+// découle directement du compte connecté, il n'y a plus de sélecteur ni de
+// création/suppression manuelle d'expositions multiples.
+// IMPORTANT : cet identifiant doit rester rigoureusement identique à celui
+// que calcule ZNKExpos.html en l'absence de ?expo=ID dans l'URL, à savoir
+// `myDefaultArtistName` brut (aucune normalisation en minuscule, aucun
+// remplacement de caractères) — sinon "Publier vers la page" écrit sous une
+// clé localStorage que ZNKExpos.html ne relit jamais.
+populateFontSelects();
+currentExpoId = (myDefaultArtistName || 'exposition').trim();
+expoData = loadExpo(currentExpoId);
+if (!expoData) {
+    expoData = {
+        id: currentExpoId, title: 'ZNK EXPO', subtitle: '', artist: myDefaultArtistName, artistId: myIdZNK || null,
+        displayFont: 'Fraunces', bodyFont: 'Inter', accent: '#b08d57', panels: []
+    };
+    persistExpo();
+} else {
+    if (!expoData.artist) expoData.artist = myDefaultArtistName;
+    if (!expoData.artistId) expoData.artistId = myIdZNK || null;
+}
+renderAll();
+</script>
+</body>
+</html>

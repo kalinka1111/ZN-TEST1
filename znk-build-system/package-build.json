@@ -1,0 +1,50 @@
+{
+  "name": "znk-p2p-system",
+  "version": "2.0.0",
+  "main": "main-build.js",
+  "description": "ZNK237-APP",
+  "scripts": {
+    "start": "electron .",
+    "build-mac": "electron-builder --mac",
+    "build-win": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.znk.znk237app",
+    "productName": "ZNK237-APP",
+    "directories": {
+      "output": "dist/${platform}"
+    },
+    "files": [
+      "main-build.js",
+      "path-adapter.js",
+      "preload-build.js",
+      "*.html",
+      "modules/**/*",
+      "modules-admin/**/*",
+      "js/**/*",
+      "ui/**/*",
+      "frontend/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "icons",
+        "to": "icons"
+      },
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

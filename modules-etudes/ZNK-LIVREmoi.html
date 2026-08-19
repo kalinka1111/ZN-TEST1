@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNK-LIVREmoi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --cover:#2e073e;
+    --cover-2:#be38f3;
+    --paper:#FBF6EC;
+    --paper-shade:#ffd9a8;
+    --ink:#444444;
+    --ink-soft:#371a94;
+    --accent:#E0556F;
+    --accent-dark:#B33B52;
+    --pencil:#9C9282;
+    --sage:#6E8B74;
+    --line:#c0c0c0;
+    --font-hand:'Caveat',cursive;
+    --font-body:'Lora',Georgia,'Times New Roman',serif;
+    --font-ui:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-ui);
+    background:var(--cover);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .app{
+    max-width:1180px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--cover);
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- header ---------- */
+  header.top{
+    padding:28px 32px 0 32px;
+    color:#ffd9a8;
+  }
+  .brandline{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .brandline h1{
+    font-family: Lato, sans-serif;
+    font-weight:700;
+    font-size:44px;
+    margin:0;
+    color:#FBF6EC;
+    letter-spacing:0.5px;
+  }
+  .brandline .tag{
+    font-size:13px;
+    color:#9AA7B4;
+    font-family:var(--font-ui);
+  }
+  .titlebar{
+    margin-top:18px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .titlebar input{
+    background:transparent;
+    border:none;
+    border-bottom:1px solid #3C4E5F;
+    color:#FBF6EC;
+    font-family:var(--font-hand);
+    font-size:22px;
+    padding:4px 2px;
+    outline:none;
+    min-width:220px;
+  }
+  .titlebar input::placeholder{color:#e32400;}
+  .titlebar input#authorInput{font-family:var(--font-ui);font-size:14px;color:#C7CEDA;min-width:180px;}
+
+  /* ---------- ribbon tab nav ---------- */
+  nav.ribbons{
+    display:flex;
+    gap:6px;
+    padding:22px 32px 0 32px;
+  }
+  .ribbon{
+    position:relative;
+    padding:10px 20px 12px 20px;
+    background:#28394A;
+    color:#AFC0CE;
+    font-size:13px;
+    font-weight:500;
+    border:none;
+    cursor:pointer;
+    clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);
+    transition:background 0.15s ease,color 0.15s ease;
+  }
+  .ribbon:hover{background:#32475C;color:#EAF0F4;}
+  .ribbon.active{background:var(--paper);color:var(--ink);}
+
+  /* ---------- page (paper) area ---------- */
+  main.paper{
+    flex:1;
+    background:var(--paper);
+    margin:0 32px 32px 32px;
+    border-radius:2px 10px 10px 10px;
+    padding:36px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.28);
+  }
+  .view{display:none;}
+  .view.active{display:block;}
+  h2.section-title{
+    font-family:var(--font-hand);
+    font-size:30px;
+    margin:0 0 4px 0;
+    color:var(--cover);
+  }
+  p.section-sub{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:0 0 24px 0;
+  }
+
+  /* buttons + inputs (paper theme) */
+  button{
+    font-family:var(--font-ui);
+    cursor:pointer;
+  }
+  .btn{
+    background:var(--paper);
+    border:1px solid var(--ink);
+    color:var(--ink);
+    font-size:13px;
+    font-weight:500;
+    padding:9px 16px;
+    border-radius:6px;
+  }
+  .btn:hover{background:var(--ink);color:var(--paper);}
+  .btn.primary{background:var(--accent);border-color:var(--accent-dark);color:#fff;}
+  .btn.primary:hover{background:var(--accent-dark);}
+  .btn.ghost{border-color:var(--line);color:var(--ink-soft);}
+  .btn.ghost:hover{background:var(--paper-shade);color:var(--ink);}
+  .btn.small{padding:5px 10px;font-size:12px;border-radius:5px;}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;background:var(--paper);color:var(--ink-soft);}
+  select,input[type=text],input[type=number],textarea{
+    font-family:var(--font-ui);
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:6px;
+    padding:8px 10px;
+    font-size:13px;
+    color:var(--ink);
+  }
+  textarea{font-family:var(--font-body);font-size:15px;line-height:1.6;width:100%;resize:vertical;}
+  label.field-label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-weight:500;}
+
+  /* ---------- pages tab ---------- */
+  #pageList{display:flex;flex-direction:column;gap:14px;margin-bottom:20px;}
+  .page-card{
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#fff;
+    padding:16px;
+    display:flex;
+    gap:16px;
+  }
+  .page-body{flex:1;min-width:0;}
+  .page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;}
+  .page-num{font-family:var(--font-hand);font-size:22px;color:var(--cover);}
+  .page-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .page-status{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--paper-shade);color:var(--ink-soft);}
+  .page-status.ok{background:#E4EEE4;color:var(--sage);}
+  .page-status.pending{background:#F6E7CB;color:#8A6420;}
+  .page-images{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .page-images img{width:56px;height:56px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
+  .rm-img{border:none;background:var(--accent);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:16px;padding:0;margin-left:-24px;margin-top:-4px;cursor:pointer;}
+  .btn.small.recording{background:var(--accent);border-color:var(--accent-dark);color:#fff;animation:pulseRec 1.1s ease-in-out infinite;}
+  @keyframes pulseRec{0%,100%{opacity:1;}50%{opacity:0.6;}}
+  .page-audio{margin-top:10px;display:flex;align-items:center;gap:8px;}
+  .page-audio audio{height:32px;max-width:220px;}
+
+  .empty{
+    border:1px dashed var(--line);
+    border-radius:10px;
+    padding:40px 20px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:14px;
+  }
+
+  /* ---------- layout tab ---------- */
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:24px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .swatch-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .swatch{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;}
+  .swatch.sel{border-color:var(--ink);}
+
+  .layout-preview{
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--paper-shade);
+    padding:24px;
+    display:flex;
+    justify-content:center;
+  }
+  #layoutPreviewPage{
+    background:#fff;
+    box-shadow:0 4px 14px rgba(0,0,0,0.15);
+    padding:24px;
+  }
+
+  /* ---------- cover tab ---------- */
+  .cover-wrap{display:flex;gap:28px;flex-wrap:wrap;}
+  .cover-form{flex:1;min-width:260px;display:flex;flex-direction:column;gap:14px;}
+  .cover-preview-area{flex:1;min-width:300px;display:flex;justify-content:center;align-items:flex-start;padding-top:4px;}
+  .book-render{display:flex;box-shadow:0 10px 30px rgba(0,0,0,0.3);border-radius:2px;overflow:hidden;}
+  .book-back,.book-spine,.book-front{
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    color:#fff;padding:14px 10px;text-align:center;
+  }
+  .book-front{width:180px;height:250px;padding:0;justify-content:flex-start;}
+  .cover-header{width:100%;flex:none;padding:16px 10px 12px;box-sizing:border-box;}
+  .cover-image-area{width:100%;flex:1;background-size:cover;background-position:center;background-repeat:no-repeat;}
+  .book-spine{width:26px;height:250px;writing-mode:vertical-rl;font-size:11px;letter-spacing:0.5px;}
+  .book-back{width:150px;height:250px;font-size:10px;line-height:1.5;justify-content:flex-start;padding-top:24px;}
+  .cover-title{font-family:var(--font-hand);font-size:24px;line-height:1.15;margin-bottom:6px;}
+  .cover-author{font-size:11px;opacity:0.85;}
+  input#coverImgFile{font-size:12px;}
+
+  /* ---------- preview/export tab ---------- */
+  .flip-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+  #flipStage{
+    width:340px;height:440px;background:#fff;border:1px solid var(--line);border-radius:6px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.15);
+    padding:0;display:flex;flex-direction:column;overflow:hidden;
+  }
+  #flipStage .flip-page-num{font-size:11px;color:var(--ink-soft);text-align:center;margin-top:8px;flex:none;}
+  #flipStage .flip-text{white-space:pre-wrap;font-family:var(--font-body);}
+  /* overflow-y:auto (au lieu de laisser le parent couper en silence) : une
+     page avec beaucoup de texte + images peut dépasser la hauteur fixe du
+     cadre — sans ça, tout ce qui dépasse (souvent l'image, ajoutée après le
+     texte) devient invisible sans aucune erreur. */
+  #flipStage .flip-pad{padding:26px;display:flex;flex-direction:column;flex:1;overflow-y:auto;}
+  #flipStage .flip-cover-header{padding:22px 26px 16px;flex:none;}
+  #flipStage .flip-image-area{flex:1;background-size:cover;background-position:center;background-repeat:no-repeat;}
+  .flip-controls{display:flex;align-items:center;gap:14px;}
+  .flip-controls span{font-size:13px;color:var(--ink-soft);}
+  .export-row{display:flex;gap:10px;justify-content:center;margin-top:26px;flex-wrap:wrap;}
+
+  .hint{font-size:12px;color:var(--pencil);margin-top:6px;}
+  footer.savebar{
+    text-align:center;
+    font-size:11px;
+    color:#6C7C8A;
+    padding:10px 0 26px 0;
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Lato:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap"></head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brandline">
+      <h1>ZNK-LIVREmoi</h1>
+      <span class="tag">transforme ses histoires écrites au crayon en vrai livre</span>
+    </div>
+    <div class="titlebar">
+      <input type="text" id="titleInput" placeholder="Titre de l'histoire">
+      <input type="text" id="authorInput" placeholder="Auteur (son prénom)">
+    </div>
+  </header>
+
+  <nav class="ribbons">
+    <button class="ribbon active" data-view="pages">1. Pages</button>
+    <button class="ribbon" data-view="layout">2. Mise en page</button>
+    <button class="ribbon" data-view="cover">3. Couverture</button>
+    <button class="ribbon" data-view="export">4. Aperçu &amp; export</button>
+  </nav>
+
+  <main class="paper">
+
+    <!-- ===== VIEW 1 : PAGES ===== -->
+    <section class="view active" id="view-pages">
+      <h2 class="section-title">Ses pages, une par une</h2>
+      <p class="section-sub">Choisis comment obtenir le texte de chaque page : lecture à voix haute au micro (reconnue hors-ligne par Whisper), ou saisie manuelle.</p>
+      <div id="pageList"></div>
+      <button class="btn primary" id="addPageBtn">+ Nouvelle page</button>
+      <input type="file" id="pageImageAddInput" accept="image/*" style="display:none" multiple>
+    </section>
+
+    <!-- ===== VIEW 2 : MISE EN PAGE ===== -->
+    <section class="view" id="view-layout">
+      <h2 class="section-title">Comment le livre sera composé</h2>
+      <p class="section-sub">Quelques réglages simples, appliqués à toutes les pages.</p>
+      <div class="grid2">
+        <div class="field">
+          <label class="field-label">Format du livre</label>
+          <select id="fmtSelect">
+            <option value="A5">A5 — petit livre (14,8 × 21 cm)</option>
+            <option value="A4">A4 — grand format (21 × 29,7 cm)</option>
+            <option value="carre">Carré — album (20 × 20 cm)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Police du texte</label>
+          <select id="fontSelect">
+            <option value="Lora">Lora (lisible, chaleureuse)</option>
+            <option value="Caveat">Caveat (comme une écriture à la main)</option>
+            <option value="Georgia">Georgia (classique)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Taille du texte : <span id="fsOut">16</span> pt</label>
+          <input type="range" id="fsRange" min="12" max="26" value="16">
+        </div>
+        <div class="field">
+          <label class="field-label">Marges : <span id="mgOut">20</span> mm</label>
+          <input type="range" id="mgRange" min="10" max="35" value="20">
+        </div>
+        <div class="field">
+          <label class="field-label">Colonnes</label>
+          <select id="colSelect">
+            <option value="1">1 colonne</option>
+            <option value="2">2 colonnes</option>
+          </select>
+        </div>
+      </div>
+      <div class="layout-preview">
+        <div id="layoutPreviewPage"></div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 3 : COUVERTURE ===== -->
+    <section class="view" id="view-cover">
+      <h2 class="section-title">Sa couverture</h2>
+      <p class="section-sub">Le dos (tranche) s'ajuste automatiquement selon le nombre de pages.</p>
+      <div class="cover-wrap">
+        <div class="cover-form">
+          <div class="field">
+            <label class="field-label">Couleur de fond</label>
+            <div class="swatch-row" id="coverSwatches"></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+              <input type="color" id="coverColorCustom" style="width:36px;height:30px;padding:2px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;">
+              <span style="font-size:12px;color:var(--ink-soft);">ou choisir une couleur personnalisée</span>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Image de couverture (facultatif)</label>
+            <input type="file" id="coverImgFile" accept="image/*">
+            <div id="coverImgInfo" style="font-size:12px;color:var(--ink-soft);margin-top:6px;display:none;"></div>
+            <div id="coverImgScaleWrap" style="margin-top:8px;display:none;">
+              <label class="field-label" style="font-size:12px;">Zoom de l'image (<span id="coverImgScaleVal">100</span>%)</label>
+              <input type="range" id="coverImgScale" min="100" max="250" value="100" step="1" style="width:100%;">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Texte au dos du livre (résumé)</label>
+            <textarea id="backTextArea" rows="4" placeholder="Une petite phrase pour donner envie de lire..."></textarea>
+          </div>
+          <div class="field">
+            <label class="field-label">Photo de l'auteur (facultatif — placée en page 1)</label>
+            <input type="file" id="authorPhotoFile" accept="image/*">
+            <div id="authorPhotoPreviewWrap" style="margin-top:8px;display:none;">
+              <img id="authorPhotoPreview" style="width:70px;height:70px;object-fit:cover;border-radius:4px;border:1px solid var(--line);">
+              <button class="btn small ghost" id="authorPhotoRemove" style="margin-left:8px;">Retirer</button>
+            </div>
+          </div>
+        </div>
+        <div class="cover-preview-area">
+          <div class="book-render">
+            <div class="book-back" id="bookBack"></div>
+            <div class="book-spine" id="bookSpine"></div>
+            <div class="book-front" id="bookFront"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 4 : EXPORT ===== -->
+    <section class="view" id="view-export">
+      <h2 class="section-title">Feuilleter et exporter</h2>
+      <p class="section-sub">Le livre numérique se lit directement ici. Le PDF est prêt pour l'impression.</p>
+      <div class="flip-wrap">
+        <div id="flipStage"></div>
+        <div class="flip-controls">
+          <button class="btn small" id="flipPrev">← Page précédente</button>
+          <span id="flipPos">—</span>
+          <button class="btn small" id="flipNext">Page suivante →</button>
+        </div>
+      </div>
+      <div class="export-row">
+        <button class="btn primary" id="exportPdfBtn">Télécharger le PDF (prêt à imprimer)</button>
+        <button class="btn ghost" id="saveHtmlBtn">Sauvegarder ce livre numérique (.html)</button>
+        <button class="btn ghost" id="publishLibBtn">Publier dans ZNK Librairie</button>
+      </div>
+      <p class="hint" style="text-align:center;">Le fichier .html téléchargé est un livre feuilletable autonome (identique au PDF), à ouvrir et lire sans connexion — pas l'outil de création.</p>
+      <p class="hint" style="text-align:center;" id="publishHint">Publier envoie ce livre au serveur ZNK et le rend visible par tous dans ZNK Librairie.</p>
+    </section>
+
+  </main>
+
+  <footer class="savebar" id="saveIndicator">Enregistré automatiquement sur cet appareil</footer>
+</div>
+
+<script>
+/* =========================================================================
+   ZNK-LIVREmoi — prototype standalone
+   -------------------------------------------------------------------------
+   Obtention du texte d'une page : transcription VOCALE. Principe : la page
+   est photographiée (pour garder l'image originale dans le livre), puis la
+   petite-fille lit son texte à voix haute au micro — et c'est cette lecture
+   qui est transcrite, via faster-whisper côté server.py, entièrement
+   hors-ligne (aucune donnée audio envoyée à un tiers, pas de dépendance
+   macOS/Windows). Choix retenu pour l'intégration dans l'app ZNK réelle :
+   réutiliser le même schéma déjà en place ailleurs (server.py +
+   require_api_key + znkFetch()) plutôt qu'un nouveau pont electronAPI —
+   c'est le mécanisme déjà établi pour appeler une API côté serveur sans
+   jamais exposer de clé côté client (voir WhatsZNK.html).
+   ========================================================================= */
+const WHISPER_ENDPOINT = '/api/transcribe-audio'; // local uniquement (whisper.cpp tourne chez l'utilisateur)
+
+// ---- Contenu PARTAGÉ (visible par tous les utilisateurs) --------------------
+// /api/books doit être joignable par TOUT LE MONDE, pas seulement par
+// l'auteur — donc, contrairement à WHISPER_ENDPOINT (local par nature), cette
+// route doit pointer vers un server.py hébergé sur un VPS partagé, pas vers
+// le server.py local de chaque utilisateur (qui n'est visible que par lui).
+// Tant qu'aucun VPS n'est configuré, on retombe sur le chemin relatif local
+// (comportement actuel, rien ne casse) — dès qu'un VPS existe, il suffit de
+// définir SA SEULE valeur ci-dessous (ou via localStorage 'znk_cloud_url',
+// pratique pour tester sans reconstruire l'app) pour que LIVREmoi et
+// ZNK Librairie basculent ensemble vers le contenu partagé.
+const ZNK_CLOUD_URL = (function(){
+  try{ return localStorage.getItem('znk_cloud_url') || ''; }catch(e){ return ''; }
+})(); // ex: 'https://cloud.znk-app.com' — laisser vide = local uniquement
+function znkCloudPath(path){ return (ZNK_CLOUD_URL || '') + path; }
+
+const STORAGE_KEY = 'znk-livremoi-book';
+
+function defaultBook(){
+  return {
+    title:'', author:'', authorPhoto:null,
+    pages:[],
+    layout:{ format:'A5', font:'Lora', fontSize:16, margin:20, columns:1 },
+    cover:{ bgColor:'#2e073e', coverImage:null, backText:'', imgW:null, imgH:null, imgScale:100 }
+  };
+}
+let book = loadBook();
+
+function loadBook(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return Object.assign(defaultBook(), JSON.parse(raw));
+  }catch(e){}
+  return defaultBook();
+}
+function newPageObject(){
+  return { id:'p'+Date.now()+Math.random().toString(36).slice(2,6), image:null, transcribed:'', corrected:'', manual:false, images:[], transcribing:false };
+}
+let saveTimer=null;
+function saveBook(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(book));
+  const ind=document.getElementById('saveIndicator');
+  ind.textContent='Enregistré ✓';
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{ind.textContent='Enregistré automatiquement sur cet appareil';},1400);
+}
+
+/* ---------- navigation ---------- */
+document.querySelectorAll('.ribbon').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.ribbon').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    if(btn.dataset.view==='layout') renderLayoutPreview();
+    if(btn.dataset.view==='cover') renderCover();
+    if(btn.dataset.view==='export') renderFlip();
+  });
+});
+
+/* ---------- header fields ---------- */
+const titleInput=document.getElementById('titleInput');
+const authorInput=document.getElementById('authorInput');
+titleInput.value=book.title; authorInput.value=book.author;
+titleInput.addEventListener('input',()=>{book.title=titleInput.value;saveBook();renderCover();});
+authorInput.addEventListener('input',()=>{book.author=authorInput.value;saveBook();renderCover();});
+
+/* ---------- PAGES ---------- */
+const pageList=document.getElementById('pageList');
+const pageImageAddInput=document.getElementById('pageImageAddInput');
+let pendingTargetPageId=null;
+
+document.getElementById('addPageBtn').addEventListener('click',()=>{
+  book.pages.push(newPageObject());
+  saveBook();
+  renderPages();
+});
+
+function fileToDataUrl(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=()=>rej(new Error('lecture impossible'));
+    r.readAsDataURL(file);
+  });
+}
+
+// Chaque image ajoutée devient un repère [[img:ID]] inséré dans le texte, à
+// l'endroit où était le curseur au moment de cliquer sur "+ Images" — même
+// principe que pour la voix. pendingImageInsertion est capturé au clic,
+// avant l'ouverture du sélecteur de fichiers.
+let pendingImageInsertion=null; // {start, end}
+
+pageImageAddInput.addEventListener('change', async (e)=>{
+  const files=Array.from(e.target.files||[]);
+  const pg=book.pages.find(p=>p.id===pendingTargetPageId);
+  if(pg){
+    const insertion=pendingImageInsertion || {start:(pg.corrected||'').length, end:(pg.corrected||'').length};
+    pendingImageInsertion=null;
+    let cursor=insertion.start, cursorEnd=insertion.end;
+    for(const f of files){
+      const src=await fileToDataUrl(f);
+      const id='img'+Date.now()+Math.random().toString(36).slice(2,6);
+      pg.images.push({id, src, widthPct:100});
+      const token='[[img:'+id+']]';
+      pg.corrected=insertTextAtPosition(pg.corrected||'', token, cursor, cursorEnd);
+      cursor=cursor+token.length+1; cursorEnd=cursor; // les suivantes s'insèrent juste après
+    }
+    pg.transcribed=pg.corrected;
+  }
+  saveBook();
+  renderPages();
+  pageImageAddInput.value='';
+});
+
+/* Transcription vocale (Whisper). Dans l'app Electron ZNK, la transcription
+   tourne 100% en local via whisper.cpp (main.js: handler IPC
+   'transcribe-audio', exposé ici par preload.js sous
+   window.electronAPI.transcribeAudio) — aucune connexion requise. Les repli
+   znkFetch/fetch ci-dessous ne servent que si ce module est un jour testé
+   hors de l'app Electron (navigateur seul, avec un vrai serveur derrière
+   WHISPER_ENDPOINT). */
+async function transcribeVoice(audioDataUrl){
+  if(window.electronAPI && typeof window.electronAPI.transcribeAudio==='function'){
+    const result=await window.electronAPI.transcribeAudio(audioDataUrl);
+    if(result && result.success) return result.text || '';
+    throw new Error((result && result.error) || 'transcription locale indisponible');
+  }
+  if(typeof window.znkFetch==='function'){
+    const resp=await window.znkFetch(WHISPER_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({audio:audioDataUrl})
+    });
+    if(resp && resp.ok){ const data=await resp.json(); return data.text || ''; }
+  }
+  const resp2=await fetch(WHISPER_ENDPOINT,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({audio:audioDataUrl})
+  });
+  if(resp2.ok){ const data2=await resp2.json(); return data2.text || ''; }
+  throw new Error("serveur ZNK (Whisper) injoignable — écris le texte toi-même ci-dessous");
+}
+
+function blobToDataUrl(blob){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=()=>rej(new Error('lecture audio impossible'));
+    r.readAsDataURL(blob);
+  });
+}
+
+/* ---------- enregistrement micro (lecture à voix haute) ---------- */
+// Le son n'est jamais conservé : il sert uniquement à produire le texte, puis
+// il est jeté. Le texte transcrit s'insère à l'endroit où était le curseur au
+// moment de démarrer l'enregistrement (pas systématiquement à la fin).
+let activeRecorder=null;
+let activeRecorderPageId=null;
+let activeChunks=[];
+let pendingInsertion=null; // {pageId, start, end} — position du curseur au clic sur 🎙️
+
+function startRecording(pageId, insertion){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    alert("Micro non disponible dans ce navigateur/contexte.");
+    return;
+  }
+  pendingInsertion = insertion || {pageId, start:0, end:0};
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    activeChunks=[];
+    activeRecorderPageId=pageId;
+    const mimeType = (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/webm')) ? 'audio/webm' : '';
+    activeRecorder = mimeType ? new MediaRecorder(stream,{mimeType}) : new MediaRecorder(stream);
+    activeRecorder.addEventListener('dataavailable', e=>{ if(e.data && e.data.size>0) activeChunks.push(e.data); });
+    activeRecorder.addEventListener('stop', async ()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(activeChunks, {type: activeRecorder.mimeType || 'audio/webm'});
+      const chunkCount=activeChunks.length;
+      const insertionAtStop=pendingInsertion;
+      activeRecorder=null; activeRecorderPageId=null; pendingInsertion=null;
+      if(blob.size>0){
+        await transcribeAndInsert(insertionAtStop, blob);
+      } else {
+        renderPages();
+        alert("Aucun son n'a été capté (0 fragment audio reçu du micro, blob vide). "+
+              "Le micro a répondu mais n'a livré aucune donnée — vérifie qu'aucune autre "+
+              "app n'utilise le micro en exclusif, et réessaie. (chunks reçus : "+chunkCount+")");
+      }
+    });
+    activeRecorder.start();
+    renderPages();
+  }).catch(err=>{
+    alert("Impossible d'accéder au micro : "+err.message);
+  });
+}
+
+function stopRecording(){
+  if(activeRecorder && activeRecorder.state==='recording'){ activeRecorder.stop(); }
+}
+
+async function transcribeAndInsert(insertion, blob){
+  const pg=book.pages.find(p=>p.id===insertion.pageId);
+  if(!pg) return;
+  pg.transcribing=true; renderPages();
+  try{
+    const dataUrl=await blobToDataUrl(blob); // temporaire, en mémoire — jamais sauvegardé
+    const text=await transcribeVoice(dataUrl);
+    if(text){
+      const original=pg.corrected||'';
+      const start=Math.max(0, Math.min(insertion.start, original.length));
+      const end=Math.max(start, Math.min(insertion.end, original.length));
+      pg.corrected=insertTextAtPosition(original, text, start, end);
+      pg.transcribed=pg.corrected;
+    }
+  }catch(err){
+    alert("Transcription vocale indisponible : "+err.message);
+  }finally{
+    pg.transcribing=false;
+    saveBook(); renderPages();
+  }
+}
+
+function insertTextAtPosition(original, insertText, start, end){
+  const before=original.slice(0,start);
+  const after=original.slice(end);
+  const needSpaceBefore = before && !/\s$/.test(before);
+  const needSpaceAfter = after && !/^\s/.test(after);
+  return before + (needSpaceBefore?' ':'') + insertText + (needSpaceAfter?' ':'') + after;
+}
+
+// Crée (ou rejoint) la page suivante et y démarre directement l'enregistrement —
+// pour quand un passage lu doit continuer sur une nouvelle page plutôt que la
+// page en cours. Choix volontairement manuel : la coupure "au bon endroit"
+// dépend trop de la mise en page choisie pour la deviner automatiquement.
+function recordOnNextPage(currentPageId){
+  const idx=book.pages.findIndex(p=>p.id===currentPageId);
+  let nextPage=book.pages[idx+1];
+  if(!nextPage){
+    nextPage=newPageObject();
+    book.pages.push(nextPage);
+    saveBook();
+  }
+  renderPages();
+  setTimeout(()=>{
+    const el=document.querySelector('[data-page-id="'+nextPage.id+'"]');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    startRecording(nextPage.id, {pageId:nextPage.id, start:0, end:0});
+  }, 60);
+}
+
+function renderPages(){
+  pageList.innerHTML='';
+  if(book.pages.length===0){
+    pageList.innerHTML='<div class="empty">Aucune page pour l\'instant. Ajoute la première page du livre.</div>';
+    return;
+  }
+  book.pages.forEach((pg,idx)=>{
+    const card=document.createElement('div');
+    card.className='page-card';
+    card.dataset.pageId=pg.id;
+
+    const body=document.createElement('div');
+    body.className='page-body';
+
+    const head=document.createElement('div');
+    head.className='page-head';
+    const num=document.createElement('div');
+    num.className='page-num';
+    num.textContent='Page '+(idx+1);
+    head.appendChild(num);
+
+    const status=document.createElement('span');
+    status.className='page-status'+(pg.corrected?' ok':'');
+    status.textContent = pg.corrected ? 'texte prêt'
+      : pg.transcribing ? 'transcription en cours…'
+      : (activeRecorderPageId===pg.id) ? 'enregistrement…'
+      : 'vide';
+    head.appendChild(status);
+    body.appendChild(head);
+
+    const actions=document.createElement('div');
+    actions.className='page-actions';
+
+    const voiceBtn=document.createElement('button');
+    voiceBtn.className='btn small'+(activeRecorderPageId===pg.id?' recording':'');
+    const isRecordingThisPage = activeRecorderPageId===pg.id;
+    voiceBtn.textContent = isRecordingThisPage ? '⏹ Arrêter l\'enregistrement'
+      : pg.transcribing ? 'Transcription en cours…'
+      : '🎙️ Lire un passage à voix haute';
+    voiceBtn.disabled = pg.transcribing || (activeRecorderPageId!==null && !isRecordingThisPage);
+    voiceBtn.addEventListener('click', ()=>{
+      if(isRecordingThisPage){ stopRecording(); }
+      else{
+        startRecording(pg.id, { pageId: pg.id, start: ta.selectionStart, end: ta.selectionEnd });
+      }
+    });
+    actions.appendChild(voiceBtn);
+
+    const nextPageBtn=document.createElement('button');
+    nextPageBtn.className='btn small ghost';
+    nextPageBtn.textContent='↳ Page suivante';
+    nextPageBtn.title='Continuer la lecture à voix haute sur la page suivante (crée la page si besoin)';
+    nextPageBtn.disabled = pg.transcribing || activeRecorderPageId!==null;
+    nextPageBtn.addEventListener('click', ()=>{ recordOnNextPage(pg.id); });
+    actions.appendChild(nextPageBtn);
+
+    const imgBtn=document.createElement('button');
+    imgBtn.className='btn small ghost';
+    imgBtn.textContent='+ Images';
+    imgBtn.title='Insère la ou les images à la position du curseur dans le texte';
+    imgBtn.addEventListener('click',()=>{
+      pendingTargetPageId=pg.id;
+      pendingImageInsertion={ start: ta.selectionStart, end: ta.selectionEnd };
+      pageImageAddInput.click();
+    });
+    actions.appendChild(imgBtn);
+
+    const delBtn=document.createElement('button');
+    delBtn.className='btn small ghost';
+    delBtn.textContent='Supprimer la page';
+    delBtn.addEventListener('click',()=>{
+      book.pages=book.pages.filter(p=>p.id!==pg.id);
+      saveBook(); renderPages();
+    });
+    actions.appendChild(delBtn);
+
+    body.appendChild(actions);
+
+    const ta=document.createElement('textarea');
+    ta.rows=4;
+    ta.placeholder='Texte de cette page (transcrit ou écrit à la main)…';
+    ta.value=pg.corrected||'';
+    ta.style.marginTop='10px';
+    ta.addEventListener('input',()=>{ pg.corrected=ta.value; pg.manual=true; saveBook(); });
+    body.appendChild(ta);
+
+    if(pg.images.length){
+      const imgsWrap=document.createElement('div');
+      imgsWrap.className='page-images';
+      pg.images.forEach((imgObj,i)=>{
+        if(imgObj.widthPct==null) imgObj.widthPct=100; // migration des images ajoutées avant ce réglage
+
+        const col=document.createElement('div');
+        col.style.display='flex';
+        col.style.flexDirection='column';
+        col.style.alignItems='center';
+        col.style.gap='4px';
+
+        const imWrap=document.createElement('div');
+        imWrap.style.position='relative';
+        const im=document.createElement('img'); im.src=imgObj.src;
+        im.title=(pg.corrected||'').includes('[[img:'+imgObj.id+']]') ? 'Placée dans le texte' : 'Non placée (repère absent du texte)';
+        imWrap.appendChild(im);
+        const rm=document.createElement('button');
+        rm.className='rm-img'; rm.textContent='×';
+        rm.style.margin='0'; rm.style.position='absolute'; rm.style.top='-6px'; rm.style.right='-6px';
+        rm.addEventListener('click',()=>{
+          pg.images.splice(i,1);
+          pg.corrected=(pg.corrected||'').split('[[img:'+imgObj.id+']]').join('').replace(/ {2,}/g,' ');
+          saveBook(); renderPages();
+        });
+        imWrap.appendChild(rm);
+        col.appendChild(imWrap);
+
+        const sizeRow=document.createElement('div');
+        sizeRow.style.display='flex'; sizeRow.style.alignItems='center'; sizeRow.style.gap='4px';
+        const range=document.createElement('input');
+        range.type='range'; range.min='20'; range.max='100'; range.step='5';
+        range.value=imgObj.widthPct;
+        range.style.width='56px';
+        range.title='Taille de l\'image dans le livre';
+        const pctLabel=document.createElement('span');
+        pctLabel.style.fontSize='10px'; pctLabel.style.color='var(--pencil)'; pctLabel.style.minWidth='28px';
+        pctLabel.textContent=imgObj.widthPct+'%';
+        range.addEventListener('input',()=>{ pctLabel.textContent=range.value+'%'; });
+        range.addEventListener('change',()=>{
+          imgObj.widthPct=Number(range.value);
+          saveBook(); renderFlip();
+        });
+        sizeRow.appendChild(range); sizeRow.appendChild(pctLabel);
+        col.appendChild(sizeRow);
+
+        imgsWrap.appendChild(col);
+      });
+      body.appendChild(imgsWrap);
+    }
+
+    card.appendChild(body);
+    pageList.appendChild(card);
+  });
+}
+renderPages();
+
+/* ---------- LAYOUT ---------- */
+const fmtSelect=document.getElementById('fmtSelect');
+const fontSelect=document.getElementById('fontSelect');
+const fsRange=document.getElementById('fsRange');
+const mgRange=document.getElementById('mgRange');
+const colSelect=document.getElementById('colSelect');
+const fsOut=document.getElementById('fsOut');
+const mgOut=document.getElementById('mgOut');
+
+fmtSelect.value=book.layout.format;
+fontSelect.value=book.layout.font;
+fsRange.value=book.layout.fontSize; fsOut.textContent=book.layout.fontSize;
+mgRange.value=book.layout.margin; mgOut.textContent=book.layout.margin;
+colSelect.value=book.layout.columns;
+
+[fmtSelect,fontSelect,colSelect].forEach(el=>el.addEventListener('change',()=>{
+  book.layout.format=fmtSelect.value;
+  book.layout.font=fontSelect.value;
+  book.layout.columns=Number(colSelect.value);
+  saveBook(); renderLayoutPreview();
+}));
+fsRange.addEventListener('input',()=>{ fsOut.textContent=fsRange.value; book.layout.fontSize=Number(fsRange.value); saveBook(); renderLayoutPreview(); });
+mgRange.addEventListener('input',()=>{ mgOut.textContent=mgRange.value; book.layout.margin=Number(mgRange.value); saveBook(); renderLayoutPreview(); });
+
+const FORMATS={ A5:{w:148,h:210}, A4:{w:210,h:297}, carre:{w:200,h:200} };
+function renderLayoutPreview(){
+  const f=FORMATS[book.layout.format];
+  const scale=1.35;
+  const el=document.getElementById('layoutPreviewPage');
+  el.style.width=(f.w*scale)+'px';
+  el.style.height=(f.h*scale)+'px';
+  el.style.fontFamily=book.layout.font+', serif';
+  el.style.fontSize=book.layout.fontSize+'px';
+  el.style.lineHeight='1.6';
+  el.style.padding=(book.layout.margin*scale*0.6)+'px';
+  el.style.columnCount=book.layout.columns;
+  el.style.columnGap='18px';
+  const sampleText=(book.pages[0]&&book.pages[0].corrected) || 'Il était une fois une histoire écrite au crayon, page après page, qui allait bientôt devenir un vrai livre…';
+  el.textContent=sampleText;
+}
+renderLayoutPreview();
+
+/* ---------- COVER ---------- */
+const coverColors=['#2e073e','#7b219f','#4f7a28','#a96800','#d95000','#444444'];
+const coverSwatches=document.getElementById('coverSwatches');
+coverColors.forEach(c=>{
+  const sw=document.createElement('div');
+  sw.className='swatch'+(book.cover.bgColor===c?' sel':'');
+  sw.style.background=c;
+  sw.addEventListener('click',()=>{
+    book.cover.bgColor=c;
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('sel'));
+    sw.classList.add('sel');
+    coverColorCustom.value=c;
+    saveBook(); renderCover();
+  });
+  coverSwatches.appendChild(sw);
+});
+
+const coverColorCustom=document.getElementById('coverColorCustom');
+coverColorCustom.value=book.cover.bgColor;
+coverColorCustom.addEventListener('input',()=>{
+  book.cover.bgColor=coverColorCustom.value;
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('sel'));
+  saveBook(); renderCover();
+});
+
+const coverImgInfo=document.getElementById('coverImgInfo');
+const coverImgScaleWrap=document.getElementById('coverImgScaleWrap');
+const coverImgScale=document.getElementById('coverImgScale');
+const coverImgScaleVal=document.getElementById('coverImgScaleVal');
+
+function updateCoverImgInfo(){
+  if(book.cover.coverImage && book.cover.imgW && book.cover.imgH){
+    coverImgInfo.style.display='block';
+    coverImgInfo.textContent=`Dimensions d'origine : ${book.cover.imgW} × ${book.cover.imgH} px`;
+    coverImgScaleWrap.style.display='block';
+  } else {
+    coverImgInfo.style.display='none';
+    coverImgScaleWrap.style.display='none';
+  }
+}
+
+document.getElementById('coverImgFile').addEventListener('change', async (e)=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  const dataUrl=await fileToDataUrl(file);
+  const dims=await new Promise((resolve)=>{
+    const img=new Image();
+    img.onload=()=>resolve({w:img.naturalWidth,h:img.naturalHeight});
+    img.src=dataUrl;
+  });
+  book.cover.coverImage=dataUrl;
+  book.cover.imgW=dims.w;
+  book.cover.imgH=dims.h;
+  book.cover.imgScale=100;
+  coverImgScale.value=100;
+  coverImgScaleVal.textContent='100';
+  updateCoverImgInfo();
+  saveBook(); renderCover();
+});
+
+coverImgScale.addEventListener('input',()=>{
+  book.cover.imgScale=parseInt(coverImgScale.value,10);
+  coverImgScaleVal.textContent=book.cover.imgScale;
+  saveBook(); renderCover();
+});
+
+updateCoverImgInfo();
+
+const backTextArea=document.getElementById('backTextArea');
+backTextArea.value=book.cover.backText;
+backTextArea.addEventListener('input',()=>{ book.cover.backText=backTextArea.value; saveBook(); renderCover(); });
+
+const authorPhotoFile=document.getElementById('authorPhotoFile');
+const authorPhotoPreviewWrap=document.getElementById('authorPhotoPreviewWrap');
+const authorPhotoPreview=document.getElementById('authorPhotoPreview');
+const authorPhotoRemove=document.getElementById('authorPhotoRemove');
+
+function updateAuthorPhotoPreview(){
+  if(book.authorPhoto){
+    authorPhotoPreviewWrap.style.display='block';
+    authorPhotoPreview.src=book.authorPhoto;
+  } else {
+    authorPhotoPreviewWrap.style.display='none';
+  }
+}
+authorPhotoFile.addEventListener('change', async (e)=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  book.authorPhoto=await fileToDataUrl(file);
+  updateAuthorPhotoPreview();
+  saveBook();
+});
+authorPhotoRemove.addEventListener('click',()=>{
+  book.authorPhoto=null;
+  authorPhotoFile.value='';
+  updateAuthorPhotoPreview();
+  saveBook();
+});
+updateAuthorPhotoPreview();
+
+function renderCover(){
+  const front=document.getElementById('bookFront');
+  const spine=document.getElementById('bookSpine');
+  const back=document.getElementById('bookBack');
+  const bg=book.cover.bgColor;
+  [front,spine,back].forEach(el=>el.style.background=bg);
+  front.style.backgroundImage='none';
+
+  const imageAreaStyle=book.cover.coverImage
+    ? `background-image:url(${book.cover.coverImage});background-size:${book.cover.imgScale||100}%;background-position:center;background-repeat:no-repeat;`
+    : `background:${bg};`;
+
+  front.innerHTML=`
+    <div class="cover-header" style="background:${bg};">
+      <div class="cover-title">${escapeHtml(book.title||'Mon histoire')}</div>
+      <div class="cover-author">${escapeHtml(book.author||'')}</div>
+    </div>
+    <div class="cover-image-area" style="${imageAreaStyle}"></div>`;
+
+  spine.textContent=(book.title||'Mon histoire');
+  const pageCount=Math.max(book.pages.length,1);
+  spine.style.width=Math.min(60,Math.max(16, 14+pageCount*1.3))+'px';
+  back.innerHTML=`<div style="display:flex;flex-direction:column;height:100%;"><div style="font-size:10px;line-height:1.6;">${escapeHtml(book.cover.backText||'')}</div><div style="font-size:9px;opacity:0.7;margin-top:auto;padding-top:14px;">ZNK Editions</div></div>`;
+}
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+renderCover();
+
+/* ---------- EXPORT / FLIPBOOK ---------- */
+let flipIndex=0;
+// Découpe le texte d'une page en segments ordonnés {type:'text'|'image', ...}
+// en respectant la position des repères [[img:ID]] — utilisé par l'aperçu
+// feuilletable, le PDF ET le .html exporté (buildStandaloneHtml réutilise
+// cette même fonction via .toString()), pour qu'une image insérée au milieu
+// du texte apparaisse bien au milieu, pas systématiquement à la fin.
+function splitPageIntoSegments(pg){
+  const text=pg.corrected||'';
+  const byId={};
+  (pg.images||[]).forEach(im=>{ byId[im.id]=im; });
+  const segments=[];
+  const re=/\[\[img:([a-z0-9]+)\]\]/gi;
+  let lastIndex=0, m;
+  while((m=re.exec(text))){
+    if(m.index>lastIndex) segments.push({type:'text', value:text.slice(lastIndex,m.index)});
+    const im=byId[m[1]];
+    if(im) segments.push({type:'image', src:im.src, id:im.id, widthPct:im.widthPct||100});
+    lastIndex=re.lastIndex;
+  }
+  if(lastIndex<text.length) segments.push({type:'text', value:text.slice(lastIndex)});
+  if(segments.length===0) segments.push({type:'text', value:''});
+  return segments;
+}
+
+function flipPagesData(){
+  const arr=[{type:'cover'}];
+  book.pages.forEach((p,i)=>arr.push({type:'page',data:p,num:i+1}));
+  arr.push({type:'back'});
+  return arr;
+}
+function renderFlip(){
+  const arr=flipPagesData();
+  if(flipIndex<0) flipIndex=0;
+  if(flipIndex>=arr.length) flipIndex=arr.length-1;
+  const item=arr[flipIndex];
+  const stage=document.getElementById('flipStage');
+  stage.style.fontFamily=book.layout.font+', serif';
+  stage.style.fontSize=book.layout.fontSize+'px';
+  if(item.type==='cover'){
+    stage.style.background=book.cover.bgColor;
+    stage.style.backgroundImage='none';
+    stage.style.color='#fff';
+    const bg=book.cover.bgColor;
+    const imgAreaStyle=book.cover.coverImage
+      ? `background-image:url(${book.cover.coverImage});background-size:${book.cover.imgScale||100}%;`
+      : `background:${bg};`;
+    stage.innerHTML=`
+      <div class="flip-cover-header" style="background:${bg};text-align:center;">
+        <div class="flip-text" style="font-family: Merriweather, serif;font-size:32px;">${escapeHtml(book.title||'Mon histoire')}</div>
+        <div style="font-size:13px;opacity:0.85;margin-top:6px;">${escapeHtml(book.author||'')}</div>
+      </div>
+      <div class="flip-image-area" style="${imgAreaStyle}"></div>`;
+  } else if(item.type==='back'){
+    stage.style.background=book.cover.bgColor;
+    stage.style.backgroundImage='none';
+    stage.style.color='#fff';
+    stage.innerHTML=`<div class="flip-pad" style="height:100%;"><div style="margin:auto;text-align:center;font-size:13px;">${escapeHtml(book.cover.backText||'')}</div><div style="text-align:center;font-size:11px;opacity:0.7;padding-top:14px;">ZNK Editions</div></div>`;
+  } else {
+    stage.style.background='#fff';
+    stage.style.backgroundImage='none';
+    stage.style.color='var(--ink)';
+    const authorPhotoHtml=(item.num===1 && book.authorPhoto)
+      ? `<img src="${book.authorPhoto}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;float:right;margin:0 0 10px 12px;">`
+      : '';
+    const segments=splitPageIntoSegments(item.data);
+    const body=segments.map(seg => seg.type==='image'
+      ? `<img src="${seg.src}" style="width:${seg.widthPct}%;margin:8px auto;display:block;border-radius:4px;">`
+      : `<span class="flip-text">${escapeHtml(seg.value)}</span>`
+    ).join('');
+    stage.innerHTML=`<div class="flip-pad">${authorPhotoHtml}${body}<div class="flip-page-num">— ${item.num} —</div></div>`;
+  }
+  document.getElementById('flipPos').textContent=(flipIndex+1)+' / '+arr.length;
+}
+document.getElementById('flipPrev').addEventListener('click',()=>{ flipIndex--; renderFlip(); });
+document.getElementById('flipNext').addEventListener('click',()=>{ flipIndex++; renderFlip(); });
+
+/* Renvoie {width,height} en pixels d'une image encodée en data URL,
+   nécessaire pour la dimensionner correctement dans le PDF (jsPDF ne
+   connaît pas la taille intrinsèque d'une image tant qu'elle n'est
+   pas chargée). */
+function loadImageMeta(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve({width:img.naturalWidth,height:img.naturalHeight});
+    img.onerror=()=>reject(new Error('image manuscrite illisible'));
+    img.src=dataUrl;
+  });
+}
+function dataUrlImageFormat(dataUrl){
+  const m=/^data:image\/(\w+);base64,/.exec(dataUrl||'');
+  if(!m) return 'JPEG';
+  let ext=m[1].toUpperCase();
+  if(ext==='JPG') ext='JPEG';
+  return ext;
+}
+
+/* Reconvertit une image quelconque (HEIC mal supporté, PNG avec transparence,
+   profil de couleur exotique, etc.) en JPEG propre via un <canvas> — jsPDF
+   échoue silencieusement sur certains formats/profils, ce qui faisait
+   "disparaître" des images sans erreur visible. Cap à 1600px sur le plus
+   grand côté pour garder des PDF raisonnables. */
+function normalizeImageForPdf(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const maxDim=1600;
+        let w=img.naturalWidth, h=img.naturalHeight;
+        if(!w||!h) throw new Error('dimensions image invalides');
+        if(Math.max(w,h)>maxDim){
+          const scale=maxDim/Math.max(w,h);
+          w=Math.round(w*scale); h=Math.round(h*scale);
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.fillStyle='#ffffff'; // fond blanc pour les PNG transparents (JPEG n'a pas d'alpha)
+        ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img,0,0,w,h);
+        resolve({ dataUrl: canvas.toDataURL('image/jpeg',0.87), width:w, height:h });
+      }catch(err){ reject(err); }
+    };
+    img.onerror=()=>reject(new Error('image illisible ou format non supporté'));
+    img.src=dataUrl;
+  });
+}
+
+document.getElementById('exportPdfBtn').addEventListener('click', async ()=>{
+  if(!window.jspdf){ alert('Le générateur de PDF n\'a pas pu se charger (connexion nécessaire pour ce prototype).'); return; }
+  const { jsPDF } = window.jspdf;
+  const f=FORMATS[book.layout.format];
+  const doc=new jsPDF({ unit:'mm', format:[f.w,f.h] });
+  const margin=book.layout.margin;
+
+  const exportBtn=document.getElementById('exportPdfBtn');
+  const originalLabel=exportBtn.textContent;
+  exportBtn.disabled=true;
+  exportBtn.textContent='Préparation du PDF…';
+
+  try{
+    const failedImages=[];
+    doc.setFillColor(book.cover.bgColor);
+    doc.rect(0,0,f.w,f.h,'F');
+
+    const headerH=f.h*0.22;
+
+    if(book.cover.coverImage && book.cover.imgW && book.cover.imgH){
+      try{
+        const norm=await normalizeImageForPdf(book.cover.coverImage);
+        const subW=f.w, subH=f.h-headerH, subY=headerH;
+        const subAspect=subW/subH;
+        const imgAspect=norm.width/norm.height;
+        let dispW,dispH;
+        if(imgAspect>subAspect){ dispH=subH; dispW=subH*imgAspect; } else { dispW=subW; dispH=subW/imgAspect; }
+        const zoom=(book.cover.imgScale||100)/100;
+        dispW*=zoom; dispH*=zoom;
+        const ix=(subW-dispW)/2, iy=subY+(subH-dispH)/2;
+        doc.addImage(norm.dataUrl, 'JPEG', ix, iy, dispW, dispH);
+      }catch(e){ failedImages.push('image de couverture'); }
+    }
+
+    // Bandeau titre solide, dessiné par-dessus l'image pour ne jamais s'y mélanger
+    doc.setFillColor(book.cover.bgColor);
+    doc.rect(0,0,f.w,headerH,'F');
+
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(24);
+    doc.text(book.title||'Mon histoire', f.w/2, headerH*0.55, {align:'center'});
+    doc.setFontSize(12);
+    doc.text(book.author||'', f.w/2, headerH*0.55+10, {align:'center'});
+
+    for(const [i,pg] of book.pages.entries()){
+      doc.addPage([f.w,f.h]);
+      doc.setTextColor(35,36,31);
+      doc.setFontSize(book.layout.fontSize);
+      const usableWidth=f.w-margin*2;
+      const footerLimit=f.h-margin-8;
+      let cursorY=margin+8;
+      const segments=splitPageIntoSegments(pg);
+      let firstTextDrawn=false;
+
+      for(const seg of segments){
+        if(seg.type==='text'){
+          if(!seg.value) continue;
+          if(!firstTextDrawn && i===0 && book.authorPhoto){
+            firstTextDrawn=true;
+            try{
+              const norm=await normalizeImageForPdf(book.authorPhoto);
+              const photoW=Math.min(30, usableWidth*0.35);
+              const photoH=photoW*(norm.height/norm.width);
+              const px=f.w-margin-photoW, py=margin;
+              doc.addImage(norm.dataUrl, 'JPEG', px, py, photoW, photoH);
+              const textW=usableWidth-photoW-6;
+              const lines=doc.splitTextToSize(seg.value, textW);
+              doc.text(lines, margin, cursorY);
+              const dims=doc.getTextDimensions(lines);
+              cursorY=Math.max(cursorY+dims.h, py+photoH)+8;
+            }catch(err){
+              failedImages.push("photo de l'auteur");
+              const lines=doc.splitTextToSize(seg.value, usableWidth);
+              doc.text(lines, margin, cursorY);
+              cursorY+=doc.getTextDimensions(lines).h+8;
+            }
+          } else {
+            firstTextDrawn=true;
+            const lines=doc.splitTextToSize(seg.value, usableWidth);
+            doc.text(lines, margin, cursorY);
+            cursorY+=doc.getTextDimensions(lines).h+8;
+          }
+        } else if(seg.type==='image'){
+          try{
+            const norm=await normalizeImageForPdf(seg.src);
+            const targetWidth=usableWidth*((seg.widthPct||100)/100);
+            let dispW=targetWidth, dispH=dispW*(norm.height/norm.width);
+            const maxH=f.h-margin*2-16;
+            if(dispH>maxH){ dispH=maxH; dispW=dispH*(norm.width/norm.height); }
+            if(cursorY+dispH>footerLimit){
+              doc.addPage([f.w,f.h]);
+              doc.setFillColor(255,255,255);
+              doc.rect(0,0,f.w,f.h,'F');
+              cursorY=margin;
+            }
+            const ix=margin+(usableWidth-dispW)/2;
+            doc.addImage(norm.dataUrl, 'JPEG', ix, cursorY, dispW, dispH);
+            cursorY+=dispH+8;
+          }catch(err){
+            failedImages.push('une image de la page '+(i+1));
+          }
+        }
+      }
+
+      doc.setFontSize(9);
+      doc.setTextColor(150,150,150);
+      doc.text(String(i+1), f.w/2, f.h-10, {align:'center'});
+    }
+
+    doc.addPage([f.w,f.h]);
+    doc.setFillColor(book.cover.bgColor);
+    doc.rect(0,0,f.w,f.h,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(11);
+    const backLines=doc.splitTextToSize(book.cover.backText||'', f.w-margin*2);
+    doc.text(backLines, f.w/2, f.h/2, {align:'center'});
+    doc.setFontSize(9);
+    doc.setTextColor(230,230,230);
+    doc.text('ZNK Editions', f.w/2, f.h-margin, {align:'center'});
+
+    doc.save((book.title||'mon-livre').replace(/[^a-z0-9\-]+/gi,'_')+'.pdf');
+
+    if(failedImages.length){
+      alert('Le PDF est prêt, mais '+failedImages.length+' image(s) n\'ont pas pu être incluses : '+failedImages.join(', ')+'. Réessaie avec une photo différente pour celles-ci.');
+    }
+  }finally{
+    exportBtn.disabled=false;
+    exportBtn.textContent=originalLabel;
+  }
+});
+
+function buildStandaloneHtml(){
+  const title=escapeHtml(book.title||'Mon histoire');
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF6EC; --ink:#444444; --ink-soft:#371a94; --line:#c0c0c0;
+    --font-hand:'Caveat',cursive; --font-body:'Lora',Georgia,'Times New Roman',serif;
+    --font-ui:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-ui); background:${book.cover.bgColor}; color:var(--ink);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    position:relative;
+  }
+  .doc-header{
+    position:fixed; top:18px; left:22px; z-index:5;
+    color:#FBF6EC; line-height:1.3;
+  }
+  .doc-header .doc-title{
+    font-family:var(--font-hand); font-size:22px; font-weight:700; margin:0;
+  }
+  .doc-header .doc-author{
+    font-family:var(--font-ui); font-size:12px; opacity:0.85; margin:0;
+  }
+  .flip-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+  #flipStage{
+    width:340px;height:440px;background:#fff;border:1px solid var(--line);border-radius:6px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    padding:0;display:flex;flex-direction:column;overflow:hidden;
+  }
+  #flipStage .flip-page-num{font-size:11px;color:var(--ink-soft);text-align:center;margin-top:8px;flex:none;}
+  #flipStage .flip-text{white-space:pre-wrap;font-family:var(--font-body);}
+  #flipStage .flip-pad{padding:26px;display:flex;flex-direction:column;flex:1;overflow-y:auto;}
+  #flipStage .flip-cover-header{padding:22px 26px 16px;flex:none;}
+  #flipStage .flip-image-area{flex:1;background-size:cover;background-position:center;background-repeat:no-repeat;}
+  .flip-controls{display:flex;align-items:center;gap:14px;}
+  .flip-controls span{font-size:13px;color:var(--ink-soft);}
+  .btn{
+    background:var(--paper);border:1px solid var(--ink);color:var(--ink);
+    font-family:var(--font-ui);font-size:13px;padding:8px 14px;border-radius:20px;
+    cursor:pointer;transition:all .15s;
+  }
+  .btn:hover{background:var(--ink);color:var(--paper);}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+</style>
+</head>
+<body>
+  <div class="doc-header">
+    <p class="doc-title">${title}</p>
+    <p class="doc-author">${escapeHtml(book.author||'')}</p>
+  </div>
+  <div class="flip-wrap">
+    <div id="flipStage"></div>
+    <div class="flip-controls">
+      <button class="btn" id="flipPrev">← Page précédente</button>
+      <span id="flipPos">—</span>
+      <button class="btn" id="flipNext">Page suivante →</button>
+    </div>
+  </div>
+<script>
+const book = ${JSON.stringify(book).replace(/</g,'\\u003c')};
+let flipIndex = 0;
+${escapeHtml.toString()}
+${splitPageIntoSegments.toString()}
+${flipPagesData.toString()}
+${renderFlip.toString()}
+document.getElementById('flipPrev').addEventListener('click',()=>{ flipIndex--; renderFlip(); });
+document.getElementById('flipNext').addEventListener('click',()=>{ flipIndex++; renderFlip(); });
+renderFlip();
+<\/script>
+</body>
+</html>`;
+}
+
+document.getElementById('saveHtmlBtn').addEventListener('click', ()=>{
+  const html=buildStandaloneHtml();
+  const blob=new Blob([html], {type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=(book.title||'mon-livre').replace(/[^a-z0-9\-]+/gi,'_')+'.html';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ---------- publication dans ZNK Librairie ----------
+   Routes /api/books ajoutées dans server.py (Flask) : un fichier JSON
+   par livre, stocké côté serveur (persistant, visible par tous ceux qui
+   accèdent au serveur — VPS ou réseau local). L'id est généré une fois
+   côté client puis réutilisé : republier met à jour le même fichier.
+   Les pages sont servies par ce même serveur Express, donc un simple
+   fetch relatif suffit (même origine, pas besoin d'URL de backend). */
+function ensureBookId(){
+  if(!book.id){ book.id='b'+Date.now()+Math.random().toString(36).slice(2,8); saveBook(); }
+  return book.id;
+}
+document.getElementById('publishLibBtn').addEventListener('click', async ()=>{
+  const btn=document.getElementById('publishLibBtn');
+  if(!book.pages.length){ alert('Ajoute au moins une page avant de publier ce livre dans ZNK Librairie.'); return; }
+
+  const id=ensureBookId();
+  const original=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='Publication…';
+  try{
+    const response=await fetch(znkCloudPath(`/api/books/${id}`), {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(book)
+    });
+    if(!response.ok) throw new Error('HTTP '+response.status);
+    const result=await response.json();
+    if(result.publishedAt){ book.publishedAt=result.publishedAt; saveBook(); }
+    btn.textContent='Publié ✓';
+  }catch(e){
+    console.warn('⚠️ Serveur ZNK injoignable pour la publication:', e);
+    btn.textContent='Échec — serveur injoignable';
+  }finally{
+    setTimeout(()=>{ btn.textContent=original; btn.disabled=false; },2200);
+  }
+});
+
+renderFlip();
+</script>
+</body>
+</html>

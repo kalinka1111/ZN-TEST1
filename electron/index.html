@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>©ZNK</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 60%, #0f3460 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(0, 212, 255, 0.6);
+            border-radius: 50%;
+            animation: float 6s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 2;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        /* Titre plus discret et élégant */
+        .main-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 30px;
+            color: rgba(0, 212, 255, 0.9);
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            opacity: 0.85;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .main-title:hover {
+            opacity: 1;
+            text-shadow: 0 0 25px rgba(0, 212, 255, 0.5);
+            letter-spacing: 10px;
+        }
+
+        /* Écran TV plus grand et imposant */
+        .tv-screen {
+            width: 800px;
+            height: 500px;
+            background: #000;
+            border-radius: 25px;
+            border: 10px solid #1a1a1a;
+            position: relative;
+            margin-bottom: 50px;
+            box-shadow: 
+                0 0 50px rgba(0, 212, 255, 0.4),
+                0 10px 60px rgba(0, 0, 0, 0.6),
+                inset 0 0 30px rgba(255, 255, 255, 0.05);
+            animation: screenPulse 4s ease-in-out infinite;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .tv-screen:hover {
+            transform: scale(1.02);
+            box-shadow: 
+                0 0 70px rgba(0, 212, 255, 0.6),
+                0 15px 80px rgba(0, 0, 0, 0.7),
+                inset 0 0 40px rgba(255, 255, 255, 0.08);
+        }
+
+        @keyframes screenPulse {
+            0%, 100% {
+                box-shadow: 
+                    0 0 50px rgba(0, 212, 255, 0.4),
+                    0 10px 60px rgba(0, 0, 0, 0.6),
+                    inset 0 0 30px rgba(255, 255, 255, 0.05);
+            }
+            50% {
+                box-shadow: 
+                    0 0 70px rgba(0, 212, 255, 0.6),
+                    0 15px 80px rgba(0, 0, 0, 0.7),
+                    inset 0 0 40px rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .tv-content {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .workflow-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 15px;
+        }
+
+        .tv-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .tv-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 212, 255, 0.03) 2px,
+                rgba(0, 212, 255, 0.03) 4px
+            );
+            animation: scanlines 2s linear infinite;
+        }
+
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        /* Badge LIVE plus élégant */
+     
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+        }
+
+        @keyframes livePulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.85;
+                transform: scale(1.05);
+            }
+        }
+
+        .workflow-fallback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1;
+            display: none;
+        }
+
+        .workflow-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
+
+        .admin-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 10px;
+        }
+
+        /* Contrôles personnalisés plus élégants */
+        .custom-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .tv-screen:hover .custom-controls {
+            opacity: 1;
+        }
+
+        .control-btn {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            color: #346488;
+            padding: 8px 14px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        /* Boutons d'action ultra élégants */
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            padding: 12px 38px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(14px);
+            text-transform: uppercase;
+        }
+
+        /* Bouton Connexion - Design futuriste */
+        .connect-btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0056d6 100%);
+            color: white;
+            box-shadow: 
+                0 8px 2px rgba(0, 212, 255, 0.35),
+                0 0 0 2px rgba(0, 212, 255, 0.2);
+            position: relative;
+        }
+
+        .connect-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .connect-btn:hover::before {
+            left: 100%;
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 15px 35px rgba(0, 212, 255, 0.5),
+                0 0 0 3px rgba(0, 212, 255, 0.3),
+                0 0 50px rgba(0, 212, 255, 0.4);
+            background: linear-gradient(135deg, #006d8f 0%, #008cb4 100%);
+        }
+
+        .connect-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        /* Bouton Inscription - Design glassmorphism */
+        .register-btn {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.2),
+                inset 0 0 30px rgba(0, 212, 255, 0.05);
+            backdrop-filter: blur(20px);
+        }
+
+        .register-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 60px;
+            padding: 2px;
+            background: linear-gradient(135deg, #00d4ff, transparent, #00d4ff);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .register-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            background: rgba(0, 212, 255, 0.15);
+            border-color: #00d4ff;
+            box-shadow: 
+                0 15px 35px rgba(0, 212, 255, 0.3),
+                inset 0 0 40px rgba(0, 212, 255, 0.1);
+        }
+
+        .register-btn:hover::after {
+            opacity: 1;
+        }
+
+        .register-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        /* Animation de ripple améliorée */
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+            pointer-events: none;
+        }
+
+        .action-btn:active::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .fade-in {
+            opacity: 0;
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        .fade-in:nth-child(1) { animation-delay: 0.1s; }
+        .fade-in:nth-child(2) { animation-delay: 0.4s; }
+        .fade-in:nth-child(3) { animation-delay: 0.7s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive optimisé */
+        @media (max-width: 1024px) {
+            .tv-screen {
+                width: 650px;
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 1.4rem;
+                margin-bottom: 25px;
+                letter-spacing: 5px;
+            }
+            
+            .tv-screen {
+                width: 90vw;
+                height: 55vw;
+                max-width: 500px;
+                max-height: 310px;
+                margin-bottom: 35px;
+            }
+            
+            .workflow-text {
+                font-size: 20px;
+            }
+            
+            .live-badge {
+                font-size: 9px;
+                padding: 6px 12px;
+                top: 15px;
+                right: 15px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 18px;
+                width: 100%;
+                max-width: 320px;
+            }
+            
+            .action-btn {
+                padding: 14px 35px;
+                font-size: 14px;
+                letter-spacing: 1px;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-title {
+                font-size: 1.2rem;
+                letter-spacing: 3px;
+            }
+            
+            .tv-screen {
+                border: 6px solid #1a1a1a;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="main-container">
+        <h1 class="main-title fade-in">©ZNK</h1>
+        
+        <div class="tv-screen fade-in">
+            <div class="tv-content">
+                <video 
+                    class="workflow-video" 
+                    id="workflowVideo"
+                    autoplay 
+                    loop 
+                    muted 
+                    playsinline
+                    preload="auto">
+                    <source src="./assets/videos/intro.mp4" type="video/mp4">
+                </video>
+                
+                <div class="tv-overlay"></div>
+                
+              
+                
+             <div class="custom-controls">
+                    <button class="control-btn" id="playPauseBtn" title="Lecture/Pause">⏸</button>
+                    <button class="control-btn" id="muteBtn" title="Son">🔇</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-buttons fade-in">
+            <a href="./auth-hub.html" class="action-btn connect-btn">
+                Se Connecter
+            </a>
+            <a href="./inscription.html" class="action-btn register-btn">
+                S'inscrire
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 4) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        const video = document.getElementById('workflowVideo');
+        const fallback = document.getElementById('fallback');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const muteBtn = document.getElementById('muteBtn');
+
+        video.addEventListener('error', () => {
+            fallback.style.display = 'block';
+            console.warn('Vidéo non disponible, affichage du fallback');
+        });
+
+        video.addEventListener('loadeddata', () => {
+            fallback.style.display = 'none';
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            if (video.paused) {
+                video.play();
+                playPauseBtn.textContent = '⏸';
+                playPauseBtn.title = 'Pause';
+            } else {
+                video.pause();
+                playPauseBtn.textContent = '▶';
+                playPauseBtn.title = 'Lecture';
+            }
+        });
+
+        muteBtn.addEventListener('click', () => {
+            video.muted = !video.muted;
+            muteBtn.textContent = video.muted ? '🔇' : '🔊';
+            muteBtn.title = video.muted ? 'Activer le son' : 'Couper le son';
+        });
+
+        function addGlitchEffect() {
+            const tvContent = document.querySelector('.tv-content');
+            
+            setInterval(() => {
+                if (Math.random() < 0.05) {
+                    tvContent.style.filter = 'hue-rotate(180deg) contrast(1.5)';
+                    setTimeout(() => {
+                        tvContent.style.filter = 'none';
+                    }, 50);
+                }
+            }, 3000);
+        }
+
+        function addClickEffects() {
+            const buttons = document.querySelectorAll('.action-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.zIndex = '10';
+                });
+                
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.zIndex = '1';
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            addGlitchEffect();
+            addClickEffects();
+            
+            video.play().catch(err => {
+                console.warn('Erreur de lecture vidéo:', err);
+            });
+        });
+    </script>
+</body>
+</html>

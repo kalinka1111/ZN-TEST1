@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK System - Interface Parents</title>
+    <script src="/assets/js/znk-header-system.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460, #1e293b);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(30, 41, 59, 0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .parent-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            color: #a0a0a0;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+            50% { opacity: 0.5; box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
+            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+        }
+
+        .main-container {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .dashboard-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .dashboard-title h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff, #8b5cf6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard-title p {
+            font-size: 1.2rem;
+            color: #a0a0a0;
+        }
+
+        .children-selector {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .child-btn {
+            padding: 12px 24px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .child-btn.active {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border-color: #8b5cf6;
+            transform: scale(1.05);
+        }
+
+        .child-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .sections {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-card {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            background: rgba(139, 92, 246, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.2);
+        }
+
+        .info-card h4 {
+            color: #8b5cf6;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.3rem;
+        }
+
+        .info-card .label {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .subject-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .subject-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .subject-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .subject-grade {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+
+        .activity-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            border: 3px solid rgba(30, 41, 59, 0.8);
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -1.15rem;
+            top: 12px;
+            width: 2px;
+            height: calc(100% - 12px);
+            background: rgba(139, 92, 246, 0.3);
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .timeline-time {
+            font-size: 0.8rem;
+            color: #8b5cf6;
+            margin-bottom: 0.3rem;
+        }
+
+        .timeline-content {
+            color: #a0a0a0;
+        }
+
+        .controls-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .control-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-card:hover {
+            background: rgba(139, 92, 246, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .control-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .control-label {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+            margin-top: 0.5rem;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.2);
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(45deg, #8b5cf6, #06b6d4);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .communication-btn {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .communication-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-title h1 {
+                font-size: 2rem;
+            }
+            
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Modules partagés par le professeur */
+        .prof-modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .prof-module-card {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-left: 4px solid #8b5cf6;
+            border-radius: 12px;
+            padding: 1.4rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .prof-module-card:hover {
+            background: rgba(139, 92, 246, 0.18);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.2);
+        }
+
+        .prof-module-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.6rem;
+        }
+
+        .prof-module-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .prof-module-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .prof-module-desc {
+            font-size: 0.85rem;
+            color: #a0a0a0;
+            line-height: 1.4;
+        }
+
+        .prof-module-section-tag {
+            font-size: 0.7rem;
+            color: #a78bfa;
+            margin-top: 0.6rem;
+        }
+
+        .prof-modules-empty {
+            text-align: center;
+            color: #a0a0a0;
+            padding: 2rem;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+        }
+
+        .zprof-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        .zprof-modal-content {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.97), rgba(15, 15, 35, 0.97));
+            margin: 8% auto;
+            padding: 2rem;
+            border: 1px solid rgba(139, 92, 246, 0.35);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 560px;
+            position: relative;
+        }
+
+        .zprof-modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 26px;
+            cursor: pointer;
+        }
+
+        .zprof-modal-close:hover { color: #8b5cf6; }
+        .zprof-modal-content h2 { color: #8b5cf6; margin-bottom: 1rem; }
+        .zprof-modal-content p { color: #cbd5e1; line-height: 1.6; }
+
+        .quiz-stat-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-left: 4px solid #7c3aed;
+            border-radius: 12px;
+            padding: 1.1rem 1.4rem;
+            margin-bottom: 0.9rem;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+        }
+        .quiz-stat-info h4 { font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .quiz-stat-info span { font-size: 0.75rem; color: #a0a0a0; }
+        .quiz-stat-numbers { display: flex; gap: 1.2rem; text-align: center; }
+        .quiz-stat-numbers div { min-width: 60px; }
+        .quiz-stat-numbers .num { font-size: 1.3rem; font-weight: 700; color: #a78bfa; }
+        .quiz-stat-numbers .lbl { font-size: 0.65rem; color: #888; }
+    </style>
+</head>
+<body>
+    <header class="znk-unified-header" id="znkHeader"></header>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.ZNK && window.ZNK.Header) {
+                window.ZNK.Header.init({
+                    title: "Dashboard Parents ZNK",
+                    subtitle: "Espace parents",
+                    context: "parents",
+                    showBackBtn: true
+                });
+            }
+        });
+    </script>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">P</div>
+                <div class="logo-text">ZNK PARENTS</div>
+            </div>
+            <div class="parent-info">
+                <div class="status-indicator"></div>
+                <span>Interface Parents</span>
+                <span>|</span>
+                <span>Suivi Enfants Actif</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="dashboard-title">
+            <h1>Espace Parents</h1>
+            <p>Suivez la progression et l'activité de vos enfants</p>
+        </div>
+
+        <!-- Sélecteur d'enfants -->
+        <div class="children-selector">
+            <button class="child-btn active" onclick="selectChild('anji')">👧 Anji Kaya (CE1)</button>
+            <button class="child-btn" onclick="selectChild('emma')">👦 Emma (CM2)</button>
+        </div>
+
+        <div class="sections">
+            <!-- Vue d'ensemble -->
+            <div class="section">
+                <div class="section-title">
+                    <div class="section-icon">📊</div>
+                    Vue d'ensemble
+                </div>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>Moyenne générale</h4>
+                        <div class="value">15.2/20</div>
+                        <div class="label">En progression</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 76%"></div>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <h4>Temps d'étude</h4>
+                        <div class="value">3h45</div>
+                        <div class="label">Cette semaine</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 65%"></div>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <h4>Devoirs rendus</h4>
+                        <div class="value">12/15</div>
+                        <div class="label">Ce mois</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 80%"></div>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <h4>Présence</h4>
+                        <div class="value">98%</div>
+                        <div class="label">Excellent</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 98%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modules partagés par le professeur -->
+            <div class="section">
+                <div class="section-title">
+                    <div class="section-icon">👩‍🏫</div>
+                    Modules partagés par le professeur
+                </div>
+                <div id="profModulesContainer"></div>
+            </div>
+
+            <!-- Résultats des interrogations -->
+            <div class="section">
+                <div class="section-title">
+                    <div class="section-icon">🧪</div>
+                    Résultats des interrogations
+                </div>
+                <div id="quizStatsContainer"></div>
+            </div>
+
+            <!-- Performances par matière -->
+            <div class="section">
+                <div class="section-title">
+                    <div class="section-icon">📚</div>
+                    Performances par matière
+                </div>
+                <div class="subject-item">
+                    <div class="subject-header">
+                        <span class="subject-name">📐 Mathématiques</span>
+                        <span class="subject-grade">16/20</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%"></div>
+                    </div>
+                </div>
+                <div class="subject-item">
+                    <div class="subject-header">
+                        <span class="subject-name">📖 Français</span>
+                        <span class="subject-grade">14.5/20</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 72%"></div>
+                    </div>
+                </div>
+                <div class="subject-item">
+                    <div class="subject-header">
+                        <span class="subject-name">🔬 Sciences</span>
+                        <span class="subject-grade">15/20</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 75%"></div>
+                    </div>
+                </div>
+                <div class="subject-item">
+                    <div class="subject-header">
+                        <span class="subject-name">🎨 Arts</span>
+                        <span class="subject-grade">17/20</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activité récente -->
+            <div class="section">
+                <div class="section-title">
+                    <div class="section-icon">📅</div>
+                    Activité récente
+                </div>
+                <div class="activity-timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-time">Aujourd'hui 15:30</div>
+                        <div class="timeline-content">A terminé l'interrogation de mathématiques (16/20)</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">Aujourd'hui 14:00</div>
+                        <div class="timeline-content">A participé au cours de sciences en direct</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">Hier 16:45</div>
+                        <div class="timeline-content">A rendu le devoir de français</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">Hier 10:00</div>
+                        <div class="timeline-content">A utilisé l'assistant IA pour réviser</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contrôles parentaux -->
+            <div class="section">
+                <div class="section-title">
+                    <div class="section-icon">🔒</div>
+                    Contrôles parentaux
+                </div>
+                <div class="controls-section">
+                    <div class="control-card">
+                        <div class="control-icon">⏰</div>
+                        <div class="control-label">Temps d'écran</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="control-card">
+                        <div class="control-icon">💬</div>
+                        <div class="control-label">WhatsZNK</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="control-card">
+                        <div class="control-icon">🎨</div>
+                        <div class="control-label">Art Classes</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Communication -->
+            <div class="section">
+                <div class="section-title">
+                    <div class="section-icon">💬</div>
+                    Communication
+                </div>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="communication-btn" onclick="contactTeacher()">
+                        👩‍🏫 Contacter le professeur
+                    </button>
+                    <button class="communication-btn" onclick="viewReports()">
+                        📄 Consulter les bulletins
+                    </button>
+                    <button class="communication-btn" onclick="scheduleAppointment()">
+                        📅 Prendre rendez-vous
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal détail module professeur -->
+    <div id="zprofModuleModal" class="zprof-modal">
+        <div class="zprof-modal-content">
+            <span class="zprof-modal-close" onclick="closeProfModuleModal()">&times;</span>
+            <h2 id="zprofModuleTitle">Titre</h2>
+            <p id="zprofModuleDescription">Description</p>
+        </div>
+    </div>
+
+    <script src="znk-professeur-manifest.js"></script>
+    <script>
+        function renderProfModules() {
+            const container = document.getElementById('profModulesContainer');
+            if (!window.ZNKManifest) {
+                container.innerHTML = '<div class="prof-modules-empty">Le module de synthèse n\'est pas disponible.</div>';
+                return;
+            }
+            const manifest = ZNKManifest.get();
+            const mods = manifest.modules.filter(mo => mo.audience && mo.audience.parents && mo.status !== 'off');
+
+            if (mods.length === 0) {
+                container.innerHTML = '<div class="prof-modules-empty">Aucune information partagée par le professeur pour l\'instant.</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="prof-modules-grid">
+                    ${mods.map(mo => {
+                        const sec = ZNKManifest.sectionInfo(manifest.sections, mo.section);
+                        const niv = ZNKManifest.niveauInfo(mo.niveau);
+                        const mat = ZNKManifest.matiereInfo(mo.matiere, mo.matiereLibre);
+                        return `
+                            <div class="prof-module-card" onclick="openProfModuleModal('${mo.id}')">
+                                <div class="prof-module-header">
+                                    <div class="prof-module-icon" style="background:${sec.color}">${mo.icon}</div>
+                                    <div class="prof-module-title">${mo.title}</div>
+                                </div>
+                                <div class="prof-module-desc">${mo.shortDescription}</div>
+                                <div class="prof-module-section-tag">${mat.icon} ${mat.label}${niv.code !== 'tous' ? ' · 🎓 ' + niv.label : ''}</div>
+                            </div>`;
+                    }).join('')}
+                </div>`;
+        }
+
+        function openProfModuleModal(id) {
+            const manifest = ZNKManifest.get();
+            const mo = manifest.modules.find(m => m.id === id);
+            if (!mo) return;
+            document.getElementById('zprofModuleTitle').textContent = `${mo.icon} ${mo.title}`;
+            document.getElementById('zprofModuleDescription').textContent = mo.longDescription;
+            document.getElementById('zprofModuleModal').style.display = 'block';
+        }
+
+        function closeProfModuleModal() {
+            document.getElementById('zprofModuleModal').style.display = 'none';
+        }
+
+        function renderQuizStats() {
+            const container = document.getElementById('quizStatsContainer');
+            if (!window.ZNKManifest) return;
+            const quizzes = ZNKManifest.quiz.list().filter(q => q.status === 'publie' && q.audience && q.audience.parents);
+
+            if (quizzes.length === 0) {
+                container.innerHTML = '<div class="prof-modules-empty">Aucun résultat d\'interrogation partagé pour l\'instant.</div>';
+                return;
+            }
+
+            container.innerHTML = quizzes.map(q => {
+                const stats = ZNKManifest.quiz.stats(q.id);
+                const mat = ZNKManifest.matiereInfo(q.matiere, q.matiereLibre);
+                const niv = ZNKManifest.niveauInfo(q.niveau);
+                return `
+                    <div class="quiz-stat-card">
+                        <div class="quiz-stat-info">
+                            <h4>🧪 ${q.title}</h4>
+                            <span>${mat.icon} ${mat.label} · 🎓 ${niv.label}</span>
+                        </div>
+                        <div class="quiz-stat-numbers">
+                            <div><div class="num">${stats.count}</div><div class="lbl">réponses</div></div>
+                            <div><div class="num">${stats.average}%</div><div class="lbl">moyenne</div></div>
+                            <div><div class="num">${stats.successRate}%</div><div class="lbl">réussite</div></div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        document.getElementById('zprofModuleModal').addEventListener('click', function (e) {
+            if (e.target === this) closeProfModuleModal();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeProfModuleModal();
+        });
+
+        renderProfModules();
+        renderQuizStats();
+        window.addEventListener('storage', () => { renderProfModules(); renderQuizStats(); });
+        window.addEventListener('znk-data-synced', () => { renderProfModules(); renderQuizStats(); });
+        ZNKManifest.electron.sync().then(() => { renderProfModules(); renderQuizStats(); });
+    </script>
+
+    <script>
+        function selectChild(childId) {
+            document.querySelectorAll('.child-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            console.log('Enfant sélectionné:', childId);
+            // Ici, vous chargeriez les données de l'enfant sélectionné
+        }
+
+        function contactTeacher() {
+            alert('📧 Ouverture de la messagerie avec le professeur...');
+        }
+
+        function viewReports() {
+            alert('📄 Consultation des bulletins et rapports...');
+        }
+
+        function scheduleAppointment() {
+            alert('📅 Calendrier des rendez-vous...');
+        }
+
+        // Animation au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.section, .info-card, .control-card, .prof-module-card, .quiz-stat-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+        });
+    </script>
+    <script src="../../znk-auto-nav.js"></script>
+    <script src="../../module-mapping.js"></script>
+</body>
+</html>

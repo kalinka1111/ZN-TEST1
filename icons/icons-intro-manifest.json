@@ -1,0 +1,130 @@
+{
+  "icons": [
+    {
+      "id": "user-profile",
+      "name": "Profil Utilisateur",
+      "src": "user-profile.svg",
+      "category": "navigation"
+    },
+    {
+      "id": "actv",
+      "name": "ACTV",
+      "src": "actv.svg",
+      "category": "workflow"
+    },
+    {
+      "id": "logo-actv",
+      "name": "logo-actv",
+      "src": "logo-actv.svg",
+      "category": "workflow"
+    },
+    {
+      "id": "artflow",
+      "name": "ArtFlow",
+      "src": "artflow.svg",
+      "category": "workflow"
+    },
+    {
+      "id": "radio",
+      "name": "Radio",
+      "src": "radio.svg",
+      "category": "workflow"
+    },
+    {
+      "id": "whatsznk",
+      "name": "WhatsZNK",
+      "src": "whatsznk.svg",
+      "category": "social"
+    },
+    {
+      "id": "whatsznk1",
+      "name": "WhatsZNK1",
+      "src": "whatsznk1.svg",
+      "category": "social"
+    },
+     {
+      "id": "colors",
+      "name": "colors",
+      "src": "colors.svg",
+      "category": "colors"
+    },
+    {
+      "id": "fida-social",
+      "name": "FIDA Social",
+      "src": "fida-social.svg",
+      "category": "social"
+    },
+    {
+      "id": "etudes",
+      "name": "Études",
+      "src": "etudes.svg",
+      "category": "education"
+    },
+    {
+      "id": "nomad",
+      "name": "Nomad Bank",
+      "src": "nomad.svg",
+      "category": "gestion"
+    },
+ {
+      "id": "ZNKOMia",
+      "name": "ZNKOMia",
+      "src": "ZNKOMia.svg",
+      "category": "iA ZNK"
+    },
+    {
+      "id": "comptabilite",
+      "name": "Comptabilité",
+      "src": "comptabilite.svg",
+      "category": "gestion"
+    },
+    {
+      "id": "archives",
+      "name": "Archives",
+      "src": "archives.svg",
+      "category": "gestion"
+    },
+     {
+      "id": "studios",
+      "name": "Studios",
+      "src": "studios.svg",
+      "category": "creation"
+    },
+     {
+      "id": "terminal-znk",
+      "name": "terminal-ZNK",
+      "src": "terminnal-ZNK.svg",
+      "category": "making"
+    },
+  {
+      "id": "maternelle",
+      "name": "Maternelle",
+      "src": "maternelle.svg",
+      "category": "etudes"
+    },
+    {
+      "id": "parametres",
+      "name": "Parametres",
+      "src": "parametres.svg",
+      "category": "parametres"
+    },
+    {
+      "id": "messages",
+      "name": "Message",
+      "src": "message.svg",
+      "category": "message"
+    },
+ {
+      "id": "terminal-professeurs",
+      "name": "terminal-professeurs",
+      "src": "terminal-professeurs.svg",
+      "category": "terminal-professeurs"
+    },
+     {
+      "id": "notifications",
+      "name": "Notifications",
+      "src": "notifications.svg",
+      "category": "notifications"
+    }
+  ]
+}

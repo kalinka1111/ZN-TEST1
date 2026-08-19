@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK Music Studio Pro - Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: #2a2a2a;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 15px;
+            border-bottom: 1px solid #3a3a3a;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #0066cc;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #0052a3;
+        }
+
+        .btn-secondary {
+            background: #444;
+        }
+
+        .btn-secondary:hover {
+            background: #555;
+        }
+
+        .btn-export {
+            background: #d32f2f;
+        }
+
+        .btn-export:hover {
+            background: #b71c1c;
+        }
+
+        .project-name {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .tempo-display {
+            background: #1a1a1a;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #0066cc;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .main-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .top-section {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            background: #0a0a0a;
+            gap: 1px;
+        }
+
+        .library {
+            background: #2a2a2a;
+            padding: 15px;
+            overflow-y: auto;
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .library h3 {
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #999;
+            text-transform: uppercase;
+        }
+
+        .library-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .library-tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px;
+            background: #3a3a3a;
+            border: none;
+            border-radius: 4px;
+            color: #999;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .library-tab.active {
+            background: #0066cc;
+            color: white;
+        }
+
+        .sound-item {
+            background: #3a3a3a;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            cursor: move;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .sound-item:hover {
+            background: #4a4a4a;
+        }
+        
+        .sound-item.dragging {
+            opacity: 0.5;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .sound-name {
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .sound-category {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .mixer {
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .mixer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .mixer-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .add-track-btn {
+            padding: 8px 16px;
+            background: #00cc66;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .add-track-btn:hover {
+            background: #00aa55;
+        }
+
+        .mixer-channels {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .channel {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .channel-name {
+            font-size: 12px;
+            text-align: center;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .vu-meter {
+            width: 100%;
+            height: 150px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vu-meter-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, #00cc66, #ffcc00, #ff3333);
+            transition: height 0.1s;
+        }
+
+        .fader {
+            width: 100%;
+            height: 120px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .fader-track {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: #3a3a3a;
+            border-radius: 2px;
+        }
+
+        .fader-thumb {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 12px;
+            background: #0066cc;
+            border-radius: 2px;
+            cursor: grab;
+            transition: background 0.2s;
+        }
+
+        .fader-thumb:hover {
+            background: #0052a3;
+        }
+
+        .channel-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-btn {
+            padding: 6px;
+            background: #3a3a3a;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .control-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .control-btn.active {
+            background: #d32f2f;
+        }
+
+        .inspector {
+            background: #2a2a2a;
+            padding: 15px;
+            overflow-y: auto;
+            width: 320px;
+            flex-shrink: 0;
+        }
+
+        .inspector h3 {
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #999;
+            text-transform: uppercase;
+        }
+
+        .keyboard-widget {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .keyboard-title {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: #aaa;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .keyboard-octaves {
+            display: flex;
+            gap: 2px;
+            overflow-x: auto;
+            padding: 10px 5px;
+            background: #0a0a0a;
+            border-radius: 6px;
+        }
+
+        .octave-group {
+            display: flex;
+            gap: 1px;
+            flex-shrink: 0;
+        }
+
+        .key {
+            width: 38px;
+            height: 120px;
+            background: linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%);
+            border: 1px solid #333;
+            border-radius: 0 0 4px 4px;
+            cursor: pointer;
+            transition: all 0.05s;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .key:hover {
+            background: linear-gradient(180deg, #f0f0f0 0%, #e5e5e5 100%);
+            transform: translateY(1px);
+        }
+
+        .key:active, .key.playing {
+            background: linear-gradient(180deg, #0066cc 0%, #0052a3 100%);
+            transform: translateY(3px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .key.black {
+            width: 26px;
+            height: 75px;
+            background: linear-gradient(180deg, #222 0%, #000 100%);
+            margin: 0 -14px;
+            z-index: 2;
+            border-radius: 0 0 3px 3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .key.black:hover {
+            background: linear-gradient(180deg, #444 0%, #222 100%);
+        }
+
+        .key.black:active, .key.black.playing {
+            background: linear-gradient(180deg, #0066cc 0%, #0052a3 100%);
+        }
+
+        .key-label {
+            position: absolute;
+            bottom: 8px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9px;
+            color: #666;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        .key.black .key-label {
+            color: #999;
+            bottom: 5px;
+        }
+
+        .keyboard-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .octave-btn {
+            padding: 8px 16px;
+            background: #3a3a3a;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .octave-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .octave-display {
+            padding: 8px 16px;
+            background: #0066cc;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .volume-control {
+            background: #3a3a3a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .volume-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .volume-title {
+            font-size: 13px;
+            color: #aaa;
+            font-weight: 600;
+        }
+
+        .volume-value {
+            font-size: 13px;
+            color: #00cc66;
+            font-weight: bold;
+        }
+
+        .volume-slider {
+            width: 100%;
+            height: 8px;
+            background: #555;
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00cc66;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #00cc66;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .timeline {
+            background: #2a2a2a;
+            border-top: 1px solid #3a3a3a;
+            display: flex;
+            flex-direction: column;
+            height: 320px;
+            flex-shrink: 0;
+        }
+
+        .timeline-header {
+            padding: 10px 15px;
+            background: #333;
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .transport-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #0066cc;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .transport-btn:hover {
+            background: #0052a3;
+        }
+
+        .transport-btn.stop {
+            background: #d32f2f;
+        }
+
+        .transport-btn.record {
+            background: #ff0000;
+        }
+
+        .timeline-time {
+            font-size: 12px;
+            color: #aaa;
+            min-width: 60px;
+        }
+
+        .timeline-tracks {
+            flex: 1;
+            padding: 10px;
+            overflow-x: auto;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ff0000;
+            z-index: 100;
+            pointer-events: none;
+            transition: left 0.1s linear;
+        }
+
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -4px;
+            width: 10px;
+            height: 10px;
+            background: #ff0000;
+            border-radius: 50%;
+        }
+
+        .track {
+            min-height: 70px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            padding: 8px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            position: relative;
+        }
+
+        .track.drop-target {
+            background: #2a4a2a;
+            border: 2px dashed #00cc66;
+        }
+
+        .track-label {
+            position: absolute;
+            left: 10px;
+            top: 8px;
+            font-size: 11px;
+            color: #999;
+            font-weight: bold;
+            z-index: 1;
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .timeline-clip {
+            background: linear-gradient(135deg, #7c4dff 0%, #5e35b1 100%);
+            padding: 10px;
+            border-radius: 4px;
+            cursor: move;
+            min-width: 120px;
+            height: 50px;
+            position: absolute;
+            top: 20px;
+            transition: transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .timeline-clip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .timeline-clip.selected {
+            border: 2px solid #ffcc00;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+
+        .timeline-clip.dragging {
+            opacity: 0.7;
+            z-index: 1000;
+        }
+
+        .timeline-clip-name {
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .timeline-clip-duration {
+            font-size: 10px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 3px;
+        }
+
+        .clip-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            background: rgba(255,255,255,0.2);
+            cursor: ew-resize;
+        }
+
+        .clip-handle.left {
+            left: 0;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .clip-handle.right {
+            right: 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .empty-timeline {
+            text-align: center;
+            color: #555;
+            font-size: 13px;
+            padding: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .instrument-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .instrument-card {
+            background: #3a3a3a;
+            padding: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .instrument-card:hover {
+            background: #4a4a4a;
+            transform: translateY(-2px);
+        }
+
+        .instrument-card.selected {
+            background: #0066cc;
+        }
+
+        .instrument-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .instrument-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #00cc66;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 2000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="btn" id="importBtn">📁 Importer Audio</button>
+            <button class="btn btn-secondary" id="saveBtn">💾 Sauvegarder</button>
+            <div class="project-name">ZNK Music Studio Pro</div>
+            <div class="tempo-display" id="tempoDisplay">120 BPM</div>
+            <button class="btn btn-export" id="exportBtn">📤 Exporter Mix</button>
+        </div>
+
+        <div class="main-area">
+            <div class="content-wrapper">
+                <div class="top-section">
+                    <div class="library">
+                        <h3>🎵 Bibliothèque</h3>
+                        <div class="library-tabs">
+                            <button class="library-tab active" data-tab="synths">Synths</button>
+                            <button class="library-tab" data-tab="drums">Drums</button>
+                            <button class="library-tab" data-tab="instruments">Instruments</button>
+                            <button class="library-tab" data-tab="imported">Importés</button>
+                        </div>
+                        <div id="libraryContent"></div>
+                    </div>
+
+                    <div class="mixer">
+                        <div class="mixer-header">
+                            <div class="mixer-title">🎚️ Console de Mixage</div>
+                            <button class="add-track-btn" id="addTrackBtn">+ Ajouter Piste</button>
+                        </div>
+                        <div class="mixer-channels" id="mixerChannels"></div>
+                    </div>
+                </div>
+
+                <div class="timeline">
+                    <div class="timeline-header">
+                        <span>📊 Timeline (Glissez les sons ici)</span>
+                        <div class="timeline-controls">
+                            <button class="transport-btn record" id="recordBtn">⏺</button>
+                            <button class="transport-btn" id="playBtn">▶</button>
+                            <button class="transport-btn stop" id="stopBtn">⏹</button>
+                            <span class="timeline-time" id="timelineTime">00:00</span>
+                        </div>
+                    </div>
+                    <div class="timeline-tracks" id="timelineTracks">
+                        <div class="playhead" id="playhead" style="left: 10px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inspector">
+                <h3>⚙️ Contrôles</h3>
+                <div id="inspectorContent">
+                    <div class="volume-control">
+                        <div class="volume-header">
+                            <span class="volume-title">🔊 Volume Principal</span>
+                            <span class="volume-value" id="volumeValue">70%</span>
+                        </div>
+                        <input type="range" class="volume-slider" id="masterVolume" min="0" max="100" value="70">
+                    </div>
+                    
+                    <div class="keyboard-widget">
+                        <div class="keyboard-title">🎹 Grand Clavier MIDI</div>
+                        <div class="keyboard-octaves" id="keyboardOctaves"></div>
+                        <div class="keyboard-controls">
+                            <button class="octave-btn" id="octaveDown">◀ Octave</button>
+                            <div class="octave-display" id="octaveDisplay">C4</div>
+                            <button class="octave-btn" id="octaveUp">Octave ▶</button>
+                        </div>
+                    </div>
+                    <div style="background: #3a3a3a; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                        <p style="font-size: 12px; color: #aaa; line-height: 1.6;">
+                            <strong style="color: #00cc66;">💡 Guide:</strong><br>
+                            • Glissez les sons vers la timeline<br>
+                            • Importez vos fichiers audio<br>
+                            • Cliquez sur les sons pour preview<br>
+                            • Utilisez le clavier virtuel
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addTrackModal">
+        <div class="modal-content">
+            <h2>Ajouter une Piste</h2>
+            <div class="instrument-grid" id="instrumentGrid"></div>
+            <div class="modal-buttons">
+                <button class="btn" id="confirmAddTrack">Ajouter</button>
+                <button class="btn btn-secondary" id="cancelAddTrack">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // NOTIFICATION SYSTEM
+        const showNotification = (message, type = 'success') => {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.style.background = type === 'success' ? '#00cc66' : type === 'error' ? '#d32f2f' : '#0066cc';
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            
+            setTimeout(() => {
+                notif.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => notif.remove(), 300);
+            }, 3000);
+        };
+
+        // WEB AUDIO ENGINE
+        const AudioEngine = {
+            context: null,
+            masterGain: null,
+            tracks: {},
+            buffers: {},
+            
+            init() {
+                this.context = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.context.createGain();
+                this.masterGain.connect(this.context.destination);
+                this.masterGain.gain.value = 0.7;
+            },
+            
+            playNote(frequency, duration = 0.3, waveType = 'sine') {
+                const osc = this.context.createOscillator();
+                const gain = this.context.createGain();
+                
+                osc.type = waveType;
+                osc.frequency.value = frequency;
+                
+                gain.gain.setValueAtTime(0.3, this.context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                
+                osc.start(this.context.currentTime);
+                osc.stop(this.context.currentTime + duration);
+                
+                return { osc, gain };
+            },
+            
+            playDrum(type) {
+                const now = this.context.currentTime;
+                
+                if (type === 'kick') {
+                    const osc = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    
+                    gain.gain.setValueAtTime(1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                    
+                } else if (type === 'snare') {
+                    const bufferSize = this.context.sampleRate * 0.2;
+                    const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.1));
+                    }
+                    
+                    const noise = this.context.createBufferSource();
+                    const gain = this.context.createGain();
+                    
+                    noise.buffer = buffer;
+                    gain.gain.value = 0.4;
+                    
+                    noise.connect(gain);
+                    gain.connect(this.masterGain);
+                    
+                    noise.start(now);
+                    
+                } else if (type === 'hihat') {
+                    const bufferSize = this.context.sampleRate * 0.05;
+                    const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.05));
+                    }
+                    
+                    const noise = this.context.createBufferSource();
+                    const highpass = this.context.createBiquadFilter();
+                    const gain = this.context.createGain();
+                    
+                    noise.buffer = buffer;
+                    highpass.type = 'highpass';
+                    highpass.frequency.value = 7000;
+                    gain.gain.value = 0.2;
+                    
+                    noise.connect(highpass);
+                    highpass.connect(gain);
+                    gain.connect(this.masterGain);
+                    
+                    noise.start(now);
+                }
+            },
+            
+            // Instruments africains synthétisés
+            playBalafon(note) {
+                const freq = this.noteToFreq(note);
+                const osc1 = this.context.createOscillator();
+                const osc2 = this.context.createOscillator();
+                const gain = this.context.createGain();
+                
+                osc1.type = 'sine';
+                osc1.frequency.value = freq;
+                osc2.type = 'sine';
+                osc2.frequency.value = freq * 2.01;
+                
+                gain.gain.setValueAtTime(0.4, this.context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 1.5);
+                
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(this.masterGain);
+                
+                osc1.start();
+                osc2.start();
+                osc1.stop(this.context.currentTime + 1.5);
+                osc2.stop(this.context.currentTime + 1.5);
+            },
+            
+            playTrumpet(note) {
+                const freq = this.noteToFreq(note);
+                const osc = this.context.createOscillator();
+                const gain = this.context.createGain();
+                const filter = this.context.createBiquadFilter();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.value = freq;
+                
+                filter.type = 'bandpass';
+                filter.frequency.value = freq * 2;
+                filter.Q.value = 10;
+                
+                gain.gain.setValueAtTime(0, this.context.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3, this.context.currentTime + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.8);
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.masterGain);
+                
+                osc.start();
+                osc.stop(this.context.currentTime + 0.8);
+            },
+            
+            playBass(note) {
+                const freq = this.noteToFreq(note) / 2;
+                const osc = this.context.createOscillator();
+                const gain = this.context.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.value = freq;
+                
+                gain.gain.setValueAtTime(0.5, this.context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.8);
+                
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                
+                osc.start();
+                osc.stop(this.context.currentTime + 0.8);
+            },
+            
+            playGuitar(note) {
+                const freq = this.noteToFreq(note);
+                const osc1 = this.context.createOscillator();
+                const osc2 = this.context.createOscillator();
+                const gain = this.context.createGain();
+                
+                osc1.type = 'triangle';
+                osc1.frequency.value = freq;
+                osc2.type = 'sawtooth';
+                osc2.frequency.value = freq * 1.01;
+                
+                gain.gain.setValueAtTime(0.3, this.context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 2);
+                
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(this.masterGain);
+                
+                osc1.start();
+                osc2.start();
+                osc1.stop(this.context.currentTime + 2);
+                osc2.stop(this.context.currentTime + 2);
+            },
+            
+            playJingle() {
+                const notes = [523.25, 659.25, 783.99];
+                notes.forEach((freq, i) => {
+                    setTimeout(() => {
+                        const osc = this.context.createOscillator();
+                        const gain = this.context.createGain();
+                        
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        
+                        gain.gain.setValueAtTime(0.2, this.context.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.3);
+                        
+                        osc.connect(gain);
+                        gain.connect(this.masterGain);
+                        
+                        osc.start();
+                        osc.stop(this.context.currentTime + 0.3);
+                    }, i * 100);
+                });
+            },
+            
+            createTrack(id, type) {
+                const gain = this.context.createGain();
+                const eq = this.context.createBiquadFilter();
+                const compressor = this.context.createDynamicsCompressor();
+                
+                eq.type = 'peaking';
+                eq.frequency.value = 1000;
+                eq.Q.value = 1;
+                eq.gain.value = 0;
+                
+                gain.connect(eq);
+                eq.connect(compressor);
+                compressor.connect(this.masterGain);
+                
+                this.tracks[id] = { gain, eq, compressor, type, nodes: [] };
+                return this.tracks[id];
+            },
+            
+            noteToFreq(note) {
+                // Parse note string like "C4", "A#5", etc.
+                const noteMatch = note.match(/^([A-G]#?)(\d+)$/);
+                if (!noteMatch) {
+                    const notes = {
+                        'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13,
+                        'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00,
+                        'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88
+                    };
+                    return notes[note] || 440;
+                }
+                
+                const [, noteName, octaveStr] = noteMatch;
+                const octave = parseInt(octaveStr);
+                
+                const noteOffsets = {
+                    'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+                    'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+                };
+                
+                const offset = noteOffsets[noteName];
+                const a4 = 440;
+                const semitones = (octave - 4) * 12 + (offset - 9);
+                
+                return a4 * Math.pow(2, semitones / 12);
+            },
+            
+            async loadAudioFile(file) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
+                    const id = Date.now() + Math.random();
+                    this.buffers[id] = audioBuffer;
+                    return { id, buffer: audioBuffer, duration: audioBuffer.duration };
+                } catch (error) {
+                    console.error('Erreur chargement audio:', error);
+                    throw error;
+                }
+            },
+            
+            activeSources: [],
+            
+            playBuffer(bufferId, startTime = 0) {
+                const buffer = this.buffers[bufferId];
+                if (!buffer) return null;
+                
+                const source = this.context.createBufferSource();
+                source.buffer = buffer;
+                source.connect(this.masterGain);
+                source.start(startTime);
+                
+                this.activeSources.push(source);
+                source.onended = () => {
+                    const index = this.activeSources.indexOf(source);
+                    if (index > -1) this.activeSources.splice(index, 1);
+                };
+                
+                return source;
+            },
+            
+            stopAllSounds() {
+                this.activeSources.forEach(source => {
+                    try {
+                        source.stop();
+                    } catch (e) {}
+                });
+                this.activeSources = [];
+            }
+        };
+
+        // STATE MANAGER
+        const ZNKStudio = {
+            tracks: [],
+            clips: [],
+            timelineClips: [],
+            selectedTrack: null,
+            tempo: 120,
+            playhead: 0,
+            isPlaying: false,
+            pixelsPerSecond: 50,
+            
+            addTrack(name, type, instrument) {
+                const track = {
+                    id: Date.now() + Math.random(),
+                    name,
+                    type,
+                    instrument,
+                    volume: 0.8,
+                    mute: false,
+                    solo: false
+                };
+                this.tracks.push(track);
+                AudioEngine.createTrack(track.id, type);
+                this.notify('trackAdded', track);
+                return track;
+            },
+            
+            addClipToTimeline(trackId, clipData, position) {
+                const clip = {
+                    id: Date.now() + Math.random(),
+                    trackId,
+                    name: clipData.name,
+                    type: clipData.type,
+                    instrument: clipData.instrument,
+                    wave: clipData.wave,
+                    drum: clipData.drum,
+                    bufferId: clipData.bufferId,
+                    position,
+                    duration: clipData.duration || 2,
+                    selected: false
+                };
+                
+                this.timelineClips.push(clip);
+                this.notify('clipAdded', clip);
+                return clip;
+            },
+            
+            selectTrack(trackId) {
+                this.selectedTrack = trackId;
+                this.notify('trackSelected', trackId);
+            },
+            
+            listeners: {},
+            on(event, callback) {
+                if (!this.listeners[event]) this.listeners[event] = [];
+                this.listeners[event].push(callback);
+            },
+            
+            notify(event, data) {
+                if (this.listeners[event]) {
+                    this.listeners[event].forEach(cb => cb(data));
+                }
+            }
+        };
+
+        // LIBRARY MODULE
+        const LibraryModule = {
+            currentTab: 'synths',
+            
+            init() {
+                document.querySelectorAll('.library-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.library-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        this.currentTab = tab.dataset.tab;
+                        this.render();
+                    });
+                });
+                
+                ZNKStudio.on('clipAdded', () => {
+                    if (this.currentTab === 'imported') this.render();
+                });
+                
+                this.render();
+            },
+            
+            render() {
+                const content = document.getElementById('libraryContent');
+                
+                if (this.currentTab === 'synths') {
+                    content.innerHTML = `
+                        <div class="sound-item" draggable="true" data-type="synth" data-wave="sine" data-name="Synth Sine">
+                            <div class="sound-name">🎹 Synth Sine</div>
+                            <div class="sound-category">Onde pure</div>
+                        </div>
+                        <div class="sound-item" draggable="true" data-type="synth" data-wave="square" data-name="Synth Square">
+                            <div class="sound-name">🎛️ Synth Square</div>
+                            <div class="sound-category">Onde carrée</div>
+                        </div>
+                        <div class="sound-item" draggable="true" data-type="synth" data-wave="sawtooth" data-name="Synth Saw">
+                            <div class="sound-name">🎸 Synth Saw</div>
+                            <div class="sound-category">Onde dent de scie</div>
+                        </div>
+                        <div class="sound-item" draggable="true" data-type="synth" data-wave="triangle" data-name="Synth Triangle">
+                            <div class="sound-name">🔺 Synth Triangle</div>
+                            <div class="sound-category">Onde triangle</div>
+                        </div>
+                    `;
+                } else if (this.currentTab === 'drums') {
+                    content.innerHTML = `
+                        <div class="sound-item" draggable="true" data-type="drum" data-drum="kick" data-name="Kick">
+                            <div class="sound-name">💥 Kick</div>
+                            <div class="sound-category">Grosse caisse</div>
+                        </div>
+                        <div class="sound-item" draggable="true" data-type="drum" data-drum="snare" data-name="Snare">
+                            <div class="sound-name">💥 Snare</div>
+                            <div class="sound-category">Caisse claire</div>
+                        </div>
+                        <div class="sound-item" draggable="true" data-type="drum" data-drum="hihat" data-name="Hi-Hat">
+                            <div class="sound-name">💥 Hi-Hat</div>
+                            <div class="sound-category">Charleston</div>
+                        </div>
+                    `;
+                } else if (this.currentTab === 'instruments') {
+                    content.innerHTML = `
+                        <div class="sound-item" draggable="true" data-type="instrument" data-instrument="balafon" data-name="Balafon">
+                            <div class="sound-name">🎼 Balafon</div>
+                            <div class="sound-category">Instrument africain</div>
+                        </div>
+                        <div class="sound-item" draggable="true" data-type="instrument" data-instrument="trumpet" data-name="Trompette">
+                            <div class="sound-name">🎺 Trompette</div>
+                            <div class="sound-category">Cuivre</div>
+                        </div>
+                        <div class="sound-item" draggable="true" data-type="instrument" data-instrument="bass" data-name="Basse">
+                            <div class="sound-name">🎸 Basse</div>
+                            <div class="sound-category">Basse synthétique</div>
+                        </div>
+                        <div class="sound-item" draggable="true" data-type="instrument" data-instrument="guitar" data-name="Guitare">
+                            <div class="sound-name">🎸 Guitare</div>
+                            <div class="sound-category">Cordes</div>
+                        </div>
+                        <div class="sound-item" draggable="true" data-type="jingle" data-name="Jingle">
+                            <div class="sound-name">🔔 Jingle</div>
+                            <div class="sound-category">Effet sonore</div>
+                        </div>
+                    `;
+                } else if (this.currentTab === 'imported') {
+                    const importedClips = ZNKStudio.clips.filter(c => c.type === 'imported');
+                    
+                    if (importedClips.length === 0) {
+                        content.innerHTML = `
+                            <p style="color: #666; font-size: 12px; padding: 10px; line-height: 1.6;">
+                                Aucun fichier importé.<br><br>
+                                Cliquez sur "📁 Importer Audio" pour ajouter vos fichiers WAV/MP3.
+                            </p>
+                        `;
+                    } else {
+                        content.innerHTML = importedClips.map(clip => `
+                            <div class="sound-item" draggable="true" data-type="imported" data-buffer-id="${clip.bufferId}" data-name="${clip.name}">
+                                <div class="sound-name">🎵 ${clip.name}</div>
+                                <div class="sound-category">${clip.duration.toFixed(1)}s</div>
+                            </div>
+                        `).join('');
+                    }
+                }
+                
+                this.attachHandlers();
+            },
+            
+            attachHandlers() {
+                document.querySelectorAll('.sound-item').forEach(item => {
+                    // Click pour preview
+                    item.addEventListener('click', () => {
+                        const type = item.dataset.type;
+                        
+                        // Arrêter tous les sons en cours
+                        AudioEngine.stopAllSounds();
+                        
+                        if (type === 'synth') {
+                            AudioEngine.playNote(440, 0.5, item.dataset.wave);
+                        } else if (type === 'drum') {
+                            AudioEngine.playDrum(item.dataset.drum);
+                        } else if (type === 'instrument') {
+                            const inst = item.dataset.instrument;
+                            if (inst === 'balafon') AudioEngine.playBalafon('C4');
+                            else if (inst === 'trumpet') AudioEngine.playTrumpet('C4');
+                            else if (inst === 'bass') AudioEngine.playBass('C4');
+                            else if (inst === 'guitar') AudioEngine.playGuitar('C4');
+                        } else if (type === 'jingle') {
+                            AudioEngine.playJingle();
+                        } else if (type === 'imported') {
+                            AudioEngine.playBuffer(item.dataset.bufferId);
+                        }
+                    });
+                    
+                    // Drag & Drop
+                    item.addEventListener('dragstart', (e) => {
+                        item.classList.add('dragging');
+                        const clipData = {
+                            type: item.dataset.type,
+                            name: item.dataset.name,
+                            wave: item.dataset.wave,
+                            drum: item.dataset.drum,
+                            instrument: item.dataset.instrument,
+                            bufferId: item.dataset.bufferId,
+                            duration: item.dataset.type === 'imported' ? 
+                                parseFloat(item.querySelector('.sound-category').textContent) : 2
+                        };
+                        e.dataTransfer.setData('application/json', JSON.stringify(clipData));
+                        e.dataTransfer.effectAllowed = 'copy';
+                    });
+                    
+                    item.addEventListener('dragend', () => {
+                        item.classList.remove('dragging');
+                    });
+                });
+            }
+        };
+
+        // TIMELINE MODULE
+        const TimelineModule = {
+            draggedClip: null,
+            
+            init() {
+                ZNKStudio.on('trackAdded', () => this.render());
+                ZNKStudio.on('clipAdded', () => this.render());
+                
+                document.getElementById('playBtn').addEventListener('click', () => this.togglePlay());
+                document.getElementById('stopBtn').addEventListener('click', () => this.stop());
+                
+                this.render();
+            },
+            
+            render() {
+                const container = document.getElementById('timelineTracks');
+                const playhead = container.querySelector('.playhead');
+                
+                container.innerHTML = '';
+                container.appendChild(playhead);
+                
+                if (ZNKStudio.tracks.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'empty-timeline';
+                    empty.innerHTML = 'Ajoutez des pistes avec le bouton "+ Ajouter Piste"<br>puis glissez des sons de la bibliothèque';
+                    container.appendChild(empty);
+                    return;
+                }
+                
+                ZNKStudio.tracks.forEach(track => {
+                    const trackEl = document.createElement('div');
+                    trackEl.className = 'track';
+                    trackEl.dataset.trackId = track.id;
+                    trackEl.innerHTML = `<span class="track-label">${track.name}</span>`;
+                    
+                    // Drop zone
+                    trackEl.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'copy';
+                        trackEl.classList.add('drop-target');
+                    });
+                    
+                    trackEl.addEventListener('dragleave', () => {
+                        trackEl.classList.remove('drop-target');
+                    });
+                    
+                    trackEl.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        trackEl.classList.remove('drop-target');
+                        
+                        const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                        const rect = trackEl.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const position = x / ZNKStudio.pixelsPerSecond;
+                        
+                        ZNKStudio.addClipToTimeline(track.id, data, Math.max(0, position));
+                        showNotification(`✅ "${data.name}" ajouté à la timeline`);
+                    });
+                    
+                    // Render clips for this track
+                    const trackClips = ZNKStudio.timelineClips.filter(c => c.trackId === track.id);
+                    trackClips.forEach(clip => {
+                        const clipEl = this.createClipElement(clip);
+                        trackEl.appendChild(clipEl);
+                    });
+                    
+                    container.appendChild(trackEl);
+                });
+            },
+            
+            createClipElement(clip) {
+                const clipEl = document.createElement('div');
+                clipEl.className = 'timeline-clip';
+                if (clip.selected) clipEl.classList.add('selected');
+                
+                clipEl.style.left = (clip.position * ZNKStudio.pixelsPerSecond) + 'px';
+                clipEl.style.width = (clip.duration * ZNKStudio.pixelsPerSecond) + 'px';
+                
+                clipEl.innerHTML = `
+                    <div class="timeline-clip-name">${clip.name}</div>
+                    <div class="timeline-clip-duration">${clip.duration.toFixed(1)}s</div>
+                `;
+                
+                // Drag to move
+                clipEl.draggable = true;
+                clipEl.addEventListener('dragstart', (e) => {
+                    this.draggedClip = clip;
+                    clipEl.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                clipEl.addEventListener('dragend', () => {
+                    clipEl.classList.remove('dragging');
+                    this.draggedClip = null;
+                });
+                
+                // Click to select/play
+                clipEl.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('clip-handle')) return;
+                    
+                    ZNKStudio.timelineClips.forEach(c => c.selected = false);
+                    clip.selected = true;
+                    this.render();
+                    
+                    // Preview
+                    this.playClip(clip);
+                });
+                
+                return clipEl;
+            },
+            
+            playClip(clip) {
+                // Arrêter tous les sons en cours
+                AudioEngine.stopAllSounds();
+                
+                if (clip.type === 'synth') {
+                    AudioEngine.playNote(440, clip.duration, clip.wave);
+                } else if (clip.type === 'drum') {
+                    AudioEngine.playDrum(clip.drum);
+                } else if (clip.type === 'instrument') {
+                    if (clip.instrument === 'balafon') AudioEngine.playBalafon('C4');
+                    else if (clip.instrument === 'trumpet') AudioEngine.playTrumpet('C4');
+                    else if (clip.instrument === 'bass') AudioEngine.playBass('C4');
+                    else if (clip.instrument === 'guitar') AudioEngine.playGuitar('C4');
+                } else if (clip.type === 'jingle') {
+                    AudioEngine.playJingle();
+                } else if (clip.type === 'imported') {
+                    AudioEngine.playBuffer(clip.bufferId);
+                }
+            },
+            
+            togglePlay() {
+                if (ZNKStudio.isPlaying) {
+                    this.pause();
+                } else {
+                    this.play();
+                }
+            },
+            
+            play() {
+                ZNKStudio.isPlaying = true;
+                const btn = document.getElementById('playBtn');
+                btn.textContent = '⏸';
+                
+                const startTime = AudioEngine.context.currentTime;
+                
+                // Play all clips
+                ZNKStudio.timelineClips.forEach(clip => {
+                    const clipStartTime = startTime + clip.position;
+                    
+                    if (clip.type === 'imported' && clip.bufferId) {
+                        setTimeout(() => {
+                            AudioEngine.playBuffer(clip.bufferId);
+                        }, clip.position * 1000);
+                    }
+                });
+                
+                // Animate playhead
+                const startPlayhead = ZNKStudio.playhead;
+                const animate = () => {
+                    if (!ZNKStudio.isPlaying) return;
+                    
+                    ZNKStudio.playhead += 0.05;
+                    this.updatePlayhead();
+                    
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            },
+            
+            pause() {
+                ZNKStudio.isPlaying = false;
+                document.getElementById('playBtn').textContent = '▶';
+            },
+            
+            stop() {
+                this.pause();
+                ZNKStudio.playhead = 0;
+                this.updatePlayhead();
+                AudioEngine.stopAllSounds();
+            },
+            
+            updatePlayhead() {
+                const playhead = document.getElementById('playhead');
+                const left = 10 + (ZNKStudio.playhead * ZNKStudio.pixelsPerSecond);
+                playhead.style.left = left + 'px';
+                
+                const mins = Math.floor(ZNKStudio.playhead / 60);
+                const secs = Math.floor(ZNKStudio.playhead % 60);
+                document.getElementById('timelineTime').textContent = 
+                    `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+        };
+
+        // MIXER MODULE  
+        const MixerModule = {
+            init() {
+                ZNKStudio.on('trackAdded', () => this.render());
+                this.render();
+            },
+            
+            render() {
+                const container = document.getElementById('mixerChannels');
+                
+                if (ZNKStudio.tracks.length === 0) {
+                    container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">Ajoutez une piste pour commencer</p>';
+                    return;
+                }
+                
+                container.innerHTML = ZNKStudio.tracks.map(track => `
+                    <div class="channel" data-track-id="${track.id}">
+                        <div class="channel-name">${track.name}</div>
+                        <div class="vu-meter">
+                            <div class="vu-meter-fill" id="vu-${track.id}" style="height: 0%"></div>
+                        </div>
+                        <div class="fader" data-track-id="${track.id}">
+                            <div class="fader-track"></div>
+                            <div class="fader-thumb" style="bottom: ${track.volume * 100}%"></div>
+                        </div>
+                        <div class="channel-controls">
+                            <button class="control-btn ${track.mute ? 'active' : ''}" data-action="mute">M</button>
+                            <button class="control-btn ${track.solo ? 'active' : ''}" data-action="solo">S</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                this.attachFaderHandlers();
+            },
+            
+            attachFaderHandlers() {
+                document.querySelectorAll('.fader').forEach(fader => {
+                    const thumb = fader.querySelector('.fader-thumb');
+                    const trackId = parseFloat(fader.dataset.trackId);
+                    
+                    let isDragging = false;
+                    
+                    const updateVolume = (e) => {
+                        const rect = fader.getBoundingClientRect();
+                        const y = Math.max(0, Math.min(rect.height, rect.bottom - e.clientY));
+                        const volume = y / rect.height;
+                        
+                        thumb.style.bottom = (volume * 100) + '%';
+                        
+                        const track = ZNKStudio.tracks.find(t => t.id === trackId);
+                        if (track) {
+                            track.volume = volume;
+                            const audioTrack = AudioEngine.tracks[trackId];
+                            if (audioTrack) audioTrack.gain.gain.value = volume;
+                        }
+                    };
+                    
+                    thumb.addEventListener('mousedown', (e) => {
+                        isDragging = true;
+                        e.preventDefault();
+                    });
+                    
+                    document.addEventListener('mousemove', (e) => {
+                        if (isDragging) updateVolume(e);
+                    });
+                    
+                    document.addEventListener('mouseup', () => {
+                        isDragging = false;
+                    });
+                });
+            }
+        };
+
+        // ADD TRACK MODULE
+        const AddTrackModule = {
+            selectedInstrument: null,
+            
+            init() {
+                document.getElementById('addTrackBtn').addEventListener('click', () => this.showModal());
+                document.getElementById('cancelAddTrack').addEventListener('click', () => this.hideModal());
+                document.getElementById('confirmAddTrack').addEventListener('click', () => this.addTrack());
+            },
+            
+            showModal() {
+                const modal = document.getElementById('addTrackModal');
+                const grid = document.getElementById('instrumentGrid');
+                
+                const instruments = [
+                    { name: 'Synth Sine', icon: '🎹', type: 'sine' },
+                    { name: 'Synth Square', icon: '🎛️', type: 'square' },
+                    { name: 'Balafon', icon: '🎼', type: 'balafon' },
+                    { name: 'Trompette', icon: '🎺', type: 'trumpet' },
+                    { name: 'Basse', icon: '🎸', type: 'bass' },
+                    { name: 'Guitare', icon: '🎸', type: 'guitar' },
+                    { name: 'Batterie', icon: '🥁', type: 'drums' },
+                    { name: 'Audio', icon: '🎵', type: 'audio' }
+                ];
+                
+                grid.innerHTML = instruments.map(inst => `
+                    <div class="instrument-card" data-instrument="${inst.type}">
+                        <div class="instrument-icon">${inst.icon}</div>
+                        <div class="instrument-name">${inst.name}</div>
+                    </div>
+                `).join('');
+                
+                grid.querySelectorAll('.instrument-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        grid.querySelectorAll('.instrument-card').forEach(c => c.classList.remove('selected'));
+                        card.classList.add('selected');
+                        this.selectedInstrument = {
+                            type: card.dataset.instrument,
+                            name: card.querySelector('.instrument-name').textContent
+                        };
+                    });
+                });
+                
+                modal.classList.add('active');
+            },
+            
+            hideModal() {
+                document.getElementById('addTrackModal').classList.remove('active');
+                this.selectedInstrument = null;
+            },
+            
+            addTrack() {
+                if (!this.selectedInstrument) {
+                    alert('Sélectionnez un instrument');
+                    return;
+                }
+                
+                const trackNumber = ZNKStudio.tracks.length + 1;
+                ZNKStudio.addTrack(
+                    `${this.selectedInstrument.name} ${trackNumber}`,
+                    this.selectedInstrument.type,
+                    this.selectedInstrument.type
+                );
+                
+                showNotification(`✅ Piste "${this.selectedInstrument.name} ${trackNumber}" ajoutée`);
+                this.hideModal();
+            }
+        };
+
+        // IMPORT MODULE
+        const ImportModule = {
+            init() {
+                document.getElementById('importBtn').addEventListener('click', () => this.openFilePicker());
+            },
+            
+            openFilePicker() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'audio/*';
+                input.multiple = true;
+                
+                input.onchange = async (e) => {
+                    const files = Array.from(e.target.files);
+                    let successCount = 0;
+                    
+                    for (const file of files) {
+                        try {
+                            const result = await AudioEngine.loadAudioFile(file);
+                            
+                            ZNKStudio.clips.push({
+                                id: result.id,
+                                name: file.name,
+                                type: 'imported',
+                                duration: result.duration,
+                                bufferId: result.id
+                            });
+                            
+                            successCount++;
+                        } catch (error) {
+                            console.error(`Erreur import ${file.name}:`, error);
+                        }
+                    }
+                    
+                    if (successCount > 0) {
+                        showNotification(`✅ ${successCount} fichier(s) importé(s)`, 'success');
+                        LibraryModule.render();
+                    } else {
+                        showNotification(`❌ Erreur lors de l'import`, 'error');
+                    }
+                };
+                
+                input.click();
+            }
+        };
+
+        // RECORDING MODULE
+        const RecordingModule = {
+            mediaRecorder: null,
+            recordedChunks: [],
+            isRecording: false,
+            
+            init() {
+                document.getElementById('recordBtn').addEventListener('click', () => this.toggle());
+            },
+            
+            async toggle() {
+                if (this.isRecording) {
+                    this.stop();
+                } else {
+                    await this.start();
+                }
+            },
+            
+            async start() {
+                try {
+                    const destination = AudioEngine.context.createMediaStreamDestination();
+                    AudioEngine.masterGain.connect(destination);
+                    
+                    this.mediaRecorder = new MediaRecorder(destination.stream);
+                    this.recordedChunks = [];
+                    
+                    this.mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) this.recordedChunks.push(e.data);
+                    };
+                    
+                    this.mediaRecorder.onstop = () => this.save();
+                    this.mediaRecorder.start(100);
+                    this.isRecording = true;
+                    
+                    const btn = document.getElementById('recordBtn');
+                    btn.style.animation = 'pulse 1s infinite';
+                    
+                    showNotification('🔴 Enregistrement démarré', 'info');
+                } catch (error) {
+                    showNotification('❌ Erreur enregistrement', 'error');
+                }
+            },
+            
+            stop() {
+                if (this.mediaRecorder && this.isRecording) {
+                    this.mediaRecorder.stop();
+                    this.isRecording = false;
+                    
+                    const btn = document.getElementById('recordBtn');
+                    btn.style.animation = '';
+                    
+                    showNotification('⏹️ Enregistrement arrêté');
+                }
+            },
+            
+            save() {
+                const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `znk-recording-${Date.now()}.webm`;
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                showNotification('💾 Enregistrement sauvegardé');
+            }
+        };
+
+        // KEYBOARD MODULE
+        const KeyboardModule = {
+            currentOctave: 4,
+            activeKeys: new Set(),
+            isRendering: false,
+            
+            init() {
+                this.render();
+                this.setupOctaveControls();
+                this.setupComputerKeyboard();
+            },
+            
+            render() {
+                if (this.isRendering) return;
+                this.isRendering = true;
+                
+                const container = document.getElementById('keyboardOctaves');
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                
+                // Sauvegarder l'état de scroll
+                const scrollPos = container.scrollLeft;
+                
+                // Afficher 2 octaves complètes
+                container.innerHTML = '';
+                
+                for (let octave = this.currentOctave; octave <= this.currentOctave + 1; octave++) {
+                    const octaveGroup = document.createElement('div');
+                    octaveGroup.className = 'octave-group';
+                    
+                    notes.forEach((note, index) => {
+                        const isBlack = note.includes('#');
+                        const key = document.createElement('div');
+                        key.className = isBlack ? 'key black' : 'key';
+                        key.dataset.note = `${note}${octave}`;
+                        
+                        if (!isBlack) {
+                            const label = document.createElement('div');
+                            label.className = 'key-label';
+                            label.textContent = note;
+                            key.appendChild(label);
+                        }
+                        
+                        key.addEventListener('mousedown', () => this.playKey(key));
+                        key.addEventListener('mouseup', () => this.releaseKey(key));
+                        key.addEventListener('mouseleave', () => this.releaseKey(key));
+                        
+                        octaveGroup.appendChild(key);
+                    });
+                    
+                    container.appendChild(octaveGroup);
+                }
+                
+                // Restaurer le scroll
+                container.scrollLeft = scrollPos;
+                
+                document.getElementById('octaveDisplay').textContent = `C${this.currentOctave}`;
+                
+                this.isRendering = false;
+            },
+            
+            setupOctaveControls() {
+                document.getElementById('octaveDown').addEventListener('click', () => {
+                    if (this.currentOctave > 1) {
+                        this.currentOctave--;
+                        this.render();
+                        showNotification(`Octave ${this.currentOctave}`, 'info');
+                    }
+                });
+                
+                document.getElementById('octaveUp').addEventListener('click', () => {
+                    if (this.currentOctave < 7) {
+                        this.currentOctave++;
+                        this.render();
+                        showNotification(`Octave ${this.currentOctave}`, 'info');
+                    }
+                });
+            },
+            
+            setupComputerKeyboard() {
+                const keyMap = {
+                    'a': 'C', 'w': 'C#', 's': 'D', 'e': 'D#', 'd': 'E', 'f': 'F',
+                    't': 'F#', 'g': 'G', 'y': 'G#', 'h': 'A', 'u': 'A#', 'j': 'B',
+                    'k': 'C', 'o': 'C#', 'l': 'D', 'p': 'D#', ';': 'E', "'": 'F'
+                };
+                
+                document.addEventListener('keydown', (e) => {
+                    // Ignorer si focus dans un input
+                    if (e.target.tagName === 'INPUT') return;
+                    
+                    if (e.repeat || this.activeKeys.has(e.key)) return;
+                    
+                    const note = keyMap[e.key.toLowerCase()];
+                    if (note) {
+                        this.activeKeys.add(e.key);
+                        const octave = e.key === e.key.toLowerCase() ? this.currentOctave : this.currentOctave + 1;
+                        const noteName = `${note}${octave}`;
+                        const freq = AudioEngine.noteToFreq(noteName);
+                        AudioEngine.playNote(freq, 0.3, 'sine');
+                        
+                        // Animation visuelle
+                        const keyEl = document.querySelector(`[data-note="${noteName}"]`);
+                        if (keyEl) {
+                            keyEl.classList.add('playing');
+                            setTimeout(() => keyEl.classList.remove('playing'), 200);
+                        }
+                    }
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    this.activeKeys.delete(e.key);
+                });
+            },
+            
+            playKey(keyEl) {
+                const note = keyEl.dataset.note;
+                const freq = AudioEngine.noteToFreq(note);
+                AudioEngine.playNote(freq, 0.5, 'sine');
+                keyEl.classList.add('playing');
+            },
+            
+            releaseKey(keyEl) {
+                keyEl.classList.remove('playing');
+            }
+        };
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            AudioEngine.init();
+            LibraryModule.init();
+            MixerModule.init();
+            TimelineModule.init();
+            AddTrackModule.init();
+            ImportModule.init();
+            RecordingModule.init();
+            KeyboardModule.init();
+            
+            // Volume principal
+            const volumeSlider = document.getElementById('masterVolume');
+            const volumeValue = document.getElementById('volumeValue');
+            
+            volumeSlider.addEventListener('input', (e) => {
+                const volume = parseInt(e.target.value) / 100;
+                AudioEngine.masterGain.gain.value = volume;
+                volumeValue.textContent = e.target.value + '%';
+            });
+            
+            document.getElementById('tempoDisplay').addEventListener('click', () => {
+                const newTempo = prompt('Nouveau tempo (BPM)', ZNKStudio.tempo);
+                if (newTempo && !isNaN(newTempo)) {
+                    ZNKStudio.tempo = parseInt(newTempo);
+                    document.getElementById('tempoDisplay').textContent = newTempo + ' BPM';
+                }
+            });
+            
+            // Stop button arrête tout
+            document.getElementById('stopBtn').addEventListener('click', () => {
+                AudioEngine.stopAllSounds();
+            });
+            
+            showNotification('🎵 ZNK Music Studio Pro chargé!', 'success');
+        });
+    </script>
+</body>
+</html>

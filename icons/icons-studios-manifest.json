@@ -1,0 +1,165 @@
+{
+  "name": "ZNK Studios Dashboard Icons",
+  "version": "1.0.0",
+  "description": "Manifest d'icônes pour le Dashboard Studios ZNK",
+  "icons": [
+    {
+      "id": "user-profile",
+      "name": "Profil Utilisateur",
+      "src": "user-profile.svg",
+      "category": "navigation",
+      "description": "Icône de profil utilisateur"
+    },
+    {
+      "id": "video-studio",
+      "name": "Video Studio",
+      "src": "video-studio.svg",
+      "category": "creation",
+      "description": "Studio vidéo ",
+      "maps_to": "video-studio"
+    },
+    {
+      "id": "artflow-direct",
+      "name": "Artflow Direct",
+      "src": "artflow-direct.svg",
+      "category": "creation",
+      "description": "artflow-direct",
+      "maps_to": "artflow"
+    },
+
+    {
+      "id": "video-ia",
+      "name": "Video IA",
+      "src": "video-ia.svg",
+      "category": "creation",
+      "description": "Video IA",
+      "maps_to": "video-ia"
+    },
+ {
+      "id": "music",
+      "name": "Music",
+      "src": "music.svg",
+      "category": "creation",
+      "description": "Studio musique",
+      "maps_to": "radio"
+    },
+ {
+      "id": "music-pro",
+      "name": "Music-pro",
+      "src": "music-pro.svg",
+      "category": "creation",
+      "description": "Studio musique Pro",
+      "maps_to": "radio"
+    },
+ {
+      "id": "music-ia",
+      "name": "Music-ia",
+      "src": "music-ia.svg",
+      "category": "creation",
+      "description": "Music IA",
+      "maps_to": "radio"
+    },
+ {
+      "id": "live",
+      "name": "live",
+      "src": "live.svg",
+      "category": "creation",
+      "description": "Studio Live",
+      "maps_to": "live"
+    },
+    {
+      "id": "regie",
+      "name": "Regie",
+      "src": "regie.svg",
+      "category": "creation",
+      "description": "Regie Studio",
+      "maps_to": "Artflow Radio"
+    },
+    {
+      "id": "ia-studios",
+      "name": "IA Studios",
+      "src": "ia-studios.svg",
+      "category": "ai",
+      "description": "Intelligence artificielle pour les studios"
+    },
+    {
+      "id": "affiche",
+      "name": "Affiche Maker",
+      "src": "affiche.svg",
+      "category": "social",
+      "description": "Affiche Maker"
+    },
+    {
+      "id": "dessin",
+      "name": "Dessin",
+      "src": "dessin.svg",
+      "category": "creation",
+      "description": "Studio Dessin"
+    },
+    {
+      "id": "avatar",
+      "name": "Avatar Maker",
+      "src": "avatar.svg",
+      "category": "creation",
+      "description": "Avatar Maker"
+    },
+    {
+      "id": "archives",
+      "name": "Archives",
+      "src": "archives.svg",
+      "category": "storage",
+      "description": "Gestion des archives"
+    },
+    {
+      "id": "studios",
+      "name": "Studios",
+      "src": "studios.svg",
+      "category": "navigation",
+      "description": "Accès aux studios (header)"
+    },
+    {
+      "id": "parametres",
+      "name": "Paramètres",
+      "src": "parametres.svg",
+      "category": "settings",
+      "description": "Paramètres système (header)"
+    },
+    {
+      "id": "messages",
+      "name": "Messages",
+      "src": "message.svg",
+      "category": "communication",
+      "description": "Messages (header)"
+    },
+    {
+      "id": "notifications",
+      "name": "Notifications",
+      "src": "notifications.svg",
+      "category": "notifications",
+      "description": "Centre de notifications (header)"
+    }
+  ],
+  "mapping_guide": {
+    "sidebar": {
+      "video-studio": "video-studio",
+      "artflow-direct": "artflow-direct",
+      "video-ia": "video-ia",
+      "music": "music",
+      "music-pro": "music-pro",
+      "music-ia": "music-ia",
+      "live": "live",
+       "regie": "regie",
+      "affiches": "affiche",
+      "dessin": "dessin",
+      "video-ia": "video-ia",
+      "archives": "archives"
+   
+    },
+    "header": {
+      "studios": "Studios",
+      "messages": "Messages",
+      "notifications": "Notifications",
+      "parametres": "Parametres"
+    }
+  }
+}

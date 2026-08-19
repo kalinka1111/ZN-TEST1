@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZAZA App Launcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .launcher-container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff88;
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .zaza-logo {
+            font-size: 3em;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            text-align: center;
+        }
+
+        .launcher-title {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .status-display {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .status-line {
+            margin-bottom: 10px;
+            opacity: 0;
+            animation: fadeInLine 0.3s ease forwards;
+        }
+
+        @keyframes fadeInLine {
+            to { opacity: 1; }
+        }
+
+        .success { color: #00ff88; }
+        .error { color: #ff4444; }
+        .warning { color: #ffa726; }
+        .info { color: #4ecdc4; }
+
+        .app-status {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 136, 255, 0.1));
+            border: 2px solid #00ff88;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .app-status.offline {
+            border-color: #ff4444;
+            background: linear-gradient(135deg, rgba(255, 68, 68, 0.1), rgba(255, 136, 0, 0.1));
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .online { background: #00ff88; }
+        .offline { background: #ff4444; }
+
+        .app-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .app-port {
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        .launch-btn {
+            background: linear-gradient(45deg, #00ff88, #0088ff);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .launch-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.6);
+        }
+
+        .launch-btn:disabled {
+            background: #333;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .manual-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: #333;
+            border: 1px solid #666;
+            padding: 12px 24px;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .control-btn:hover {
+            background: #444;
+            border-color: #00ff88;
+            transform: translateY(-2px);
+        }
+
+        .instructions {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid #8b5cf6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .instructions h3 {
+            color: #8b5cf6;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #aaa;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .code-snippet {
+            background: #000;
+            border: 1px solid #8b5cf6;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-btn {
+            background: #8b5cf6;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #7c3aed;
+        }
+
+        .auto-redirect {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 136, 255, 0.2));
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .redirect-timer {
+            font-size: 1.5em;
+            color: #00ff88;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="launcher-container">
+        <div class="zaza-logo">🚀 ZAZA</div>
+        <div class="launcher-title">Application Launcher</div>
+        
+        <!-- Auto-redirect notification -->
+        <div class="auto-redirect" id="autoRedirect" style="display: none;">
+            <div style="font-size: 1.2em; margin-bottom: 10px;">🎯 Application détectée !</div>
+            <div class="redirect-timer" id="redirectTimer">Ouverture dans 3 secondes...</div>
+            <button class="control-btn" onclick="launcher.cancelRedirect()">Annuler</button>
+        </div>
+        
+        <!-- App Status Card -->
+        <div class="app-status" id="appStatus">
+            <div class="app-name">
+                <span class="status-indicator offline" id="statusIndicator"></span>
+                <span id="appName">Votre Application</span>
+            </div>
+            <div class="app-port" id="appPort">localhost:5000</div>
+            <button class="launch-btn" id="launchBtn" onclick="launcher.launchApp()" disabled>
+                ⚡ Lancer l'Application
+            </button>
+            <div style="color: #888; font-size: 0.9em;" id="statusText">Vérification...</div>
+        </div>
+        
+        <!-- Status Log -->
+        <div class="status-display" id="statusDisplay">
+            <div class="status-line info">🚀 ZAZA Launcher initialisé</div>
+            <div class="status-line info">🔍 Recherche de l'application...</div>
+        </div>
+        
+        <!-- Manual Controls -->
+        <div class="manual-controls">
+            <button class="control-btn" onclick="launcher.checkStatus()">
+                🔄 Vérifier
+            </button>
+            <button class="control-btn" onclick="launcher.showInstructions()">
+                📖 Instructions
+            </button>
+            <button class="control-btn" onclick="launcher.openAppFolder()">
+                📁 Dossier App
+            </button>
+        </div>
+        
+        <!-- Instructions (hidden by default) -->
+        <div class="instructions" id="instructions" style="display: none;">
+            <h3>📖 Comment utiliser ce launcher</h3>
+            <ol>
+                <li><strong>Installez Electron</strong> (une seule fois) :
+                    <div class="code-snippet">
+                        <code id="installCmd">npm install electron --save-dev</code>
+                        <button class="copy-btn" onclick="copyCode('installCmd')">Copier</button>
+                    </div>
+                </li>
+                <li><strong>Lancez votre application</strong> dans le terminal :
+                    <div class="code-snippet">
+                        <code id="launchCmd">electron . --port=5000</code>
+                        <button class="copy-btn" onclick="copyCode('launchCmd')">Copier</button>
+                    </div>
+                </li>
+                <li><strong>Revenez ici</strong> et cliquez sur "🔄 Vérifier"</li>
+                <li><strong>Cliquez sur "⚡ Lancer"</strong> quand le bouton devient vert</li>
+            </ol>
+            <p style="margin-top: 15px; color: #ffa726;">
+                ⚠️ <strong>Important :</strong> L'application doit tourner sur localhost:5000
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // =========================
+        // CONFIGURATION - MODIFIER ICI
+        // =========================
+        const APP_CONFIG = {
+            name: "Votre Application",
+            port: 5000,
+            autoRedirect: true,
+            redirectDelay: 3 // secondes
+        };
+
+        // =========================
+        // ZAZA LAUNCHER
+        // =========================
+        class ZAZALauncher {
+            constructor(config) {
+                this.config = config;
+                this.url = `http://localhost:${config.port}`;
+                this.isOnline = false;
+                this.redirectTimer = null;
+                this.checkInterval = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.log(`🚀 ZAZA Launcher v3.0`, 'success');
+                this.log(`📱 Application: ${this.config.name}`, 'info');
+                this.log(`🔌 Port: ${this.config.port}`, 'info');
+                
+                // Update UI
+                document.getElementById('appName').textContent = this.config.name;
+                document.getElementById('appPort').textContent = `localhost:${this.config.port}`;
+                
+                // First check
+                setTimeout(() => this.checkStatus(), 1000);
+                
+                // Auto-check every 5 seconds
+                this.checkInterval = setInterval(() => {
+                    if (!this.isOnline) {
+                        this.checkStatus(true);
+                    }
+                }, 5000);
+            }
+            
+            async checkStatus(silent = false) {
+                if (!silent) {
+                    this.log('🔍 Vérification de l\'application...', 'info');
+                }
+                
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    
+                    await fetch(this.url, {
+                        method: 'HEAD',
+                        signal: controller.signal,
+                        mode: 'no-cors'
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    this.setOnline();
+                    
+                } catch (error) {
+                    // Try alternative detection
+                    try {
+                        await new Promise((resolve, reject) => {
+                            const timeout = setTimeout(() => reject(new Error('timeout')), 2000);
+                            const img = new Image();
+                            img.onload = () => {
+                                clearTimeout(timeout);
+                                resolve(true);
+                            };
+                            img.onerror = () => {
+                                clearTimeout(timeout);
+                                resolve(true);
+                            };
+                            img.src = this.url + '/favicon.ico?t=' + Date.now();
+                        });
+                        
+                        this.setOnline();
+                    } catch (e) {
+                        this.setOffline();
+                    }
+                }
+            }
+            
+            setOnline() {
+                if (!this.isOnline) {
+                    this.isOnline = true;
+                    this.log(`✅ Application détectée sur :${this.config.port}`, 'success');
+                    this.updateUI(true);
+                    
+                    if (this.config.autoRedirect) {
+                        this.startAutoRedirect();
+                    }
+                }
+            }
+            
+            setOffline() {
+                this.isOnline = false;
+                this.updateUI(false);
+                
+                // Only log once
+                const lastLog = document.querySelector('.status-display .status-line:last-child');
+                if (!lastLog || !lastLog.textContent.includes('Application non détectée')) {
+                    this.log(`⚠️ Application non détectée sur :${this.config.port}`, 'warning');
+                }
+            }
+            
+            updateUI(online) {
+                const appStatus = document.getElementById('appStatus');
+                const statusIndicator = document.getElementById('statusIndicator');
+                const launchBtn = document.getElementById('launchBtn');
+                const statusText = document.getElementById('statusText');
+                
+                if (online) {
+                    appStatus.classList.remove('offline');
+                    statusIndicator.classList.remove('offline');
+                    statusIndicator.classList.add('online');
+                    launchBtn.disabled = false;
+                    statusText.textContent = '✅ Application prête';
+                    statusText.style.color = '#00ff88';
+                } else {
+                    appStatus.classList.add('offline');
+                    statusIndicator.classList.remove('online');
+                    statusIndicator.classList.add('offline');
+                    launchBtn.disabled = true;
+                    statusText.textContent = '⚠️ Application non détectée';
+                    statusText.style.color = '#ffa726';
+                }
+            }
+            
+            startAutoRedirect() {
+                this.log(`🎯 Lancement automatique activé`, 'success');
+                const autoRedirectDiv = document.getElementById('autoRedirect');
+                const timerDiv = document.getElementById('redirectTimer');
+                autoRedirectDiv.style.display = 'block';
+                
+                let countdown = this.config.redirectDelay;
+                timerDiv.textContent = `Ouverture dans ${countdown} secondes...`;
+                
+                this.redirectTimer = setInterval(() => {
+                    countdown--;
+                    timerDiv.textContent = `Ouverture dans ${countdown} secondes...`;
+                    if (countdown <= 0) {
+                        this.launchApp();
+                    }
+                }, 1000);
+            }
+            
+            cancelRedirect() {
+                if (this.redirectTimer) {
+                    clearInterval(this.redirectTimer);
+                    this.redirectTimer = null;
+                }
+                document.getElementById('autoRedirect').style.display = 'none';
+                this.log('❌ Lancement automatique annulé', 'warning');
+            }
+            
+            launchApp() {
+                if (!this.isOnline) {
+                    this.log('⚠️ Impossible de lancer : application non détectée', 'error');
+                    this.showInstructions();
+                    return;
+                }
+                
+                this.cancelRedirect();
+                this.log(`🚀 Ouverture de ${this.config.name}...`, 'success');
+                
+                // Stop auto-checking
+                if (this.checkInterval) {
+                    clearInterval(this.checkInterval);
+                }
+                
+                setTimeout(() => {
+                    window.location.href = this.url;
+                }, 500);
+            }
+            
+            showInstructions() {
+                const instructionsDiv = document.getElementById('instructions');
+                if (instructionsDiv.style.display === 'none') {
+                    instructionsDiv.style.display = 'block';
+                    this.log('📖 Instructions affichées', 'info');
+                } else {
+                    instructionsDiv.style.display = 'none';
+                }
+            }
+            
+            openAppFolder() {
+                this.log('📁 Ouvrez le dossier de votre application', 'info');
+                alert(`📁 Ouvrez le dossier contenant votre application\n\nPuis lancez dans le terminal:\nelektron . --port=${this.config.port}`);
+            }
+            
+            log(message, type = 'info') {
+                const display = document.getElementById('statusDisplay');
+                const line = document.createElement('div');
+                line.className = `status-line ${type}`;
+                const timestamp = new Date().toLocaleTimeString();
+                line.innerHTML = `[${timestamp}] ${message}`;
+                display.appendChild(line);
+                display.scrollTop = display.scrollHeight;
+                
+                // Keep only last 50 lines
+                const lines = display.querySelectorAll('.status-line');
+                if (lines.length > 50) lines[0].remove();
+            }
+        }
+
+        // Copy Code Function
+        function copyCode(elementId) {
+            const code = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ Commande copiée dans le presse-papier !');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Commande copiée !');
+            });
+        }
+
+        // Initialize launcher
+        let launcher;
+        document.addEventListener('DOMContentLoaded', () => {
+            launcher = new ZAZALauncher(APP_CONFIG);
+        });
+    </script>
+</body>
+</html>

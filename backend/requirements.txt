@@ -1,0 +1,34 @@
+# ============================================================================
+# ZNK Backend - Dépendances Python
+# ============================================================================
+
+# Framework Web
+flask==3.0.0
+werkzeug==3.0.1
+
+# CORS (Cross-Origin Resource Sharing)
+flask-cors==4.0.0
+
+# Utilitaires
+python-dotenv==1.0.0
+
+# Optionnel : Bases de données
+# flask-sqlalchemy==3.1.1
+# pymongo==4.6.0
+
+# Optionnel : Authentification
+# flask-jwt-extended==4.6.0
+# pyjwt==2.8.0
+
+# Optionnel : Validation
+# marshmallow==3.20.1
+# flask-marshmallow==0.15.0
+
+# Optionnel : Async
+# flask-socketio==5.3.5
+
+# Optionnel : Cache
+# flask-caching==2.1.0
+
+# Optionnel : Rate limiting
+# flask-limiter==3.5.0

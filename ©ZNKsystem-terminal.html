@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>©ZNKsystem - Terminal Interne</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            color: #00ff00;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .terminal-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .terminal-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #00ff00;
+        }
+        
+        .terminal-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .close { background: #ff5f57; }
+        .minimize { background: #ffbd2e; }
+        .maximize { background: #28ca42; }
+        
+        .terminal-output {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.9);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .terminal-input-container {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 15px 20px;
+            border-top: 1px solid #333;
+            display: flex;
+            align-items: center;
+        }
+        
+        .terminal-prompt {
+            color: #00ff00;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .command-line {
+            margin-bottom: 5px;
+        }
+        
+        .command-output {
+            color: #ffffff;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+        
+        .error {
+            color: #ff4444;
+        }
+        
+        .success {
+            color: #00ff00;
+        }
+        
+        .warning {
+            color: #ffaa00;
+        }
+        
+        .info {
+            color: #00aaff;
+        }
+        
+        .file-explorer {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #333;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .file-explorer-header {
+            padding: 10px;
+            background: #333;
+            border-bottom: 1px solid #444;
+            font-weight: bold;
+        }
+        
+        .file-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #222;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .file-item:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .folder {
+            color: #00aaff;
+        }
+        
+        .file {
+            color: #ffffff;
+        }
+        
+        .script-runner {
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            width: 250px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #333;
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .script-runner-header {
+            padding: 10px;
+            background: #333;
+            border-bottom: 1px solid #444;
+            font-weight: bold;
+        }
+        
+        .script-item {
+            padding: 10px;
+            border-bottom: 1px solid #222;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .script-item:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .status-bar {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px 20px;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        
+        .cursor {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .typing-indicator {
+            color: #ffaa00;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="terminal-title">©ZNKsystem Terminal v2.0 - Automator Integration</div>
+            <div class="terminal-controls">
+                <button class="control-btn close" onclick="closeTerminal()"></button>
+                <button class="control-btn minimize" onclick="minimizeTerminal()"></button>
+                <button class="control-btn maximize" onclick="maximizeTerminal()"></button>
+            </div>
+        </div>
+        
+        <div class="terminal-output" id="output">
+            <div class="command-output success">
+©ZNKsystem Terminal Interne v2.0
+Powered by: Anthropic + Claude + Automator
+===============================================
+
+Bienvenue dans votre terminal intégré ©ZNKsystem!
+
+Commandes disponibles:
+• organize     - Lance l'organisation automatique
+• frontend     - Accède aux outils frontend
+• backend      - Accède aux outils backend
+• automator    - Gère les scripts Automator
+• status       - Affiche le statut système
+• help         - Affiche l'aide
+• clear        - Efface le terminal
+• ls           - Liste les fichiers
+• cd [dossier] - Change de répertoire
+• python [script] - Exécute un script Python
+• explorer     - Ouvre l'explorateur de fichiers
+• scripts      - Ouvre le gestionnaire de scripts
+
+Système prêt. Tapez 'help' pour plus d'informations.
+            </div>
+        </div>
+        
+        <div class="terminal-input-container">
+            <span class="terminal-prompt">©ZNKsystem:~$</span>
+            <input type="text" class="terminal-input" id="commandInput" placeholder="Tapez votre commande..." autocomplete="off">
+        </div>
+        
+        <div class="status-bar">
+            <span>Statut: <span class="success">Connecté</span></span>
+            <span>Répertoire: /©ZNKsystem</span>
+            <span id="clock"></span>
+        </div>
+    </div>
+    
+    <!-- Explorateur de fichiers -->
+    <div class="file-explorer" id="fileExplorer">
+        <div class="file-explorer-header">
+            Explorateur ©ZNKsystem
+            <button style="float: right; background: none; border: none; color: #fff; cursor: pointer;" onclick="toggleFileExplorer()">×</button>
+        </div>
+        <div id="fileList">
+            <div class="file-item folder" onclick="navigateFolder('FRONTEND')">📁 FRONTEND</div>
+            <div class="file-item folder" onclick="navigateFolder('BACKEND')">📁 BACKEND</div>
+            <div class="file-item folder" onclick="navigateFolder('QUICK_ACCESS')">📁 QUICK_ACCESS</div>
+            <div class="file-item file" onclick="openFile('dashboard.html')">📄 dashboard.html</div>
+            <div class="file-item file" onclick="openFile('znk_organizer.py')">🐍 znk_organizer.py</div>
+            <div class="file-item file" onclick="openFile('automator_workflow.workflow')">⚙️ automator_workflow.workflow</div>
+        </div>
+    </div>
+    
+    <!-- Gestionnaire de scripts -->
+    <div class="script-runner" id="scriptRunner">
+        <div class="script-runner-header">
+            Scripts ©ZNKsystem
+            <button style="float: right; background: none; border: none; color: #fff; cursor: pointer;" onclick="toggleScriptRunner()">×</button>
+        </div>
+        <div class="script-item" onclick="runScript('organize')">
+            🗂️ Organisation automatique
+        </div>
+        <div class="script-item" onclick="runScript('frontend_setup')">
+            🎨 Configuration Frontend
+        </div>
+        <div class="script-item" onclick="runScript('backend_maintenance')">
+            ⚙️ Maintenance Backend
+        </div>
+        <div class="script-item" onclick="runScript('automator_sync')">
+            🔄 Synchronisation Automator
+        </div>
+        <div class="script-item" onclick="runScript('backup_system')">
+            💾 Sauvegarde système
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentDirectory = '/©ZNKsystem';
+        let commandHistory = [];
+        let historyIndex = -1;
+        let isProcessing = false;
+        
+        // Éléments DOM
+        const output = document.getElementById('output');
+        const commandInput = document.getElementById('commandInput');
+        const clock = document.getElementById('clock');
+        const fileExplorer = document.getElementById('fileExplorer');
+        const scriptRunner = document.getElementById('scriptRunner');
+        
+        // Mise à jour de l'horloge
+        function updateClock() {
+            const now = new Date();
+            clock.textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+        
+        // Gestionnaire d'entrée de commande
+        commandInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                executeCommand();
+            } else if (e.key === 'ArrowUp') {
+                navigateHistory(-1);
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown') {
+                navigateHistory(1);
+                e.preventDefault();
+            }
+        });
+        
+        // Navigation dans l'historique
+        function navigateHistory(direction) {
+            if (commandHistory.length === 0) return;
+            
+            historyIndex += direction;
+            if (historyIndex < 0) historyIndex = 0;
+            if (historyIndex >= commandHistory.length) historyIndex = commandHistory.length - 1;
+            
+            commandInput.value = commandHistory[historyIndex];
+        }
+        
+        // Exécution de commande
+        function executeCommand() {
+            if (isProcessing) return;
+            
+            const command = commandInput.value.trim();
+            if (!command) return;
+            
+            //

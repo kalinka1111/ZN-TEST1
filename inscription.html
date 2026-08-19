@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - ZNK SmartHub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 520px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--accent-color, #00ffff);
+            border-radius: 20px;
+            padding: 32px 24px;
+            box-shadow: 0 0 60px var(--accent-glow, rgba(0, 255, 255, 0.3));
+            transition: all 0.3s ease;
+        }
+
+        .container.visiteur {
+            --accent-color: #00ffff;
+            --accent-glow: rgba(0, 255, 255, 0.3);
+            --gradient-start: #00ffff;
+            --gradient-end: #0080ff;
+        }
+
+        .container.etudes {
+            --accent-color: #43e97b;
+            --accent-glow: rgba(67, 233, 123, 0.3);
+            --gradient-start: #43e97b;
+            --gradient-end: #38f9d7;
+        }
+
+        .container.enseignant {
+            --accent-color: #ffd700;
+            --accent-glow: rgba(255, 215, 0, 0.3);
+            --gradient-start: #ffd700;
+            --gradient-end: #ff8c00;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: 42px;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--accent-color);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Sélecteur de type de compte */
+        .account-type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 28px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        .type-option {
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .type-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .type-option.active {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .type-icon {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .type-icon img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .type-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .type-desc {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.3;
+        }
+
+        /* Description du type de compte */
+        .account-description {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--accent-color);
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .features-list li {
+            padding: 4px 0;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .features-list li:before {
+            content: "✓";
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        /* Formulaire */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .label {
+            display: block;
+            font-size: 11px;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .input, .select {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .input:focus, .select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .input.error {
+            border-color: #ff4757;
+        }
+
+        .select {
+            cursor: pointer;
+        }
+
+        .select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .input-hint {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .error-text {
+            color: #ff4757;
+            font-size: 11px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .hint-text {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 11px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .hint-text.show {
+            display: block;
+        }
+
+        .hint-text strong {
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .error-text.show {
+            display: block;
+        }
+
+        /* Prévisualisation email et ID */
+        .preview-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .preview-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .preview-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .preview-value {
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .id-preview {
+            text-align: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .id-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent-color);
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+
+        /* Boutons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .back-link a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link a:hover {
+            text-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* Overlay de succès */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .success-card {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--accent-color);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 420px;
+            box-shadow: 0 0 60px var(--accent-glow);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .success-title {
+            color: var(--accent-color, #00ffff);
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .success-info {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .success-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            color: white;
+            font-size: 13px;
+        }
+
+        .success-info-label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .success-info-value {
+            font-weight: bold;
+            color: var(--accent-color, #00ffff);
+            font-family: monospace;
+        }
+
+        .success-btn {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, var(--gradient-start, #00ffff), var(--gradient-end, #0080ff));
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        /* Section spécifique études (cachée par défaut) */
+        .etudes-only {
+            display: none;
+        }
+
+        .etudes-only.show {
+            display: block;
+        }
+
+        /* Section spécifique enseignant (cachée par défaut) */
+        .enseignant-only {
+            display: none;
+        }
+
+        .enseignant-only.show {
+            display: block;
+        }
+
+        /* Section spécifique membre-parent (cachée par défaut) */
+        .membreparent-only {
+            display: none;
+        }
+
+        .membreparent-only.show {
+            display: block;
+        }
+
+        .ecole-only, .independant-only {
+            display: none;
+        }
+
+        .ecole-only.show, .independant-only.show {
+            display: block;
+        }
+
+        /* Section Pays (élève + enseignant uniquement, cachée par défaut) */
+        .pays-group {
+            display: none;
+        }
+
+        .pays-group.show {
+            display: block;
+        }
+
+        /* Gestion de la liste des élèves (compte enseignant) */
+        .eleves-add-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .eleves-add-row .input {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .eleves-add-row .select {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 10px;
+            font-size: 13px;
+        }
+
+        .eleve-item .eleve-niveau {
+            display: inline-block;
+            margin-top: 2px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: rgba(255, 215, 0, 0.15);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-add-eleve {
+            padding: 0 18px;
+            background: rgba(255, 215, 0, 0.15);
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            color: var(--accent-color);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add-eleve:hover {
+            background: rgba(255, 215, 0, 0.25);
+        }
+
+        .eleves-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .eleve-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+
+        .eleve-item .eleve-name {
+            font-size: 13px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .eleve-item .eleve-creds {
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--accent-color);
+        }
+
+        .eleve-item .eleve-remove {
+            background: none;
+            border: none;
+            color: #ff4757;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 2px 6px;
+        }
+
+        .eleves-empty {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            text-align: center;
+            padding: 8px 0;
+        }
+    </style>
+    <script src="/js/znk-session.js"></script>
+</head>
+<body>
+    <div class="container visiteur" id="mainContainer">
+        <div class="header">
+            <div class="logo">ZNK</div>
+            <div class="subtitle">Inscription</div>
+        </div>
+
+        <!-- Sélecteur de type de compte -->
+        <div class="account-type-selector">
+            <div class="type-option active" data-type="visiteur" id="typeVisiteur">
+                <div class="type-icon"><img src="./icons/visiteur.svg" alt="Visiteur"></div>
+                <div class="type-name">Visiteur</div>
+                <div class="type-desc">Accès découverte</div>
+            </div>
+            <div class="type-option" data-type="etudes" id="typeEtudes">
+                <div class="type-icon"><img src="./icons/etudes.svg" alt="Études"></div>
+                <div class="type-name">Études</div>
+                <div class="type-desc">Espace étudiant</div>
+            </div>
+            <div class="type-option" data-type="enseignant" id="typeEnseignant">
+                <div class="type-icon"><img src="./icons/professeur.svg" alt="Enseignant"></div>
+                <div class="type-name">Enseignant</div>
+                <div class="type-desc">Partagez un savoir</div>
+            </div>
+            <div class="type-option" data-type="membreParent" id="typeMembreParent">
+                <div class="type-icon"><img src="./icons/membre.svg" alt="Membre-Parent" onerror="this.outerHTML='<span style=font-size:28px>👨‍👩‍👧</span>'"></div>
+                <div class="type-name">Membre-Parent</div>
+                <div class="type-desc">Suivez vos enfants</div>
+            </div>
+        </div>
+
+        <!-- Description dynamique -->
+        <div class="account-description" id="accountDescription">
+            <div id="descriptionContent"></div>
+        </div>
+
+        <!-- Formulaire -->
+        <form id="inscriptionForm">
+            <div class="form-group">
+                <label class="label">Prénom</label>
+                <input type="text" id="prenom" class="input" placeholder="Votre prénom" required>
+                <div class="error-text" id="prenomError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Nom</label>
+                <input type="text" id="nom" class="input" placeholder="Votre nom" required>
+                <div class="error-text" id="nomError"></div>
+            </div>
+
+            <!-- Pays (élève + enseignant) : détermine le drapeau affiché sur Art Études -->
+            <div class="form-group pays-group" id="paysGroup">
+                <label class="label">Pays</label>
+                <select id="pays" class="select">
+                    <option value="" data-flag="">-- Sélectionnez votre pays --</option>
+                    <option value="FR" data-flag="🇫🇷">🇫🇷 France</option>
+                    <option value="BL" data-flag="🇧🇱">🇧🇱 Saint-Barthélemy</option>
+                    <option value="MF" data-flag="🇲🇫">🇲🇫 Saint-Martin</option>
+                    <option value="GP" data-flag="🇬🇵">🇬🇵 Guadeloupe</option>
+                    <option value="MQ" data-flag="🇲🇶">🇲🇶 Martinique</option>
+                    <option value="GF" data-flag="🇬🇫">🇬🇫 Guyane</option>
+                    <option value="RE" data-flag="🇷🇪">🇷🇪 Réunion</option>
+                    <option value="YT" data-flag="🇾🇹">🇾🇹 Mayotte</option>
+                    <option value="CM" data-flag="🇨🇲">🇨🇲 Cameroun</option>
+                    <option value="SN" data-flag="🇸🇳">🇸🇳 Sénégal</option>
+                    <option value="CI" data-flag="🇨🇮">🇨🇮 Côte d'Ivoire</option>
+                    <option value="ML" data-flag="🇲🇱">🇲🇱 Mali</option>
+                    <option value="BJ" data-flag="🇧🇯">🇧🇯 Bénin</option>
+                    <option value="TG" data-flag="🇹🇬">🇹🇬 Togo</option>
+                    <option value="BF" data-flag="🇧🇫">🇧🇫 Burkina Faso</option>
+                    <option value="NE" data-flag="🇳🇪">🇳🇪 Niger</option>
+                    <option value="GN" data-flag="🇬🇳">🇬🇳 Guinée</option>
+                    <option value="CD" data-flag="🇨🇩">🇨🇩 RD Congo</option>
+                    <option value="CG" data-flag="🇨🇬">🇨🇬 Congo</option>
+                    <option value="GA" data-flag="🇬🇦">🇬🇦 Gabon</option>
+                    <option value="MG" data-flag="🇲🇬">🇲🇬 Madagascar</option>
+                    <option value="MA" data-flag="🇲🇦">🇲🇦 Maroc</option>
+                    <option value="TN" data-flag="🇹🇳">🇹🇳 Tunisie</option>
+                    <option value="DZ" data-flag="🇩🇿">🇩🇿 Algérie</option>
+                    <option value="HT" data-flag="🇭🇹">🇭🇹 Haïti</option>
+                    <option value="BE" data-flag="🇧🇪">🇧🇪 Belgique</option>
+                    <option value="CH" data-flag="🇨🇭">🇨🇭 Suisse</option>
+                    <option value="CA" data-flag="🇨🇦">🇨🇦 Canada</option>
+                    <option value="AUTRE" data-flag="🌍">🌍 Autre pays</option>
+                </select>
+                <div class="error-text" id="paysError"></div>
+            </div>
+
+            <!-- Nom de l'école (uniquement pour type études) -->
+            <div class="form-group etudes-only" id="ecoleEtudesGroup">
+                <label class="label">Nom de l'école</label>
+                <input type="text" id="ecoleEtudes" class="input" placeholder="Nom de ton école">
+                <div class="error-text" id="ecoleEtudesError"></div>
+            </div>
+
+            <!-- Niveau d'études (uniquement pour type études) -->
+            <div class="form-group etudes-only" id="niveauGroup">
+                <label class="label">Niveau scolaire</label>
+                <select id="niveau" class="select">
+                    <option value="">-- Sélectionnez votre classe --</option>
+                    
+                    <optgroup label="🎨 Maternelle">
+                        <option value="ps">Petite Section (PS)</option>
+                        <option value="ms">Moyenne Section (MS)</option>
+                        <option value="gs">Grande Section (GS)</option>
+                    </optgroup>
+                    
+                    <optgroup label="📚 Primaire">
+                        <option value="cp">CP (Cours Préparatoire)</option>
+                        <option value="ce1">CE1 (Cours Élémentaire 1)</option>
+                        <option value="ce2">CE2 (Cours Élémentaire 2)</option>
+                        <option value="cm1">CM1 (Cours Moyen 1)</option>
+                        <option value="cm2">CM2 (Cours Moyen 2)</option>
+                    </optgroup>
+                    
+                    <optgroup label="🎓 Collège">
+                        <option value="6eme">6ème</option>
+                        <option value="5eme">5ème</option>
+                        <option value="4eme">4ème</option>
+                        <option value="3eme">3ème</option>
+                    </optgroup>
+                    
+                    <optgroup label="🏫 Lycée">
+                        <option value="seconde">Seconde</option>
+                        <option value="premiere">Première</option>
+                        <option value="terminale">Terminale</option>
+                    </optgroup>
+                    
+                    <optgroup label="🎯 Supérieur">
+                        <option value="bts1">BTS 1ère année</option>
+                        <option value="bts2">BTS 2ème année</option>
+                        <option value="licence1">Licence 1 (L1)</option>
+                        <option value="licence2">Licence 2 (L2)</option>
+                        <option value="licence3">Licence 3 (L3)</option>
+                        <option value="master1">Master 1 (M1)</option>
+                        <option value="master2">Master 2 (M2)</option>
+                        <option value="doctorat">Doctorat</option>
+                    </optgroup>
+                    
+                    <optgroup label="👨‍🏫 Autre">
+                        <option value="formation">Formation professionnelle</option>
+                        <option value="autre">Autre</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Champs spécifiques enseignant -->
+            <div class="form-group enseignant-only" id="enseignantGroup">
+                <label class="label">Vous êtes</label>
+                <select id="statutEnseignant" class="select">
+                    <option value="">-- Sélectionnez votre statut --</option>
+                    <option value="ecole">Professeur dans un établissement précis</option>
+                    <option value="independant">Formateur indépendant</option>
+                </select>
+            </div>
+
+            <div class="form-group ecole-only" id="ecoleGroup">
+                <label class="label">Établissement</label>
+                <input type="text" id="etablissement" class="input" placeholder="Nom de l'école / établissement"
+                       list="etablissementsDatalist" autocomplete="off">
+                <datalist id="etablissementsDatalist"></datalist>
+                <div class="error-text" id="etablissementError"></div>
+                <div class="hint-text" id="etablissementHint"></div>
+            </div>
+
+            <div class="form-group ecole-only" id="niveauEnseigneGroup">
+                <label class="label">Niveau enseigné</label>
+                <select id="niveauEnseigne" class="select">
+                    <option value="">-- Sélectionnez le niveau --</option>
+
+                    <optgroup label="🎨 Maternelle">
+                        <option value="ps">Petite Section (PS)</option>
+                        <option value="ms">Moyenne Section (MS)</option>
+                        <option value="gs">Grande Section (GS)</option>
+                    </optgroup>
+
+                    <optgroup label="📚 Primaire">
+                        <option value="cp">CP (Cours Préparatoire)</option>
+                        <option value="ce1">CE1 (Cours Élémentaire 1)</option>
+                        <option value="ce2">CE2 (Cours Élémentaire 2)</option>
+                        <option value="cm1">CM1 (Cours Moyen 1)</option>
+                        <option value="cm2">CM2 (Cours Moyen 2)</option>
+                    </optgroup>
+
+                    <optgroup label="🎓 Collège">
+                        <option value="6eme">6ème</option>
+                        <option value="5eme">5ème</option>
+                        <option value="4eme">4ème</option>
+                        <option value="3eme">3ème</option>
+                    </optgroup>
+
+                    <optgroup label="🏫 Lycée">
+                        <option value="seconde">Seconde</option>
+                        <option value="premiere">Première</option>
+                        <option value="terminale">Terminale</option>
+                    </optgroup>
+
+                    <optgroup label="🎯 Supérieur">
+                        <option value="bts">BTS</option>
+                        <option value="licence">Licence</option>
+                        <option value="master">Master</option>
+                        <option value="doctorat">Doctorat</option>
+                    </optgroup>
+
+                    <optgroup label="👨‍🏫 Autre">
+                        <option value="formation">Formation professionnelle</option>
+                        <option value="autre">Autre</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="form-group independant-only" id="specialiteGroup">
+                <label class="label">Spécialité / savoir partagé</label>
+                <input type="text" id="specialite" class="input" placeholder="Ex: Développement web, Guitare, Cuisine...">
+                <div class="error-text" id="specialiteError"></div>
+            </div>
+
+            <!-- Liste des élèves (compte enseignant) -->
+            <div class="form-group enseignant-only" id="elevesGroup">
+                <label class="label">Liste de vos élèves</label>
+                <div class="eleves-add-row">
+                    <input type="text" id="elevePrenom" class="input" placeholder="Prénom de l'élève">
+                    <input type="text" id="eleveNom" class="input" placeholder="Nom de l'élève">
+                    <select id="eleveNiveau" class="select">
+                        <option value="">-- Niveau de l'élève --</option>
+
+                        <optgroup label="🎨 Maternelle">
+                            <option value="ps">Petite Section (PS)</option>
+                            <option value="ms">Moyenne Section (MS)</option>
+                            <option value="gs">Grande Section (GS)</option>
+                        </optgroup>
+
+                        <optgroup label="📚 Primaire">
+                            <option value="cp">CP</option>
+                            <option value="ce1">CE1</option>
+                            <option value="ce2">CE2</option>
+                            <option value="cm1">CM1</option>
+                            <option value="cm2">CM2</option>
+                        </optgroup>
+
+                        <optgroup label="🎓 Collège">
+                            <option value="6eme">6ème</option>
+                            <option value="5eme">5ème</option>
+                            <option value="4eme">4ème</option>
+                            <option value="3eme">3ème</option>
+                        </optgroup>
+
+                        <optgroup label="🏫 Lycée">
+                            <option value="seconde">Seconde</option>
+                            <option value="premiere">Première</option>
+                            <option value="terminale">Terminale</option>
+                        </optgroup>
+
+                        <optgroup label="🎯 Supérieur / Autre">
+                            <option value="bts">BTS</option>
+                            <option value="licence">Licence</option>
+                            <option value="master">Master</option>
+                            <option value="formation">Formation professionnelle</option>
+                            <option value="autre">Autre</option>
+                        </optgroup>
+                    </select>
+                    <button type="button" class="btn-add-eleve" onclick="addEleve()">➕ Ajouter</button>
+                </div>
+                <div class="eleves-list" id="elevesList">
+                    <div class="eleves-empty">Aucun élève ajouté pour l'instant</div>
+                </div>
+                <div class="input-hint">🔑 Chaque élève reçoit un identifiant (prénom + 1ère lettre du nom) et le code PIN commun <strong>1234</strong> (différent de votre code personnel). Vous pourrez modifier cette liste plus tard depuis le module "Mes élèves" du dashboard professeur.</div>
+            </div>
+
+            <!-- Liaison à un ou plusieurs comptes élèves existants (uniquement pour type membre-parent) -->
+            <div class="form-group membreparent-only" id="enfantsGroup">
+                <label class="label">Relier un compte élève existant</label>
+                <div class="eleves-add-row">
+                    <input type="text" id="enfantLoginId" class="input" placeholder="Identifiant ZNK de l'élève (donné par l'enseignant)">
+                    <button type="button" class="btn-add-eleve" onclick="linkEnfant()">🔗 Relier</button>
+                </div>
+                <div class="eleves-list" id="enfantsList">
+                    <div class="eleves-empty">Aucun enfant relié pour l'instant</div>
+                </div>
+                <div class="input-hint">🔑 Demandez à l'enseignant l'identifiant de connexion de votre enfant (généré à la création de son compte élève). Vous pouvez relier plusieurs enfants du même appareil.</div>
+            </div>
+
+            <!-- Prévisualisation email et ID -->
+            <div class="preview-section">
+                <div class="preview-row">
+                    <span class="preview-label">Email ZNK</span>
+                    <span class="preview-value" id="emailPreview">---</span>
+                </div>
+                <div class="id-preview">
+                    <div class="preview-label">Votre ID</div>
+                    <div class="id-value" id="idPreview">--####</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Code PIN (4 chiffres)</label>
+                <input type="password" id="code" class="input" placeholder="••••" maxlength="4" pattern="[0-9]{4}" required>
+                <div class="input-hint">🔒 Mémorisez bien ce code</div>
+                <div class="error-text" id="codeError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Confirmer le code</label>
+                <input type="password" id="codeConfirm" class="input" placeholder="••••" maxlength="4" pattern="[0-9]{4}" required>
+                <div class="error-text" id="codeConfirmError"></div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                ✨ Créer mon compte
+            </button>
+        </form>
+
+        <div class="back-link">
+            <a href="auth-hub.html">← Retour à la connexion</a>
+        </div>
+    </div>
+
+    <!-- Overlay de succès -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-card" id="successCard">
+            <div class="success-icon">✅</div>
+            <div class="success-title">Compte créé avec succès !</div>
+            
+            <div class="success-info">
+                <div class="success-info-row">
+                    <span class="success-info-label">ID ZNK:</span>
+                    <span class="success-info-value" id="successIdZNK">---</span>
+                </div>
+                <div class="success-info-row">
+                    <span class="success-info-label">Email:</span>
+                    <span class="success-info-value" id="successEmail">---</span>
+                </div>
+                <div class="success-info-row">
+                    <span class="success-info-label">Type:</span>
+                    <span class="success-info-value" id="successType">---</span>
+                </div>
+                <div class="success-info-row" id="successElevesRow" style="display:none;">
+                    <span class="success-info-label">Élèves ajoutés:</span>
+                    <span class="success-info-value" id="successElevesCount">0</span>
+                </div>
+            </div>
+
+            <p style="color: rgba(255, 255, 255, 0.7); font-size: 13px; margin: 15px 0;">
+                Vous pouvez maintenant vous connecter avec votre email et code PIN
+            </p>
+
+            <button class="success-btn" onclick="goToLogin()">
+                🔓 Aller à la connexion
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const isElectron = typeof require !== 'undefined';
+        let ipcRenderer = null;
+
+        if (isElectron) {
+            try {
+                ipcRenderer = require('electron').ipcRenderer;
+            } catch (e) {
+                console.log('IPC non disponible');
+            }
+        }
+
+        // État actuel
+        let currentType = 'visiteur';
+
+        // Liste des élèves saisie par le professeur (avant création du compte)
+        let elevesListState = [];
+
+        // Enfants (comptes élèves existants) reliés par un membre-parent
+        let enfantsListState = [];
+
+        // Configuration des types
+        const accountTypes = {
+            visiteur: {
+                prefix: 'VI',
+                domain: '@echo.znk',
+                role: 'visitor',
+                name: 'Visiteur',
+                description: `
+                    <strong>🎯 Compte Visiteur</strong> - Découvrez l'écosystème ZNK
+                    <ul class="features-list">
+                        <li>Scan de documents</li>
+                        <li>Création de contenu</li>
+                        <li>Statistiques personnelles</li>
+                    </ul>
+                `,
+                accentColor: '#00ffff',
+                gradientStart: '#00ffff',
+                gradientEnd: '#0080ff'
+            },
+            etudes: {
+                prefix: 'ET',
+                domain: '@echo.znk',
+                role: 'ecole',
+                name: 'Études',
+                description: `
+                    <strong>📚 Compte Études</strong> - Espace complet pour étudiants
+                    <ul class="features-list">
+                        <li>Tous les outils visiteur</li>
+                        <li>Organisation académique avancée</li>
+                        <li>Statistiques d'apprentissage</li>
+                        <li>Collaboration étudiante</li>
+                    </ul>
+                `,
+                accentColor: '#43e97b',
+                gradientStart: '#43e97b',
+                gradientEnd: '#38f9d7'
+            },
+            enseignant: {
+                prefix: 'EN',
+                domain: '@echo.znk',
+                role: 'enseignant',
+                name: 'Enseignant',
+                description: `
+                    <strong>🎓 Compte Enseignant</strong> - Pour les professeurs d'un établissement précis ou les formateurs indépendants qui souhaitent partager leur savoir
+                    <ul class="features-list">                      
+                        <li>Profil enseignant lié à un établissement ou indépendant</li>
+                         <li>Liste des eleves de la classe</li>
+                    </ul>
+                `,
+                accentColor: '#ffd700',
+                gradientStart: '#ffd700',
+                gradientEnd: '#ff8c00'
+            },
+            membreParent: {
+                prefix: 'MP',
+                domain: '@echo.znk',
+                role: 'membre-parent',
+                name: 'Membre-Parent',
+                description: `
+                    <strong>👨‍👩‍👧 Compte Membre-Parent</strong> - Reliez-vous au compte élève déjà créé par l'enseignant de votre enfant
+                    <ul class="features-list">
+                        <li>Suivi de la progression de votre enfant</li>
+                        <li>Un compte peut être relié à plusieurs enfants</li>
+                        <li>Ne crée pas de nouveau compte élève : relie un compte existant</li>
+                    </ul>
+                `,
+                accentColor: '#ff6ec7',
+                gradientStart: '#ff6ec7',
+                gradientEnd: '#a855f7'
+            }
+        };
+
+        // Initialisation
+        function init() {
+            document.getElementById('typeVisiteur').addEventListener('click', () => switchType('visiteur'));
+            document.getElementById('typeEtudes').addEventListener('click', () => switchType('etudes'));
+            document.getElementById('typeEnseignant').addEventListener('click', () => switchType('enseignant'));
+            document.getElementById('typeMembreParent').addEventListener('click', () => switchType('membreParent'));
+            
+            document.getElementById('prenom').addEventListener('input', updatePreviews);
+            document.getElementById('nom').addEventListener('input', updatePreviews);
+            
+            document.getElementById('code').addEventListener('input', validateCode);
+            document.getElementById('codeConfirm').addEventListener('input', validateCodeConfirm);
+
+            document.getElementById('statutEnseignant').addEventListener('change', updateStatutEnseignant);
+            document.getElementById('etablissement').addEventListener('input', updateEtablissementHint);
+            populateEtablissementsDatalist();
+
+            // Confort : pré-remplir le niveau élève avec le niveau enseigné choisi par le prof
+            document.getElementById('niveauEnseigne').addEventListener('change', () => {
+                const eleveNiveauSelect = document.getElementById('eleveNiveau');
+                if (eleveNiveauSelect && !eleveNiveauSelect.value) {
+                    eleveNiveauSelect.value = document.getElementById('niveauEnseigne').value;
+                }
+            });
+
+            document.getElementById('elevePrenom').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addEleve(); }
+            });
+            document.getElementById('eleveNom').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addEleve(); }
+            });
+
+            document.getElementById('enfantLoginId').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); linkEnfant(); }
+            });
+            
+            document.getElementById('inscriptionForm').addEventListener('submit', handleSubmit);
+
+            // Important : poser les variables CSS (--accent-color, --gradient-start/end)
+            // au niveau racine dès le chargement. Sans ça, tant que l'utilisateur n'a
+            // pas cliqué sur un type de compte (switchType), ces variables ne sont
+            // définies que localement par .container.<type> et ne sont donc pas
+            // héritées par #successOverlay, qui est en dehors de .container.
+            // C'est ce qui rendait le bouton "Aller à la connexion" invisible pour
+            // le type "visiteur" (actif par défaut, jamais cliqué).
+            const initConfig = accountTypes[currentType];
+            document.documentElement.style.setProperty('--accent-color', initConfig.accentColor);
+            document.documentElement.style.setProperty('--gradient-start', initConfig.gradientStart);
+            document.documentElement.style.setProperty('--gradient-end', initConfig.gradientEnd);
+
+            updateDescription();
+            updatePreviews();
+        }
+
+        // Changer de type de compte
+        function switchType(type) {
+            currentType = type;
+            
+            // Mettre à jour les boutons
+            document.getElementById('typeVisiteur').classList.toggle('active', type === 'visiteur');
+            document.getElementById('typeEtudes').classList.toggle('active', type === 'etudes');
+            document.getElementById('typeEnseignant').classList.toggle('active', type === 'enseignant');
+            document.getElementById('typeMembreParent').classList.toggle('active', type === 'membreParent');
+            
+            // Mettre à jour le conteneur
+            const container = document.getElementById('mainContainer');
+            container.className = `container ${type}`;
+            
+            // Mettre à jour les variables CSS
+            const config = accountTypes[type];
+            document.documentElement.style.setProperty('--accent-color', config.accentColor);
+            document.documentElement.style.setProperty('--gradient-start', config.gradientStart);
+            document.documentElement.style.setProperty('--gradient-end', config.gradientEnd);
+            
+            // Afficher/masquer les champs spécifiques
+            const etudesFields = document.querySelectorAll('.etudes-only');
+            etudesFields.forEach(field => {
+                field.classList.toggle('show', type === 'etudes');
+            });
+
+            const enseignantFields = document.querySelectorAll('.enseignant-only');
+            enseignantFields.forEach(field => {
+                field.classList.toggle('show', type === 'enseignant');
+            });
+
+            const membreParentFields = document.querySelectorAll('.membreparent-only');
+            membreParentFields.forEach(field => {
+                field.classList.toggle('show', type === 'membreParent');
+            });
+
+            // Le champ Pays sert à afficher le bon drapeau sur Art Études :
+            // utile pour les élèves et les enseignants uniquement.
+            const paysFields = document.querySelectorAll('.pays-group');
+            paysFields.forEach(field => {
+                field.classList.toggle('show', type === 'etudes' || type === 'enseignant');
+            });
+
+            if (type !== 'membreParent') {
+                enfantsListState = [];
+                renderEnfantsList();
+            }
+
+            if (type !== 'enseignant') {
+                // Réinitialiser le sous-état et masquer les sous-champs
+                document.getElementById('statutEnseignant').value = '';
+                document.querySelectorAll('.ecole-only, .independant-only').forEach(field => {
+                    field.classList.remove('show');
+                });
+                // Réinitialiser la liste des élèves saisie
+                elevesListState = [];
+                renderElevesList();
+            }
+            
+            updateDescription();
+            updatePreviews();
+        }
+
+        // Afficher les sous-champs selon le statut de l'enseignant (école précise ou indépendant)
+        function updateStatutEnseignant() {
+            const statut = document.getElementById('statutEnseignant').value;
+            document.querySelectorAll('.ecole-only').forEach(field => {
+                field.classList.toggle('show', statut === 'ecole');
+            });
+            document.querySelectorAll('.independant-only').forEach(field => {
+                field.classList.toggle('show', statut === 'independant');
+            });
+            if (statut === 'ecole') populateEtablissementsDatalist();
+        }
+
+        // ================= Établissements déjà créés (suggestions + ID École) =================
+        // But : quand un enseignant tape le nom de son établissement, lui proposer les
+        // noms déjà saisis par d'autres enseignants sur cet appareil (autocomplétion),
+        // et lui montrer en direct l'ID École qui sera généré — pour qu'il utilise
+        // exactement la même orthographe qu'un collègue et obtienne ainsi le MÊME ID.
+        //
+        // Le calcul d'ID est le même hash déterministe que celui utilisé dans
+        // professeur.html : deux enseignants qui saisissent le même nom (aux accents/
+        // majuscules/espaces près) obtiennent toujours le même ID École, sans registre
+        // central — cela reste donc limité aux établissements déjà vus SUR CET APPAREIL
+        // (ou déjà présents dans users.json en mode Electron).
+        function normalizeEcoleNom(nom) {
+            return (nom || '').toString()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().trim().replace(/\s+/g, ' ');
+        }
+
+        function hashString(str) {
+            let hash = 5381;
+            for (let i = 0; i < str.length; i++) {
+                hash = (((hash << 5) + hash) + str.charCodeAt(i)) >>> 0;
+            }
+            return hash;
+        }
+
+        function generateEcoleId(nom) {
+            const norm = normalizeEcoleNom(nom);
+            if (!norm) return null;
+            return 'ECO-' + hashString(norm).toString(36).toUpperCase();
+        }
+
+        // Récupère les noms d'établissements déjà saisis par des enseignants sur cet
+        // appareil (registre local + éventuellement users.json en mode Electron).
+        async function getKnownEtablissements() {
+            const noms = new Map(); // clé = nom normalisé, valeur = 1ère orthographe vue
+
+            const addIfEcole = (acc) => {
+                if (acc && acc.role === 'enseignant' && acc.statutEnseignant === 'ecole' && acc.etablissement) {
+                    const norm = normalizeEcoleNom(acc.etablissement);
+                    if (norm && !noms.has(norm)) noms.set(norm, acc.etablissement.trim());
+                }
+            };
+
+            try {
+                const store = JSON.parse(localStorage.getItem(ZNK_DEVICE_ACCOUNTS_KEY) || '{}');
+                Object.values(store).forEach(addIfEcole);
+            } catch (err) {
+                console.warn('getKnownEtablissements (device store):', err);
+            }
+
+            try {
+                if (isElectron && window.electronAPI && window.electronAPI.getAllUsers) {
+                    const allUsers = await window.electronAPI.getAllUsers();
+                    if (Array.isArray(allUsers)) allUsers.forEach(addIfEcole);
+                }
+            } catch (err) {
+                console.warn('getKnownEtablissements (Electron):', err);
+            }
+
+            return Array.from(noms.values()).sort((a, b) => a.localeCompare(b, 'fr'));
+        }
+
+        async function populateEtablissementsDatalist() {
+            const datalist = document.getElementById('etablissementsDatalist');
+            if (!datalist) return;
+            const noms = await getKnownEtablissements();
+            datalist.innerHTML = noms.map(n => `<option value="${n.replace(/"/g, '&quot;')}"></option>`).join('');
+        }
+
+        // Aperçu en direct de l'ID École pendant la saisie.
+        function updateEtablissementHint() {
+            const input = document.getElementById('etablissement');
+            const hint = document.getElementById('etablissementHint');
+            if (!input || !hint) return;
+            const val = input.value.trim();
+            if (!val) { hint.classList.remove('show'); return; }
+            hint.innerHTML = `ID École : <strong>${generateEcoleId(val)}</strong> — identique pour tout enseignant saisissant exactement ce nom.`;
+            hint.classList.add('show');
+        }
+
+        // ===== Gestion de la liste des élèves (compte enseignant) =====
+
+        // Retire les accents et ne garde que les lettres, en minuscule
+        function slugify(str) {
+            return (str || '')
+                .toString()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z]/g, '');
+        }
+
+        // Correspondance niveau précis -> groupe de niveau (utilisé par le dashboard
+        // pour choisir automatiquement ArtEtudes-maternelle / Primaire / College / lycee.html)
+        const NIVEAU_TO_GROUPE = {
+            ps: 'maternelle', ms: 'maternelle', gs: 'maternelle',
+            cp: 'primaire', ce1: 'primaire', ce2: 'primaire', cm1: 'primaire', cm2: 'primaire',
+            '6eme': 'college', '5eme': 'college', '4eme': 'college', '3eme': 'college',
+            seconde: 'lycee', premiere: 'lycee', terminale: 'lycee',
+            bts1: 'superieur', bts2: 'superieur', bts: 'superieur',
+            licence1: 'superieur', licence2: 'superieur', licence3: 'superieur', licence: 'superieur',
+            master1: 'superieur', master2: 'superieur', master: 'superieur',
+            doctorat: 'superieur', formation: 'autre', autre: 'autre'
+        };
+
+        function niveauToGroupe(niveau) {
+            return NIVEAU_TO_GROUPE[niveau] || 'autre';
+        }
+
+        // Libellé lisible d'un niveau à partir de sa valeur (lit directement les <option> du select)
+        function niveauLabel(niveau) {
+            if (!niveau) return 'Niveau non renseigné';
+            const opt = document.querySelector(`#eleveNiveau option[value="${niveau}"]`);
+            return opt ? opt.textContent : niveau;
+        }
+
+        // Génère un identifiant de connexion unique : prénom + 1ère lettre du nom
+        function generateLoginId(prenom, nom, existingIds) {
+            const base = slugify(prenom) + slugify(nom).charAt(0);
+            let id = base || 'eleve';
+            let n = 1;
+            while (existingIds.has(id)) {
+                id = base + n;
+                n++;
+            }
+            existingIds.add(id);
+            return id;
+        }
+
+        function addEleve() {
+            const prenomInput = document.getElementById('elevePrenom');
+            const nomInput = document.getElementById('eleveNom');
+            const niveauSelect = document.getElementById('eleveNiveau');
+            const prenom = prenomInput.value.trim();
+            const nom = nomInput.value.trim();
+            const niveau = niveauSelect.value;
+
+            if (!prenom || !nom) {
+                alert('⚠️ Renseignez le prénom et le nom de l\'élève');
+                return;
+            }
+
+            if (!niveau) {
+                alert('⚠️ Sélectionnez le niveau scolaire de l\'élève');
+                niveauSelect.focus();
+                return;
+            }
+
+            elevesListState.push({ prenom, nom, niveau, niveauGroupe: niveauToGroupe(niveau) });
+            prenomInput.value = '';
+            nomInput.value = '';
+            // On ne réinitialise pas le niveau : pratique quand toute une classe a le même niveau
+            prenomInput.focus();
+            renderElevesList();
+        }
+
+        function removeEleve(index) {
+            elevesListState.splice(index, 1);
+            renderElevesList();
+        }
+
+        function renderElevesList() {
+            const container = document.getElementById('elevesList');
+            if (!container) return;
+
+            if (elevesListState.length === 0) {
+                container.innerHTML = '<div class="eleves-empty">Aucun élève ajouté pour l\'instant</div>';
+                return;
+            }
+
+            const usedIds = new Set();
+            container.innerHTML = elevesListState.map((e, index) => {
+                const loginId = generateLoginId(e.prenom, e.nom, usedIds);
+                return `
+                    <div class="eleve-item">
+                        <div>
+                            <div class="eleve-name">${e.prenom} ${e.nom}</div>
+                            <div class="eleve-creds">ID: ${loginId} · PIN: 1234</div>
+                            <div class="eleve-niveau">${niveauLabel(e.niveau)}</div>
+                        </div>
+                        <button type="button" class="eleve-remove" onclick="removeEleve(${index})" title="Retirer">✕</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Cherche, sur cet appareil, un élève déjà créé par un enseignant
+        // (stocké sous znk_eleves_<profId>) dont l'identifiant correspond.
+        function findEleveByLoginId(loginId) {
+            const target = loginId.trim().toLowerCase();
+            if (!target) return null;
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (!key || !key.startsWith('znk_eleves_')) continue;
+                try {
+                    const eleves = JSON.parse(localStorage.getItem(key) || '[]');
+                    const match = eleves.find(e => (e.loginId || '').toLowerCase() === target);
+                    if (match) return match; // contient déjà profId, prenom, nom, niveau
+                } catch (err) { /* clé corrompue, on ignore */ }
+            }
+            return null;
+        }
+
+        function linkEnfant() {
+            const input = document.getElementById('enfantLoginId');
+            const loginId = input.value.trim();
+
+            if (!loginId) {
+                alert('⚠️ Entrez l\'identifiant ZNK de l\'élève');
+                return;
+            }
+            if (enfantsListState.some(e => e.loginId.toLowerCase() === loginId.toLowerCase())) {
+                alert('⚠️ Cet enfant est déjà relié à ce compte');
+                return;
+            }
+
+            const eleve = findEleveByLoginId(loginId);
+            if (!eleve) {
+                alert('❌ Aucun compte élève trouvé avec cet identifiant sur cet appareil.\n\nVérifiez l\'identifiant auprès de l\'enseignant, ou assurez-vous que le compte enseignant qui l\'a créé a bien été ouvert sur cet appareil.');
+                return;
+            }
+
+            enfantsListState.push({
+                loginId: eleve.loginId,
+                profId: eleve.profId,
+                prenom: eleve.prenom,
+                nom: eleve.nom,
+                niveau: eleve.niveau
+            });
+            input.value = '';
+            renderEnfantsList();
+        }
+
+        function removeEnfant(index) {
+            enfantsListState.splice(index, 1);
+            renderEnfantsList();
+        }
+
+        function renderEnfantsList() {
+            const container = document.getElementById('enfantsList');
+            if (!container) return;
+
+            if (enfantsListState.length === 0) {
+                container.innerHTML = '<div class="eleves-empty">Aucun enfant relié pour l\'instant</div>';
+                return;
+            }
+
+            container.innerHTML = enfantsListState.map((e, index) => `
+                <div class="eleve-item">
+                    <div>
+                        <div class="eleve-name">${e.prenom} ${e.nom}</div>
+                        <div class="eleve-creds">ID: ${e.loginId}</div>
+                        <div class="eleve-niveau">${niveauLabel(e.niveau) || e.niveau || ''}</div>
+                    </div>
+                    <button type="button" class="eleve-remove" onclick="removeEnfant(${index})" title="Retirer">✕</button>
+                </div>
+            `).join('');
+        }
+
+        // Mettre à jour la description
+        function updateDescription() {
+            const config = accountTypes[currentType];
+            document.getElementById('descriptionContent').innerHTML = config.description;
+        }
+
+        // Mettre à jour les prévisualisations
+        function updatePreviews() {
+            const prenom = document.getElementById('prenom').value.trim().toLowerCase();
+            const nom = document.getElementById('nom').value.trim().toLowerCase();
+            const config = accountTypes[currentType];
+            
+            // Email
+            let email = '---';
+            if (prenom && nom) {
+                email = `${prenom}.${nom}${config.domain}`;
+            } else if (prenom || nom) {
+                email = `${prenom || nom}...${config.domain}`;
+            }
+            document.getElementById('emailPreview').textContent = email;
+            
+            // ID
+            let id = `${config.prefix}####`;
+            if (prenom && nom) {
+                const randomNum = Math.floor(1000 + Math.random() * 9000);
+                id = `${config.prefix}${randomNum}`;
+            }
+            document.getElementById('idPreview').textContent = id;
+        }
+
+        // Validation du code
+        function validateCode() {
+            const code = document.getElementById('code').value;
+            const codeError = document.getElementById('codeError');
+            const codeInput = document.getElementById('code');
+
+            if (code.length > 0 && !/^\d+$/.test(code)) {
+                showError(codeInput, codeError, 'Seuls les chiffres sont autorisés');
+                return false;
+            }
+
+            if (code.length === 4) {
+                clearError(codeInput, codeError);
+                return true;
+            }
+
+            return false;
+        }
+
+        // Validation confirmation code
+        function validateCodeConfirm() {
+            const code = document.getElementById('code').value;
+            const codeConfirm = document.getElementById('codeConfirm').value;
+            const codeConfirmError = document.getElementById('codeConfirmError');
+            const codeConfirmInput = document.getElementById('codeConfirm');
+
+            if (codeConfirm && code !== codeConfirm) {
+                showError(codeConfirmInput, codeConfirmError, 'Les codes ne correspondent pas');
+                return false;
+            }
+
+            clearError(codeConfirmInput, codeConfirmError);
+            return true;
+        }
+
+        function showError(input, errorElement, message) {
+            input.classList.add('error');
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+
+        function clearError(input, errorElement) {
+            input.classList.remove('error');
+            errorElement.classList.remove('show');
+        }
+
+        // ========================================
+        // REGISTRE MULTI-COMPTES DE L'APPAREIL.
+        // Contrairement à 'znk_account' (case unique, écrasée à chaque nouvelle
+        // inscription — c'était le bug : créer un 2e compte, p.ex. un 2e
+        // enseignant, effaçait silencieusement le 1er), cette clé garde TOUS les
+        // comptes créés sur cet appareil, indexés par email. auth-hub.html
+        // consulte ce registre à la connexion, donc aucun compte ne disparaît
+        // plus quand un nouveau est créé.
+        // ========================================
+        const ZNK_DEVICE_ACCOUNTS_KEY = 'znk_device_accounts_store';
+
+        function saveDeviceAccountToStore(account) {
+            try {
+                const store = JSON.parse(localStorage.getItem(ZNK_DEVICE_ACCOUNTS_KEY) || '{}');
+                store[account.email.toLowerCase()] = account;
+                localStorage.setItem(ZNK_DEVICE_ACCOUNTS_KEY, JSON.stringify(store));
+            } catch (err) {
+                console.warn('saveDeviceAccountToStore:', err);
+            }
+        }
+
+        // Vérifie si un email (donc un couple prénom+nom, ex: leo.martin@echo.znk)
+        // est déjà pris par un compte existant, tous types confondus, pour éviter
+        // que 2 comptes partagent le même identifiant de connexion.
+        async function isEmailAlreadyUsed(email) {
+            const emailLower = email.toLowerCase();
+
+            // 1) Registre multi-comptes de l'appareil (tous les comptes créés via ce formulaire).
+            try {
+                const store = JSON.parse(localStorage.getItem(ZNK_DEVICE_ACCOUNTS_KEY) || '{}');
+                if (store[emailLower]) return true;
+            } catch (err) {
+                console.warn('isEmailAlreadyUsed (device store):', err);
+            }
+
+            // 2) Ancien slot unique 'znk_account' (compte le plus récent créé en mode web).
+            try {
+                const stored = JSON.parse(localStorage.getItem('znk_account') || 'null');
+                if (stored && stored.email && stored.email.toLowerCase() === emailLower) return true;
+            } catch (err) {
+                console.warn('isEmailAlreadyUsed (znk_account):', err);
+            }
+
+            // 3) En Electron, stockage persistant réel (users.json), au cas où le
+            // registre local aurait été effacé sans que les comptes aient disparu.
+            try {
+                if (isElectron && window.electronAPI && window.electronAPI.getAllUsers) {
+                    const allUsers = await window.electronAPI.getAllUsers();
+                    if (Array.isArray(allUsers) && allUsers.some(u => (u.email || '').toLowerCase() === emailLower)) {
+                        return true;
+                    }
+                }
+            } catch (err) {
+                console.warn('isEmailAlreadyUsed (Electron):', err);
+            }
+
+            return false;
+        }
+
+        // Soumission du formulaire
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            // Registre local (fonctionne offline et en mode web) de tous les comptes
+            // déjà créés sur cet appareil, pour appliquer la règle : 1 seul compte
+            // "réel" (études/enseignant/membre...) autorisé, autre qu'invité.
+            // Les élèves ajoutés par un enseignant ne passent pas par ce formulaire
+            // (ils sont créés depuis le compte du prof, via terminal-lecons.html),
+            // donc ils ne comptent jamais dans cette limite.
+            function getDeviceAccounts() {
+                try {
+                    return JSON.parse(localStorage.getItem('znk_created_accounts') || '[]');
+                } catch (err) {
+                    return [];
+                }
+            }
+
+            function registerDeviceAccount(account) {
+                try {
+                    const accounts = getDeviceAccounts();
+                    accounts.push({ id: account.idZNK, role: account.role, createdAt: account.createdAt });
+                    localStorage.setItem('znk_created_accounts', JSON.stringify(accounts));
+                } catch (err) {
+                    console.warn('registerDeviceAccount:', err);
+                }
+            }
+
+            // Anciennement : un seul compte non-invité par appareil, TOUS rôles
+            // confondus (un enseignant ne pouvait donc jamais créer en plus un
+            // compte membre personnel). On limite désormais par RÔLE : un seul
+            // compte de CHAQUE rôle (enseignant, membre, école...) par appareil,
+            // ce qui permet à un enseignant d'avoir son compte "enseignant" ET
+            // un compte "membre" personnel sur la même machine.
+            async function hasExistingAccountWithRole(role) {
+                // 1) Registre local : fiable même hors ligne / en mode web.
+                if (getDeviceAccounts().some(acc => acc.role === role)) return true;
+
+                // 2) En Electron, on croise avec le stockage persistant réel
+                // (users.json), au cas où le registre local aurait été effacé
+                // sans que les comptes eux-mêmes aient disparu.
+                try {
+                    if (isElectron && window.electronAPI && window.electronAPI.getAllUsers) {
+                        const allUsers = await window.electronAPI.getAllUsers();
+                        if (Array.isArray(allUsers) && allUsers.some(u => u.role === role)) return true;
+                    }
+                } catch (err) {
+                    console.warn('Vérification Electron des comptes existants:', err);
+                }
+
+                return false;
+            }
+
+            const prenom = document.getElementById('prenom').value.trim();
+            const nom = document.getElementById('nom').value.trim();
+            const code = document.getElementById('code').value;
+            const codeConfirm = document.getElementById('codeConfirm').value;
+            const config = accountTypes[currentType];
+
+            // Validations
+            if (!prenom || !nom) {
+                alert('⚠️ Veuillez remplir tous les champs');
+                return;
+            }
+
+            if (currentType === 'etudes') {
+                const niveau = document.getElementById('niveau').value;
+                if (!niveau) {
+                    alert('⚠️ Veuillez sélectionner votre niveau d\'études');
+                    return;
+                }
+                const ecoleEtudes = document.getElementById('ecoleEtudes').value.trim();
+                if (!ecoleEtudes) {
+                    alert('⚠️ Veuillez indiquer le nom de votre école');
+                    return;
+                }
+                if (!document.getElementById('pays').value) {
+                    alert('⚠️ Veuillez sélectionner votre pays');
+                    return;
+                }
+            }
+
+            if (currentType === 'membreParent') {
+                if (enfantsListState.length === 0) {
+                    alert('⚠️ Reliez au moins un compte élève avant de créer votre compte membre-parent');
+                    return;
+                }
+            }
+
+            if (currentType === 'enseignant') {
+                const statutEnseignant = document.getElementById('statutEnseignant').value;
+                if (!statutEnseignant) {
+                    alert('⚠️ Veuillez indiquer si vous êtes professeur dans un établissement ou formateur indépendant');
+                    return;
+                }
+
+                if (statutEnseignant === 'ecole') {
+                    const etablissement = document.getElementById('etablissement').value.trim();
+                    const niveauEnseigne = document.getElementById('niveauEnseigne').value;
+                    if (!etablissement) {
+                        alert('⚠️ Veuillez indiquer le nom de votre établissement');
+                        return;
+                    }
+                    if (!niveauEnseigne) {
+                        alert('⚠️ Veuillez sélectionner le niveau enseigné');
+                        return;
+                    }
+                } else if (statutEnseignant === 'independant') {
+                    const specialite = document.getElementById('specialite').value.trim();
+                    if (!specialite) {
+                        alert('⚠️ Veuillez indiquer votre spécialité ou le savoir que vous souhaitez partager');
+                        return;
+                    }
+                }
+
+                if (!document.getElementById('pays').value) {
+                    alert('⚠️ Veuillez sélectionner votre pays');
+                    return;
+                }
+
+                if (code === '1234') {
+                    alert('⚠️ Le code 1234 est réservé aux élèves. Choisissez un autre code PIN pour votre compte enseignant.');
+                    return;
+                }
+            }
+
+            if (code.length !== 4 || !/^\d{4}$/.test(code)) {
+                alert('⚠️ Le code doit contenir exactement 4 chiffres');
+                return;
+            }
+
+            if (code !== codeConfirm) {
+                alert('⚠️ Les codes ne correspondent pas');
+                return;
+            }
+
+            // Limite : 1 seul compte par RÔLE et par appareil (ex : un seul
+            // "enseignant", un seul "membre"...). Le compte visiteur reste
+            // libre, et les comptes élèves créés par un enseignant depuis son
+            // propre compte ne sont pas concernés. Un enseignant peut donc
+            // créer en plus un compte "membre" personnel sur le même appareil.
+            if (config.role !== 'visitor' && await hasExistingAccountWithRole(config.role)) {
+                alert(`⚠️ Un compte "${config.name || config.role}" existe déjà sur cet appareil.\n\nConnectez-vous au compte existant via l'écran de connexion, ou créez un compte d'un autre type (ex : membre) si c'est ce que vous cherchez à faire.`);
+                return;
+            }
+
+            // Générer l'email et vérifier qu'il n'est pas déjà utilisé par un
+            // autre compte (même prénom + même nom -> même identifiant de connexion).
+            const email = `${prenom.toLowerCase()}.${nom.toLowerCase()}${config.domain}`;
+
+            if (await isEmailAlreadyUsed(email)) {
+                alert(`⚠️ L'identifiant "${email}" est déjà utilisé par un compte existant.\n\nAjoutez une initiale ou un chiffre à votre nom (ex : ${nom.toLowerCase()}2) pour obtenir un identifiant unique, ou connectez-vous au compte existant depuis l'écran de connexion.`);
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Création en cours...';
+
+            const idZNK = `${config.prefix}${Math.floor(1000 + Math.random() * 9000)}`;
+
+            const accountData = {
+                idZNK,
+                id: idZNK,           // alias attendu par znk-session.js / nomad.html / CIZNK
+                email,
+                emailZnk: email,    // alias attendu par znk-session.js
+                prenom,
+                nom,
+                code,
+                role: config.role,
+                createdAt: new Date().toISOString(),
+                balance: 0,
+                betis: 0
+            };
+
+            if (currentType === 'etudes') {
+                accountData.niveau = document.getElementById('niveau').value;
+                accountData.ecole = document.getElementById('ecoleEtudes').value.trim();
+                const paysSelectEtudes = document.getElementById('pays');
+                accountData.pays = paysSelectEtudes.value;
+                accountData.paysFlag = paysSelectEtudes.selectedOptions[0]?.dataset.flag || '';
+            }
+
+            if (currentType === 'membreParent') {
+                // On ne crée aucun nouveau compte élève ici : on référence les
+                // comptes déjà créés par l'enseignant (znk_eleves_<profId>).
+                accountData.enfants = enfantsListState.map(e => ({
+                    loginId: e.loginId,
+                    profId: e.profId,
+                    prenom: e.prenom,
+                    nom: e.nom,
+                    niveau: e.niveau
+                }));
+            }
+
+            if (currentType === 'enseignant') {
+                const statutEnseignant = document.getElementById('statutEnseignant').value;
+                accountData.statutEnseignant = statutEnseignant;
+                if (statutEnseignant === 'ecole') {
+                    accountData.etablissement = document.getElementById('etablissement').value.trim();
+                    accountData.niveauEnseigne = document.getElementById('niveauEnseigne').value;
+                } else if (statutEnseignant === 'independant') {
+                    accountData.specialite = document.getElementById('specialite').value.trim();
+                }
+                const paysSelectProf = document.getElementById('pays');
+                accountData.pays = paysSelectProf.value;
+                accountData.paysFlag = paysSelectProf.selectedOptions[0]?.dataset.flag || '';
+
+                // Génération des comptes élèves : ID de connexion (prénom + 1ère lettre du nom)
+                // + code PIN commun 1234 (différent du code du professeur)
+                const usedIds = new Set();
+                accountData.eleves = elevesListState.map(e => ({
+                    loginId: generateLoginId(e.prenom, e.nom, usedIds),
+                    pin: '1234',
+                    prenom: e.prenom,
+                    nom: e.nom,
+                    niveau: e.niveau,
+                    niveauGroupe: e.niveauGroupe || niveauToGroupe(e.niveau),
+                    profId: idZNK,
+                    createdAt: new Date().toISOString()
+                }));
+
+                // Copie dédiée dans localStorage, sous une clé propre au professeur :
+                // c'est ce que professeur.html (module "Mes élèves") lit et modifie ensuite.
+                if (accountData.eleves.length > 0) {
+                    try {
+                        localStorage.setItem(`znk_eleves_${idZNK}`, JSON.stringify(accountData.eleves));
+                    } catch (err) {
+                        console.warn('Impossible d\'enregistrer la liste des élèves localement', err);
+                    }
+                }
+            }
+
+            try {
+                let result;
+
+                if (isElectron && ipcRenderer) {
+                    // Mode Electron : sauvegarde durable sur disque (users.json)
+                    result = await ipcRenderer.invoke('create-user', accountData);
+                    // + on garde aussi une copie dans localStorage : c'est ce que
+                    // auth-hub.html lit pour authentifier et que infos-user.html
+                    // affiche automatiquement après connexion.
+                    if (result && result.success) {
+                        localStorage.setItem('znk_account', JSON.stringify(accountData));
+                        saveDeviceAccountToStore(accountData);
+                    }
+                } else {
+                    // Mode web
+                    localStorage.setItem('znk_account', JSON.stringify(accountData));
+                    saveDeviceAccountToStore(accountData);
+                    result = { success: true, data: { idZNK, email } };
+                }
+
+                // Identité unique : on ouvre immédiatement la session ZNKSession
+                // avec ce compte fraîchement créé, pour que tous les modules
+                // (nomad.html, user-profile.html, CIZNK.html...) le reconnaissent
+                // sans repasser par un écran de connexion séparé.
+                if (result.success && window.ZNKSession) {
+                    window.ZNKSession.setSession(accountData);
+                }
+
+                if (result.success) {
+                    registerDeviceAccount(accountData);
+                    showSuccess(idZNK, email, config.name, accountData.eleves ? accountData.eleves.length : 0);
+                } else {
+                    throw new Error(result.error || 'Erreur de création');
+                }
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur: ' + (error.message || 'Impossible de créer le compte'));
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✨ Créer mon compte';
+            }
+        }
+
+        // Afficher le succès
+        function showSuccess(idZNK, email, typeName, elevesCount) {
+            // Appliquer les couleurs au success card
+            const successCard = document.getElementById('successCard');
+            successCard.style.borderColor = accountTypes[currentType].accentColor;
+            
+            document.getElementById('successIdZNK').textContent = idZNK;
+            document.getElementById('successEmail').textContent = email;
+            document.getElementById('successType').textContent = typeName;
+
+            const elevesRow = document.getElementById('successElevesRow');
+            if (elevesCount > 0) {
+                document.getElementById('successElevesCount').textContent = elevesCount;
+                elevesRow.style.display = 'flex';
+            } else {
+                elevesRow.style.display = 'none';
+            }
+
+            document.getElementById('successOverlay').style.display = 'flex';
+        }
+
+        function goToLogin() {
+            if (currentType === 'enseignant') {
+                window.location.href = 'ZNKartEtudesDash-prof.html';
+            } else {
+                window.location.href = 'auth-hub.html';
+            }
+        }
+
+        // Initialiser au chargement
+        document.addEventListener('DOMContentLoaded', init);
+
+        console.log('✅ Page d\'inscription unifiée chargée');
+    </script>
+</body>
+</html>

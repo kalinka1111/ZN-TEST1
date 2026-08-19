@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>©ZNKsystem</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 60%, #0f3460 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Particules d'arrière-plan */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(0, 212, 255, 0.6);
+            border-radius: 50%;
+            animation: float 6s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        /* Container principal */
+        .main-container {
+            position: relative;
+            z-index: 2;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        /* Titre principal avec effet glow */
+        .main-title {
+            font-size: 4rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 60px;
+            background: linear-gradient(45deg, #00d4ff, #ffffff, #00d4ff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        @keyframes titleGlow {
+            0% {
+                background-position: 0% 50%;
+                filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.3));
+            }
+            100% {
+                background-position: 100% 50%;
+                filter: drop-shadow(0 0 40px rgba(0, 212, 255, 0.6));
+            }
+        }
+
+        /* Écran télé */
+        .tv-screen {
+            width: 500px;
+            height: 300px;
+            background: #000;
+            border-radius: 20px;
+            border: 8px solid #2a2a2a;
+            position: relative;
+            margin-bottom: 60px;
+            box-shadow: 
+                0 0 30px rgba(0, 212, 255, 0.3),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+            animation: screenPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes screenPulse {
+            0%, 100% {
+                box-shadow: 
+                    0 0 30px rgba(0, 212, 255, 0.3),
+                    inset 0 0 20px rgba(255, 255, 255, 0.05);
+            }
+            50% {
+                box-shadow: 
+                    0 0 50px rgba(0, 212, 255, 0.6),
+                    inset 0 0 30px rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .tv-content {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #001122, #003366, #001122);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Effet de scan lines */
+        .tv-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 212, 255, 0.1) 2px,
+                rgba(0, 212, 255, 0.1) 4px
+            );
+            animation: scanlines 2s linear infinite;
+        }
+
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        .workflow-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
+            text-align: center;
+            z-index: 1;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+            animation: workflowBlink 2s ease-in-out infinite;
+        }
+
+        @keyframes workflowBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .admin-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 10px;
+            z-index: 1;
+        }
+
+        /* Boutons d'action */
+        .action-buttons {
+            display: flex;
+            gap: 40px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            padding: 18px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .connect-btn {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.5);
+            background: linear-gradient(45deg, #00e5ff, #00b3e6);
+        }
+
+        .register-btn {
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.2));
+            color: white;
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .register-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            background: linear-gradient(45deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.3));
+            border-color: #00d4ff;
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Effet de ripple sur les boutons */
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transition: width 0.6s, height 0.6s, top 0.6s, left 0.6s;
+            z-index: -1;
+        }
+
+        .action-btn:active::before {
+            width: 300px;
+            height: 300px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Animation d'entrée */
+        .fade-in {
+            opacity: 0;
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        .fade-in:nth-child(1) { animation-delay: 0.2s; }
+        .fade-in:nth-child(2) { animation-delay: 0.6s; }
+        .fade-in:nth-child(3) { animation-delay: 1s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.5rem;
+                margin-bottom: 40px;
+            }
+            
+            .tv-screen {
+                width: 350px;
+                height: 200px;
+                margin-bottom: 40px;
+            }
+            
+            .workflow-text {
+                font-size: 18px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .action-btn {
+                padding: 15px 30px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="main-container">
+        <h1 class="main-title fade-in">©ZNKsystem</h1>
+        
+        <div class="tv-screen fade-in">
+            <div class="tv-content">
+                <div class="workflow-text">WORKFLOW ACTV</div>
+                <div class="admin-subtitle">ADMIN INTRO</div>
+            </div>
+        </div>
+        
+        <div class="action-buttons fade-in">
+            <a href="./auth-hub.html" class="action-btn connect-btn">
+                Se Connecter
+            </a>
+            <a href="./inscription.html" class="action-btn register-btn">
+                S'inscrire
+            </a>
+        </div>
+    </div>
+           <script src="src/batch-inject.js"></script>
+    <script>
+        // Création des particules d'arrière-plan
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 4) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Effet de glitch sur l'écran TV
+        function addGlitchEffect() {
+            const tvContent = document.querySelector('.tv-content');
+            
+            setInterval(() => {
+                if (Math.random() < 0.1) { // 10% de chance de glitch
+                    tvContent.style.filter = 'hue-rotate(180deg) contrast(2)';
+                    setTimeout(() => {
+                        tvContent.style.filter = 'none';
+                    }, 100);
+                }
+            }, 2000);
+        }
+
+        // Effet sonore au clic (simulation)
+        function addClickEffects() {
+            const buttons = document.querySelectorAll('.action-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Créer un effet de pulse
+                    btn.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        btn.style.transform = '';
+                    }, 150);
+                });
+            });
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            addGlitchEffect();
+            addClickEffects();
+            
+            // Animation d'apparition progressive
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+
+        // Gestion Electron si disponible
+        if (typeof require !== 'undefined') {
+            import { ZNKNexus } from "/js/znk-bridge.js";
+            
+            // Écouter les événements Electron
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('action-btn')) {
+                    const href = e.target.getAttribute('href');
+                    e.preventDefault();
+                    await ZNKNexus.send("navigate-to", href);
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

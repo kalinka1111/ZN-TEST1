@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>ZNK Radio — Récepteur d'émissions</title>
+    <style>
+        /* ============================================
+           🎨 PALETTE ZNKRADIO — modifie uniquement ici
+           pour recolorer tout le template.
+           ============================================ */
+        :root {
+            --color-primary: #22c55e;       /* couleur principale : logo, badges "officiel", pagination active */
+            --color-primary-dark: #15803d;
+            --color-secondary: #4ade80;     /* couleur secondaire : badges "perso"/utilisateur */
+            --color-secondary-dark: #16a34a;
+            --color-select: #ffb800;        /* piste sélectionnée / en cours de lecture (ambre conservé pour rester lisible sur fond vert) */
+            --color-play: #10b981;          /* bouton play (grand rond central) */
+            --color-play-dark: #047857;
+            --color-info: #34d399;          /* bouton "Publier" (action secondaire du header) */
+            --color-info-dark: #059669;
+            --color-danger: #ef4444;        /* retirer / supprimer une piste (rouge conservé pour signaler une action destructrice) */
+            --color-text: #eafff2;
+            --color-text-strong: #ffffff;
+            --color-text-muted: #9fd0b5;
+            --bg-page-start: #07160f;
+            --bg-page-end: #0b2a1c;
+        }
+
+        /* === Styles réduits mais lisibles === */
+        * { box-sizing: border-box; margin:0; padding:0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-page-start) 0%, var(--bg-page-end) 60%);
+            color: var(--color-text);
+            min-height:100vh;
+            display:flex;
+            flex-direction:column;
+        }
+        .top-header {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:14px 20px;
+            border-bottom:1px solid rgba(255,255,255,0.04);
+            backdrop-filter: blur(6px);
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+        }
+        .znk-logo { width:46px;height:46px;min-width:46px;min-height:46px;flex-shrink:0;border-radius:10px;background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;font-size:20px;box-shadow:0 6px 18px rgba(34,197,94,0.18);overflow:hidden;}
+        .znk-logo img { width:100%;height:100%;max-width:100%;max-height:100%;object-fit:cover;display:block; }
+        .title { font-size:18px;color:#aef7c9;font-weight:700;display:flex;gap:10px;align-items:center;}
+        .actions { display:flex; gap:10px; align-items:center; }
+        .btn { background:linear-gradient(135deg,var(--color-secondary),var(--color-secondary-dark)); color:#000; padding:8px 12px;border-radius:14px;border:none;cursor:pointer;font-weight:700; }
+        .btn.secondary { background:linear-gradient(135deg,var(--color-info),var(--color-info-dark)); color:#fff; }
+
+        .layout { display:flex; flex:1; gap:18px; padding:22px; overflow:hidden; }
+        .main { flex:1; overflow:auto; padding-bottom:100px; }
+        .sidebar { width:340px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-left:1px solid rgba(255,255,255,0.03); padding:18px; display:flex;flex-direction:column; gap:12px; }
+
+        .section-title { font-size:20px;margin-bottom:8px;color:#dffce8; }
+        .subtitle { color:var(--color-text-muted); font-size:13px; margin-bottom:16px; }
+
+        .grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; }
+        .card { background:rgba(255,255,255,0.03); border-radius:12px; padding:14px; cursor:pointer; transition:all .18s; border:1px solid rgba(255,255,255,0.02); }
+        .card.official { background:color-mix(in srgb, var(--color-primary) 6%, transparent); border-color:color-mix(in srgb, var(--color-primary) 14%, transparent); }
+        .card.perso { background:color-mix(in srgb, var(--color-secondary) 6%, transparent); border-color:color-mix(in srgb, var(--color-secondary) 16%, transparent); }
+        .page-btn { min-width:34px; height:34px; padding:0 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); color:#dffce8; cursor:pointer; font-size:13px; }
+        .page-btn:hover { background:rgba(255,255,255,0.08); }
+        .page-btn.active { background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark)); color:#000; font-weight:700; border-color:transparent; }
+        .page-btn:disabled { opacity:.35; cursor:not-allowed; }
+        .card:hover { transform:translateY(-4px); box-shadow:0 8px 30px rgba(0,0,0,0.45); border-color: color-mix(in srgb, var(--color-primary) 6%, transparent); }
+        .card .header { display:flex; gap:12px; align-items:center; }
+        .logo { width:64px;height:64px;min-width:64px;min-height:64px;border-radius:10px;background:linear-gradient(135deg,#708090,#4b5563);display:flex;align-items:center;justify-content:center;font-size:28px;color:#000;font-weight:700; background-size:cover; background-position:center; background-repeat:no-repeat; overflow:hidden; flex-shrink:0; }
+        .logo.official { background-image:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark)); }
+        .logo.perso { background-image:linear-gradient(135deg,var(--color-secondary),var(--color-secondary-dark)); }
+        .info { flex:1; min-width:0; }
+        .name { font-weight:700;color:#fff;font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .meta { color:var(--color-text-muted);font-size:12px;margin-top:6px;}
+        /* Détails visibles uniquement au survol de la carte : description + nombre de pistes + date */
+        .card-details { max-height:0; opacity:0; overflow:hidden; transition:max-height .18s ease, opacity .18s ease; }
+        .card:hover .card-details { max-height:80px; opacity:1; margin-top:12px; }
+
+        .now { background:rgba(255,255,255,0.02); padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02); }
+        .track { display:flex; gap:10px; align-items:center; padding:8px 6px; border-radius:8px; cursor:pointer; }
+        .track:hover { background:rgba(255,255,255,0.02); }
+        .track.now-playing { background:color-mix(in srgb, var(--color-select) 14%, transparent); }
+        .track.now-playing .track-title { color:var(--color-select); }
+        .track-add-btn { background:none;border:none;color:var(--color-text-muted);font-size:16px;cursor:pointer;padding:4px 8px; flex-shrink:0; }
+        .track-add-btn:hover { color:var(--color-select); }
+        .track-remove-btn { background:none;border:none;color:var(--color-danger);font-size:14px;cursor:pointer;padding:4px 8px; flex-shrink:0; }
+        .back-link { font-size:12px; color:var(--color-primary); cursor:pointer; margin-bottom:8px; display:inline-block; }
+        .back-link:hover { text-decoration:underline; }
+        .cover { width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark)); display:flex;align-items:center;justify-content:center;color:#000;font-weight:700; background-size:cover; background-position:center; overflow:hidden; flex-shrink:0; }
+        .track-title { font-size:13px; font-weight:700; }
+        .track-sub { font-size:12px;color:var(--color-text-muted); }
+
+        .bottom-player { position:fixed; left:0; right:0; bottom:0; height:78px; background:linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.6)); display:flex; align-items:center; gap:16px; padding:10px 18px; border-top:1px solid rgba(255,255,255,0.03); }
+        .player-info { display:flex; gap:12px; align-items:center; min-width:240px; }
+        .player-title { font-weight:700; color:#fff; }
+        .controls { display:flex; gap:8px; align-items:center; }
+        .control { width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.03); display:flex;align-items:center;justify-content:center;border:none; cursor:pointer; color:#dffce8; }
+        .play-big { background:linear-gradient(135deg,var(--color-play),var(--color-play-dark)); color:#fff; font-weight:800; width:56px;height:56px;border-radius:50%; }
+
+        #searchInput:focus { border-color: var(--color-primary) !important; }
+
+        @media (max-width:900px) {
+            /* Avant : .sidebar { display:none } masquait complètement
+               "Ma liste d'écoute" sur smartphone/tablette. On empile
+               désormais main + sidebar en colonne pour que la playlist
+               reste accessible (elle passe sous la grille d'émissions). */
+            .layout { flex-direction: column; overflow: visible; padding:16px; gap:14px; }
+            .main { overflow: visible; padding-bottom: 20px; }
+            .sidebar {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid rgba(255,255,255,0.05);
+                padding: 16px 0 0 0;
+                padding-bottom: 100px; /* laisse la place au bottom-player fixe */
+            }
+            .grid { grid-template-columns: repeat(2, 1fr); gap:10px; }
+            .logo { width:52px; height:52px; min-width:52px; min-height:52px; font-size:22px; }
+        }
+
+        @media (max-width:900px) and (max-width:640px) {
+            .sidebar { padding-bottom: 84px; }
+        }
+
+        /* Petits écrans (mobile) : la vignette de 64px devenait trop grande
+           par rapport à une carte de 2 colonnes très étroite, ce qui
+           écrasait le titre et rendait la carte illisible. On passe en
+           1 colonne pour laisser assez de place à l'image + au texte. */
+        @media (max-width:520px) {
+            .grid { grid-template-columns: 1fr; }
+            .card { padding:12px; }
+            .logo { width:56px; height:56px; min-width:56px; min-height:56px; font-size:24px; }
+            .name { font-size:14px; }
+        }
+
+        /* Le bottom-player avait une largeur minimale incompressible d'environ
+           550px (player-info 240px + controls ~150px + statut 160px) : il
+           débordait sur tout écran de téléphone. On le rend compact et on
+           masque ce qui n'est pas essentiel en dessous de 640px. */
+        @media (max-width:640px) {
+            .bottom-player { height:auto; min-height:66px; padding:8px 10px; gap:10px; }
+            .player-info { min-width:0; flex:1 1 auto; gap:8px; }
+            .player-info .cover { width:38px; height:38px; min-width:38px; }
+            .player-title { font-size:13px; max-width:38vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            .player-info .track-sub { max-width:38vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            .controls { gap:4px; }
+            .control { width:34px; height:34px; }
+            .play-big { width:42px; height:42px; }
+            .bottom-player > div[style*="min-width:160px"] { display:none; } /* statut texte, non essentiel sur mobile */
+            .main { padding-bottom:84px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div class="znk-logo">
+                <img src="./icons/radio.svg" alt="radio" onerror="this.outerHTML='<span style=font-size:22px>📻</span>'">
+            </div>
+            <div class="title">ZNKRADIO</div>
+        </div>
+        <div class="actions">
+            <button class="btn secondary" onclick="openAdminPublish()">⚙️ Publier</button>
+            <button class="btn" onclick="refreshAll()">🔄</button>
+        </div>
+    </div>
+
+    <div class="layout">
+        <main class="main">
+            <input type="text" id="searchInput" placeholder="🔎 Rechercher une émission…"
+                style="width:100%;padding:12px 14px;margin-bottom:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#fff;font-size:14px;outline:none;">
+            <div id="radioGrid" class="grid"></div>
+            <div id="pagination" style="display:flex;justify-content:center;gap:6px;margin-top:20px;flex-wrap:wrap;"></div>
+        </main>
+
+        <aside class="sidebar" id="sidebar">
+            <div class="now">
+                <div id="sidebarTitle" style="font-weight:800;color:#c9fcdd;margin-bottom:8px;">En cours / Collections récentes</div>
+                <div id="favoritesList"></div>
+            </div>
+
+            <div class="now" style="margin-top:12px;">
+                <div style="font-weight:800;color:#c9fcdd;margin-bottom:8px;">🎶 Ma liste d'écoute</div>
+                <div id="myPlaylistList"></div>
+                <button class="btn" style="margin-top:8px;width:100%;" onclick="playMyPlaylist()">▶ Lire ma liste</button>
+            </div>
+        </aside>
+    </div>
+
+    <div class="bottom-player" id="bottomPlayer">
+        <div class="player-info">
+            <div id="playerCover" class="cover">🎧</div>
+            <div>
+                <div id="playerTitle" class="player-title">Sélectionnez une piste</div>
+                <div id="playerArtist" class="track-sub">—</div>
+            </div>
+        </div>
+
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+            <div class="controls">
+                <button class="control" onclick="prevTrack()">⏮️</button>
+                <button id="playBtn" class="play-big" onclick="togglePlay()">▶️</button>
+                <button class="control" onclick="nextTrack()">⏭️</button>
+            </div>
+        </div>
+
+        <div style="min-width:160px;text-align:right;color:var(--color-text-muted);font-size:13px;">
+            <div id="statusText">Prêt</div>
+        </div>
+    </div>
+
+    <audio id="mainAudio" style="display:none"></audio>
+
+    <script>
+        /**
+         * ZNK Radio Receiver
+         * - Ne propose pas d'upload.
+         * - Récupère et fusionne les sources :
+         *     1) manifest admin JSON (persistent-audios/znk-audio-manifest.json)
+         *     2) manifest users JSON (users/manifests/user-audio-manifest.json)
+         */
+
+        const MAIN_ADMIN_MANIFEST = './persistent-audios/znk-audio-manifest.json';
+        const MAIN_USER_MANIFEST  = './users/manifests/user-audio-manifest.json';
+
+        class ZNKReceiver {
+            constructor() {
+                this.admin = { emissions: [] };
+                this.users = { emissions: [] };
+                this.merged = []; // émissions fusionnées
+                this.init();
+            }
+
+            init() {
+                window.addEventListener('storage', (e) => {
+                    if (!e.key) return;
+                    this.loadFromAllSources().then(renderStations);
+                });
+
+                // Chargement initial
+                this.loadFromAllSources().then(renderStations);
+            }
+
+            async loadFromAllSources() {
+                await Promise.all([this.loadAdminManifest(), this.loadUserManifest()]);
+                this.merge();
+            }
+
+            async loadAdminManifest() {
+                // Préfère l'IPC (chemin toujours correct, dev comme build packagé) —
+                // fetch() relatif casse en packagé car radio.html vit dans app.asar
+                // alors que persistent-audios/ vit à côté, hors de l'archive.
+                if (window.electronAPI && window.electronAPI.getRadioAdminManifest) {
+                    try {
+                        const result = await window.electronAPI.getRadioAdminManifest();
+                        if (result && result.success && result.json) {
+                            this.admin = JSON.parse(result.json) || { emissions: [] };
+                            console.log('Manifest admin chargé (IPC):', (this.admin.emissions || []).length);
+                            return;
+                        }
+                    } catch (err) {
+                        console.warn('Erreur chargement manifest admin (IPC):', err && err.message);
+                    }
+                }
+                try {
+                    const res = await fetch(MAIN_ADMIN_MANIFEST);
+                    if (res.ok) {
+                        const json = await res.json();
+                        this.admin = json || { emissions: [] };
+                        console.log('Manifest admin chargé:', (this.admin.emissions || []).length);
+                    } else {
+                        this.admin = { emissions: [] };
+                        console.warn('Manifest admin absent:', MAIN_ADMIN_MANIFEST);
+                    }
+                } catch (err) {
+                    this.admin = { emissions: [] };
+                    console.warn('Erreur chargement manifest admin:', err && err.message);
+                }
+            }
+
+            async loadUserManifest() {
+                if (window.electronAPI && window.electronAPI.getRadioUserManifest) {
+                    try {
+                        const result = await window.electronAPI.getRadioUserManifest();
+                        if (result && result.success && result.json) {
+                            this.users = JSON.parse(result.json) || { emissions: [] };
+                            console.log('Manifest users chargé (IPC):', (this.users.emissions || []).length);
+                            return;
+                        }
+                    } catch (err) {
+                        console.warn('Erreur chargement manifest users (IPC):', err && err.message);
+                    }
+                }
+                try {
+                    const res = await fetch(MAIN_USER_MANIFEST);
+                    if (res.ok) {
+                        const json = await res.json();
+                        this.users = json || { emissions: [] };
+                        console.log('Manifest users chargé:', (this.users.emissions || []).length);
+                    } else {
+                        this.users = { emissions: [] };
+                        console.warn('Manifest users absent:', MAIN_USER_MANIFEST);
+                    }
+                } catch (err) {
+                    this.users = { emissions: [] };
+                    console.warn('Erreur chargement manifest users:', err && err.message);
+                }
+            }
+
+            /**
+             * Merge rules:
+             * - Charger admin.emissions (marquées isOfficial=true)
+             * - Charger users.emissions (source=user)
+             */
+            merge() {
+                this.merged = [];
+
+                // 1) admin — le pull VPS (pullOfficialRadioCatalog / sync-pull)
+                // renvoie déjà TOUT le catalogue serveur, officiel ET perso
+                // confondus (voir /api/radio-emissions côté server.py, qui liste
+                // tout RADIO_DIR sans filtrer). On distingue donc chaque entrée
+                // via son propre champ `isOfficial` plutôt que de tout marquer
+                // "officiel" du seul fait que ça vient de ce pull — sinon les
+                // émissions perso publiées par les autres users (nouveau
+                // circuit /api/radio-emissions/mine) s'afficheraient à tort
+                // avec le badge officiel. Absence du champ (anciennes entrées
+                // du catalogue admin d'origine) = toujours considéré officiel.
+                if (Array.isArray(this.admin.emissions)) {
+                    this.admin.emissions.forEach(e => {
+                        const officielle = e.isOfficial !== false;
+                        this.merged.push({
+                            id: e.id || `admin_${Math.random().toString(36).slice(2,9)}`,
+                            name: e.name || e.title || 'Emission ZNK',
+                            description: e.description || e.summary || '',
+                            createdAt: e.createdAt || e.publishedAt || null,
+                            tracks: e.tracks || e.items || [],
+                            coverImage: e.coverImage || null,
+                            source: officielle ? 'admin' : 'user',
+                            isOfficial: officielle,
+                            trackCount: (e.tracks || []).length
+                        });
+                    });
+                }
+
+                // 2) users manifests
+                if (Array.isArray(this.users.emissions)) {
+                    this.users.emissions.forEach(e => {
+                        this.merged.push({
+                            id: e.id || `user_${Math.random().toString(36).slice(2,9)}`,
+                            name: e.name || e.title || 'Collection utilisateur',
+                            description: e.description || '',
+                            createdAt: e.createdAt || null,
+                            tracks: e.tracks || [],
+                            coverImage: e.coverImage || null,
+                            source: 'user',
+                            isOfficial: false,
+                            trackCount: (e.tracks || []).length
+                        });
+                    });
+                }
+
+                // ensure radiobyznk official persistent block exists
+                const existZnk = this.merged.find(e => e.id === 'radiobyznk');
+                if (!existZnk) {
+                    this.merged.unshift({
+                        id: 'radiobyznk',
+                        name: 'ZNK — Officiel (radiobyznk)',
+                        description: 'Bloc officiel persistant intégré dans le build.',
+                        createdAt: new Date().toISOString(),
+                        tracks: [],
+                        source: 'admin',
+                        isOfficial: true,
+                        trackCount: 0
+                    });
+                }
+
+                // compute trackCount if missing
+                this.merged = this.merged.map(e => ({ ...e, trackCount: e.tracks ? e.tracks.length : 0 }));
+                console.log('🔀 Émissions fusionnées:', this.merged.length);
+            }
+
+            getEmissions() {
+                // ZNK-Officiel (id réservé 'radiobyznk') toujours strictement
+                // en premier, avant même les autres émissions admin.
+                // Ensuite : émissions admin (isOfficial), puis perso.
+                return [...this.merged].sort((a, b) => {
+                    if (a.id === 'radiobyznk') return -1;
+                    if (b.id === 'radiobyznk') return 1;
+                    return (b.isOfficial === true) - (a.isOfficial === true);
+                });
+            }
+
+            getTracksByEmission(emissionId) {
+                const e = this.merged.find(x => x.id === emissionId);
+                return e ? (e.tracks || []) : [];
+            }
+        }
+
+        // Instance globale
+        const ZNK = new ZNKReceiver();
+        document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; renderStations(); });
+
+        // Player state
+        let mainAudio = document.getElementById('mainAudio');
+        let currentPlaylist = [];
+        let currentIndex = -1;
+        let isPlaying = false;
+
+        // Playlist actuellement ouverte dans la sidebar (id d'émission, ou
+        // null si on affiche "Collections récentes"). Persistant tant que
+        // l'utilisateur ne revient pas en arrière volontairement — un
+        // rafraîchissement automatique (renderStations) ne doit plus la
+        // remplacer par la liste des collections récentes.
+        let openPlaylistId = null;
+
+        // Ma liste d'écoute personnelle (locale, jamais publiée) : pistes
+        // choisies manuellement par l'auditeur, toutes émissions confondues.
+        const MY_PLAYLIST_KEY = 'znk_my_playlist';
+        let myPlaylist = [];
+        try {
+            myPlaylist = JSON.parse(localStorage.getItem(MY_PLAYLIST_KEY) || '[]');
+            if (!Array.isArray(myPlaylist)) myPlaylist = [];
+        } catch (e) { myPlaylist = []; }
+
+        function saveMyPlaylist() {
+            localStorage.setItem(MY_PLAYLIST_KEY, JSON.stringify(myPlaylist));
+        }
+
+        // Render functions
+        const EMISSIONS_PER_PAGE = 10; // 2 colonnes x 5 lignes par page
+        let currentPage = 1;
+
+        function renderStations() {
+            const grid = document.getElementById('radioGrid');
+            const paginationEl = document.getElementById('pagination');
+            grid.innerHTML = '';
+            paginationEl.innerHTML = '';
+            const searchTerm = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+            let emissions = ZNK.getEmissions();
+            if (searchTerm) {
+                emissions = emissions.filter(e => (e.name || '').toLowerCase().includes(searchTerm));
+            }
+
+            if (!emissions || emissions.length === 0) {
+                grid.innerHTML = `<div style="padding:40px;color:var(--color-text-muted);">${searchTerm ? 'Aucun résultat pour "' + escapeHtml(searchTerm) + '"' : 'Aucune émission disponible.'}</div>`;
+                renderSidebar();
+                return;
+            }
+
+            const totalPages = Math.max(1, Math.ceil(emissions.length / EMISSIONS_PER_PAGE));
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * EMISSIONS_PER_PAGE;
+            const pageEmissions = emissions.slice(start, start + EMISSIONS_PER_PAGE);
+
+            pageEmissions.forEach(em => {
+                const isOfficial = em.isOfficial;
+                const trackCount = em.trackCount || 0;
+                const card = document.createElement('div');
+                card.className = 'card ' + (isOfficial ? 'official' : 'perso');
+
+                const logo = isOfficial ? '📻' : '🎤';
+                const created = em.createdAt ? new Date(em.createdAt).toLocaleDateString('fr-FR') : 'Non daté';
+
+                // Si une image de couverture a été choisie pour l'émission
+                // (em.coverImage), on l'affiche à la place du dégradé de
+                // couleur + icône micro/radio par défaut.
+                const logoClass = 'logo ' + (isOfficial ? 'official' : 'perso');
+                const logoStyle = em.coverImage ? `background-image:url('${em.coverImage}')` : '';
+                const logoContent = em.coverImage ? '' : logo;
+
+                card.innerHTML = `
+                    <div class="header">
+                        <div class="${logoClass}" style="${logoStyle}">${logoContent}</div>
+                        <div class="info">
+                            <div class="name">${escapeHtml(em.name)}</div>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="meta">${escapeHtml(em.description || '')}</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                            <div style="font-size:12px;color:var(--color-text-muted);">${trackCount} piste(s)</div>
+                            <div style="font-size:12px;color:var(--color-text-muted);">${created}</div>
+                        </div>
+                    </div>
+                `;
+
+                // Clic direct sur la carte (icône ou titre) = ouvrir la playlist
+                // de l'émission. Plus de bouton play séparé.
+                card.onclick = () => openEmissionSidebar(em.id);
+                grid.appendChild(card);
+            });
+
+            renderPagination(totalPages);
+            renderSidebar();
+        }
+
+        function renderPagination(totalPages) {
+            const el = document.getElementById('pagination');
+            el.innerHTML = '';
+            if (totalPages <= 1) return;
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.textContent = '‹';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => { currentPage--; renderStations(); };
+            el.appendChild(prevBtn);
+
+            for (let p = 1; p <= totalPages; p++) {
+                const btn = document.createElement('button');
+                btn.className = 'page-btn' + (p === currentPage ? ' active' : '');
+                btn.textContent = p;
+                btn.onclick = () => { currentPage = p; renderStations(); };
+                el.appendChild(btn);
+            }
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.textContent = '›';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => { currentPage++; renderStations(); };
+            el.appendChild(nextBtn);
+        }
+
+        // Décide quoi afficher en haut de la sidebar : la playlist en cours
+        // d'écoute si l'utilisateur en a ouvert une (persiste à travers les
+        // rafraîchissements automatiques), sinon les collections récentes.
+        function renderSidebar() {
+            if (openPlaylistId) {
+                renderOpenPlaylist();
+            } else {
+                renderFavorites();
+            }
+        }
+
+        function renderFavorites() {
+            document.getElementById('sidebarTitle').textContent = 'En cours / Collections récentes';
+            const fav = document.getElementById('favoritesList');
+            fav.innerHTML = '';
+            const emissions = ZNK.getEmissions().slice(0,6);
+            emissions.forEach(e => {
+                if ((e.trackCount || 0) === 0) return;
+                const div = document.createElement('div');
+                div.className = 'track';
+                div.style.justifyContent = 'space-between';
+                const left = document.createElement('div');
+                left.style.display = 'flex'; left.style.gap='8px'; left.style.alignItems='center';
+                left.innerHTML = `<div class="cover">🎵</div><div><div style="font-weight:700">${escapeHtml(e.name)}</div><div style="font-size:12px;color:var(--color-text-muted)">${(e.trackCount||0)} piste(s)</div></div>`;
+                div.appendChild(left);
+                const btn = document.createElement('button');
+                btn.className = 'btn'; btn.style.height='36px'; btn.style.padding='6px 10px';
+                btn.textContent = 'Ouvrir';
+                btn.onclick = (ev) => { ev.stopPropagation(); openEmissionSidebar(e.id); };
+                div.appendChild(btn);
+                fav.appendChild(div);
+            });
+        }
+
+        function openEmissionSidebar(emissionId) {
+            openPlaylistId = emissionId;
+            renderOpenPlaylist();
+        }
+
+        // Affiche la playlist actuellement ouverte (openPlaylistId). Appelée
+        // au clic initial ET à chaque rafraîchissement automatique, pour que
+        // l'écran reste sur "ce qu'on écoute" plutôt que de revenir aux
+        // collections récentes pendant l'écoute.
+        function renderOpenPlaylist() {
+            const em = ZNK.getEmissions().find(e => e.id === openPlaylistId);
+            const tracks = ZNK.getTracksByEmission(openPlaylistId);
+            const fav = document.getElementById('favoritesList');
+
+            document.getElementById('sidebarTitle').innerHTML =
+                `<span class="back-link" onclick="closeOpenPlaylist()">⬅ Retour</span><br>🎧 ${escapeHtml(em ? em.name : 'Playlist')}`;
+
+            fav.innerHTML = '';
+            if (!tracks || tracks.length === 0) {
+                fav.innerHTML = `<div style="color:var(--color-text-muted)">Aucune piste dans cette émission</div>`;
+                return;
+            }
+
+            const nowPlayingUrl = (currentIndex >= 0 && currentPlaylist[currentIndex]) ? currentPlaylist[currentIndex].url : null;
+
+            tracks.forEach((t, idx) => {
+                const tr = document.createElement('div');
+                tr.className = 'track' + (t.url && t.url === nowPlayingUrl ? ' now-playing' : '');
+                tr.onclick = () => playTrackList(tracks, idx);
+                tr.innerHTML = `
+                    <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;">
+                        <div class="cover">♪</div>
+                        <div style="min-width:0;">
+                            <div class="track-title">${escapeHtml(t.title || ('Piste ' + (idx + 1)))}</div>
+                            <div class="track-sub">${escapeHtml(t.artist || '')}</div>
+                        </div>
+                    </div>
+                    <button class="track-add-btn" title="Ajouter à ma liste d'écoute">➕</button>
+                `;
+                tr.querySelector('.track-add-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    addToMyPlaylist(t, em ? em.name : '');
+                });
+                fav.appendChild(tr);
+            });
+        }
+
+        window.closeOpenPlaylist = function closeOpenPlaylist() {
+            openPlaylistId = null;
+            renderFavorites();
+        };
+
+        // ---------- Ma liste d'écoute personnelle ----------
+        window.addToMyPlaylist = function addToMyPlaylist(track, emissionName) {
+            if (!track || !track.url) return;
+            const exists = myPlaylist.some(t => t.url === track.url);
+            if (exists) {
+                document.getElementById('statusText').textContent = 'Déjà dans ma liste';
+                return;
+            }
+            myPlaylist.push({
+                id: track.id || (track.url),
+                title: track.title || 'Piste',
+                artist: track.artist || emissionName || '',
+                url: track.url,
+                duration: track.duration || ''
+            });
+            saveMyPlaylist();
+            renderMyPlaylist();
+            document.getElementById('statusText').textContent = 'Ajouté à ma liste';
+        };
+
+        function removeFromMyPlaylist(url) {
+            myPlaylist = myPlaylist.filter(t => t.url !== url);
+            saveMyPlaylist();
+            renderMyPlaylist();
+        }
+
+        function renderMyPlaylist() {
+            const container = document.getElementById('myPlaylistList');
+            container.innerHTML = '';
+            if (myPlaylist.length === 0) {
+                container.innerHTML = '<div style="font-size:12px;color:var(--color-text-muted);">Vide — clique sur ➕ à côté d\'une piste pour l\'ajouter.</div>';
+                return;
+            }
+            const nowPlayingUrl = (currentIndex >= 0 && currentPlaylist[currentIndex]) ? currentPlaylist[currentIndex].url : null;
+            myPlaylist.forEach((t, idx) => {
+                const tr = document.createElement('div');
+                tr.className = 'track' + (t.url === nowPlayingUrl ? ' now-playing' : '');
+                tr.onclick = () => playTrackList(myPlaylist, idx);
+                tr.innerHTML = `
+                    <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;">
+                        <div class="cover">♪</div>
+                        <div style="min-width:0;">
+                            <div class="track-title">${escapeHtml(t.title)}</div>
+                            <div class="track-sub">${escapeHtml(t.artist || '')}</div>
+                        </div>
+                    </div>
+                    <button class="track-remove-btn" title="Retirer">✕</button>
+                `;
+                tr.querySelector('.track-remove-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeFromMyPlaylist(t.url);
+                });
+                container.appendChild(tr);
+            });
+        }
+
+        window.playMyPlaylist = function playMyPlaylist() {
+            if (myPlaylist.length === 0) {
+                alert('Ta liste d\'écoute est vide — ajoute des pistes avec ➕.');
+                return;
+            }
+            playTrackList(myPlaylist, 0);
+        };
+
+        renderMyPlaylist();
+
+        // Player controls
+        async function playTrackList(tracks, index) {
+            currentPlaylist = tracks;
+            currentIndex = index;
+            const t = tracks[index];
+            if (!t || !t.url) {
+                alert('URL de piste invalide ou manquante.');
+                return;
+            }
+
+            let resolvedUrl = t.url;
+            if (window.electronAPI && window.electronAPI.getAudioUrl) {
+                try {
+                    let fileNameGuess = t.fileName;
+                    if (!fileNameGuess) {
+                        try {
+                            const decoded = decodeURIComponent(t.url);
+                            fileNameGuess = decoded.split('/').pop();
+                        } catch (e) { /* garde t.url tel quel en dernier recours */ }
+                    }
+                    const resolved = await window.electronAPI.getAudioUrl({ fileName: fileNameGuess, titleHint: t.name });
+                    if (resolved && resolved.success && resolved.url) {
+                        // Déjà en cache local (écoutée au moins une fois avant,
+                        // ou pré-persistée) : on joue depuis le disque, aucun
+                        // réseau nécessaire. Sinon on tombe sur l'URL distante
+                        // ci-dessous, résolue contre le domaine du VPS.
+                        resolvedUrl = resolved.url;
+                    } else {
+                        resolvedUrl = await resolveRemoteUrl(t.url);
+                    }
+                } catch (e) {
+                    console.warn('⚠️ [Radio] getAudioUrl:', e);
+                    resolvedUrl = await resolveRemoteUrl(t.url);
+                }
+            } else {
+                resolvedUrl = await resolveRemoteUrl(t.url);
+            }
+
+            loadAndPlay(resolvedUrl, t);
+            // Rafraîchit la surbrillance "en cours de lecture" dans la sidebar
+            if (openPlaylistId) renderOpenPlaylist();
+            renderMyPlaylist();
+        }
+
+        // ---------- Sync-puis-offline : résolution + cache en lecture ----------
+        let registryUrlCache = undefined; // undefined = pas encore demandé, null = pas configuré
+        async function resolveRemoteUrl(url) {
+            // Les URLs des pistes user/communauté sont relatives (ex: /files/xxx.mp3),
+            // renvoyées telles quelles par server.py — il faut les préfixer avec le
+            // domaine du VPS (ZNK_REGISTRY_URL) pour en faire une URL jouable.
+            if (!url || !url.startsWith('/')) return url; // déjà absolue (http/https) ou vide
+            if (registryUrlCache === undefined) {
+                try {
+                    registryUrlCache = (window.electronAPI && window.electronAPI.getRegistryUrl)
+                        ? await window.electronAPI.getRegistryUrl()
+                        : null;
+                } catch (e) {
+                    registryUrlCache = null;
+                }
+            }
+            return registryUrlCache ? `${registryUrlCache.replace(/\/$/, '')}${url}` : url;
+        }
+
+        // Mise en cache "à l'usage" après une lecture qui a effectivement
+        // démarré depuis le réseau (pas depuis le cache) — silencieuse,
+        // n'affecte jamais la lecture en cours si elle échoue.
+        function cacheTrackInBackground(url, trackMeta) {
+            if (!window.electronAPI || !window.electronAPI.cacheAudioTrack) return;
+            if (!url || !url.startsWith('http')) return; // déjà un fichier local (file://) : rien à cacher
+            let fileName = trackMeta.fileName;
+            if (!fileName) {
+                try { fileName = decodeURIComponent(url).split('/').pop(); }
+                catch (e) { fileName = url.split('/').pop(); }
+            }
+            if (!fileName) return;
+            window.electronAPI.cacheAudioTrack({ url, fileName }).catch(e => {
+                console.warn('⚠️ [Radio] cacheAudioTrack:', e && e.message);
+            });
+        }
+
+        function loadAndPlay(url, trackMeta = {}) {
+            try {
+                mainAudio.pause();
+                mainAudio.src = url;
+                mainAudio.load();
+                mainAudio.play().then(() => {
+                    isPlaying = true;
+                    document.getElementById('playBtn').textContent = '⏸️';
+                    updatePlayerUI(trackMeta);
+                    document.getElementById('statusText').textContent = 'Lecture en cours';
+                    cacheTrackInBackground(url, trackMeta); // sync-puis-offline : persiste pour la prochaine écoute
+                }).catch(err => {
+                    console.error('Erreur lecture:', err);
+                    alert('Impossible de lire le fichier — vérifiez le chemin :\n' + url);
+                    document.getElementById('statusText').textContent = 'Erreur de lecture';
+                });
+            } catch (err) {
+                console.error('loadAndPlay err', err);
+            }
+        }
+
+        function updatePlayerUI(meta = {}) {
+            document.getElementById('playerTitle').textContent = meta.title || 'Piste';
+            document.getElementById('playerArtist').textContent = meta.artist || meta.type || '-';
+            const cover = document.getElementById('playerCover');
+            if (meta.coverArt) {
+                cover.style.backgroundImage = `url('${meta.coverArt}')`;
+                cover.textContent = '';
+            } else {
+                cover.style.backgroundImage = '';
+                cover.textContent = meta.title ? meta.title.charAt(0).toUpperCase() : '🎧';
+            }
+        }
+
+        function togglePlay() {
+            if (!mainAudio.src) return;
+            if (mainAudio.paused) {
+                mainAudio.play().catch(console.error);
+            } else {
+                mainAudio.pause();
+            }
+        }
+
+        function prevTrack() {
+            if (currentPlaylist.length === 0) return;
+            currentIndex = (currentIndex > 0) ? currentIndex - 1 : currentPlaylist.length - 1;
+            playTrackList(currentPlaylist, currentIndex);
+        }
+
+        function nextTrack() {
+            if (currentPlaylist.length === 0) return;
+            currentIndex = (currentIndex < currentPlaylist.length -1) ? currentIndex + 1 : 0;
+            playTrackList(currentPlaylist, currentIndex);
+        }
+
+        // Utility: sanitize small strings for insertion as text
+        function escapeHtml(text) {
+            if (!text && text !== 0) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Events & init
+        document.addEventListener('DOMContentLoaded', () => {
+            // set audio element listeners
+            mainAudio = document.getElementById('mainAudio');
+            mainAudio.volume = 0.75;
+            mainAudio.addEventListener('play', () => { document.getElementById('playBtn').textContent = '⏸️'; isPlaying = true; });
+            mainAudio.addEventListener('pause', () => { document.getElementById('playBtn').textContent = '▶️'; isPlaying = false; });
+            mainAudio.addEventListener('ended', () => nextTrack());
+            // initial render if ZNK already loaded its sources
+            setTimeout(() => renderStations(), 200);
+            // rafraîchissement périodique : utile si une émission a été publiée depuis un autre onglet
+            setInterval(async () => {
+                await ZNK.loadFromAllSources();
+                renderStations();
+            }, 8000);
+        });
+
+        // Buttons actions
+        // Détection du rôle (même convention que dans admin-publish-radio.html
+        // / user-publish-radio.html) pour ouvrir le bon outil de publication :
+        // - admin-publish-radio.html : plusieurs émissions (dont l'officielle)
+        // - user-publish-radio.html  : une seule émission perso
+        function isAdminAccount() {
+            let account = null;
+            try { account = JSON.parse(localStorage.getItem('znk_account') || 'null'); } catch (e) {}
+            const roleFromAccount = (account && (account.role || account.type || account.accountType) || '').toString().toLowerCase();
+            let userType = '';
+            try { userType = (localStorage.getItem('znk_user_type') || '').toLowerCase(); } catch (e) {}
+            return roleFromAccount.includes('admin') || userType.includes('admin');
+        }
+
+        function openAdminPublish() {
+            const page = isAdminAccount() ? './admin-publish-radio.html' : './user-publish-radio.html';
+            window.open(page, '_blank');
+        }
+
+        function refreshAll() {
+            const api = window.electronAPI || null;
+            const statusEl = document.getElementById('statusText');
+
+            // Le pull VPS est optionnel : si l'API n'est pas dispo (page ouverte
+            // hors Electron) ou si le VPS est injoignable, on retombe simplement
+            // sur les manifestes locaux déjà présents — jamais bloquant.
+            const pull = (api && api.pullOfficialRadioCatalog)
+                ? api.pullOfficialRadioCatalog().catch(() => ({ success: false }))
+                : Promise.resolve({ success: false });
+
+            statusEl.textContent = 'Synchronisation…';
+
+            pull.then(result => {
+                if (result && result.success) {
+                    statusEl.textContent = `Catalogue officiel à jour (${result.count} émission(s))`;
+                } else if (result && result.offline) {
+                    statusEl.textContent = 'VPS injoignable — manifestes locaux';
+                }
+                return ZNK.loadFromAllSources();
+            }).then(() => {
+                renderStations();
+                if (!statusEl.textContent.startsWith('Catalogue') && !statusEl.textContent.startsWith('VPS')) {
+                    statusEl.textContent = 'Manifests synchronisés';
+                }
+            });
+        }
+
+        // expose for debugging
+        window.ZNKReceiver = ZNK;
+        window.renderStations = renderStations;
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>🎥 ZNK Camera Core - Mode Local (Effets + Timeline) — Fix selection & timeline</title>
+    <style>
+        /* Styles (identiques + fixes pour overlay/timeline) */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+               background: linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);
+               color: white; min-height:100vh; }
+        .container { max-width:1400px; margin:0 auto; padding:20px; }
+        .header { background: linear-gradient(135deg,#1e1b4b,#312e81,#1e40af);
+                 padding:20px; border-radius:12px; margin-bottom:18px; text-align:center; }
+        .main-grid { display:grid; grid-template-columns:300px 1fr 360px; gap:16px; }
+        .panel { background: linear-gradient(145deg,#1f2937,#111827); padding:14px; border-radius:10px; border:1px solid rgba(59,130,246,0.06); }
+        .camera-viewer { position:relative; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+        canvas.virtual-camera { width:100%; height:100%; display:block; z-index:1; }
+        .camera-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; z-index:3; pointer-events:none; transition:opacity .15s; }
+        .camera-overlay.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+        .source-item { position:relative; background: rgba(0,0,0,0.12); border-radius:8px; padding:10px; margin-bottom:8px; cursor:pointer; border:1px solid transparent; }
+        .source-item.active { border-color:#3b82f6; box-shadow:0 6px 18px rgba(59,130,246,0.06); }
+        .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600; margin:4px; }
+        .btn-primary { background:linear-gradient(45deg,#3b82f6,#2563eb); color:#fff; }
+        .btn-secondary { background:rgba(75,85,99,0.8); color:#fff; }
+        .btn-success { background:linear-gradient(45deg,#10b981,#059669); color:#fff; }
+        .btn-danger { background:linear-gradient(45deg,#ef4444,#dc2626); color:#fff; }
+        .input-group { margin-bottom:10px; }
+        .timeline { margin-top:10px; display:flex; gap:8px; align-items:center; }
+        .small { font-size:0.85rem; color:#93c5fd; }
+        .drop-hint { position:absolute; right:12px; top:12px; font-size:0.85rem; color:#cbd5e1; background:rgba(0,0,0,0.3); padding:6px 8px; border-radius:6px; z-index:4; pointer-events:none;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 ZNK Camera Core — Fix selection & Timeline</h1>
+            <p>Central viewer fixes : selection working, timeline & drag-drop overlay on canvas</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- Sources -->
+            <div class="panel">
+                <h3>📹 Sources</h3>
+                <div id="uploadZone" style="border:2px dashed #3b82f6; padding:12px; border-radius:8px; text-align:center; cursor:pointer;">
+                    <input type="file" id="mediaInput" accept="video/*,image/*" multiple style="display:none" />
+                    <div style="font-size:1.8rem;">📤</div>
+                    <div><strong>Glissez / Déposez</strong> ou cliquez</div>
+                </div>
+                <div id="sourcesList" style="margin-top:12px; max-height:420px; overflow:auto;"></div>
+            </div>
+
+            <!-- Center viewer -->
+            <div class="panel">
+                <h3>🖥️ Visionneuse centrale</h3>
+                <div class="camera-viewer" id="viewerWrap" style="height:420px;">
+                    <canvas id="virtualCamera" class="virtual-camera" width="1280" height="720"></canvas>
+                    <div class="camera-overlay" id="cameraOverlay">
+                        <div>📹 Sélectionnez une source</div>
+                    </div>
+                    <div class="drop-hint" id="dropHint" style="display:none">Déposez image pour overlay</div>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button class="btn btn-success" id="startBtn">⏺️ Démarrer</button>
+                    <button class="btn btn-danger" id="stopBtn" disabled>⏹️ Arrêter</button>
+                    <button class="btn btn-primary" id="screenshotBtn">📸 Capture</button>
+                    <div style="margin-left:auto">
+                        <button class="btn btn-secondary" id="exportWebmBtn">⬇️ Exporter WebM</button>
+                        <button class="btn btn-primary" id="exportMp4Btn">⬇️ Exporter MP4 (ffmpeg)</button>
+                    </div>
+                </div>
+
+                <div id="timelinePanel" style="margin-top:12px; display:none;">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <div class="small">Temps:</div>
+                        <input type="range" id="timeline" min="0" max="1" step="0.001" value="0" style="flex:1" />
+                        <div id="timeLabel" class="small" style="width:120px; text-align:right;">00:00 / 00:00</div>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <div style="flex:1"><label class="small">Fade in (s)</label><input id="tl_fade_in_handle" type="range" min="0" max="1" step="0.001" value="0.1" style="width:100%"></div>
+                        <div style="flex:1"><label class="small">Fade out (s)</label><input id="tl_fade_out_handle" type="range" min="0" max="1" step="0.001" value="0.1" style="width:100%"></div>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
+                        <label class="small">Easing</label>
+                        <select id="tl_easing" class="small">
+                            <option value="linear">linear</option>
+                            <option value="easeInQuad">easeIn</option>
+                            <option value="easeOutQuad">easeOut</option>
+                            <option value="easeInOutQuad" selected>easeInOut</option>
+                        </select>
+                        <button class="btn btn-primary" id="applyTimelineBtn" style="margin-left:auto">Appliquer timeline</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Per-clip effects -->
+            <div class="panel">
+                <h3>⚙️ Effets par clip</h3>
+                <div class="input-group"><label>Rotation (°)</label><input id="ef_rotate" type="number" step="1" value="0"></div>
+                <div class="input-group"><label>Fade in (s)</label><input id="ef_fade_in" type="number" step="0.05" value="0.3"></div>
+                <div class="input-group"><label>Fade out (s)</label><input id="ef_fade_out" type="number" step="0.05" value="0.3"></div>
+                <div class="input-group"><label>Light leak (image)</label><input id="ef_light_input" type="file" accept="image/*"></div>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <button class="btn btn-primary" id="applyEfBtn">Appliquer</button>
+                    <button class="btn btn-secondary" id="applyAllEfBtn">Appliquer à toutes</button>
+                    <button class="btn btn-secondary" id="resetEfBtn">Réinitialiser</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        // Elements
+        const uploadZone = document.getElementById('uploadZone');
+        const mediaInput = document.getElementById('mediaInput');
+        const sourcesList = document.getElementById('sourcesList');
+        const canvas = document.getElementById('virtualCamera');
+        const ctx = canvas.getContext('2d');
+        const cameraOverlay = document.getElementById('cameraOverlay');
+        const dropHint = document.getElementById('dropHint');
+        const timelinePanel = document.getElementById('timelinePanel');
+        const timeline = document.getElementById('timeline');
+        const timeLabel = document.getElementById('timeLabel');
+        const tl_fade_in_handle = document.getElementById('tl_fade_in_handle');
+        const tl_fade_out_handle = document.getElementById('tl_fade_out_handle');
+        const tl_easing = document.getElementById('tl_easing');
+
+        // effect inputs
+        const ef_rotate = document.getElementById('ef_rotate');
+        const ef_fade_in = document.getElementById('ef_fade_in');
+        const ef_fade_out = document.getElementById('ef_fade_out');
+        const ef_light_input = document.getElementById('ef_light_input');
+
+        // state
+        const state = {
+            sources: new Map(), // id -> source obj
+            currentSource: null
+        };
+
+        function uid(prefix='s'){ return prefix + '_' + Math.floor(Math.random()*1e9).toString(36); }
+
+        function defaultEffects(){
+            return {
+                rotate:0, fade_in:0.3, fade_out:0.3,
+                leak_opacity:0.6, lightImg:null, lightSrc:null, overlayLocalPath:null,
+                ov_entry_start:-1, ov_entry_dur:0, ov_exit_start:-1, ov_exit_dur:0,
+                easing:'easeInOutQuad'
+            };
+        }
+
+        // Easing
+        const EASINGS = {
+            linear: t => t,
+            easeInQuad: t => t*t,
+            easeOutQuad: t => t*(2-t),
+            easeInOutQuad: t => t<0.5 ? 2*t*t : -1+(4-2*t)*t
+        };
+
+        // create default procedural sources
+        function createDefaults(){
+            const gradId = 'gradient';
+            state.sources.set(gradId, {
+                id:gradId, type:'pattern', name:'Dégradé Animé',
+                render:(ctx,w,h,t)=>{
+                    const g = ctx.createLinearGradient(0,0,w,h);
+                    const hue = (t*0.03)%360;
+                    g.addColorStop(0, `hsl(${hue},70%,50%)`);
+                    g.addColorStop(1, `hsl(${(hue+60)%360},70%,50%)`);
+                    ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+                    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.font='28px Arial'; ctx.textAlign='center';
+                    ctx.fillText('🎬 ZNK Studio', w/2, h/2);
+                },
+                effects: defaultEffects()
+            });
+            const noiseId = 'noise';
+            state.sources.set(noiseId, {
+                id:noiseId, type:'pattern', name:'Bruit Coloré',
+                render:(ctx,w,h,t)=>{
+                    const img = ctx.createImageData(w,h); const d=img.data;
+                    for(let i=0;i<d.length;i+=4){
+                        const v = Math.floor(Math.random()*255);
+                        d[i]=v; d[i+1]=v; d[i+2]=v; d[i+3]=255;
+                    }
+                    ctx.putImageData(img,0,0);
+                },
+                effects: defaultEffects()
+            });
+        }
+
+        // add media file
+        function addMediaFile(file){
+            const id = uid('media');
+            const url = URL.createObjectURL(file);
+            if(file.type.startsWith('video/')){
+                const video = document.createElement('video');
+                video.src = url; video.loop = true; video.muted = true; video.playsInline = true; video.preload='auto';
+                const obj = {
+                    id, type:'video', name:file.name, element:video, localPath: file.path || null, effects: defaultEffects(),
+                    render:function(ctx,w,h,t){
+                        if(video.readyState >= 2){
+                            const dur = video.duration || 0.0001;
+                            const ct = video.currentTime || 0;
+                            const eff = this.effects;
+                            const alpha = computeAlpha(ct, dur, eff.fade_in, eff.fade_out, eff.easing);
+                            drawWithRotationAndAlpha(ctx, video, w, h, eff.rotate, alpha);
+                            drawOverlayIfNeeded(ctx, w, h, eff, ct, dur);
+                            // label
+                            ctx.save(); ctx.globalAlpha=0.9;
+                            ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(0,0,Math.min(360,w),28);
+                            ctx.fillStyle='white'; ctx.font='14px Arial'; ctx.textAlign='left';
+                            ctx.fillText('📹 '+this.name, 8, 18); ctx.restore();
+                        }
+                    }
+                };
+                video.addEventListener('loadeddata', ()=> video.play().catch(()=>{}));
+                state.sources.set(id, obj);
+                addSourceUI(id,file.name,url);
+            } else if(file.type.startsWith('image/')){
+                const img = new Image(); img.src = url;
+                const obj = {
+                    id, type:'image', name:file.name, element:img, localPath: file.path || null, effects: defaultEffects(),
+                    render:function(ctx,w,h,t){
+                        if(img.complete){
+                            const eff = this.effects;
+                            drawWithRotationAndAlpha(ctx, img, w, h, eff.rotate, 1.0);
+                            drawOverlayIfNeeded(ctx, w, h, eff, 0, 1);
+                        }
+                    }
+                };
+                state.sources.set(id, obj);
+                addSourceUI(id,file.name,url);
+            }
+            updateSourceCount();
+        }
+
+        // add UI entry; important: click handler uses closest so inner clicks work
+        function addSourceUI(id,name,thumb){
+            const div = document.createElement('div');
+            div.className = 'source-item';
+            div.dataset.source = id;
+            div.innerHTML = `<div style="background:url('${thumb}') center/cover; height:60px; border-radius:6px; margin-bottom:8px;"></div>
+                             <strong>${name}</strong><div style="font-size:0.85rem;color:#9ca3af">${state.sources.get(id).type}</div>`;
+            div.addEventListener('click', (ev)=> {
+                // allow clicks on child elements
+                selectSource(id);
+            });
+            const rm = document.createElement('button');
+            rm.textContent='×'; rm.style.cssText='position:absolute;right:8px;top:8px;background:#ef4444;border:none;border-radius:50%;width:22px;height:22px;color:#fff;cursor:pointer;';
+            rm.addEventListener('click', (e)=> { e.stopPropagation(); removeSource(id); });
+            div.style.position='relative';
+            div.appendChild(rm);
+            sourcesList.appendChild(div);
+        }
+
+        function removeSource(id){
+            const el = document.querySelector(`[data-source="${id}"]`);
+            if(el) el.remove();
+            state.sources.delete(id);
+            if(state.currentSource === id){
+                state.currentSource = null;
+                cameraOverlay.classList.remove('hidden');
+                timelinePanel.style.display = 'none';
+            }
+            updateSourceCount();
+        }
+
+        function updateSourceCount(){ document.getElementById('sourceCount') && (document.getElementById('sourceCount').textContent = state.sources.size); }
+
+        // selection fix: ensure overlay hidden, timeline visible for video, load effects UI
+        function selectSource(id){
+            // de-highlight all
+            document.querySelectorAll('.source-item').forEach(s=> s.classList.remove('active'));
+            const sel = document.querySelector(`[data-source="${id}"]`);
+            if(sel) sel.classList.add('active');
+
+            if(!state.sources.has(id)) return;
+            state.currentSource = id;
+            cameraOverlay.classList.add('hidden');
+            const src = state.sources.get(id);
+            loadEffectsUI(src.effects);
+            if(src.type === 'video'){
+                timelinePanel.style.display = 'block';
+                setupTimeline(src);
+            } else {
+                timelinePanel.style.display = 'none';
+            }
+            showMsg('📌 Source active: ' + src.name,'info');
+        }
+
+        // draw helper
+        function drawWithRotationAndAlpha(ctx, element, w, h, rotateDeg, alpha){
+            ctx.save();
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
+            const rad = (rotateDeg||0) * Math.PI / 180;
+            const mw = element.videoWidth || element.naturalWidth || w;
+            const mh = element.videoHeight || element.naturalHeight || h;
+            const scale = Math.max(w/mw, h/mh);
+            const dw = mw*scale, dh = mh*scale;
+            ctx.translate(w/2, h/2);
+            ctx.rotate(rad);
+            ctx.globalAlpha = (typeof alpha === 'number') ? alpha : 1.0;
+            ctx.drawImage(element, -dw/2, -dh/2, dw, dh);
+            ctx.restore();
+        }
+
+        function computeAlpha(timeSec, duration, fadeIn, fadeOut, easingName){
+            duration = Math.max(0.0001, duration||0.0001);
+            fadeIn = Math.max(0, fadeIn||0); fadeOut = Math.max(0, fadeOut||0);
+            let total = fadeIn + fadeOut;
+            if(total > duration && total>0){
+                const scale = duration / total;
+                fadeIn *= scale; fadeOut *= scale;
+            }
+            let a = 1.0;
+            const ease = EASINGS[easingName]||EASINGS.linear;
+            if(fadeIn>0 && timeSec < fadeIn){ const t = Math.max(0, Math.min(1, timeSec/fadeIn)); a *= ease(t); }
+            if(fadeOut>0 && timeSec > (duration - fadeOut)){ const t = Math.max(0, Math.min(1, (duration - timeSec)/fadeOut)); a *= ease(t); }
+            return Math.max(0, Math.min(1, a));
+        }
+
+        function drawOverlayIfNeeded(ctx,w,h,eff,currentTime,duration){
+            if(!eff || !eff.lightImg) return;
+            const img = eff.lightImg;
+            let enabled = false;
+            if((eff.ov_entry_start === -1) && (eff.ov_exit_start === -1)) enabled = true;
+            else {
+                if(eff.ov_entry_start >=0 && eff.ov_entry_dur > 0 && currentTime >= eff.ov_entry_start && currentTime <= eff.ov_entry_start + eff.ov_entry_dur) enabled = true;
+                if(eff.ov_exit_start >=0 && eff.ov_exit_dur > 0 && currentTime >= eff.ov_exit_start && currentTime <= eff.ov_exit_start + eff.ov_exit_dur) enabled = true;
+            }
+            if(!enabled) return;
+            ctx.save();
+            let overlayAlpha = eff.leak_opacity || 0.6;
+            if(eff.ov_entry_start >=0 && eff.ov_entry_dur > 0 && currentTime >= eff.ov_entry_start && currentTime <= eff.ov_entry_start + eff.ov_entry_dur){
+                const t = (currentTime - eff.ov_entry_start) / eff.ov_entry_dur;
+                overlayAlpha *= (EASINGS[eff.easing]||EASINGS.linear)(Math.max(0,Math.min(1,t)));
+            }
+            if(eff.ov_exit_start >=0 && eff.ov_exit_dur > 0 && currentTime >= eff.ov_exit_start && currentTime <= eff.ov_exit_start + eff.ov_exit_dur){
+                const t = (currentTime - eff.ov_exit_start) / eff.ov_exit_dur;
+                overlayAlpha *= (1 - (EASINGS[eff.easing]||EASINGS.linear)(Math.max(0,Math.min(1,t))));
+            }
+            ctx.globalAlpha = overlayAlpha;
+            const iw = img.width, ih = img.height;
+            const scale = Math.max(w/iw, h/ih);
+            const dw = iw*scale, dh = ih*scale;
+            ctx.drawImage(img, (w-dw)/2, (h-dh)/2, dw, dh);
+            ctx.restore();
+        }
+
+        // UI loader / applier
+        function loadEffectsUI(e){ if(!e) e = defaultEffects(); ef_rotate.value = e.rotate||0; ef_fade_in.value = e.fade_in||0; ef_fade_out.value = e.fade_out||0; }
+        function applyEffectsToCurrent(){
+            if(!state.currentSource) return showMsg('Sélectionnez une source','error');
+            const src = state.sources.get(state.currentSource);
+            src.effects.rotate = Number(ef_rotate.value) || 0;
+            src.effects.fade_in = Number(ef_fade_in.value) || 0;
+            src.effects.fade_out = Number(ef_fade_out.value) || 0;
+            showMsg('✅ Effets appliqués','success');
+        }
+
+        // timeline wiring for video source
+        function setupTimeline(src){
+            const v = src.element;
+            if(!v || !v.duration){ v.addEventListener('loadedmetadata', ()=> setupTimeline(src), {once:true}); return; }
+            // set timeline bounds and handles in seconds
+            timeline.min = 0; timeline.max = v.duration; timeline.step = Math.max(0.01, v.duration/1000);
+            timeline.value = v.currentTime || 0;
+            timeLabel.textContent = formatTime(0) + ' / ' + formatTime(v.duration);
+            tl_fade_in_handle.max = v.duration; tl_fade_out_handle.max = v.duration;
+            tl_fade_in_handle.value = Math.min(v.duration, src.effects.fade_in || 0.3);
+            tl_fade_out_handle.value = Math.min(v.duration, src.effects.fade_out || 0.3);
+            tl_easing.value = src.effects.easing || 'easeInOutQuad';
+
+            timeline.oninput = ()=> { v.currentTime = Number(timeline.value); timeLabel.textContent = formatTime(v.currentTime) + ' / ' + formatTime(v.duration); };
+
+            // sync timeline while playing
+            function tick(){
+                if(state.currentSource !== src.id) return;
+                try { timeline.value = v.currentTime || 0; timeLabel.textContent = formatTime(v.currentTime||0) + ' / ' + formatTime(v.duration); }
+                catch(e){}
+                requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        function applyTimelineToSource(){
+            if(!state.currentSource) return;
+            const src = state.sources.get(state.currentSource);
+            const v = src.element;
+            const dur = (v && v.duration) ? v.duration : 1.0;
+            src.effects.fade_in = Number(tl_fade_in_handle.value);
+            src.effects.fade_out = Number(tl_fade_out_handle.value);
+            src.effects.easing = tl_easing.value;
+            showMsg('✅ Timeline appliquée','success');
+        }
+
+        // drop overlay onto central viewer -> attach to current source
+        function setupCentralDrop(){
+            const wrap = document.getElementById('viewerWrap');
+            ['dragenter','dragover'].forEach(ev => wrap.addEventListener(ev, (e)=>{ e.preventDefault(); dropHint.style.display='block'; }));
+            ['dragleave','drop'].forEach(ev => wrap.addEventListener(ev, (e)=>{ dropHint.style.display='none'; }));
+            wrap.addEventListener('drop', (e)=>{
+                e.preventDefault();
+                if(!e.dataTransfer || !e.dataTransfer.files || e.dataTransfer.files.length===0) return;
+                const f = e.dataTransfer.files[0];
+                if(!state.currentSource) { showMsg('Sélectionnez une source avant de déposer un overlay','error'); return; }
+                if(!f.type.startsWith('image/')) { showMsg('Déposez une image (PNG/JPG) pour overlay','error'); return; }
+                const reader = new FileReader();
+                reader.onload = evt => {
+                    const img = new Image(); img.onload = ()=> {
+                        const src = state.sources.get(state.currentSource);
+                        src.effects.lightImg = img;
+                        src.effects.lightSrc = evt.target.result;
+                        // if running in Electron, file.path exists: store for ffmpeg export
+                        try { if(f.path) src.effects.overlayLocalPath = f.path; } catch(e){}
+                        showMsg('✅ Overlay appliqué à la source','success');
+                    };
+                    img.src = evt.target.result;
+                };
+                reader.readAsDataURL(f);
+            });
+        }
+
+        // wire ef_light_input to allow setting overlay via file input
+        ef_light_input.addEventListener('change', (ev)=>{
+            const f = ev.target.files && ev.target.files[0];
+            if(!f) return;
+            if(!state.currentSource) { showMsg('Sélectionnez une source avant de charger l\'overlay','error'); return; }
+            const reader = new FileReader();
+            reader.onload = e=>{
+                const img = new Image(); img.onload = ()=>{
+                    const src = state.sources.get(state.currentSource);
+                    src.effects.lightImg = img;
+                    src.effects.lightSrc = e.target.result;
+                    try { if(f.path) src.effects.overlayLocalPath = f.path; } catch(e){}
+                    showMsg('✅ Overlay chargé pour la source','success');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(f);
+        });
+
+        // exports: WebM (client) and MP4 via backend detection (window.api.runGenerate)
+        document.getElementById('exportWebmBtn').addEventListener('click', async ()=>{
+            const fps = 30;
+            const mime = 'video/webm;codecs=vp9';
+            try{
+                const stream = canvas.captureStream(fps);
+                const rec = new MediaRecorder(stream, { mimeType: mime });
+                const chunks = [];
+                rec.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+                rec.onstop = ()=> {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = `znk-export-${Date.now()}.webm`; a.click(); URL.revokeObjectURL(url);
+                    showMsg('⬇️ Export WebM prêt','success');
+                };
+                rec.start();
+                setTimeout(()=> rec.stop(), 4000); // default 4s
+                showMsg('⏺️ Enregistrement WebM en cours (4s)','info');
+            }catch(e){ showMsg('Export WebM impossible: ' + e.message,'error'); }
+        });
+
+        document.getElementById('exportMp4Btn').addEventListener('click', async ()=>{
+            if(!state.currentSource) return showMsg('Sélectionnez une source pour export MP4','error');
+            const src = state.sources.get(state.currentSource);
+            if(!(window.api && window.api.runGenerate)){
+                return showMsg('Export MP4 non disponible (nécessite Electron backend)','error');
+            }
+            if(!src.localPath) return showMsg('Export MP4 : le fichier source doit être local (ouvrir via dialogue Electron)','error');
+            const eff = src.effects || defaultEffects();
+            const params = {
+                input: src.localPath,
+                output: `outputs/${src.name.replace(/[^\w\d\-_\.]/g,'_')}_${Date.now()}.mp4`,
+                rotate: eff.rotate || 0,
+                fade_in: eff.fade_in || 0,
+                fade_out: eff.fade_out || 0,
+                leak_opacity: eff.leak_opacity || 0.6,
+                overlay_entry_start: eff.ov_entry_start >=0 ? eff.ov_entry_start : -1,
+                overlay_entry_dur: eff.ov_entry_dur || 0,
+                overlay_exit_start: eff.ov_exit_start >=0 ? eff.ov_exit_start : -1,
+                overlay_exit_dur: eff.ov_exit_dur || 0,
+                light_leak: eff.overlayLocalPath || eff.lightSrc || null,
+                preview: false
+            };
+            try{
+                showMsg('🔄 Lancement export MP4...','info');
+                const res = await window.api.runGenerate(params);
+                if(res && res.ok) showMsg('✅ Export MP4 terminé: ' + res.output,'success');
+                else { console.error(res); showMsg('❌ Erreur export MP4 (voir debug)','error'); }
+            }catch(err){ console.error(err); showMsg('❌ Export MP4 échoué','error'); }
+        });
+
+        // timeline apply button
+        document.getElementById('applyTimelineBtn').addEventListener('click', ()=> applyTimelineToSource());
+
+        // apply effects button
+        document.getElementById('applyEfBtn').addEventListener('click', ()=> applyEffectsToCurrent());
+        document.getElementById('applyAllEfBtn').addEventListener('click', ()=> {
+            for(const [id, s] of state.sources.entries()){
+                s.effects.rotate = Number(ef_rotate.value) || 0;
+                s.effects.fade_in = Number(ef_fade_in.value) || 0;
+                s.effects.fade_out = Number(ef_fade_out.value) || 0;
+            }
+            showMsg('✅ Effets appliqués à toutes les sources','success');
+        });
+        document.getElementById('resetEfBtn').addEventListener('click', ()=>{
+            if(!state.currentSource) return;
+            state.sources.get(state.currentSource).effects = defaultEffects();
+            loadEffectsUI(state.sources.get(state.currentSource).effects);
+            showMsg('🔄 Effets réinitialisés','info');
+        });
+
+        // timeline apply implementation
+        function applyTimelineToSource(){
+            if(!state.currentSource) return showMsg('Sélectionnez une source','error');
+            const src = state.sources.get(state.currentSource);
+            if(src.type !== 'video') return showMsg('Timeline applicable uniquement sur les sources vidéo','error');
+            const v = src.element;
+            if(!v.duration) return showMsg('Vidéo pas prête', 'error');
+            const dur = v.duration;
+            // here tl_fade_in_handle and tl_fade_out_handle are in seconds (because setupTimeline sets max=duration)
+            src.effects.fade_in = Number(tl_fade_in_handle.value);
+            src.effects.fade_out = Number(tl_fade_out_handle.value);
+            src.effects.easing = tl_easing.value;
+            showMsg('✅ Timeline appliquée','success');
+        }
+
+        // central drop setup
+        setupCentralDrop();
+
+        // handle uploads
+        uploadZone.onclick = ()=> mediaInput.click();
+        uploadZone.addEventListener('dragover', e=>{ e.preventDefault(); uploadZone.style.background='rgba(59,130,246,0.04)'; });
+        uploadZone.addEventListener('dragleave', ()=> uploadZone.style.background='transparent');
+        uploadZone.addEventListener('drop', e=>{ e.preventDefault(); uploadZone.style.background='transparent'; handleFiles(e.dataTransfer.files); });
+        mediaInput.addEventListener('change', e=> handleFiles(e.target.files));
+
+        function handleFiles(list){ Array.from(list).forEach(f=> { if(f.type.startsWith('video/')||f.type.startsWith('image/')) addMediaFile(f); }); }
+
+        // render loop
+        function renderLoop(){
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0,0,w,h);
+            if(state.currentSource && state.sources.has(state.currentSource)){
+                const src = state.sources.get(state.currentSource);
+                try{ src.render(ctx,w,h,Date.now()); } catch(e){ console.warn(e); }
+            } else {
+                // default
+                ctx.fillStyle = '#0b1220'; ctx.fillRect(0,0,w,h);
+                ctx.fillStyle = '#fff'; ctx.font='36px Arial'; ctx.textAlign='center';
+                ctx.fillText('🎥 ZNK Camera Core', w/2, h/2 - 10);
+                ctx.font='16px Arial'; ctx.fillStyle='#9ca3af';
+                ctx.fillText('Sélectionnez une source', w/2, h/2 + 20);
+            }
+            requestAnimationFrame(renderLoop);
+        }
+
+        // helpers
+        function formatTime(s){ s = isNaN(s) ? 0 : Math.floor(s); const mm = Math.floor(s/60).toString().padStart(2,'0'); const ss = (s%60).toString().padStart(2,'0'); return `${mm}:${ss}`; }
+        function showMsg(msg, type='info'){ const colors = { info:'#3b82f6', success:'#10b981', error:'#ef4444' }; const n = document.createElement('div'); n.textContent = msg; n.style.cssText = `position:fixed;right:24px;top:24px;background:${colors[type]||colors.info};color:white;padding:10px 14px;border-radius:8px;z-index:9999;`; document.body.appendChild(n); setTimeout(()=>{ n.style.opacity=0; setTimeout(()=>n.remove(),300); },2000); }
+
+        // init
+        createDefaults();
+        renderLoop();
+        updateSourceCount();
+        // auto-select first source after small delay
+        setTimeout(()=> { const k = state.sources.keys().next().value; if(k) selectSource(k); }, 300);
+
+        // expose API for Electron integration (optional)
+        window.znkCamera = { state };
+
+        // ensure viewer can accept clicks and drops
+        (function makeViewerInteractive(){
+            const wrap = document.getElementById('viewerWrap');
+            // Allow drop
+            wrap.addEventListener('dragover', e=> e.preventDefault());
+            wrap.addEventListener('drop', e=> e.preventDefault());
+        })();
+
+    })();
+    </script>
+</body>
+</html>

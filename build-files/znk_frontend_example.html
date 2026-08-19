@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK237 - Test Icon Adapter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-card h2 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .info-value {
+            color: #fff;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .status.ok {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status.error {
+            background: #f44336;
+            color: white;
+        }
+
+        .icons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .icon-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .icon-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .icon-image {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-image img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .icon-name {
+            font-size: 0.9em;
+            word-break: break-word;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+        }
+
+        .error-message {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 ZNK237 Icon Adapter Test</h1>
+
+        <div class="buttons">
+            <button onclick="loadAppInfo()">📱 Info App</button>
+            <button onclick="loadMode()">🔧 Mode Adapter</button>
+            <button onclick="checkIntegrity()">✅ Vérifier Intégrité</button>
+            <button onclick="loadAllIcons()">📦 Charger Icônes</button>
+            <button onclick="loadIntroManifest()">📄 Charger Manifest Intro</button>
+            <button onclick="testSingleIcon()">🎨 Test Icône</button>
+        </div>
+
+        <div id="info-container"></div>
+        <div id="icons-container"></div>
+    </div>
+
+    <script>
+        // Utilitaires
+        function showLoading(message = 'Chargement...') {
+            document.getElementById('info-container').innerHTML = 
+                `<div class="loading">${message}</div>`;
+        }
+
+        function showError(error) {
+            document.getElementById('info-container').innerHTML += 
+                `<div class="error-message">❌ Erreur: ${error}</div>`;
+        }
+
+        // Charger info app
+        async function loadAppInfo() {
+            try {
+                showLoading('Chargement des infos app...');
+                const info = await window.znkUtils.getAppInfo();
+                
+                const html = `
+                    <div class="info-card">
+                        <h2>📱 Informations Application</h2>
+                        <div class="info-row">
+                            <span class="info-label">Nom:</span>
+                            <span class="info-value">${info.name}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Version:</span>
+                            <span class="info-value">${info.version}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Plateforme:</span>
+                            <span class="info-value">${info.platform} (${info.arch})</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Electron:</span>
+                            <span class="info-value">${info.electron}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Mode DEV:</span>
+                            <span class="info-value">
+                                <span class="status ${info.isDev ? 'ok' : 'error'}">
+                                    ${info.isDev ? '✅ OUI' : '❌ NON'}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Packagé:</span>
+                            <span class="info-value">
+                                <span class="status ${info.isPackaged ? 'ok' : 'error'}">
+                                    ${info.isPackaged ? '✅ OUI' : '❌ NON'}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('info-container').innerHTML = html;
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Charger mode adapter
+        async function loadMode() {
+            try {
+                showLoading('Chargement du mode adapter...');
+                const mode = await window.znkIcons.getMode();
+                
+                const html = `
+                    <div class="info-card">
+                        <h2>🔧 Mode Icon Adapter</h2>
+                        <div class="info-row">
+                            <span class="info-label">Mode:</span>
+                            <span class="info-value">
+                                <span class="status ok">${mode.mode}</span>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Développement:</span>
+                            <span class="info-value">${mode.isDev ? '✅' : '❌'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Chemin Icônes:</span>
+                            <span class="info-value">${mode.config.iconsPath}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Manifest:</span>
+                            <span class="info-value">${mode.config.manifestFile}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Format:</span>
+                            <span class="info-value">${mode.config.format}</span>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('info-container').innerHTML = html;
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Vérifier intégrité
+        async function checkIntegrity() {
+            try {
+                showLoading('Vérification de l\'intégrité...');
+                const integrity = await window.znkIcons.checkIntegrity();
+                
+                const errorsHtml = integrity.errors.length > 0 
+                    ? `<div class="error-message">
+                         ${integrity.errors.map(e => `• ${e}`).join('<br>')}
+                       </div>`
+                    : '<div class="status ok">✅ Aucune erreur</div>';
+                
+                const html = `
+                    <div class="info-card">
+                        <h2>✅ Rapport d'Intégrité</h2>
+                        <div class="info-row">
+                            <span class="info-label">Mode:</span>
+                            <span class="info-value">${integrity.mode}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Base Path:</span>
+                            <span class="info-value">${integrity.basePath}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Icônes trouvées:</span>
+                            <span class="info-value">${integrity.iconsFound}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Manifest chargé:</span>
+                            <span class="info-value">
+                                ${integrity.manifestLoaded ? '✅' : '❌'}
+                            </span>
+                        </div>
+                    </div>
+                    ${errorsHtml}
+                `;
+                
+                document.getElementById('info-container').innerHTML = html;
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Charger toutes les icônes
+        async function loadAllIcons() {
+            try {
+                showLoading('Chargement des icônes...');
+                const icons = await window.znkIcons.getAll();
+                
+                document.getElementById('info-container').innerHTML = `
+                    <div class="info-card">
+                        <h2>📦 Icônes Disponibles (${icons.length})</h2>
+                    </div>
+                `;
+                
+                const iconsHtml = icons.map(icon => {
+                    const imgSrc = icon.url || icon.data || '';
+                    return `
+                        <div class="icon-item">
+                            <div class="icon-image">
+                                <img src="${imgSrc}" alt="${icon.name}" />
+                            </div>
+                            <div class="icon-name">${icon.name}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('icons-container').innerHTML = `
+                    <div class="icons-grid">
+                        ${iconsHtml}
+                    </div>
+                `;
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Charger manifest intro
+        async function loadIntroManifest() {
+            try {
+                showLoading('Chargement du manifest intro...');
+                const manifest = await window.znkIcons.loadIntroManifest();
+                
+                const entries = Object.keys(manifest).length;
+                
+                const html = `
+                    <div class="info-card">
+                        <h2>📄 Manifest Intro</h2>
+                        <div class="info-row">
+                            <span class="info-label">Entrées:</span>
+                            <span class="info-value">${entries}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Données:</span>
+                            <span class="info-value">
+                                <pre style="color: #fff; overflow: auto; max-height: 300px;">
+${JSON.stringify(manifest, null, 2)}
+                                </pre>
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('info-container').innerHTML = html;
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Test d'une icône spécifique
+        async function testSingleIcon() {
+            const iconName = prompt('Nom de l\'icône à tester (ex: home, user, settings):');
+            if (!iconName) return;
+            
+            try {
+                showLoading(`Test de l'icône: ${iconName}...`);
+                const iconUrl = await window.znkIcons.resolve(iconName);
+                
+                if (!iconUrl) {
+                    showError(`Icône "${iconName}" non trouvée`);
+                    return;
+                }
+                
+                const html = `
+                    <div class="info-card">
+                        <h2>🎨 Test Icône: ${iconName}</h2>
+                        <div style="text-align: center; padding: 30px;">
+                            <img src="${iconUrl}" alt="${iconName}" 
+                                 style="max-width: 200px; max-height: 200px;" />
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">URL:</span>
+                            <span class="info-value" style="word-break: break-all; font-size: 0.8em;">
+                                ${iconUrl.substring(0, 100)}...
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('info-container').innerHTML = html;
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Charger automatiquement au démarrage
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAppInfo();
+        });
+    </script>
+</body>
+</html>

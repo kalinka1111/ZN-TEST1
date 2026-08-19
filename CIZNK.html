@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIZNK — Carte d'Identité ZNK</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+        color: #fff;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    h1 {
+        font-size: 18px;
+        letter-spacing: 1px;
+        color: #00d4ff;
+        margin-bottom: 4px;
+    }
+
+    .subtitle {
+        font-size: 12px;
+        color: rgba(255,255,255,0.5);
+        margin-bottom: 24px;
+    }
+
+    /* --------- Recherche / chargement d'un ID --------- */
+    .lookup {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+    }
+
+    .lookup input {
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.05);
+        color: #fff;
+        font-family: monospace;
+        font-size: 13px;
+        width: 220px;
+    }
+
+    .lookup button {
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(135deg, #51b3fe 0%, #004d65 100%);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+    }
+
+    /* --------- Carte flip --------- */
+    .card-scene {
+        width: 380px;
+        max-width: 90vw;
+        height: 230px;
+        perspective: 1400px;
+        margin-bottom: 18px;
+    }
+
+    .card-flip {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        transform-style: preserve-3d;
+        cursor: pointer;
+    }
+
+    .card-flip.flipped { transform: rotateY(180deg); }
+
+    .card-face {
+        position: absolute;
+        inset: 0;
+        border-radius: 18px;
+        backface-visibility: hidden;
+        padding: 18px 20px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.12);
+        overflow: hidden;
+    }
+
+    /* FACE = recto = toutes les infos (équivalent infos ZNK user) */
+    .card-front {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0a0a0a 100%);
+    }
+
+    .card-front::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 180px; height: 180px;
+        background: radial-gradient(circle, rgba(0,212,255,0.25) 0%, transparent 70%);
+    }
+
+    .front-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .znk-logo {
+        font-weight: 800;
+        font-size: 14px;
+        letter-spacing: 1px;
+        color: #00d4ff;
+    }
+
+    .type-badge {
+        font-size: 10px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: rgba(0,212,255,0.15);
+        border: 1px solid rgba(0,212,255,0.4);
+        color: #9ef0ff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .front-body {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-top: 10px;
+        flex: 1;
+    }
+
+    .avatar {
+        width: 58px; height: 58px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #51b3fe 0%, #004d65 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 20px; color: #000;
+        flex-shrink: 0;
+    }
+
+    .front-info { flex: 1; min-width: 0; }
+
+    .user-name {
+        font-size: 17px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .user-id {
+        font-family: monospace;
+        font-size: 12px;
+        color: #00d4ff;
+        margin-top: 2px;
+    }
+
+    .status-line {
+        font-size: 10px;
+        color: rgba(255,255,255,0.5);
+        margin-top: 4px;
+    }
+
+    .front-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 10px;
+        margin-top: 12px;
+        font-size: 10.5px;
+    }
+
+    .front-grid .label { color: rgba(255,255,255,0.45); }
+    .front-grid .value { color: #fff; font-family: monospace; text-align: right; }
+
+    /* PILE = verso = ID unique format carte d'identité */
+    .card-back {
+        background: linear-gradient(135deg, #0a0a0a 0%, #16213e 100%);
+        transform: rotateY(180deg);
+        justify-content: space-between;
+    }
+
+    .back-strip {
+        height: 34px;
+        background: repeating-linear-gradient(135deg, #000 0 8px, #111 8px 16px);
+        margin: -18px -20px 14px -20px;
+    }
+
+    .back-id-label {
+        font-size: 9px;
+        letter-spacing: 2px;
+        color: rgba(255,255,255,0.4);
+        text-transform: uppercase;
+    }
+
+    .back-id-value {
+        font-family: monospace;
+        font-size: 22px;
+        font-weight: 700;
+        color: #00d4ff;
+        letter-spacing: 1px;
+        margin-top: 2px;
+        word-break: break-all;
+    }
+
+    .back-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-top: 12px;
+    }
+
+    .back-card-info { font-size: 10.5px; line-height: 1.6; }
+    .back-card-info .label { color: rgba(255,255,255,0.45); }
+    .back-card-info .value { font-family: monospace; color: #fff; }
+
+    /* motif décoratif façon QR (purement visuel, non scannable) */
+    .qr-fake {
+        width: 54px; height: 54px;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: repeat(6, 1fr);
+        gap: 2px;
+        background: #fff;
+        padding: 4px;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+    .qr-fake div { background: #0a0a0a; }
+
+    .back-footer {
+        font-size: 8.5px;
+        color: rgba(255,255,255,0.35);
+        margin-top: 10px;
+        text-align: center;
+        letter-spacing: 0.5px;
+    }
+
+    .hint {
+        font-size: 11px;
+        color: rgba(255,255,255,0.4);
+        margin-bottom: 16px;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .actions button {
+        padding: 8px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.06);
+        color: #fff;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .not-found {
+        font-size: 13px;
+        color: #ff9d9d;
+        margin-bottom: 16px;
+        text-align: center;
+    }
+
+    @media print {
+        .lookup, .hint, .actions { display: none; }
+        body { background: #16213e; }
+    }
+</style>
+    <script src="./ZNKAuthSystem/znk-session.js"></script>
+</head>
+<body>
+
+    <h1>🪪 CIZNK — Carte d'Identité Numérique</h1>
+    <div class="subtitle">Identité ZNK complète (Générateur ID + WhatsZNK + Carte virtuelle + Profil)</div>
+
+    <div class="lookup">
+        <input type="text" id="idInput" placeholder="Ex: ZNK-2024-0001" autocomplete="off">
+        <button onclick="loadCard()">Charger</button>
+    </div>
+
+    <div id="notFound" class="not-found" style="display:none;">ID introuvable dans le ledger partagé.</div>
+
+    <div id="cardArea" style="display:none;">
+        <div class="card-scene">
+            <div class="card-flip" id="cardFlip" onclick="flipCard()">
+                <!-- FACE : toutes les infos -->
+                <div class="card-face card-front">
+                    <div class="front-top">
+                        <div class="znk-logo">ZNK237</div>
+                        <div class="type-badge" id="typeBadge">—</div>
+                    </div>
+                    <div class="front-body">
+                        <div class="avatar" id="avatarInitials">—</div>
+                        <div class="front-info">
+                            <div class="user-name" id="userName">—</div>
+                            <div class="user-id" id="userIdFront">—</div>
+                            <div class="status-line" id="statusLine">—</div>
+                        </div>
+                    </div>
+                    <div class="front-grid">
+                        <div class="label">WhatsZNK</div><div class="value" id="whatsZNK">—</div>
+                        <div class="label">Betis</div><div class="value" id="betisVal">—</div>
+                        <div class="label">Solde</div><div class="value" id="balanceVal">—</div>
+                        <div class="label">Créé le</div><div class="value" id="createdVal">—</div>
+                    </div>
+                </div>
+
+                <!-- PILE : ID format carte d'identité -->
+                <div class="card-face card-back">
+                    <div>
+                        <div class="back-strip"></div>
+                        <div class="back-id-label">Identifiant unique ZNK</div>
+                        <div class="back-id-value" id="userIdBack">—</div>
+                    </div>
+                    <div class="back-row">
+                        <div class="back-card-info">
+                            <div><span class="label">Carte: </span><span class="value" id="cardNumberBack">—</span></div>
+                            <div><span class="label">Exp: </span><span class="value" id="cardExpiryBack">—</span></div>
+                        </div>
+                        <div class="qr-fake" id="qrFake"></div>
+                    </div>
+                    <div class="back-footer">DOCUMENT NUMÉRIQUE ZNK237 — NON TRANSFÉRABLE — CLIQUEZ POUR RETOURNER</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint">Cliquez sur la carte pour la retourner (recto ↔ verso)</div>
+
+        <div class="actions">
+            <button onclick="flipCard()">🔄 Retourner</button>
+            <button onclick="window.print()">🖨️ Imprimer</button>
+        </div>
+    </div>
+
+<script>
+    const ZNK_LEDGER_FALLBACK_KEY = 'znkNomadLedgerFallback';
+
+    async function znkLedgerLoad() {
+        try {
+            if (window.electronAPI && window.electronAPI.znkNomadReadData) {
+                const raw = await window.electronAPI.znkNomadReadData();
+                if (raw) return JSON.parse(raw);
+            }
+        } catch (e) { console.warn('znkLedgerLoad:', e); }
+        try {
+            return JSON.parse(localStorage.getItem(ZNK_LEDGER_FALLBACK_KEY) || '{}');
+        } catch (e) { return {}; }
+    }
+
+    function flipCard() {
+        document.getElementById('cardFlip').classList.toggle('flipped');
+    }
+
+    function initials(name) {
+        if (!name) return '?';
+        const parts = name.trim().split(/\s+/);
+        return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+    }
+
+    // Motif décoratif déterministe (dépend de l'ID) pour que chaque carte ait un
+    // visuel "QR" différent — purement esthétique, pas un vrai QR scannable.
+    function renderFakeQr(seedStr) {
+        const qr = document.getElementById('qrFake');
+        qr.innerHTML = '';
+        let seed = 0;
+        for (let i = 0; i < seedStr.length; i++) seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
+        for (let i = 0; i < 36; i++) {
+            seed = (seed * 1103515245 + 12345) >>> 0;
+            const on = (seed % 100) < 45;
+            const cell = document.createElement('div');
+            cell.style.background = on ? '#0a0a0a' : '#fff';
+            qr.appendChild(cell);
+        }
+    }
+
+    const TYPE_LABELS = { visitor: 'Visiteur', member: 'Membre', memberPlus: 'Membre+', fida: 'Artiste FIDA' };
+
+    async function loadCard() {
+        const id = (document.getElementById('idInput').value || '').trim();
+        if (!id) return;
+
+        const ledger = await znkLedgerLoad();
+        const user = (ledger.users || {})[id];
+        const wallet = (ledger.wallets || {})[id];
+
+        document.getElementById('cardArea').style.display = 'none';
+        document.getElementById('notFound').style.display = 'none';
+
+        if (!user && !wallet) {
+            document.getElementById('notFound').style.display = 'block';
+            return;
+        }
+
+        // Fusionne profil (ledger.users) + portefeuille (ledger.wallets) : la
+        // carte affichée reflète toujours la dernière carte/valeurs assignées,
+        // même si seule une carte a été créée sans passer par l'onglet Utilisateurs.
+        const name = (wallet && wallet.name) || (user && user.name) || 'Utilisateur ZNK';
+        const type = (user && user.type) || 'visitor';
+        const status = (user && user.status) || 'active';
+        const whatsZNK = (user && user.whatsZNKNumber) || '—';
+        const betis = (wallet && wallet.betis) ?? (user && user.betis) ?? 0;
+        const balance = (wallet && wallet.balance) ?? (user && user.balance) ?? 0;
+        const created = user && user.created ? new Date(user.created).toLocaleDateString('fr-FR') : '—';
+        const cardNumber = (wallet && wallet.card && wallet.card.number) || (user && user.cardNumber) || '—';
+        const cardExpiry = (wallet && wallet.card && wallet.card.expiry) || (user && user.cardExpiry) || '—';
+
+        document.getElementById('typeBadge').textContent = TYPE_LABELS[type] || type;
+        document.getElementById('avatarInitials').textContent = initials(name);
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userIdFront').textContent = id;
+        document.getElementById('statusLine').textContent = `Statut: ${status}`;
+        document.getElementById('whatsZNK').textContent = whatsZNK;
+        document.getElementById('betisVal').textContent = betis;
+        document.getElementById('balanceVal').textContent = Number(balance).toFixed(2) + ' €';
+        document.getElementById('createdVal').textContent = created;
+
+        document.getElementById('userIdBack').textContent = id;
+        document.getElementById('cardNumberBack').textContent = cardNumber;
+        document.getElementById('cardExpiryBack').textContent = cardExpiry;
+        renderFakeQr(id);
+
+        document.getElementById('cardFlip').classList.remove('flipped');
+        document.getElementById('cardArea').style.display = 'block';
+    }
+
+    // Auto-chargement : priorité au ?id=... explicite (ex: lien depuis nomad.html
+    // avec ZNKNomad.user.id) ; sinon, on retombe sur l'identité unique ZNKSession
+    // pour afficher directement la carte du compte actuellement connecté.
+    (async function init() {
+        const params = new URLSearchParams(window.location.search);
+        let id = params.get('id');
+
+        if (!id && window.ZNKSession) {
+            await window.ZNKSession.ready;
+            const current = window.ZNKSession.getCurrentUser();
+            if (current) id = current.id || current.idZNK;
+        }
+
+        if (id) {
+            document.getElementById('idInput').value = id;
+            loadCard();
+        }
+    })();
+</script>
+</body>
+</html>

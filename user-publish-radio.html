@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNK Radio - Publier mon émission (utilisateur)</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --bg-primary: #07201c;
+        --bg-secondary: #0f3a30;
+        --bg-tertiary: #14453a;
+        --accent: #10b981;
+        --accent-hover: #34d399;
+        --text-primary: #ffffff;
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
+        --border: #1d6b56;
+        --success: #10b981;
+        --warning: #d29d00;
+        --error: #d54375;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #07201c 0%, #0f3a30 100%);
+        color: var(--text-primary);
+        min-height: 100vh;
+        padding: 30px 20px 80px;
+    }
+
+    .container { max-width: 880px; margin: 0 auto; }
+
+    .header { text-align: center; margin-bottom: 24px; }
+    .header h1 { color: var(--accent-hover); font-size: 1.6rem; margin-bottom: 6px; }
+    .header p { color: var(--text-secondary); font-size: 13px; }
+    #modeBadge { display: inline-block; margin-top: 10px; padding: 4px 12px; border-radius: 12px; font-size: 12px; background: var(--bg-tertiary); border: 1px solid var(--border); }
+
+    .card {
+        background: rgba(0,0,0,0.35);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px;
+        margin-bottom: 20px;
+    }
+    .card h2 { font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+    /* Émission : nom / description / cover */
+    .emission-form { display: grid; grid-template-columns: 140px 1fr; gap: 20px; }
+    .cover-picker {
+        width: 140px; height: 140px; border-radius: 14px; cursor: pointer;
+        border: 2px dashed var(--border); background: var(--bg-tertiary);
+        display: flex; align-items: center; justify-content: center; flex-direction: column;
+        gap: 6px; color: var(--text-muted); font-size: 12px; text-align: center;
+        background-size: cover; background-position: center; position: relative; overflow: hidden;
+    }
+    .cover-picker:hover { border-color: var(--accent); }
+    .cover-picker .icon { font-size: 30px; }
+    .cover-picker.has-image .icon, .cover-picker.has-image .label { display: none; }
+    .cover-picker .change-hint {
+        position: absolute; bottom: 0; left: 0; right: 0; padding: 4px;
+        background: rgba(0,0,0,0.65); font-size: 10px; opacity: 0; transition: opacity .2s;
+    }
+    .cover-picker.has-image:hover .change-hint { opacity: 1; }
+    .cover-hint { width: 140px; margin-top: 6px; font-size: 10px; line-height: 1.3; color: var(--text-muted); text-align: center; }
+
+    .form-fields { display: flex; flex-direction: column; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .form-input, .form-textarea {
+        padding: 10px 12px; background: var(--bg-tertiary); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; font-family: inherit;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--accent-hover); }
+    .form-textarea { resize: vertical; min-height: 50px; }
+
+    /* Drop zone pistes */
+    .drop-zone {
+        border: 3px dashed rgba(255,255,255,0.25); border-radius: 12px; padding: 34px 20px;
+        text-align: center; cursor: pointer; transition: all .2s;
+    }
+    .drop-zone:hover, .drop-zone.dragover { background: rgba(255,255,255,0.04); }
+    .drop-zone .big { font-size: 40px; }
+    .drop-zone .hint { opacity: .7; margin-top: 8px; font-size: 12px; }
+
+    .files-list { margin-top: 14px; }
+    .file-item {
+        padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,0.05);
+        margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+    }
+    .file-item .track-num { width: 22px; text-align: center; color: var(--text-muted); font-size: 12px; }
+    .file-item .fields { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .file-item input { padding: 6px 8px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 12px; }
+    .file-item .meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .file-item .status-pill { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.08); white-space: nowrap; }
+    .file-item .status-pill.done { background: rgba(16,185,129,0.25); color: var(--success); }
+    .file-item .status-pill.error { background: rgba(213,67,117,0.25); color: var(--error); }
+    .file-item .remove-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; }
+
+    .publish-btn {
+        width: 100%; padding: 16px; border: none; border-radius: 12px; color: #fff;
+        font-weight: 700; font-size: 15px; cursor: pointer; transition: all .2s;
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .publish-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .publish-btn:not(:disabled):hover { transform: translateY(-2px); }
+
+    .notification {
+        position: fixed; bottom: 20px; right: 20px; padding: 14px 18px; border-radius: 10px;
+        background: var(--bg-tertiary); border: 1px solid var(--border); font-size: 13px;
+        transform: translateX(140%); transition: transform .3s; z-index: 999;
+    }
+    .notification.show { transform: translateX(0); }
+    .notification.error { border-color: var(--error); }
+    .notification.success { border-color: var(--success); }
+
+    input[type="file"] { display: none; }
+
+    .emission-row {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+        background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;
+        border: 2px solid transparent; transition: all .15s;
+    }
+    .emission-row:hover { background: rgba(255,255,255,0.08); }
+    .emission-row.active { border-color: var(--accent); background: rgba(16,185,129,0.12); }
+    .emission-row .thumb { width: 36px; height: 36px; border-radius: 8px; background: var(--bg-tertiary); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .emission-row .name { flex: 1; font-size: 13px; font-weight: 600; }
+    .emission-row .count { font-size: 11px; color: var(--text-muted); }
+    .emission-row .del-btn { background: none; border: none; color: var(--error); cursor: pointer; font-size: 15px; padding: 4px; }
+
+    .status-banner {
+        display: none; align-items: center; justify-content: space-between; gap: 12px;
+        margin-bottom: 16px; padding: 10px 14px; background: rgba(255,255,255,0.05);
+        border: 1px solid var(--border); border-radius: 10px; font-size: 12px; color: var(--text-secondary);
+    }
+    .status-banner .del-emission-btn {
+        flex-shrink: 0; background: none; border: 1px solid var(--error); color: var(--error);
+        border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
+        white-space: nowrap;
+    }
+    .status-banner .del-emission-btn:hover { background: rgba(213,67,117,0.15); }
+
+    /* Retour au hub parent (affiché seulement si ouvert depuis un hub) */
+    .hub-back-bar {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        max-width: 880px;
+        margin: 0 auto 16px;
+        padding: 10px 14px;
+        background: rgba(0,0,0,0.35);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+    }
+    .hub-back-bar.visible { display: flex; }
+    .back-to-hub-btn {
+        display: flex; align-items: center; gap: 6px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        color: #fff; border: none; padding: 8px 14px; border-radius: 8px;
+        cursor: pointer; font-weight: 700; font-size: 13px; transition: all .2s;
+        white-space: nowrap;
+    }
+    .back-to-hub-btn:hover { transform: translateY(-2px); }
+    .hub-back-label { font-size: 12px; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="hub-back-bar" id="hubBackBar">
+        <button class="back-to-hub-btn" onclick="returnToParentHub()">← Retour au hub</button>
+        <div class="hub-back-label" id="hubBackLabel"></div>
+    </div>
+
+    <div class="header">
+        <h1>🎙 ZNK Radio — Publier mon émission</h1>
+        <p>Une émission = ton nom/badge + toutes tes musiques (mp3 natif, aucune conversion).</p>
+        <div id="modeBadge">Chargement…</div>
+    </div>
+
+    <div class="card">
+        <h2>📻 Mon émission</h2>
+        <div class="status-banner" id="emissionStatusBanner">
+            <span id="emissionStatusText"></span>
+            <button type="button" class="del-emission-btn" id="deleteEmissionBtn">🗑️ Supprimer mon émission</button>
+        </div>
+        <div class="emission-form">
+            <div>
+                <div class="cover-picker" id="coverPicker">
+                    <div class="icon">🖼️</div>
+                    <div class="label">Choisir<br>une image</div>
+                    <div class="change-hint">Changer l'image</div>
+                </div>
+                <div class="cover-hint">Carrée de préférence · JPG/PNG · redimensionnée auto en 500×500</div>
+            </div>
+            <div class="form-fields">
+                <div class="form-group">
+                    <label class="form-label">Nom de l'émission / artiste</label>
+                    <input class="form-input" id="emissionName" placeholder="Ex: Les nuits de Zaza" maxlength="60">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description (optionnel)</label>
+                    <textarea class="form-textarea" id="emissionDescription" placeholder="Quelques mots sur ton émission…" maxlength="240"></textarea>
+                </div>
+            </div>
+        </div>
+        <input type="file" id="coverInput" accept="image/*">
+    </div>
+
+    <div class="card">
+        <h2>🎵 Mes musiques</h2>
+        <div class="drop-zone" id="dropZone">
+            <div class="big">🎧</div>
+            <div>Glisse tes mp3 ici, ou clique pour choisir</div>
+            <div class="hint">Formats acceptés : mp3, wav, m4a, aac, flac, ogg</div>
+        </div>
+        <input type="file" id="hiddenFileInput" accept="audio/*" multiple>
+        <div class="files-list" id="filesList"></div>
+    </div>
+
+    <button class="publish-btn" id="publishBtn" onclick="publishEmission()" disabled>
+        🚀 Publier mon émission
+    </button>
+</div>
+
+<div id="notification" class="notification"></div>
+
+<script>
+(function () {
+    // ---------- Pont Electron ----------
+    // main.js lance la fenêtre avec contextIsolation: true / nodeIntegration:
+    // false par défaut (sauf ZNK_ALLOW_LEGACY=1) : `require` n'est donc JAMAIS
+    // injecté dans le renderer ici. L'API réelle est exposée par preload.js
+    // via contextBridge.exposeInMainWorld('electronAPI', ...) — c'est donc
+    // window.electronAPI qu'il faut détecter, pas `require` (qui restait
+    // toujours `undefined`, faisant croire à tort qu'on était en mode
+    // navigateur : badge "🌐 Mode navigateur" affiché même dans Electron,
+    // et le drop zone tombait sur <input type="file"> au lieu du vrai
+    // dialogue natif api.selectAudioFiles()).
+    const api = window.electronAPI || null;
+    const isElectron = !!api;
+
+    // ---------- Serveur local (main.js lance server.py sur ce port) ----------
+    // Toute la persistance "visible par les autres" passe maintenant par ici
+    // (routes .../sync-push, non protégées localement — c'est server.py qui
+    // attache la clé du device avant de relayer vers le VPS). L'ancien duo
+    // api.makeAudioPersistent + api.radioSaveEmission ne sauvait qu'en LOCAL
+    // (jamais visible par les autres users) — c'était la cause du bug
+    // "fichier introuvable" chez les autres.
+    const LOCAL_SERVER = 'http://127.0.0.1:5001';
+
+    // ---------- File d'attente offline (sync-puis-offline) ----------
+    // Si la connexion est mauvaise/absente au moment de publier, on ne perd
+    // rien : la piste (Blob) et l'émission en attente sont stockées dans
+    // IndexedDB (localStorage est trop petit/pas fait pour des binaires), et
+    // on retente automatiquement à la reconnexion (événement 'online' +
+    // tentative à chaque ouverture de la page). Même principe que la queue
+    // offline déjà en place côté WhatsZNK pour les messages texte.
+    const QUEUE_DB = 'znk-radio-queue';
+    function openQueueDb() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(QUEUE_DB, 1);
+            req.onupgradeneeded = () => {
+                const db = req.result;
+                if (!db.objectStoreNames.contains('pending-tracks')) db.createObjectStore('pending-tracks');
+                if (!db.objectStoreNames.contains('pending-emission')) db.createObjectStore('pending-emission');
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function queueSet(store, key, value) {
+        const db = await openQueueDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readwrite');
+            tx.objectStore(store).put(value, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+    async function queueGet(store, key) {
+        const db = await openQueueDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readonly');
+            const req = tx.objectStore(store).get(key);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function queueDelete(store, key) {
+        const db = await openQueueDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readwrite');
+            tx.objectStore(store).delete(key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+    async function queueGetAllKeys(store) {
+        const db = await openQueueDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readonly');
+            const req = tx.objectStore(store).getAllKeys();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    // Tente de vider la file (pistes en attente, puis émission en attente).
+    // Appelée au chargement de la page et à chaque retour de connexion.
+    // Silencieuse en cas d'échec (on retentera plus tard) — pas de
+    // notification d'erreur ici, sinon ça spamme l'utilisateur hors-ligne.
+    let flushingQueue = false;
+    async function flushPendingQueue() {
+        if (flushingQueue) return;
+        flushingQueue = true;
+        try {
+            const pending = await queueGet('pending-emission', 'current');
+            if (!pending) return;
+
+            // 1) Uploader les pistes qui n'ont pas encore d'URL
+            for (const t of pending.tracks) {
+                if (t.url) continue;
+                const blobEntry = await queueGet('pending-tracks', t.localId);
+                if (!blobEntry) continue; // orpheline, on l'ignorera à la publication
+                try {
+                    const formData = new FormData();
+                    formData.append('file', blobEntry.blob, blobEntry.name);
+                    const res = await fetch(`${LOCAL_SERVER}/api/radio-emissions/mine/track/sync-push`, { method: 'POST', body: formData });
+                    const result = await res.json();
+                    if (res.ok && result.status === 'success') {
+                        t.url = result.url;
+                        await queueDelete('pending-tracks', t.localId);
+                        await queueSet('pending-emission', 'current', pending);
+                    } else {
+                        return; // toujours pas de réseau utilisable, on retentera plus tard
+                    }
+                } catch (e) {
+                    return; // hors-ligne, on retentera au prochain 'online'
+                }
+            }
+
+            // 2) Toutes les pistes ont une URL -> publier l'émission
+            if (pending.tracks.every(t => t.url)) {
+                try {
+                    const res = await fetch(`${LOCAL_SERVER}/api/radio-emissions/mine/sync-push`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(pending.emission ? { ...pending.emission, tracks: pending.tracks } : { ...pending, tracks: pending.tracks })
+                    });
+                    const result = await res.json();
+                    if (res.ok && result.status === 'success') {
+                        await queueDelete('pending-emission', 'current');
+                        hasExistingEmission = true;
+                        showNotification('Connexion retrouvée : ton émission en attente a bien été publiée.', false);
+                    }
+                } catch (e) {
+                    // on retentera plus tard
+                }
+            }
+        } catch (e) {
+            console.warn('flushPendingQueue error:', e && e.message);
+        } finally {
+            flushingQueue = false;
+        }
+    }
+    window.addEventListener('online', flushPendingQueue);
+
+    // ---------- Retour au hub parent ----------
+    // Quand cette page est ouverte depuis un hub (ex: AdminHubCreator, via une
+    // tuile "Page locale"), l'URL contient ?parent=<url du hub>. On affiche
+    // alors une barre "← Retour au hub", et on utilise le même canal IPC
+    // (navigate-to-module) que celui qui a servi à arriver ici — exactement
+    // comme le fait ZNKStudiosDash.html pour ouvrir cette page.
+    const pageUrlParams = new URLSearchParams(window.location.search);
+    const parentHubUrl = pageUrlParams.get('parent');
+
+    if (parentHubUrl) {
+        document.getElementById('hubBackBar').classList.add('visible');
+        try {
+            const label = pageUrlParams.get('title');
+            document.getElementById('hubBackLabel').textContent = label ? `Ouvert depuis : ${label}` : '';
+        } catch (e) {}
+    }
+
+    window.returnToParentHub = function () {
+        if (!parentHubUrl) return;
+        if (isElectron && api.send) {
+            api.send("navigate-to-module", parentHubUrl);
+        } else {
+            window.location.href = parentHubUrl;
+        }
+    };
+
+    // ---------- Compte courant ----------
+    // Cette page est réservée aux comptes utilisateur (1 seule émission
+    // possible). La gestion admin (plusieurs émissions) vit dans
+    // admin-publish-radio.html — voir ce fichier pour la détection de rôle.
+    // ⚠️ Détection basée sur la convention znk_account / znk_userData
+    // documentée pour l'écosystème ZNK. Si le nom exact des champs diffère
+    // dans ton système de compte réel, ajuste getCurrentAccount() ci-dessous.
+    function getCurrentAccount() {
+        try {
+            const raw = localStorage.getItem('znk_account');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        try {
+            const raw = sessionStorage.getItem('znk_userData');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        try {
+            const raw = localStorage.getItem('znkUserData');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return null;
+    }
+
+    function getStableUserId(account) {
+        // idZNK est l'identifiant réel du compte dans l'écosystème ZNK.
+        if (account && (account.idZNK || account.id || account.userId || account.username)) {
+            return String(account.idZNK || account.id || account.userId || account.username);
+        }
+        // Repli : identifiant stable généré une fois et conservé en local,
+        // pour qu'un même appareil retrouve toujours SA même émission même
+        // sans système de compte connecté.
+        let uid = localStorage.getItem('znk_radio_local_uid');
+        if (!uid) {
+            uid = 'local_' + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem('znk_radio_local_uid', uid);
+        }
+        return uid;
+    }
+
+    const account = getCurrentAccount();
+    const role = 'user';
+    const userId = getStableUserId(account);
+    // Un utilisateur normal a toujours LA MÊME émission (1 seule, jamais de liste).
+    let currentEmissionId = `user_${userId}`;
+
+    document.getElementById('modeBadge').textContent =
+        (isElectron ? '⚡ Electron connecté' : '🌐 Mode navigateur') +
+        ' — Compte : Utilisateur (émission perso 🎤)';
+
+    // ---------- État ----------
+    let coverImageDataUrl = null; // base64, stocké directement dans le JSON de l'émission
+    let tracks = []; // { id, name, size, path, title, artist, status: pending|persisting|done|error, url }
+    // true si l'émission de cet utilisateur existe déjà côté manifest (mode
+    // édition) — pilote l'affichage du bandeau "🗑️ Supprimer mon émission".
+    let hasExistingEmission = false;
+
+    function manifestPath() {
+        return './users/manifests/user-audio-manifest.json';
+    }
+
+    // Va chercher SA propre émission déjà publiée, si elle existe — d'abord
+    // sur le serveur (source de vérité, visible par tous), avec repli sur le
+    // manifest local si le serveur/VPS est injoignable (mode hors-ligne).
+    async function fetchMyEmission() {
+        try {
+            const res = await fetch(`${LOCAL_SERVER}/api/radio-emissions/mine/sync-pull`);
+            const json = await res.json();
+            if (res.ok && json.status === 'success' && json.emission) {
+                return json.emission;
+            }
+            // 404 status:'error' = pas encore publiée, c'est normal — pas une panne.
+        } catch (e) {
+            console.warn('Serveur local injoignable, repli sur le manifest local:', e.message);
+        }
+
+        // Repli local (hors-ligne, ou serveur pas encore démarré)
+        if (isElectron && api.getRadioUserManifest) {
+            try {
+                const result = await api.getRadioUserManifest();
+                if (result && result.success && result.json) {
+                    const json = JSON.parse(result.json);
+                    const list = Array.isArray(json.emissions) ? json.emissions : [];
+                    return list.find(e => e.id === currentEmissionId) || null;
+                }
+            } catch (e) {
+                console.warn('radio:get-user-manifest indisponible (normal au premier lancement):', e.message);
+            }
+        }
+        return null;
+    }
+
+    function resetForm() {
+        hasExistingEmission = false;
+        document.getElementById('emissionName').value = '';
+        document.getElementById('emissionDescription').value = '';
+        coverImageDataUrl = null;
+        coverPicker.style.backgroundImage = '';
+        coverPicker.classList.remove('has-image');
+        tracks = [];
+        renderFilesList();
+        updatePublishState();
+    }
+
+    // Met à jour le bandeau "Émission déjà publiée" + bouton de suppression,
+    // visible uniquement quand l'utilisateur a déjà publié sa (seule) émission.
+    function updateEmissionStatusUI() {
+        const banner = document.getElementById('emissionStatusBanner');
+        const text = document.getElementById('emissionStatusText');
+        if (hasExistingEmission) {
+            text.textContent = `✓ Émission déjà publiée (${tracks.length} piste(s)) — modifie les champs puis republie pour mettre à jour, ou supprime-la pour repartir de zéro.`;
+            banner.style.display = 'flex';
+        } else {
+            banner.style.display = 'none';
+        }
+    }
+
+    function loadEmissionIntoForm(mine) {
+        hasExistingEmission = !!mine;
+        if (!mine) { resetForm(); return; }
+        document.getElementById('emissionName').value = mine.name || '';
+        document.getElementById('emissionDescription').value = mine.description || '';
+        coverImageDataUrl = null;
+        coverPicker.style.backgroundImage = '';
+        coverPicker.classList.remove('has-image');
+        if (mine.coverImage) {
+            coverImageDataUrl = mine.coverImage;
+            applyCoverPreview();
+        }
+        tracks = (mine.tracks || []).map((t, i) => ({
+            id: t.id || `existing_${i}`,
+            name: t.filename || t.title || `Piste ${i + 1}`,
+            size: 0,
+            file: null, // déjà persistée côté serveur, pas de fichier source local à ré-uploader
+            title: t.title || '',
+            artist: t.artist || '',
+            status: 'done',
+            url: t.url || null,
+            existing: true
+        }));
+        renderFilesList();
+        updatePublishState();
+    }
+
+    // ---------- Chargement initial ----------
+    // Un utilisateur n'a jamais qu'UNE seule émission (id fixe = user_<userId>),
+    // donc pas besoin de liste : on va simplement chercher si elle existe déjà
+    // dans le manifest pour pré-remplir le formulaire (mode édition), sinon
+    // on part d'un formulaire vide (première publication).
+    async function initUser() {
+        const mine = await fetchMyEmission();
+        loadEmissionIntoForm(mine);
+    }
+
+    initUser();
+
+    // ---------- Image de couverture ----------
+    const coverPicker = document.getElementById('coverPicker');
+    const coverInput = document.getElementById('coverInput');
+
+    // Taille cible de la cover : on redimensionne toujours côté client avant
+    // de la stocker en base64 dans le manifest, pour éviter des JSON énormes
+    // si l'utilisateur upload une photo de 4000×3000 sortie d'un téléphone.
+    const COVER_MAX_SIZE = 500; // px, image carrée (crop centré si besoin)
+    const COVER_JPEG_QUALITY = 0.85;
+
+    coverPicker.addEventListener('click', () => coverInput.click());
+    coverInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            showNotification('Ce fichier n\'est pas une image', true);
+            return;
+        }
+        resizeImageToDataUrl(file, COVER_MAX_SIZE, COVER_JPEG_QUALITY)
+            .then((dataUrl) => {
+                coverImageDataUrl = dataUrl;
+                applyCoverPreview();
+            })
+            .catch((err) => {
+                console.error('resizeImageToDataUrl error:', err);
+                showNotification('Impossible de traiter cette image', true);
+            });
+    });
+
+    // Redimensionne (et recadre en carré, centré) une image uploadée avant
+    // de la convertir en data URL — évite de stocker des photos énormes
+    // telles quelles dans le manifest JSON.
+    function resizeImageToDataUrl(file, maxSize, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const side = Math.min(img.width, img.height);
+                        const sx = (img.width - side) / 2;
+                        const sy = (img.height - side) / 2;
+                        const targetSide = Math.min(maxSize, side);
+                        const canvas = document.createElement('canvas');
+                        canvas.width = targetSide;
+                        canvas.height = targetSide;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, sx, sy, side, side, 0, 0, targetSide, targetSide);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    } catch (err) { reject(err); }
+                };
+                img.onerror = () => reject(new Error('Image illisible'));
+                img.src = reader.result;
+            };
+            reader.onerror = () => reject(new Error('Lecture du fichier impossible'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function applyCoverPreview() {
+        coverPicker.style.backgroundImage = `url('${coverImageDataUrl}')`;
+        coverPicker.classList.add('has-image');
+    }
+
+    // ---------- Sélection des pistes ----------
+    const dropZone = document.getElementById('dropZone');
+    const hiddenInput = document.getElementById('hiddenFileInput');
+    const filesListEl = document.getElementById('filesList');
+
+    dropZone.addEventListener('click', () => {
+        if (isElectron && api.selectAudioFiles) {
+            api.selectAudioFiles().then(result => {
+                if (!result || result.canceled) return;
+                const files = result.files || result;
+                if (Array.isArray(files) && files.length) handleFiles(files);
+                else hiddenInput.click();
+            }).catch(() => hiddenInput.click());
+        } else {
+            hiddenInput.click();
+        }
+    });
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const dtFiles = Array.from(e.dataTransfer.files || []);
+        if (dtFiles.length === 0) { showNotification('Aucun fichier détecté', true); return; }
+        handleFiles(dtFiles);
+    });
+
+    hiddenInput.addEventListener('change', (e) => {
+        handleFiles(Array.from(e.target.files || []));
+        hiddenInput.value = '';
+    });
+
+    async function handleFiles(items) {
+        const now = Date.now();
+        const audioExt = /\.(mp3|wav|m4a|aac|flac|ogg)$/i;
+
+        for (let i = 0; i < items.length; i++) {
+            const it = items[i];
+            // f.file DOIT être un vrai Blob/File exploitable en FormData pour
+            // l'upload serveur (voir persistTrack) — c'est ce qui manquait
+            // avant (on ne gardait que f.path, utile seulement pour l'ancien
+            // IPC local api.makeAudioPersistent, jamais pour un upload réseau).
+            let f = { id: `file_${now}_${i}`, name: '', size: 0, file: null, title: '', artist: '', status: 'pending' };
+
+            if (typeof it === 'string') {
+                // Vient du dialogue natif Electron (api.selectAudioFiles),
+                // qui ne renvoie qu'un CHEMIN, pas de blob exploitable côté
+                // renderer (File.path retiré depuis Electron 32+). Il faut un
+                // pont IPC dédié pour lire les octets — voir api.readAudioFile
+                // ci-dessous ; tant qu'il n'existe pas côté main.js/preload.js,
+                // on informe l'utilisateur d'utiliser le glisser-déposer à la
+                // place (qui fournit un vrai Blob, sans ce problème).
+                f.name = it.split(/[\\/]/).pop();
+                if (api && typeof api.readAudioFile === 'function') {
+                    try {
+                        const result = await api.readAudioFile(it); // { success, base64, mimeType, filename }
+                        if (result && result.success && result.base64) {
+                            const bytes = Uint8Array.from(atob(result.base64), c => c.charCodeAt(0));
+                            f.file = new Blob([bytes], { type: result.mimeType || 'audio/mpeg' });
+                            f.size = f.file.size;
+                        }
+                    } catch (e) {
+                        console.warn('readAudioFile indisponible:', e && e.message);
+                    }
+                }
+                if (!f.file) {
+                    f.status = 'error';
+                    showNotification(`Impossible de lire "${f.name}" via le sélecteur natif pour l'instant — utilise le glisser-déposer à la place`, true);
+                }
+            } else if (it && it.name) {
+                // Cas navigateur / glisser-déposer / <input type="file"> : `it`
+                // EST déjà le Blob/File — on le garde directement, aucun accès
+                // au système de fichiers n'est nécessaire pour l'upload.
+                f.name = it.name;
+                f.size = it.size || 0;
+                f.file = it;
+            } else {
+                continue;
+            }
+
+            if (!audioExt.test(f.name)) {
+                showNotification(`Ignoré (pas un fichier audio) : ${f.name}`, true);
+                continue;
+            }
+
+            f.title = f.name.replace(/\.(mp3|wav|m4a|aac|flac|ogg)$/i, '');
+            f.artist = (document.getElementById('emissionName').value || '').trim();
+            tracks.push(f);
+        }
+
+        renderFilesList();
+        updatePublishState();
+    }
+
+    function renderFilesList() {
+        filesListEl.innerHTML = '';
+        tracks.forEach((f, idx) => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
+                <div class="track-num">${idx + 1}</div>
+                <div class="fields">
+                    <input type="text" value="${escapeAttr(f.title)}" placeholder="Titre" data-field="title" />
+                    <input type="text" value="${escapeAttr(f.artist)}" placeholder="Artiste" data-field="artist" />
+                </div>
+                <span class="status-pill ${f.status}">${statusLabel(f.status)}</span>
+                <button class="remove-btn" title="Retirer">✕</button>
+            `;
+            item.querySelector('[data-field="title"]').addEventListener('input', (e) => { f.title = e.target.value; });
+            item.querySelector('[data-field="artist"]').addEventListener('input', (e) => { f.artist = e.target.value; });
+            item.querySelector('.remove-btn').addEventListener('click', () => {
+                tracks = tracks.filter(t => t.id !== f.id);
+                renderFilesList();
+                updatePublishState();
+            });
+            filesListEl.appendChild(item);
+        });
+    }
+
+    function statusLabel(status) {
+        return { pending: 'En attente', persisting: 'Envoi…', done: '✓ Prêt', queued: '⏳ En file (hors-ligne)', error: '✗ Erreur' }[status] || status;
+    }
+
+    function escapeAttr(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
+    function updatePublishState() {
+        const name = document.getElementById('emissionName').value.trim();
+        const hasValidTrack = tracks.some(t => t.status !== 'error');
+        document.getElementById('publishBtn').disabled = !(name && tracks.length > 0 && hasValidTrack);
+        updateEmissionStatusUI();
+    }
+    document.getElementById('emissionName').addEventListener('input', updatePublishState);
+
+    // ---------- Suppression de mon émission ----------
+    // Un utilisateur n'a qu'une seule émission (id fixe) : la supprimer
+    // permet de repartir d'un formulaire vide pour la recommencer, ou de
+    // simplement retirer sa présence de la radio.
+    document.getElementById('deleteEmissionBtn').addEventListener('click', async () => {
+        if (!hasExistingEmission) return;
+        if (!confirm('Supprimer ton émission ? Cette action est définitive.')) return;
+        if (!isElectron || !api.radioDeleteEmission) {
+            showNotification('electronAPI.radioDeleteEmission indisponible — vérifie que preload.js est bien à jour.', true);
+            return;
+        }
+        const btn = document.getElementById('deleteEmissionBtn');
+        btn.disabled = true;
+        try {
+            const result = await api.radioDeleteEmission(role, currentEmissionId);
+            if (!result || !result.success) throw new Error((result && result.error) || 'échec suppression');
+            resetForm();
+            showNotification('Émission supprimée — tu peux en publier une nouvelle quand tu veux', false);
+        } catch (err) {
+            console.error('deleteEmission error:', err);
+            showNotification('Erreur suppression : ' + err.message, true);
+        }
+        btn.disabled = false;
+    });
+
+    // ---------- Upload d'une piste vers le serveur (mp3 natif, pas de conversion) ----------
+    // Remplace l'ancien api.makeAudioPersistent (qui ne persistait qu'en LOCAL,
+    // invisible pour les autres users). Ici le fichier part vers le serveur
+    // local, qui le relaie vers le VPS (route .../track/sync-push) — l'URL
+    // retournée (/files/...) est ensuite valable pour N'IMPORTE QUEL client.
+    async function persistTrack(f) {
+        if (f.existing) return; // déjà persistée lors d'une publication précédente
+        if (!f.file) {
+            f.status = 'error';
+            return;
+        }
+        f.status = 'persisting';
+        renderFilesList();
+        try {
+            const formData = new FormData();
+            formData.append('file', f.file, f.name);
+            const res = await fetch(`${LOCAL_SERVER}/api/radio-emissions/mine/track/sync-push`, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            if (!res.ok || result.status !== 'success') {
+                throw new Error(result.message || `échec upload (HTTP ${res.status})`);
+            }
+            f.url = result.url; // ex: /files/radio_<idZNK>_...mp3 — à résoudre contre l'origine du VPS côté lecteur
+            f.status = 'done';
+        } catch (e) {
+            // fetch qui échoue avant même une réponse serveur = hors-ligne/VPS
+            // injoignable, pas une vraie erreur : on met en file plutôt que
+            // d'afficher un échec définitif à l'utilisateur.
+            if (e instanceof TypeError) {
+                try {
+                    await queueSet('pending-tracks', f.id, { name: f.name, blob: f.file });
+                    f.status = 'queued';
+                } catch (dbErr) {
+                    console.error('Impossible de mettre en file (IndexedDB indisponible):', dbErr);
+                    f.status = 'error';
+                }
+            } else {
+                console.error('persistTrack error:', f.name, e);
+                f.status = 'error';
+            }
+        }
+        renderFilesList();
+    }
+
+    // ---------- Publication ----------
+    window.publishEmission = async function publishEmission() {
+        const btn = document.getElementById('publishBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Publication en cours…';
+
+        try {
+            // 1) Persister toutes les pistes pas encore faites
+            for (const f of tracks) {
+                if (f.status !== 'done') await persistTrack(f);
+            }
+
+            const validTracks = tracks.filter(f => (f.status === 'done' || f.status === 'queued') && (f.url || f.status === 'queued'));
+            if (validTracks.length === 0) {
+                showNotification('Aucune piste valide à publier', true);
+                btn.disabled = false;
+                btn.textContent = '🚀 Publier mon émission';
+                return;
+            }
+
+            // Utilisateur normal : id toujours fixe (1 seule émission possible),
+            // déjà défini plus haut comme `user_${userId}`.
+            const emission = {
+                id: currentEmissionId,
+                userId: userId,
+                name: document.getElementById('emissionName').value.trim(),
+                description: document.getElementById('emissionDescription').value.trim(),
+                coverImage: coverImageDataUrl || null,
+                isOfficial: false,
+                createdAt: new Date().toISOString()
+            };
+            const trackRefs = validTracks.map(f => ({
+                id: f.id,
+                localId: f.id,
+                title: f.title || f.name,
+                artist: f.artist || '',
+                url: f.url || null, // null tant que la piste est encore en file (hors-ligne)
+                filename: f.name,
+                duration: '0:00'
+            }));
+
+            const hasQueuedTracks = trackRefs.some(t => !t.url);
+            if (hasQueuedTracks) {
+                // Au moins une piste n'a pas pu partir tout de suite (hors-ligne) :
+                // on met TOUTE l'émission en file plutôt que de la publier à
+                // moitié — flushPendingQueue terminera le travail dès que la
+                // connexion revient (upload des pistes restantes puis publish).
+                await queueSet('pending-emission', 'current', { emission, tracks: trackRefs });
+                showNotification('Pas de connexion pour l\'instant : ton émission sera publiée automatiquement dès que tu seras reconnecté.', false);
+                btn.disabled = false;
+                btn.textContent = '🚀 Publier mon émission';
+                updatePublishState();
+                return;
+            }
+
+            // Publication vers le serveur (source de vérité, visible par tous) —
+            // remplace l'ancien api.radioSaveEmission qui n'écrivait que dans
+            // le manifest LOCAL de ce device.
+            const res = await fetch(`${LOCAL_SERVER}/api/radio-emissions/mine/sync-push`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...emission, tracks: trackRefs })
+            });
+            const result = await res.json();
+            if (!res.ok || result.status !== 'success') {
+                throw new Error(result.message || `échec publication (HTTP ${res.status})`);
+            }
+
+            hasExistingEmission = true;
+            showNotification('Émission publiée ! Elle est maintenant visible par tous les users ZNK.', false);
+        } catch (e) {
+            if (e instanceof TypeError) {
+                // Le serveur local lui-même est injoignable (VPS ou server.py
+                // local down) : file d'attente plutôt qu'échec sec.
+                console.warn('publishEmission hors-ligne, mise en file:', e.message);
+                showNotification('Pas de connexion pour l\'instant : ton émission sera publiée automatiquement dès que tu seras reconnecté.', false);
+            } else {
+                console.error('publishEmission error:', e);
+                showNotification('Erreur : ' + e.message, true);
+            }
+        }
+
+        btn.disabled = false;
+        btn.textContent = '🚀 Publier mon émission';
+        updatePublishState();
+    };
+
+    // Tentative de vidage de la file au chargement de la page (au cas où on
+    // rouvre l'app avec une émission restée en attente d'une session précédente).
+    flushPendingQueue();
+
+    // ---------- Notifications ----------
+    let notifTimeout = null;
+    function showNotification(msg, isError) {
+        const el = document.getElementById('notification');
+        el.textContent = msg;
+        el.className = 'notification show ' + (isError ? 'error' : 'success');
+        clearTimeout(notifTimeout);
+        notifTimeout = setTimeout(() => el.classList.remove('show'), 4000);
+    }
+})();
+</script>
+</body>
+</html>

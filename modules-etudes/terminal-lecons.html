@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK — Leçons</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #34250c, #34250c, #000000);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #34250c;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .logo-icon {
+            width: 40px; height: 40px; border-radius: 8px;
+            background: linear-gradient(135deg, #831100, #d95000);
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+        }
+        .title { font-size: 20px; font-weight: 700; }
+        .subtitle { font-size: 13px; color: #53d5fd; }
+        .sync-badge { font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 10px; }
+        .sync-badge.on { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .sync-badge.off { background: rgba(255,255,255,0.08); color: #ebebeb; }
+
+        .btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff; padding: 0.5rem 1rem; border-radius: 10px;
+            font-size: 0.85rem; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn:hover { background: #831100; border-color: #831100; }
+        .btn.primary { background: linear-gradient(135deg, #831100, #d95000); border: none; font-weight: 600; }
+        .btn.danger { background: rgba(220,38,38,0.15); border-color: rgba(220,38,38,0.4); color: #fca5a5; }
+        .btn.small { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+        .btn.recording { background: #c0392b; border-color: #922b21; animation: dictatePulse 1.1s ease-in-out infinite; }
+        @keyframes dictatePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        .panel h2 { font-size: 1.05rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+
+        label { display: block; font-size: 0.8rem; color: #53d5fd; margin: 0.9rem 0 0.3rem; }
+        input[type=text], input[type=number], input[type=url], textarea, select {
+            width: 100%; background: #34250c; border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; padding: 0.6rem 0.7rem; color: #fff; font-size: 0.9rem; font-family: inherit;
+        }
+        textarea { resize: vertical; min-height: 55px; }
+        textarea#content { min-height: 160px; }
+        .row { display: flex; gap: 1rem; }
+        .row > div { flex: 1; }
+        .checkboxes { display: flex; gap: 1.2rem; margin-top: 0.6rem; flex-wrap: wrap; }
+        .checkboxes label { display: flex; align-items: center; gap: 6px; margin: 0; color: #fff; font-size: 0.85rem; }
+        .checkboxes input { width: auto; }
+
+        .form-actions { display: flex; gap: 0.7rem; margin-top: 1.3rem; }
+
+        .materials-block { margin-top: 1.2rem; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 1rem; }
+        .material-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .material-card .m-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .material-card .m-head span { font-size: 0.8rem; color: #6ee7b7; font-weight: 600; }
+        .remove-x { cursor: pointer; color: #fca5a5; font-size: 0.9rem; padding: 0 4px; }
+
+        .toolbar { display: flex; gap: 0.6rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+
+        .lesson-list { display: flex; flex-direction: column; gap: 0.9rem; max-height: 70vh; overflow-y: auto; }
+        .lesson-row {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-left: 3px solid #831100;
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex; align-items: flex-start; gap: 1rem;
+        }
+        .lesson-row .info { flex: 1; min-width: 0; }
+        .lesson-row .info h3 { font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .lesson-row .info p { font-size: 0.8rem; color: #53d5fd; }
+        .meta-line { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.5rem; font-size: 0.7rem; }
+        .pill { padding: 0.15rem 0.5rem; border-radius: 10px; background: rgba(255,255,255,0.08); color: #3c081b; }
+        .pill.status-publie { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .pill.status-brouillon { background: rgba(247,147,30,0.15); color: #f7931e; }
+        .lesson-row .actions { display: flex; flex-direction: column; gap: 0.4rem; }
+        .lesson-row.pinned { border-left-color: #f7931e; background: rgba(247,147,30,0.08); }
+        .pill.status-pinned { background: rgba(247,147,30,0.2); color: #f7931e; }
+        .reorder-btns { display: flex; gap: 0.3rem; }
+        .reorder-btns button { flex: 1; }
+        .section-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #53d5fd; margin: 0.6rem 0 0.3rem; opacity: 0.8; }
+        .section-label:first-child { margin-top: 0; }
+        .sort-control { margin-bottom: 1rem; }
+        .sort-control label { color: #53d5fd; font-size: 0.8rem; margin: 0 0 0.3rem; display: block; }
+
+        .empty { text-align: center; color: #53d5fd; padding: 2rem; }
+
+        @media (max-width: 1050px) {
+            .main-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo-icon">📚</div>
+            <div>
+                <div class="title">Gestionnaire de leçons</div>
+                <div class="subtitle">Créez des leçons, publiez-les pour les élèves</div>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span class="sync-badge" id="syncBadge">…</span>
+            <a class="btn" href="terminal-professeurs.html">🛠️ Modules</a>
+            <a class="btn primary" href="ArtEtudes-primaire.html">👁️ Vue élève</a>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Formulaire -->
+        <div class="panel">
+            <h2 id="formTitle">➕ Nouvelle leçon</h2>
+            <input type="hidden" id="editId">
+
+            <label>Titre</label>
+            <input type="text" id="title" placeholder="Ex: 🎈 La Lettre A et le Secret d'Anatole l'Albatros">
+
+            <label>Description courte</label>
+            <input type="text" id="description" placeholder="Ex: Le Voyage de la Lettre A">
+
+            <div class="row">
+                <div>
+                    <label>Catégorie / Matière</label>
+                    <select id="categoryId"></select>
+                </div>
+                <div>
+                    <label>Niveau ciblé</label>
+                    <select id="targetLevel">
+                        <option value="">🔎 Auto (déduit de la catégorie)</option>
+                        <option value="maternelle">🧸 Maternelle</option>
+                        <option value="primaire">📚 Primaire</option>
+                        <option value="college">🎓 Collège</option>
+                        <option value="lycee">🏆 Lycée</option>
+                        <option value="tous">🌍 Tous niveaux</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label>Durée (libre, ex: 10:00)</label>
+                    <input type="text" id="duration" placeholder="Ex: 10:00">
+                </div>
+                <div>
+                    <label>Ordre d'affichage (optionnel)</label>
+                    <input type="number" id="order" min="0" placeholder="Ex: 1">
+                </div>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label>Statut</label>
+                    <select id="status">
+                        <option value="brouillon" selected>Brouillon (non visible)</option>
+                        <option value="publie">Publié (visible élèves)</option>
+                    </select>
+                </div>
+            </div>
+
+            <label>Intervenant (optionnel)</label>
+            <input type="text" id="instructor" placeholder="Ex: ZNK Éducation">
+
+            <label>Tags (séparés par des virgules)</label>
+            <input type="text" id="tags" placeholder="Ex: alphabet, lettre-a, lecture">
+
+            <label>🔗 Interrogation associée (optionnel)</label>
+            <select id="linkedQuizId"></select>
+            <p style="font-size:0.8em; opacity:0.7; margin-top:4px; margin-bottom:12px;">
+                Tu peux aussi créer/lier l'interrogation depuis terminal-interrogations.html — les deux sens fonctionnent.
+            </p>
+
+            <div class="checkboxes">
+                <label><input type="checkbox" id="isPremium"> ⭐ Contenu premium</label>
+            </div>
+
+            <label>Contenu de la leçon</label>
+            <div style="display:flex; gap:8px; align-items:flex-start;">
+                <textarea id="content" placeholder="Texte complet de la leçon, tel qu'affiché à l'élève." style="flex:1;"></textarea>
+                <button type="button" class="btn small" id="dictateBtn" onclick="toggleDictation()" style="white-space:nowrap;">🎙️ Dicter</button>
+            </div>
+            <p id="dictateStatus" style="font-size:0.8em; opacity:0.7; margin-top:4px; display:none;"></p>
+
+            <div class="materials-block">
+                <label style="margin-top:0;">Matériels (audio, document, image)</label>
+                <div id="materialsContainer"></div>
+                <button type="button" class="btn small" onclick="addMaterial()">➕ Ajouter un matériel</button>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn primary" onclick="submitLessonForm()">💾 Enregistrer</button>
+                <button class="btn" onclick="resetLessonForm()">↺ Annuler</button>
+            </div>
+        </div>
+
+        <!-- Liste -->
+        <div class="panel">
+            <h2>📋 Leçons (<span id="countLessons">0</span>)</h2>
+            <div class="sort-control">
+                <label for="sortMode">🔀 Ordre de présentation (côté élève)</label>
+                <select id="sortMode" onchange="onSortModeChange()">
+                    <option value="manual">📌 Manuel (épinglées + ordre personnalisé)</option>
+                    <option value="titleAsc">🔤 Titre (A → Z)</option>
+                    <option value="titleDesc">🔤 Titre (Z → A)</option>
+                    <option value="newest">🆕 Plus récentes d'abord</option>
+                    <option value="oldest">📜 Plus anciennes d'abord</option>
+                    <option value="status">🚦 Statut (publié d'abord)</option>
+                </select>
+            </div>
+            <div class="toolbar">
+                <button class="btn small" onclick="publishAllDrafts()">🚀 Publier tout (brouillons)</button>
+                <button class="btn small" onclick="ZNKManifest.exportFile()">📤 Exporter modules</button>
+                <button class="btn small" onclick="toggleDiagnostic()">🔍 Diagnostic</button>
+                <button class="btn small" onclick="repairMaterialUrls()">🔧 Réparer les URLs de médias</button>
+            </div>
+            <pre id="diagnosticBox" style="display:none; background:#34250c; border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:1rem; font-size:0.72rem; white-space:pre-wrap; word-break:break-word; max-height:300px; overflow:auto; margin-bottom:1rem;"></pre>
+            <div class="lesson-list" id="lessonList"></div>
+        </div>
+    </div>
+
+    <script src="znk-professeur-manifest.js" onerror="window.__znkManifestLoadFailed = true;"></script>
+    <script src="znk-etudes-manifest.js" onerror="window.__znkEtudesManifestLoadFailed = true;"></script>
+    <!-- Sync VPS (leçons) : laisser apiBase vide tant que le VPS n'est pas branché,
+         ZNKSync se désactive alors tout seul sans rien casser. -->
+    <script>
+        window.ZNK_SYNC_CONFIG = {
+            apiBase: '',   // ex: 'https://ton-vps.example.com'
+            apiKey: ''
+        };
+    </script>
+    <script src="znk-sync-client.js" onerror="console.warn('⚠️ znk-sync-client.js non disponible — sync VPS désactivée')"></script>
+    <script>
+        // --- Vérification de compatibilité : si un des deux manifests est absent
+        // ou obsolète, on le signale clairement au lieu de planter en silence.
+        (function checkManifestCompatibility() {
+            const missing = [];
+            if (window.__znkManifestLoadFailed) missing.push('znk-professeur-manifest.js (échec de chargement — 404 ou mauvais chemin)');
+            else if (typeof window.ZNKManifest === 'undefined') missing.push('ZNKManifest (fichier chargé mais erreur JS à l\'exécution — voir la console)');
+            else {
+                if (!window.ZNKManifest.lessons) missing.push('ZNKManifest.lessons (ancienne version du manifest, pas encore mise à jour)');
+                if (!window.ZNKManifest.setCurrentProf) missing.push('ZNKManifest.setCurrentProf (ancienne version du manifest, pas encore mise à jour)');
+            }
+            if (window.__znkEtudesManifestLoadFailed) missing.push('znk-etudes-manifest.js (échec de chargement — nécessaire pour les catégories)');
+            else if (typeof window.ZNK_ETUDES_MANIFEST === 'undefined') missing.push('ZNK_ETUDES_MANIFEST (fichier chargé mais erreur JS à l\'exécution)');
+            else if (!window.ZNK_ETUDES_MANIFEST.getCategories) missing.push('ZNK_ETUDES_MANIFEST.getCategories (ancienne version du fichier)');
+
+            if (missing.length) {
+                document.body.insertAdjacentHTML('afterbegin', `
+                    <div style="background:#7f1d1d;color:#fff;padding:1rem 2rem;font-size:0.9rem;">
+                        ⚠️ <strong>Fichiers manifest manquants ou obsolètes</strong> — éléments manquants : ${missing.join(', ')}.<br>
+                        Vérifie que znk-professeur-manifest.js ET znk-etudes-manifest.js (dernières versions) se trouvent bien dans le MÊME dossier que cette page, puis recharge complètement (Ctrl+Shift+R ou redémarre l'app).
+                    </div>`);
+                return true;
+            }
+            return false;
+        })();
+    </script>
+    <script>
+        function showFatalError(context, error) {
+            console.error(context, error);
+            alert('❌ ' + context + '\n\n' + (error && error.message ? error.message : error) + '\n\n(Détails dans la console développeur)');
+        }
+
+        let currentMaterials = [];
+
+        function populateCategorySelect() {
+            const categories = ZNK_ETUDES_MANIFEST.getCategories();
+            document.getElementById('categoryId').innerHTML = categories
+                .map(c => `<option value="${c.id}">${c.icon} ${c.levelIcon || '⚪'} ${c.name}</option>`).join('');
+        }
+
+        // Liste des interrogations créées via terminal-interrogations.html,
+        // pour pouvoir lier une leçon à son interrogation (lesson.quizId -> quiz.id).
+        function populateQuizLinkSelect(selectedId) {
+            const select = document.getElementById('linkedQuizId');
+            const quizzes = (window.ZNKManifest && ZNKManifest.quiz) ? ZNKManifest.quiz.list() : [];
+            const options = ['<option value="">— Aucune (leçon sans interrogation) —</option>']
+                .concat(quizzes.map(q => `<option value="${q.id}">${q.title}</option>`));
+            select.innerHTML = options.join('');
+            select.value = selectedId || '';
+        }
+
+        // Convention : la leçon et son interrogation portent le même titre — plus facile
+        // à retrouver dans les listes. Ne s'applique qu'à une NOUVELLE leçon dont le titre
+        // est encore vide, pour ne jamais écraser un titre déjà saisi/édité.
+        document.getElementById('linkedQuizId').addEventListener('change', function () {
+            const titleField = document.getElementById('title');
+            const editId = document.getElementById('editId').value;
+            if (editId || titleField.value.trim() || !this.value) return;
+            const quizzes = (window.ZNKManifest && ZNKManifest.quiz) ? ZNKManifest.quiz.list() : [];
+            const quiz = quizzes.find(q => q.id === this.value);
+            if (quiz) titleField.value = quiz.title;
+        });
+
+        function addMaterial() {
+            currentMaterials.push({ type: 'image', title: '', url: '', _fileName: '', _status: '' });
+            renderMaterials();
+        }
+        function removeMaterial(idx) {
+            currentMaterials.splice(idx, 1);
+            renderMaterials();
+        }
+        function updateMaterialType(idx, val) { currentMaterials[idx].type = val; renderMaterials(); }
+        function updateMaterialTitle(idx, val) { currentMaterials[idx].title = val; }
+        function updateMaterialUrl(idx, val) { currentMaterials[idx].url = val; }
+
+        const ACCEPT_BY_TYPE = {
+            image: 'image/*',
+            video: 'video/mp4,video/webm,video/*',
+            audio: 'audio/*',
+            document: '.pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        };
+
+        // Chaque type de matériel a son propre pipeline de persistance côté main.js
+        // (réutilise ce qui existe déjà pour vidéo/audio, ajoute make-material-persistent pour image/document).
+        async function persistMaterialFile(type, materialId, sourcePath, file) {
+            const payload = { sourcePath, materialId, fileName: file.name };
+            if (type === 'video') return window.electronAPI.makeVideoPersistent({ ...payload, videoId: materialId });
+            if (type === 'audio') return window.electronAPI.makeAudioPersistent({ ...payload, audioId: materialId });
+            return window.electronAPI.makeMaterialPersistent({ ...payload, type });
+        }
+
+        async function handleMaterialFileSelect(idx, inputEl) {
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+
+            const requiredFn = currentMaterials[idx].type === 'video' ? 'makeVideoPersistent'
+                : currentMaterials[idx].type === 'audio' ? 'makeAudioPersistent'
+                : 'makeMaterialPersistent';
+            if (!window.electronAPI || typeof window.electronAPI[requiredFn] !== 'function') {
+                currentMaterials[idx]._status = 'error';
+                currentMaterials[idx]._statusMsg = "⚠️ Upload direct indisponible (preload.js pas encore rechargé, ou electronAPI absent) — renseigne l'URL/chemin manuellement ci-dessous.";
+                renderMaterials();
+                return;
+            }
+
+            // Depuis Electron 32+, file.path n'est plus fiable : on passe par
+            // electronAPI.getPathForFile() (webUtils côté preload) à la place.
+            let sourcePath = null;
+            if (typeof window.electronAPI.getPathForFile === 'function') {
+                try { sourcePath = await window.electronAPI.getPathForFile(file); } catch (e) { sourcePath = null; }
+            }
+            if (!sourcePath) sourcePath = file.path || null; // repli pour anciennes versions d'Electron
+
+            if (!sourcePath) {
+                currentMaterials[idx]._status = 'error';
+                currentMaterials[idx]._statusMsg = "⚠️ Chemin natif indisponible (electronAPI.getPathForFile manquant côté preload.js — recharge complètement l'app après avoir mis à jour preload.js) — renseigne l'URL/chemin manuellement ci-dessous.";
+                renderMaterials();
+                return;
+            }
+
+            currentMaterials[idx]._status = 'uploading';
+            currentMaterials[idx]._statusMsg = '⏳ Copie du fichier en cours…';
+            renderMaterials();
+
+            try {
+                const type = currentMaterials[idx].type;
+                const materialId = `mat_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+                const result = await persistMaterialFile(type, materialId, sourcePath, file);
+                if (result && result.success) {
+                    currentMaterials[idx].url = result.url; // file://... — utilisable directement en src=""
+                    currentMaterials[idx]._fileName = file.name;
+                    currentMaterials[idx]._status = 'done';
+                    currentMaterials[idx]._statusMsg = `✅ Copié → ${result.path}`;
+                    if (!currentMaterials[idx].title) currentMaterials[idx].title = file.name;
+                } else {
+                    currentMaterials[idx]._status = 'error';
+                    currentMaterials[idx]._statusMsg = '❌ ' + (result && result.error ? result.error : 'Échec de la copie du fichier');
+                }
+            } catch (err) {
+                currentMaterials[idx]._status = 'error';
+                currentMaterials[idx]._statusMsg = '❌ ' + err.message;
+            }
+            renderMaterials();
+        }
+
+        function renderMaterials() {
+            const container = document.getElementById('materialsContainer');
+            if (currentMaterials.length === 0) {
+                container.innerHTML = '<p style="font-size:0.8rem;color:#7a7a7a;">Aucun matériel. Cliquez sur "Ajouter un matériel" (optionnel).</p>';
+                return;
+            }
+            container.innerHTML = currentMaterials.map((m, idx) => `
+                <div class="material-card">
+                    <div class="m-head">
+                        <span>Matériel ${idx + 1}</span>
+                        <span class="remove-x" onclick="removeMaterial(${idx})">✕ retirer</span>
+                    </div>
+                    <div class="row">
+                        <div>
+                            <label style="margin:0 0 3px;">Type</label>
+                            <select onchange="updateMaterialType(${idx}, this.value)">
+                                <option value="image" ${m.type === 'image' ? 'selected' : ''}>🖼️ Image</option>
+                                <option value="video" ${m.type === 'video' ? 'selected' : ''}>🎬 Vidéo</option>
+                                <option value="audio" ${m.type === 'audio' ? 'selected' : ''}>🎵 Audio</option>
+                                <option value="document" ${m.type === 'document' ? 'selected' : ''}>📄 Document</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="margin:0 0 3px;">Titre</label>
+                            <input type="text" value="${escapeHtml(m.title)}" placeholder="Ex: Prononciation du son A" oninput="updateMaterialTitle(${idx}, this.value)">
+                        </div>
+                    </div>
+
+                    <label style="margin:8px 0 3px;">📁 Choisir un fichier sur ton disque</label>
+                    <input type="file" accept="${ACCEPT_BY_TYPE[m.type] || '*'}" onchange="handleMaterialFileSelect(${idx}, this)">
+                    ${m._statusMsg ? `<p style="font-size:0.75rem; margin-top:6px; color:${m._status === 'error' ? '#fca5a5' : m._status === 'uploading' ? '#fbbf24' : '#6ee7b7'};">${escapeHtml(m._statusMsg)}</p>` : ''}
+
+                    <label style="margin:8px 0 3px;">— ou URL / chemin manuel —</label>
+                    <input type="text" value="${escapeHtml(m.url)}" placeholder="Ex: ./persistent-etudes/lecture/son-a.mp3" oninput="updateMaterialUrl(${idx}, this.value)">
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            return (str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function resetLessonForm() {
+            try {
+                document.getElementById('formTitle').textContent = '➕ Nouvelle leçon';
+                document.getElementById('editId').value = '';
+                document.getElementById('title').value = '';
+                document.getElementById('description').value = '';
+                document.getElementById('duration').value = '';
+                document.getElementById('status').value = 'brouillon';
+                document.getElementById('order').value = '';
+                document.getElementById('targetLevel').value = '';
+                document.getElementById('instructor').value = '';
+                document.getElementById('tags').value = '';
+                document.getElementById('isPremium').checked = false;
+                document.getElementById('content').value = '';
+                populateCategorySelect();
+                document.getElementById('categoryId').value = 'general';
+                populateQuizLinkSelect('');
+                currentMaterials = [];
+                renderMaterials();
+            } catch (error) {
+                showFatalError('Impossible d\'initialiser le formulaire (voir bandeau rouge en haut de page)', error);
+            }
+        }
+
+        function submitLessonForm() {
+            try {
+                const title = document.getElementById('title').value.trim();
+                if (!title) { alert('Merci de donner un titre à la leçon.'); return; }
+                const content = document.getElementById('content').value.trim();
+                if (!content) { alert('Merci de renseigner le contenu de la leçon.'); return; }
+                for (const m of currentMaterials) {
+                    if (m._status === 'uploading') { alert('Attends la fin de la copie du fichier en cours.'); return; }
+                    if (!m.url.trim()) { alert('Chaque matériel doit avoir un fichier importé, ou une URL / un chemin renseigné manuellement.'); return; }
+                }
+
+                const tags = document.getElementById('tags').value
+                    .split(',').map(t => t.trim()).filter(Boolean);
+
+                const fields = {
+                    title,
+                    description: document.getElementById('description').value.trim(),
+                    categoryId: document.getElementById('categoryId').value,
+                    targetLevel: document.getElementById('targetLevel').value, // '' = auto (déduit de la catégorie)
+                    duration: document.getElementById('duration').value.trim(),
+                    status: document.getElementById('status').value,
+                    order: document.getElementById('order').value ? parseInt(document.getElementById('order').value, 10) : 0,
+                    instructor: document.getElementById('instructor').value.trim(),
+                    tags,
+                    quizId: document.getElementById('linkedQuizId').value || null,
+                    isPremium: document.getElementById('isPremium').checked,
+                    content,
+                    materials: currentMaterials.map(m => ({ type: m.type, title: m.title, url: m.url, filename: m._fileName || '' }))
+                };
+
+                const editId = document.getElementById('editId').value;
+                if (editId) {
+                    ZNKManifest.lessons.update(editId, fields);
+                    syncLessonToVPS(editId); // si déjà publiée, renvoie la version modifiée au VPS
+                } else {
+                    const newLesson = ZNKManifest.lessons.add(fields);
+                    // Si la leçon est créée directement avec le statut "Publié" (au lieu du
+                    // brouillon par défaut), il faut la pousser vers le VPS immédiatement,
+                    // sinon elle reste invisible côté élèves distants tout en semblant publiée
+                    // localement — et le bouton "Publier/Dépublier" la dépublierait au premier
+                    // clic puisqu'elle serait déjà marquée "publie". syncLessonToVPS() ne fait
+                    // rien si le statut est "brouillon", donc cet appel est sans risque dans
+                    // tous les cas.
+                    syncLessonToVPS(newLesson.id);
+                }
+                if (ZNKManifest.electron && ZNKManifest.electron.flush) ZNKManifest.electron.flush();
+                resetLessonForm();
+                renderLessonList();
+            } catch (error) {
+                showFatalError("Impossible d'enregistrer la leçon", error);
+            }
+        }
+
+        function editLesson(id) {
+            const lesson = ZNKManifest.lessons.get(id);
+            if (!lesson) return;
+            document.getElementById('formTitle').textContent = '✏️ Modifier la leçon';
+            document.getElementById('editId').value = lesson.id;
+            document.getElementById('title').value = lesson.title;
+            document.getElementById('description').value = lesson.description || '';
+            document.getElementById('duration').value = lesson.duration || '';
+            document.getElementById('status').value = lesson.status;
+            document.getElementById('order').value = lesson.order || '';
+            document.getElementById('instructor').value = lesson.instructor || '';
+            document.getElementById('tags').value = (lesson.tags || []).join(', ');
+            document.getElementById('isPremium').checked = !!lesson.isPremium;
+            document.getElementById('content').value = lesson.content || '';
+            populateCategorySelect();
+            document.getElementById('categoryId').value = lesson.categoryId;
+            document.getElementById('targetLevel').value = lesson.targetLevel || '';
+            populateQuizLinkSelect(lesson.quizId || '');
+            currentMaterials = JSON.parse(JSON.stringify(lesson.materials || []));
+            renderMaterials();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function removeLesson(id) {
+            if (!confirm('Supprimer définitivement cette leçon ?')) return;
+            ZNKManifest.lessons.remove(id);
+            if (ZNKManifest.electron && ZNKManifest.electron.flush) ZNKManifest.electron.flush();
+            renderLessonList();
+        }
+
+        // ==== Dictée de leçon (whisper.cpp local, même pipeline que ZNK-LIVREmoi) ====
+        // Le prof dicte le contenu à voix haute au lieu de le taper ; la transcription
+        // vient remplir #content (ajoutée à la suite de ce qui y est déjà, avec un
+        // espace, pour ne jamais écraser un texte déjà commencé). 100% offline via
+        // electronAPI.transcribeAudio (main.js, whisper-cli) — aucune connexion requise.
+        let dictationRecorder = null;
+        let dictationChunks = [];
+        let dictationActive = false;
+
+        function toggleDictation() {
+            if (dictationActive) { stopDictation(); }
+            else { startDictation(); }
+        }
+
+        function startDictation() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Micro non disponible dans ce contexte.");
+                return;
+            }
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                dictationChunks = [];
+                const mimeType = (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/webm')) ? 'audio/webm' : '';
+                dictationRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+                dictationRecorder.addEventListener('dataavailable', e => { if (e.data && e.data.size > 0) dictationChunks.push(e.data); });
+                dictationRecorder.addEventListener('stop', async () => {
+                    stream.getTracks().forEach(t => t.stop());
+                    const blob = new Blob(dictationChunks, { type: dictationRecorder.mimeType || 'audio/webm' });
+                    dictationRecorder = null;
+                    await runDictationTranscription(blob);
+                });
+                dictationRecorder.start();
+                dictationActive = true;
+                setDictationUI('recording');
+            }).catch(err => {
+                alert("Impossible d'accéder au micro : " + err.message);
+            });
+        }
+
+        function stopDictation() {
+            if (dictationRecorder && dictationRecorder.state === 'recording') { dictationRecorder.stop(); }
+            dictationActive = false;
+            setDictationUI('transcribing');
+        }
+
+        function setDictationUI(state) {
+            const btn = document.getElementById('dictateBtn');
+            const status = document.getElementById('dictateStatus');
+            if (state === 'recording') {
+                btn.textContent = '⏹ Arrêter';
+                btn.classList.add('recording');
+                status.style.display = 'block';
+                status.textContent = '🔴 Enregistrement en cours…';
+            } else if (state === 'transcribing') {
+                btn.textContent = '🎙️ Dicter';
+                btn.classList.remove('recording');
+                status.style.display = 'block';
+                status.textContent = '⏳ Transcription en cours (local, Whisper)…';
+            } else {
+                btn.textContent = '🎙️ Dicter';
+                btn.classList.remove('recording');
+                btn.disabled = false;
+                status.style.display = 'none';
+            }
+        }
+
+        async function runDictationTranscription(blob) {
+            const btn = document.getElementById('dictateBtn');
+            const status = document.getElementById('dictateStatus');
+            btn.disabled = true;
+            try {
+                const audioDataUrl = await new Promise((res, rej) => {
+                    const r = new FileReader();
+                    r.onload = () => res(r.result);
+                    r.onerror = () => rej(new Error('lecture audio impossible'));
+                    r.readAsDataURL(blob);
+                });
+                if (!window.electronAPI || typeof window.electronAPI.transcribeAudio !== 'function') {
+                    throw new Error("transcription locale indisponible ici (electronAPI absent — hors app ZNK ?)");
+                }
+                const result = await window.electronAPI.transcribeAudio(audioDataUrl);
+                if (!result || !result.success) throw new Error((result && result.error) || 'échec de la transcription');
+                const contentEl = document.getElementById('content');
+                contentEl.value = contentEl.value ? (contentEl.value.trim() + ' ' + result.text) : result.text;
+                status.style.display = 'block';
+                status.textContent = '✅ Texte dicté ajouté — relis-le avant d\'enregistrer.';
+                setTimeout(() => { status.style.display = 'none'; }, 4000);
+            } catch (err) {
+                status.style.display = 'block';
+                status.textContent = '⚠️ ' + err.message + ' — tape le texte toi-même.';
+            } finally {
+                btn.disabled = false;
+                if (btn.textContent !== '⏹ Arrêter') btn.textContent = '🎙️ Dicter';
+            }
+        }
+
+        function togglePublish(id, currentStatus) {
+            ZNKManifest.lessons.update(id, { status: currentStatus === 'publie' ? 'brouillon' : 'publie' });
+            if (ZNKManifest.electron && ZNKManifest.electron.flush) ZNKManifest.electron.flush();
+            renderLessonList();
+            syncLessonToVPS(id);
+        }
+
+        // Publie en une fois toutes les leçons "brouillon" du prof courant — utile
+        // après un import en masse (import-lecons-interrogations.html), qui crée
+        // volontairement en brouillon pour laisser le temps de relire avant diffusion.
+        // Ne touche pas aux leçons déjà publiées, ni à celles des autres profs.
+        function publishAllDrafts() {
+            const drafts = ZNKManifest.lessons.listMine().filter(l => l.status === 'brouillon');
+            if (drafts.length === 0) {
+                alert('Aucun brouillon à publier — tout est déjà publié.');
+                return;
+            }
+            const proceed = confirm(`Publier ${drafts.length} leçon(s) actuellement en brouillon ?\n\nElles deviendront visibles côté élève immédiatement.`);
+            if (!proceed) return;
+            drafts.forEach(l => {
+                ZNKManifest.lessons.update(l.id, { status: 'publie' });
+                syncLessonToVPS(l.id);
+            });
+            if (ZNKManifest.electron && ZNKManifest.electron.flush) ZNKManifest.electron.flush();
+            renderLessonList();
+            alert(`✅ ${drafts.length} leçon(s) publiée(s).`);
+        }
+
+        // ==== Sync VPS (push) : envoie une leçon PUBLIÉE vers le VPS, pour que ====
+        // ==== les élèves connectés depuis un autre réseau (ex: USA) la reçoivent ====
+        // ==== au prochain pull. Ne fait rien si le VPS n'est pas configuré ou    ====
+        // ==== si znk-sync-client.js n'a pas pu se charger — comportement local   ====
+        // ==== 100% inchangé dans ce cas.
+        async function syncLessonToVPS(lessonId) {
+            if (!lessonId || typeof ZNKSync === 'undefined') return;
+            const lesson = ZNKManifest.lessons.get(lessonId);
+            if (!lesson || lesson.status !== 'publie') return; // on ne synchronise que le publié
+            const profId = ZNKManifest.getCurrentProf ? ZNKManifest.getCurrentProf() : resolveCurrentProfId();
+            const payload = Object.assign({}, lesson, { updatedAt: lesson.updatedAt || new Date().toISOString() });
+            try {
+                await ZNKSync.pushLecons(profId, [payload]);
+            } catch (e) {
+                console.warn('Sync VPS (push leçon) impossible pour le moment:', e);
+            }
+        }
+
+        // Corrige une ancienne URL file:// construite à la main (espaces/accents non
+        // échappés) sans toucher au fichier lui-même — seulement le texte de l'adresse.
+        // Sûr à ré-appliquer plusieurs fois (idempotent) : on décode d'abord, puis on
+        // ré-encode, donc une URL déjà correcte ressort inchangée.
+        function fixFileUrl(oldUrl) {
+            if (!oldUrl || typeof oldUrl !== 'string' || !oldUrl.startsWith('file://')) return oldUrl;
+            try {
+                const rawPath = decodeURI(oldUrl.slice('file://'.length));
+                const encoded = rawPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+                return 'file://' + encoded;
+            } catch (e) {
+                console.warn('fixFileUrl: impossible de corriger', oldUrl, e);
+                return oldUrl;
+            }
+        }
+
+        function repairMaterialUrls() {
+            const lessons = ZNKManifest.lessons.list(); // toutes les leçons créées via cet outil (tous profs)
+            let fixedCount = 0;
+            let scannedCount = 0;
+
+            lessons.forEach(lesson => {
+                if (!lesson.materials || lesson.materials.length === 0) return;
+                let changed = false;
+                const newMaterials = lesson.materials.map(m => {
+                    if (!m.url) return m;
+                    scannedCount++;
+                    const fixed = fixFileUrl(m.url);
+                    if (fixed !== m.url) {
+                        changed = true;
+                        fixedCount++;
+                        return Object.assign({}, m, { url: fixed });
+                    }
+                    return m;
+                });
+                if (changed) {
+                    ZNKManifest.lessons.update(lesson.id, { materials: newMaterials });
+                }
+            });
+
+            if (ZNKManifest.electron && ZNKManifest.electron.flush) ZNKManifest.electron.flush();
+            alert(`🔧 Réparation terminée\n\n${scannedCount} matériel(s) scanné(s)\n${fixedCount} URL(s) corrigée(s)\n\nAucun fichier n'a été déplacé ou supprimé — seul le texte de l'adresse a été corrigé. Recharge etudes.html pour vérifier.`);
+            renderLessonList();
+        }
+
+        function toggleDiagnostic() {
+            const box = document.getElementById('diagnosticBox');
+            if (box.style.display === 'none') {
+                const raw = localStorage.getItem('znk_lessons_v1');
+                const parsed = raw ? JSON.parse(raw) : [];
+                const info = {
+                    'profId courant': ZNKManifest.getCurrentProf ? ZNKManifest.getCurrentProf() : '(non exposé)',
+                    'mode de sync': ZNKManifest.electron.availablePartitioned && ZNKManifest.electron.availablePartitioned()
+                        ? 'partitionné (fichiers par prof)'
+                        : (ZNKManifest.electron.available() ? 'legacy (fichier unique)' : 'local uniquement (navigateur, pas d\'Electron détecté)'),
+                    'clé localStorage': 'znk_lessons_v1',
+                    'nombre total de leçons stockées (tous profs)': parsed.length,
+                    'leçons du prof courant': parsed.filter(l => l.profId === (ZNKManifest.getCurrentProf ? ZNKManifest.getCurrentProf() : null)).length,
+                    'contenu brut': parsed
+                };
+                box.textContent = JSON.stringify(info, null, 2);
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        // ==== Tri & épinglage ====
+        // 'order' (déjà présent sur chaque leçon) sert d'ordre manuel persistant.
+        // 'pinned' (nouveau) fait toujours remonter la leçon en tête, avant tout le reste,
+        // quel que soit le mode de tri choisi pour les autres leçons.
+        function getSortMode() {
+            return localStorage.getItem('znk_lesson_sort_mode') || 'manual';
+        }
+        function onSortModeChange() {
+            localStorage.setItem('znk_lesson_sort_mode', document.getElementById('sortMode').value);
+            renderLessonList();
+        }
+        function byOrderThenDate(a, b) {
+            const oa = (typeof a.order === 'number' && !isNaN(a.order)) ? a.order : 999999;
+            const ob = (typeof b.order === 'number' && !isNaN(b.order)) ? b.order : 999999;
+            if (oa !== ob) return oa - ob;
+            return (a.createdAt || '').localeCompare(b.createdAt || '');
+        }
+        function getComparator(mode) {
+            switch (mode) {
+                case 'titleAsc': return (a, b) => a.title.localeCompare(b.title, 'fr');
+                case 'titleDesc': return (a, b) => b.title.localeCompare(a.title, 'fr');
+                case 'newest': return (a, b) => (b.createdAt || '').localeCompare(a.createdAt || '');
+                case 'oldest': return (a, b) => (a.createdAt || '').localeCompare(b.createdAt || '');
+                case 'status': return (a, b) => {
+                    if (a.status === b.status) return (b.createdAt || '').localeCompare(a.createdAt || '');
+                    return a.status === 'publie' ? -1 : 1;
+                };
+                case 'manual':
+                default: return byOrderThenDate;
+            }
+        }
+        // Sépare épinglées / reste, trie chaque groupe (les épinglées toujours par ordre manuel entre elles).
+        function getSortedGroups(lessons) {
+            const pinned = lessons.filter(l => l.pinned).sort(byOrderThenDate);
+            const rest = lessons.filter(l => !l.pinned).sort(getComparator(getSortMode()));
+            return { pinned, rest };
+        }
+
+        function togglePin(id) {
+            const lesson = ZNKManifest.lessons.get(id);
+            if (!lesson) return;
+            ZNKManifest.lessons.update(id, { pinned: !lesson.pinned });
+            if (ZNKManifest.electron && ZNKManifest.electron.flush) ZNKManifest.electron.flush();
+            renderLessonList();
+        }
+
+        // Échange la position d'une leçon avec sa voisine (dans son groupe : épinglées ou reste),
+        // puis fige le nouvel ordre en réécrivant le champ 'order' de tout le groupe.
+        function moveLesson(id, direction) {
+            const lessons = ZNKManifest.lessons.listMine();
+            const { pinned, rest } = getSortedGroups(lessons);
+            const group = pinned.some(l => l.id === id) ? pinned : rest;
+            const idx = group.findIndex(l => l.id === id);
+            if (idx === -1) return;
+            const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+            if (swapIdx < 0 || swapIdx >= group.length) return;
+            [group[idx], group[swapIdx]] = [group[swapIdx], group[idx]];
+            group.forEach((l, i) => {
+                if (l.order !== i) ZNKManifest.lessons.update(l.id, { order: i });
+            });
+            if (ZNKManifest.electron && ZNKManifest.electron.flush) ZNKManifest.electron.flush();
+            renderLessonList();
+        }
+
+        function renderLessonRow(lesson) {
+                const cat = ZNK_ETUDES_MANIFEST.categoryById(lesson.categoryId) || { icon: '📚', levelIcon: '⚪', name: lesson.categoryId };
+                const statusLabel = { brouillon: 'Brouillon', publie: 'Publié' }[lesson.status];
+                const levelLabels = { maternelle: '🧸 Maternelle', primaire: '📚 Primaire', college: '🎓 Collège', lycee: '🏆 Lycée', tous: '🌍 Tous niveaux' };
+                const autoLevel = cat ? ZNK_ETUDES_MANIFEST.schoolLevelFromTargetAge(cat.targetAge) : 'tous';
+                const resolvedLevel = lesson.targetLevel || autoLevel;
+                const levelLabel = (levelLabels[resolvedLevel] || resolvedLevel) + (lesson.targetLevel ? '' : ' (auto)');
+                const allQuizzes = (window.ZNKManifest && ZNKManifest.quiz) ? ZNKManifest.quiz.list() : [];
+                const linkedQuiz = lesson.quizId
+                    ? allQuizzes.find(q => q.id === lesson.quizId)
+                    : allQuizzes.find(q => q.lessonId === lesson.id);
+                const showArrows = getSortMode() === 'manual';
+                return `
+                    <div class="lesson-row${lesson.pinned ? ' pinned' : ''}">
+                        <div class="info">
+                            <h3>${lesson.title}</h3>
+                            <p>${lesson.description || ''}</p>
+                            <div class="meta-line">
+                                ${lesson.pinned ? `<span class="pill status-pinned">📌 Épinglée</span>` : ''}
+                                <span class="pill status-${lesson.status}">${statusLabel}</span>
+                                <span class="pill">${cat.icon} ${cat.levelIcon || '⚪'} ${cat.name}</span>
+                                <span class="pill">${levelLabel}</span>
+                                ${lesson.duration ? `<span class="pill">⏱️ ${lesson.duration}</span>` : ''}
+                                ${lesson.isPremium ? `<span class="pill">⭐ Premium</span>` : ''}
+                                <span class="pill">📎 ${(lesson.materials || []).length} matériel(s)</span>
+                                ${linkedQuiz ? `<span class="pill">🧪 ${linkedQuiz.title}</span>` : '<span class="pill" style="opacity:0.6;">🧪 Aucune interrogation liée</span>'}
+                            </div>
+                        </div>
+                        <div class="actions">
+                            ${showArrows ? `
+                            <div class="reorder-btns">
+                                <button class="btn small" title="Monter" onclick="moveLesson('${lesson.id}', 'up')">▲</button>
+                                <button class="btn small" title="Descendre" onclick="moveLesson('${lesson.id}', 'down')">▼</button>
+                            </div>` : ''}
+                            <button class="btn small" onclick="togglePin('${lesson.id}')">${lesson.pinned ? '📌 Désépingler' : '📌 Épingler'}</button>
+                            <button class="btn small" onclick="editLesson('${lesson.id}')">✏️ Modifier</button>
+                            <button class="btn small" onclick="togglePublish('${lesson.id}', '${lesson.status}')">${lesson.status === 'publie' ? '⏸️ Dépublier' : '🚀 Publier'}</button>
+                            <button class="btn small danger" onclick="removeLesson('${lesson.id}')">🗑️ Supprimer</button>
+                        </div>
+                    </div>`;
+        }
+
+        function renderLessonList() {
+            try {
+                const lessons = ZNKManifest.lessons.listMine();
+                document.getElementById('countLessons').textContent = lessons.length;
+                const list = document.getElementById('lessonList');
+                const sortSelect = document.getElementById('sortMode');
+                if (sortSelect && sortSelect.value !== getSortMode()) sortSelect.value = getSortMode();
+
+                if (lessons.length === 0) {
+                    list.innerHTML = '<div class="empty">Aucune leçon créée ici. Utilisez le formulaire pour en créer une.<br><br><small style="opacity:0.7;">Note : tes 22 leçons existantes (znk-etudes-manifest.js) restent visibles côté élève, elles ne s\'éditent pas ici — seulement les nouvelles leçons créées via cet outil.</small></div>';
+                    return;
+                }
+
+                const { pinned, rest } = getSortedGroups(lessons);
+                let html = '';
+                if (pinned.length > 0) {
+                    html += '<div class="section-label">📌 Épinglées</div>';
+                    html += pinned.map(renderLessonRow).join('');
+                    html += '<div class="section-label">Autres leçons</div>';
+                }
+                html += rest.map(renderLessonRow).join('');
+                list.innerHTML = html;
+            } catch (error) {
+                showFatalError('Impossible d\'afficher la liste des leçons', error);
+            }
+        }
+
+        async function updateSyncBadge() {
+            const badge = document.getElementById('syncBadge');
+            if (ZNKManifest.electron.available()) {
+                badge.textContent = '🟢 Fichier partagé (Electron)';
+                badge.className = 'sync-badge on';
+            } else {
+                badge.textContent = '⚪ Local uniquement (navigateur)';
+                badge.className = 'sync-badge off';
+            }
+        }
+
+        // Identifie le prof courant (compte créé via inscription.html, même clé que côté élève),
+        // avec repli local si aucun compte n'est trouvé (mode mono-poste).
+        function resolveCurrentProfId() {
+            try {
+                const raw = localStorage.getItem('znk_account');
+                const account = raw ? JSON.parse(raw) : null;
+                if (account && account.idZNK) return account.idZNK;
+            } catch (e) {}
+            let localId = localStorage.getItem('znk_prof_local_id');
+            if (!localId) {
+                localId = 'prof-local-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+                localStorage.setItem('znk_prof_local_id', localId);
+            }
+            return localId;
+        }
+
+        window.addEventListener('znk-data-synced', renderLessonList);
+
+        (async function init() {
+            if (window.__znkManifestLoadFailed || typeof window.ZNKManifest === 'undefined' ||
+                window.__znkEtudesManifestLoadFailed || typeof window.ZNK_ETUDES_MANIFEST === 'undefined') {
+                return; // le bandeau rouge ci-dessus explique déjà le problème
+            }
+            try {
+                ZNKManifest.setCurrentProf(resolveCurrentProfId());
+                resetLessonForm();
+                await ZNKManifest.electron.sync();
+                updateSyncBadge();
+                renderLessonList();
+            } catch (error) {
+                showFatalError('Erreur au chargement de la page', error);
+            }
+        })();
+    </script>
+</body>
+</html>

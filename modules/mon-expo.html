@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>EXHIB — ZAZA · NOAH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&family=Inter:wght@300;400;500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    :root{
+        --wall:#14120f;
+        --wall-2:#1b1815;
+        --brass:#b08d57;
+        --brass-bright:#e2c07f;
+        --ink:#ece6d8;
+        --ink-dim:#8f8a7c;
+        --rail:#3a352c;
+        --spot: rgba(255,220,165,0.14);
+    }
+    *{ margin:0; padding:0; box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+        background: radial-gradient(ellipse at 50% -10%, #201c17 0%, var(--wall) 55%, #0e0c0a 100%);
+        color: var(--ink);
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* subtle wall texture */
+    body::before{
+        content:'';
+        position:fixed; inset:0;
+        background-image:
+            repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 140px);
+        pointer-events:none;
+        z-index:0;
+    }
+
+    /* ---------- Header ---------- */
+    .expo-top{
+        position: fixed;
+        top:0; left:0; right:0;
+        height: 64px;
+        display:flex;
+        align-items:center;
+        padding: 0 28px;
+        z-index: 50;
+        background: linear-gradient(180deg, rgba(10,9,7,0.85) 0%, rgba(10,9,7,0) 100%);
+        pointer-events:none;
+    }
+    .expo-brand{
+        font-family: Lato, sans-serif;
+        font-weight: 400;
+        font-size: 14px;
+        letter-spacing: 1px;
+        color: var(--brass-bright);
+        flex: 0 0 auto;
+        min-width: 120px;
+        white-space: nowrap;
+    }
+    .expo-center{
+        flex: 1;
+        display:flex;
+        flex-direction: column;
+        align-items:center;
+        justify-content:center;
+        gap: 3px;
+    }
+    .expo-mark{
+        font-family: Lato, sans-serif;
+        font-weight:600;
+        font-size: 18px;
+        letter-spacing: 6px;
+        color: var(--ink);
+    }
+    .expo-meta{
+        font-family:'Space Grotesk', monospace;
+        font-size: 10px;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+        text-align:center;
+    }
+    .expo-progress{
+        font-family:'Space Grotesk', monospace;
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        color: var(--brass-bright);
+        flex: 0 0 auto;
+        min-width: 120px;
+        text-align:right;
+    }
+
+    /* ---------- Corridor ---------- */
+    .corridor{
+        position: relative;
+        z-index: 1;
+        height: 100dvh;
+        width: 100vw;
+        display:flex;
+        align-items:center;
+        gap: 6vw;
+        padding: 0 30vw 0 30vw;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x proximity;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+    .corridor::-webkit-scrollbar{ display:none; }
+    .corridor{ scrollbar-width: none; }
+
+    .panel{
+        position: relative;
+        flex: 0 0 auto;
+        scroll-snap-align: center;
+        display:flex;
+        flex-direction: column;
+        align-items:center;
+        gap: 16px;
+        opacity: 0.38;
+        transform: scale(0.94);
+        transition: opacity .5s ease, transform .5s ease;
+    }
+    .panel.in-view{ opacity:1; transform: scale(1); }
+
+    .spotlight{
+        position:absolute;
+        top: -22vh;
+        left:50%;
+        transform: translateX(-50%);
+        width: 60vw;
+        height: 80vh;
+        background: radial-gradient(ellipse at 50% 0%, var(--spot), transparent 65%);
+        opacity: 0.3;
+        transition: opacity .6s ease;
+        pointer-events:none;
+        z-index:-1;
+    }
+    .panel.in-view .spotlight{ opacity: 1; }
+
+    .frame-wrap{ display:inline-block; line-height:0; position:relative; cursor:pointer; }
+    .frame-wrap img, .frame-wrap video{
+        display:block;
+        max-height: 46vh;
+        max-width: 40vw;
+        width:auto; height:auto;
+        object-fit: contain;
+        background:#0000;
+    }
+
+    /* --- Encadrements --- */
+    .frame-none img{ box-shadow: 0 30px 70px rgba(0,0,0,.65); }
+    .frame-gold-classic{ padding:16px; background:linear-gradient(135deg,#caa14d,#7a5a24,#e8c877,#8a6a2e); box-shadow:0 30px 70px rgba(0,0,0,.65), inset 0 0 0 2px rgba(255,255,255,.12); }
+    .frame-gold-classic img{ box-shadow: inset 0 0 0 2px rgba(0,0,0,.4); }
+    .frame-black-modern{ padding:12px; background:#080808; box-shadow:0 30px 70px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,255,255,.07); }
+    .frame-white-gallery{ padding:24px 24px 36px; background:#f4f1ea; box-shadow:0 30px 70px rgba(0,0,0,.6); }
+    .frame-wood-rustic{ padding:16px; background:linear-gradient(160deg,#6b4423,#3d2712,#7a4d28); box-shadow:0 30px 70px rgba(0,0,0,.65); }
+    .frame-silver-line{ padding:7px; background:linear-gradient(135deg,#e6e6e6,#8a8a8a,#d4d4d4); box-shadow:0 30px 70px rgba(0,0,0,.6); }
+
+    .placeholder-canvas{
+        width: 38vw; max-width: 420px; height: 42vh;
+        display:flex; align-items:center; justify-content:center;
+        font-family:'Fraunces', serif; font-style:italic; font-size:15px;
+        color: rgba(255,255,255,0.55);
+    }
+
+    .plaque{
+        font-family:'Space Grotesk', monospace;
+        text-align:center;
+        max-width: 46vw;
+    }
+    .plaque .n{
+        font-size: 10px;
+        letter-spacing: 2px;
+        color: var(--brass-bright);
+        margin-bottom: 6px;
+    }
+    .plaque .t{
+        font-family:'Fraunces', serif;
+        font-style: italic;
+        font-weight: 400;
+        font-size: 16px;
+        color: var(--ink);
+        margin-bottom: 4px;
+        letter-spacing: 0.3px;
+    }
+    .plaque .a{
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+    }
+
+    /* ---------- Rail (bottom track) ---------- */
+    .rail{
+        position: fixed;
+        left: 6vw; right: 6vw;
+        bottom: 26px;
+        height: 2px;
+        background: var(--rail);
+        z-index: 40;
+        border-radius: 2px;
+    }
+    .rail-cursor{
+        position:absolute;
+        top:50%; left:0;
+        width: 34px; height: 34px;
+        margin-top:-17px; margin-left:-17px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 40% 35%, var(--brass-bright), var(--brass) 60%, #6f5730 100%);
+        box-shadow: 0 0 18px rgba(224,190,120,0.55);
+        transition: left .25s ease;
+    }
+
+    /* ---------- Swipe hint ---------- */
+    .hint-swipe{
+        position: fixed;
+        bottom: 60px; left:0; right:0;
+        text-align:center;
+        font-family:'Space Grotesk', monospace;
+        font-size: 10px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+        z-index: 40;
+        opacity: 1;
+        transition: opacity 1s ease;
+        pointer-events:none;
+    }
+    .hint-swipe.hidden{ opacity:0; }
+
+    /* ---------- Landscape gate (phones in portrait) ---------- */
+    .landscape-gate{
+        position: fixed; inset:0;
+        background: #0b0a08;
+        z-index: 999;
+        display:none;
+        align-items:center; justify-content:center;
+        flex-direction: column;
+        gap: 26px;
+        text-align:center;
+        padding: 40px;
+    }
+    .landscape-gate.show{ display:flex; }
+    .rotate-icon{
+        width: 70px; height: 46px;
+        border: 2px solid var(--brass-bright);
+        border-radius: 6px;
+        position:relative;
+        animation: rotatePhone 2.2s ease-in-out infinite;
+    }
+    .rotate-icon::after{
+        content:''; position:absolute; right:6px; top:50%; width:5px; height:5px;
+        margin-top:-2.5px; border-radius:50%; background: var(--brass-bright);
+    }
+    @keyframes rotatePhone{
+        0%, 20% { transform: rotate(0deg); }
+        50%, 70% { transform: rotate(90deg); }
+        100% { transform: rotate(90deg); }
+    }
+    .landscape-gate .msg1{
+        font-family:'Fraunces', serif;
+        font-style: italic;
+        font-size: 20px;
+        color: var(--ink);
+    }
+    .landscape-gate .msg2{
+        font-family:'Space Grotesk', monospace;
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        color: var(--ink-dim);
+        max-width: 280px;
+    }
+
+    /* ---------- Inquiry modal (visionneuse + contact) ---------- */
+    .modal-overlay{
+        position: fixed; inset:0; background: rgba(0,0,0,0.82);
+        z-index: 500; display:flex; align-items:center; justify-content:center;
+        padding: 24px;
+    }
+    .modal-box{
+        background: #ffffff;
+        border: 1px solid #e2ddd0;
+        max-width: 1040px; width:100%;
+        max-height: 88vh;
+        display:flex;
+        font-family:'Inter', sans-serif;
+        color: #1b1815;
+        position: relative;
+        overflow: hidden;
+    }
+    .modal-close{
+        position:absolute; top:14px; right:14px; z-index:2;
+        width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+        background: rgba(255,255,255,0.7); border:1px solid #d8d2c2; color:#1b1815;
+        cursor:pointer; font-size:16px; line-height:1;
+    }
+    .modal-close:hover{ border-color: var(--brass); color: var(--brass); }
+
+    .modal-image-side{
+        flex: 1.35;
+        background: #f4f1ea;
+        display:flex; align-items:center; justify-content:center;
+        min-width: 0;
+        padding: 30px;
+    }
+    .modal-image-side img, .modal-image-side video{
+        max-width: 100%; max-height: 76vh; width:auto; height:auto;
+        object-fit: contain;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .modal-image-side .placeholder-canvas{
+        width:100%; height:100%; min-height: 320px;
+        display:flex; align-items:center; justify-content:center;
+        font-family:'Fraunces', serif; font-style:italic; font-size:22px; text-align:center; padding:20px;
+        color: rgba(27,24,21,0.85);
+    }
+
+    .modal-info-side{
+        flex: 1; min-width: 320px; max-width: 380px;
+        padding: 40px 34px;
+        overflow-y: auto;
+        display:flex; flex-direction:column;
+        background: #ffffff;
+    }
+    .modal-box .mt{ font-family:'Fraunces', serif; font-style:italic; font-size:22px; margin-bottom:6px; color:#1b1815; }
+    .modal-box .ma{ font-size:12px; color: #a5793a; margin-bottom:4px; }
+    .modal-box .mm{ font-size:10px; letter-spacing:1px; text-transform:uppercase; color: #7a7364; margin-bottom:10px; font-family:'Space Grotesk', monospace; }
+    .modal-box .mp{ font-family:'Fraunces', serif; font-size:19px; color:#a5793a; margin-bottom:22px; }
+    .modal-box .mdivider{ height:1px; background:#e2ddd0; margin: 4px 0 22px 0; }
+    .modal-box label{ display:block; font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color: #7a7364; margin-bottom:6px; font-family:'Space Grotesk', monospace; }
+    .modal-box input, .modal-box textarea{
+        width:100%; background:#faf9f6; border:1px solid #d8d2c2; color:#1b1815;
+        padding:10px 12px; font-size:14px; margin-bottom:16px; font-family:inherit;
+    }
+    .modal-box input::placeholder, .modal-box textarea::placeholder{ color:#a39c8c; }
+    .modal-box input:focus, .modal-box textarea:focus{ outline:none; border-color: var(--brass); }
+    .modal-box textarea{ resize:vertical; min-height: 70px; }
+    .modal-actions{ display:flex; gap:10px; margin-top:auto; }
+    .modal-actions button{
+        flex:1; padding:12px; font-size:10px; letter-spacing:2px; text-transform:uppercase;
+        cursor:pointer; font-family:'Space Grotesk', monospace; border:1px solid var(--brass);
+        background:transparent; color: #1b1815;
+    }
+    .modal-actions button.primary{ background: var(--brass); color:#ffffff; font-weight:600; }
+
+    @media (max-width: 800px){
+        .modal-box{ flex-direction: column; max-height: 92vh; overflow-y:auto; }
+        .modal-image-side{ padding: 20px; min-height: 240px; }
+        .modal-image-side img{ max-height: 46vh; }
+        .modal-info-side{ max-width: none; padding: 28px 24px; }
+    }
+
+    .notif{
+        position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+        background:#ffffff; border:1px solid var(--brass); color:#1b1815;
+        padding: 26px 34px; z-index: 700; font-family:'Inter',sans-serif; font-size:13px;
+        text-align:center; max-width: 320px; line-height:1.6;
+        box-shadow: 0 30px 80px rgba(0,0,0,.35);
+    }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Merriweather:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Playfair+Display:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Roboto:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap"></head>
+<body>
+
+    <div class="landscape-gate" id="landscapeGate">
+        <div class="rotate-icon"></div>
+        <div class="msg1">Tournez votre téléphone</div>
+        <div class="msg2">Cette exposition se visite en mode paysage — inclinez l'écran pour découvrir les toiles.</div>
+    </div>
+
+    <header class="expo-top">
+        <div class="expo-brand">ZNK Gallery</div>
+        <div class="expo-center">
+            <div class="expo-mark" id="expoMark">ZNK EXPO Black &amp; White</div>
+            <div class="expo-meta" id="expoMeta">Crée ton expo personnelle</div>
+        </div>
+        <div class="expo-progress" id="expoProgress">01 / 00</div>
+    </header>
+
+    <main class="corridor" id="corridor"></main>
+
+    <div class="rail" id="rail">
+        <div class="rail-cursor" id="railCursor"></div>
+    </div>
+    <div class="hint-swipe" id="hintSwipe">← faites glisser pour avancer →</div>
+
+<script>
+    // Résout dynamiquement une image/vidéo d'œuvre quand son chemin d'origine
+    // (figé au moment de la publication, potentiellement sur une autre machine
+    // ou un ancien dossier userData) ne charge pas — appelé via onerror.
+    // Ne s'applique pas au base64 (déjà auto-suffisant, rien à résoudre).
+    window.__resolveExpoMedia = async function(el, kind, titleHint) {
+        el.onerror = null;
+        const originalUrl = el.dataset.originalUrl || el.src;
+        if (!window.electronAPI || typeof originalUrl !== 'string' || originalUrl.startsWith('data:')) return;
+
+        let fileNameGuess = null;
+        try {
+            const decoded = decodeURIComponent(originalUrl);
+            fileNameGuess = decoded.split('/').pop();
+        } catch (e) { /* garde null, la résolution retombera sur titleHint seul */ }
+
+        const api = kind === 'video' ? window.electronAPI.getVideoUrl : window.electronAPI.getMaterialUrl;
+        if (!api) return;
+        try {
+            const resolved = await api({ fileName: fileNameGuess, titleHint });
+            if (resolved && resolved.success && resolved.url) {
+                el.src = resolved.url;
+            }
+        } catch (e) {
+            console.warn('⚠️ resolveExpoMedia:', e);
+        }
+    };
+
+
+    const GALLERY_MANIFEST_URL = './znk-gallery-manifest.json';
+    const GALLERY_STORAGE_KEY = 'znk_gallery_manifest';
+    const ZNK_BACKEND_URL = 'http://localhost:5000';
+    const ZNK_GALLERY_MAILBOX = 'znkgallery@echo.znk';
+
+    // Si l'URL contient ?expo=ID, on affiche l'exposition de cet artiste précis
+    // (publiée depuis expo-manager.html) plutôt que le manifest global de la galerie.
+    // Ne fonctionne que si cette page et expo-manager.html partagent le même
+    // stockage local (même navigateur/profil — app ZNK Electron).
+    const REQUESTED_EXPO_ID = new URLSearchParams(window.location.search).get('expo');
+
+    const FRAME_CLASSES = ['none','gold-classic','black-modern','white-gallery','wood-rustic','silver-line'];
+    const PLACEHOLDER_GRADIENTS = [
+        'linear-gradient(135deg,#8b4513,#deb887)',
+        'linear-gradient(135deg,#2c1810,#cd853f)',
+        'linear-gradient(135deg,#4a3728,#a0522d)',
+        'linear-gradient(135deg,#1a1a2e,#8b6f47)',
+        'linear-gradient(135deg,#3d2712,#daa520)'
+    ];
+
+    // Images de secours : la persistance (localStorage / manifest gallery) n'étant
+    // pas fiable dans le build packagé, on affiche par défaut cette sélection fixe
+    // depuis assets/materials-seed tant qu'aucune exposition n'est résolue via
+    // ?expo=ID ou le manifest gallery.
+    const SEED_MATERIALS = [
+        { file: 'sign black.jpg',          title: 'Sign Black' },
+        { file: 'Spring.JPG',              title: 'Spring' },
+        { file: 'Nuit Blanche.JPG',        title: 'Nuit Blanche' },
+        { file: 'Baby Sun.JPG',            title: 'Baby Sun' },
+        { file: 'Mother and Child.JPG',    title: 'Mother and Child' },
+        { file: 'Sweet.JPG',               title: 'Sweet' },
+        { file: 'Enceinte de la terre2.JPG', title: 'Enceinte de la terre' },
+        { file: 'Seb.JPG',                 title: 'Seb' },
+        { file: 'Smoker.JPG',              title: 'Smoker' },
+        { file: 'Isis.JPG',                title: 'Isis' }
+    ];
+
+    function buildFallbackArtworks() {
+        return SEED_MATERIALS.map((m, i) => ({
+            id: `seed_${i}`,
+            title: m.title,
+            artist: '',
+            medium: '',
+            format: '',
+            price: '',
+            image: `assets/materials-seed/${m.file}`,
+            frame: 'black-modern',
+            gradient: PLACEHOLDER_GRADIENTS[i % PLACEHOLDER_GRADIENTS.length]
+        }));
+    }
+
+    // Convertit une exposition au format "panels" (expo-manager.html) vers le
+    // format "artworks" utilisé par ce corridor, et met à jour titre/sous-titre.
+    function applyExpoData(expoData) {
+        if (!expoData || !Array.isArray(expoData.panels) || !expoData.panels.length) return null;
+
+        const markEl = document.getElementById('expoMark');
+        const metaEl = document.getElementById('expoMeta');
+        if (markEl) markEl.textContent = expoData.title || 'EXHIB';
+        if (metaEl) metaEl.textContent = expoData.subtitle || (expoData.artist ? `${expoData.artist} — Exposition` : 'Exposition');
+        if (expoData.accent) document.documentElement.style.setProperty('--brass-bright', expoData.accent);
+
+        return expoData.panels.map((p, i) => ({
+            title: p.title || '',
+            artist: expoData.artist || '',
+            medium: '',
+            format: p.orientation === 'vertical' ? 'Vertical' : 'Horizontal',
+            price: p.price || '',
+            image: p.type === 'video' ? '' : (p.src || ''),
+            video: p.type === 'video' ? (p.src || '') : '',
+            frame: p.frame || 'none',
+            gradient: PLACEHOLDER_GRADIENTS[i % PLACEHOLDER_GRADIENTS.length]
+        }));
+    }
+
+    // Charge une exposition précise créée dans expo-manager.html. Priorité au
+    // serveur (persistant au redémarrage, visible par les autres membres via le
+    // réseau), repli sur localStorage si le serveur est injoignable (mode
+    // navigateur pur / hors ligne).
+    async function loadRequestedExpo(expoId) {
+        try {
+            const res = await fetch(`${ZNK_BACKEND_URL}/api/expos/${encodeURIComponent(expoId)}`, { cache: 'no-store' });
+            if (res.ok) {
+                const result = await res.json();
+                const fromServer = applyExpoData(result && result.data);
+                if (fromServer) return fromServer;
+            }
+        } catch (e) { /* serveur injoignable, on retombe sur localStorage */ }
+
+        let expoData = null;
+        try { expoData = JSON.parse(localStorage.getItem('znk_expo_' + expoId) || 'null'); }
+        catch (e) { console.warn('Erreur lecture exposition demandée:', e); }
+        return applyExpoData(expoData);
+    }
+
+    async function loadGalleryManifest() {
+        try {
+            const res = await fetch(GALLERY_MANIFEST_URL, { cache: 'no-store' });
+            if (res.ok) {
+                const manifest = await res.json();
+                if (manifest && manifest.artworks) return manifest;
+            }
+        } catch (e) { /* pas de manifest publié */ }
+
+        try {
+            const raw = localStorage.getItem(GALLERY_STORAGE_KEY);
+            if (raw) {
+                const manifest = JSON.parse(raw);
+                if (manifest && manifest.artworks) return manifest;
+            }
+        } catch (e) { console.warn('Erreur lecture manifest galerie:', e); }
+
+        return null;
+    }
+
+    async function loadArtworks() {
+        if (REQUESTED_EXPO_ID) {
+            const requested = await loadRequestedExpo(REQUESTED_EXPO_ID);
+            if (requested) return requested;
+        }
+        const manifest = await loadGalleryManifest();
+        if (manifest && manifest.artworks && manifest.artworks.length) return manifest.artworks;
+        return buildFallbackArtworks();
+    }
+
+    let artworksData = [];
+
+    async function buildCorridor() {
+        const corridor = document.getElementById('corridor');
+        artworksData = await loadArtworks();
+
+        document.getElementById('expoProgress').textContent = `01 / ${String(artworksData.length).padStart(2,'0')}`;
+
+        corridor.innerHTML = artworksData.map((art, i) => {
+            const frameClass = 'frame-' + (art.frame || 'none');
+            const visual = art.video
+                ? `<video src="${art.video}" data-original-url="${(art.video || '').replace(/"/g, '&quot;')}" data-title-hint="${escapeHtml(art.title || '')}" onerror="window.__resolveExpoMedia && window.__resolveExpoMedia(this, 'video', this.dataset.titleHint)" muted loop autoplay playsinline></video>`
+                : art.image
+                    ? `<img src="${art.image}" data-original-url="${(art.image || '').replace(/"/g, '&quot;')}" data-title-hint="${escapeHtml(art.title || '')}" onerror="window.__resolveExpoMedia && window.__resolveExpoMedia(this, 'image', this.dataset.titleHint)" alt="${escapeHtml(art.title || '')}">`
+                    : `<div class="placeholder-canvas" style="background:${art.gradient || PLACEHOLDER_GRADIENTS[i % PLACEHOLDER_GRADIENTS.length]}">${escapeHtml(art.title || '')}</div>`;
+
+            return `
+                <div class="panel" data-index="${i}">
+                    <div class="spotlight"></div>
+                    <div class="frame-wrap ${frameClass}" data-index="${i}">
+                        ${visual}
+                    </div>
+                    <div class="plaque">
+                        <div class="n">N° ${String(i+1).padStart(2,'0')}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        corridor.querySelectorAll('.frame-wrap').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.index, 10);
+                openInquiryModal(artworksData[idx]);
+            });
+        });
+
+        setupInViewTracking();
+        setupRail();
+    }
+
+    function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str == null ? '' : str;
+        return d.innerHTML;
+    }
+
+    // Observe quel panneau est actuellement au centre de l'écran (spot allumé + numéro de progression)
+    function setupInViewTracking() {
+        const panels = Array.from(document.querySelectorAll('.panel'));
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                entry.target.classList.toggle('in-view', entry.isIntersecting && entry.intersectionRatio > 0.55);
+            });
+            const current = panels.find(p => p.classList.contains('in-view'));
+            if (current) {
+                const idx = parseInt(current.dataset.index, 10);
+                document.getElementById('expoProgress').textContent = `${String(idx+1).padStart(2,'0')} / ${String(panels.length).padStart(2,'0')}`;
+            }
+        }, { threshold: [0, 0.55, 1] });
+        panels.forEach(p => observer.observe(p));
+    }
+
+    // Rail en bas : le curseur avance proportionnellement au scroll horizontal
+    function setupRail() {
+        const corridor = document.getElementById('corridor');
+        const cursor = document.getElementById('railCursor');
+        const rail = document.getElementById('rail');
+        const hint = document.getElementById('hintSwipe');
+
+        function updateCursor() {
+            const max = corridor.scrollWidth - corridor.clientWidth;
+            const ratio = max > 0 ? corridor.scrollLeft / max : 0;
+            const railWidth = rail.clientWidth;
+            cursor.style.left = (ratio * railWidth) + 'px';
+            if (corridor.scrollLeft > 20) hint.classList.add('hidden');
+        }
+        corridor.addEventListener('scroll', updateCursor, { passive: true });
+        updateCursor();
+
+        // Convertit le scroll vertical (souris/trackpad) en défilement horizontal, pratique en desktop
+        corridor.addEventListener('wheel', (e) => {
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                corridor.scrollLeft += e.deltaY;
+                e.preventDefault();
+            }
+        }, { passive: false });
+    }
+
+    // ---------- Verrou paysage pour téléphones ----------
+    function checkOrientation() {
+        const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+        const isSmall = Math.min(window.innerWidth, window.innerHeight) < 620;
+        const gate = document.getElementById('landscapeGate');
+        gate.classList.toggle('show', isTouch && isPortrait && isSmall);
+    }
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+
+    // ---------- Modale visionneuse + intérêt / achat ----------
+    function openInquiryModal(artwork) {
+        const existing = document.getElementById('inquiryModal');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'inquiryModal';
+        overlay.className = 'modal-overlay';
+
+        const visual = artwork.video
+            ? `<video src="${artwork.video}" data-original-url="${(artwork.video || '').replace(/"/g, '&quot;')}" data-title-hint="${escapeHtml(artwork.title || '')}" onerror="window.__resolveExpoMedia && window.__resolveExpoMedia(this, 'video', this.dataset.titleHint)" controls muted playsinline></video>`
+            : artwork.image
+                ? `<img src="${artwork.image}" data-original-url="${(artwork.image || '').replace(/"/g, '&quot;')}" data-title-hint="${escapeHtml(artwork.title || '')}" onerror="window.__resolveExpoMedia && window.__resolveExpoMedia(this, 'image', this.dataset.titleHint)" alt="${escapeHtml(artwork.title || '')}">`
+                : `<div class="placeholder-canvas" style="background:${artwork.gradient || PLACEHOLDER_GRADIENTS[0]}">${escapeHtml(artwork.title || '')}</div>`;
+
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <button class="modal-close" id="mqClose" title="Fermer">✕</button>
+                <div class="modal-image-side">
+                    ${visual}
+                </div>
+                <div class="modal-info-side">
+                    <div class="mt">${escapeHtml(artwork.title || 'Sans titre')}</div>
+                    <div class="ma">${escapeHtml(artwork.artist || '')}</div>
+                    ${(artwork.medium || artwork.format) ? `<div class="mm">${[artwork.medium, artwork.format].filter(Boolean).map(escapeHtml).join(' · ')}</div>` : ''}
+                    ${(artwork.price || artwork.prix || artwork.tarif) ? `<div class="mp">${escapeHtml(artwork.price || artwork.prix || artwork.tarif)}</div>` : ''}
+                    <div class="mdivider"></div>
+                    <label>Votre nom</label>
+                    <input id="mqName" type="text">
+                    <label>Email</label>
+                    <input id="mqEmail" type="email">
+                    <label>Message</label>
+                    <textarea id="mqMessage" placeholder="Votre question sur cette œuvre..."></textarea>
+                    <div class="modal-actions">
+                        <button id="mqCancel">Fermer</button>
+                        <button id="mqSend" class="primary">Envoyer</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        document.getElementById('mqClose').onclick = () => overlay.remove();
+        document.getElementById('mqCancel').onclick = () => overlay.remove();
+        document.getElementById('mqSend').onclick = async () => {
+            const name = document.getElementById('mqName').value.trim();
+            const email = document.getElementById('mqEmail').value.trim();
+            const message = document.getElementById('mqMessage').value.trim();
+            if (!message) {
+                document.getElementById('mqMessage').style.borderColor = '#c0392b';
+                return;
+            }
+            const subject = `Inquiry: ${artwork.title}`;
+            const body = `Œuvre: ${artwork.title}\nArtiste: ${artwork.artist}\n\nDe: ${name || 'Non renseigné'} (${email || 'Non renseigné'})\n\nMessage:\n${message}`;
+            overlay.remove();
+            await sendToGalleryMailbox(subject, body);
+        };
+    }
+
+    async function sendToGalleryMailbox(subject, body) {
+        try {
+            const response = await fetch(`${ZNK_BACKEND_URL}/api/messages/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to: ZNK_GALLERY_MAILBOX, subject, body, canal: 'email' })
+            });
+            const result = await response.json();
+            if (result.delivered) {
+                showNotif('Message envoyé', 'Votre message a été livré à la galerie.');
+            } else {
+                showNotif('Message en attente', 'La galerie n\'est pas connectée. Il sera livré à sa reconnexion.');
+            }
+        } catch (e) {
+            showNotif('Message non envoyé', 'Impossible de joindre la messagerie pour le moment.');
+        }
+    }
+
+    function showNotif(title, message) {
+        const n = document.createElement('div');
+        n.className = 'notif';
+        n.innerHTML = `<div style="font-family:'Fraunces',serif; font-style:italic; font-size:16px; margin-bottom:10px;">${title}</div><div>${message}</div>`;
+        document.body.appendChild(n);
+        setTimeout(() => n.remove(), 3800);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        checkOrientation();
+        buildCorridor();
+    });
+</script>
+</body>
+</html>

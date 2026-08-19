@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>ZNK - Galerie ART ETUDES</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<style>
+  :root{
+    --gold:#c9a24b; --gold-soft:#e4c887;
+    --paper:#f2ead8; --ink:#2b2620; --ink-soft:#5a5142;
+    --spine1:#3a2c22; --spine2:#241a14;
+    --serif:'Iowan Old Style','Palatino Linotype',Georgia,'Times New Roman',serif;
+    --sans:'Arial',sans-serif;
+    --accent:#00ff88;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; min-height:100vh;
+    font-family: Inter, sans-serif;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    color:#fff;
+    overflow-x:hidden;
+  }
+
+  /* ===== En-tête ===== */
+  .gallery-hero{
+    text-align:center;
+    padding:34px 20px 6px;
+  }
+  .gallery-hero h1{
+    font-family: "Trebuchet MS", sans-serif; font-weight:600;
+    font-size:3.1em; margin:0 0 6px;
+    color:#5e1566;
+    text-shadow:0 0 18px rgba(201,162,75,0.35);
+  }
+  .gallery-hero p{
+    margin:0; font-size:0.85em; letter-spacing:0.5px; color:#aaa;
+  }
+
+  .central-screen{
+    width:90%; max-width:1200px; margin:20px auto;
+    background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px; padding:12px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .count-indicator{ font-size:13px; display:flex; align-items:center; gap:8px; color:#ddd; }
+  .refresh-btn{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
+    color:#fff; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:12px;
+    letter-spacing:0.5px; transition:all .2s ease;
+  }
+  .refresh-btn:hover{ background:var(--accent); color:#000; }
+
+  /* ===== Grille des carnets ===== */
+  .artists-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));
+    gap:26px; width:90%; max-width:1200px; margin:10px auto 60px;
+  }
+
+  .artist-card{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:16px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:all .35s ease;
+    animation:fadeInUp .6s ease forwards;
+    opacity:0;
+    position:relative;
+  }
+  .artist-card:nth-child(1){ animation-delay:.05s; }
+  .artist-card:nth-child(2){ animation-delay:.1s; }
+  .artist-card:nth-child(3){ animation-delay:.15s; }
+  .artist-card:nth-child(4){ animation-delay:.2s; }
+  .artist-card:nth-child(5){ animation-delay:.25s; }
+  .artist-card:nth-child(6){ animation-delay:.3s; }
+  @keyframes fadeInUp{ from{ opacity:0; transform:translateY(24px);} to{ opacity:1; transform:translateY(0);} }
+
+  .artist-card:hover{
+    transform:translateY(-8px);
+    border-color:var(--gold);
+    box-shadow:0 18px 36px rgba(0,0,0,0.5);
+  }
+
+  .artist-cover{
+    width:100%; padding-bottom:118%;
+    position:relative;
+    background:var(--paper);
+    overflow:hidden;
+  }
+  .artist-cover img{
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    object-fit:contain; background:var(--paper);
+  }
+  .artist-cover::after{
+    content:"";
+    position:absolute; inset:0;
+    box-shadow:inset 0 0 40px rgba(80,60,30,0.18);
+    pointer-events:none;
+  }
+  .cover-play-overlay{
+    position:absolute; inset:0;
+    background:rgba(10,10,15,0.0);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:all .25s ease;
+    color:var(--gold-soft); font-family: Lato, sans-serif; font-size:1em;
+    letter-spacing:1px;
+  }
+  .artist-card:hover .cover-play-overlay{ opacity:1; background:rgba(10,10,15,0.45); }
+
+  .pages-badge{
+    position:absolute; top:10px; left:10px;
+    background:rgba(0,0,0,0.7); color:var(--gold-soft);
+    font-size:11px; font-weight:bold; padding:4px 10px; border-radius:12px;
+    border:1px solid rgba(201,162,75,0.5); z-index:5;
+  }
+  .niveau-badge{
+    position:absolute; top:10px; right:10px;
+    background:rgba(0,0,0,0.7); color:#7fb0c9;
+    font-size:10px; font-weight:bold; padding:4px 10px; border-radius:12px;
+    border:1px solid rgba(127,176,201,0.5); z-index:5; text-transform:uppercase; letter-spacing:0.5px;
+  }
+
+  .artist-info{ padding:14px 16px 18px; text-align:center; }
+  .artist-name{
+    font-family: Inter, sans-serif; font-weight:600; font-size:1.05em;
+    color:#fff; margin-bottom:4px;
+  }
+  .artist-meta{ font-size:11px; color:#999; }
+  .artist-meta .validated-count{ color:#7fd08a; }
+
+  /* ===== Etats vides / chargement ===== */
+  .empty-state, .loading-indicator{
+    text-align:center; padding:80px 20px; color:#777;
+    width:90%; max-width:1200px; margin:0 auto;
+  }
+  .empty-icon{ font-size:70px; margin-bottom:18px; opacity:0.5; }
+  .empty-state .empty-title{ font-family: Lato, sans-serif; font-size:1.4em; color:#ccc; margin-bottom:8px; }
+  .empty-state .empty-sub{ font-size:0.85em; max-width:420px; margin:0 auto; line-height:1.6; }
+
+  /* ===================================================================
+     ===== Visionneuse (carnet en lecture seule) — reprend l'esthétique
+     ===== "livre relié" de mesCroquis.html.
+     =================================================================== */
+  .viewer-overlay{
+    display:none; position:fixed; inset:0; z-index:900;
+    background:rgba(5,5,10,0.88); backdrop-filter:blur(6px);
+    align-items:center; justify-content:center; flex-direction:column;
+    padding:20px;
+  }
+  .viewer-overlay.open{ display:flex; }
+
+  .viewer-topbar{
+    width:100%; max-width:560px; display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:10px; gap:10px;
+  }
+  .viewer-name{
+    font-family: Lato, sans-serif; font-size:1.2em; color:var(--gold-soft);
+  }
+  .viewer-close{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
+    color:#fff; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:16px;
+  }
+  .viewer-close:hover{ background:#ef4444; color:#fff; }
+
+  .viewer-book-wrap{ perspective:2200px; width:100%; max-width:520px; }
+  .viewer-book-shell{ position:relative; width:100%; }
+
+  .v-stack-shadow{
+    position:absolute; top:8px; left:12px; right:-5px; bottom:-8px;
+    background:#d8ccae; border-radius:3px; box-shadow:0 14px 30px rgba(0,0,0,0.45);
+    transform:rotate(1.2deg); opacity:0.55;
+  }
+  .v-spine{
+    position:absolute; left:-10px; top:0; bottom:0; width:16px; border-radius:3px 0 0 3px;
+    background:linear-gradient(180deg, var(--spine1), var(--spine2) 50%, var(--spine1));
+    box-shadow:inset -3px 0 6px rgba(0,0,0,0.5); z-index:5;
+  }
+
+  .viewer-page{
+    position:relative; background:var(--paper); color:var(--ink); border-radius:3px;
+    min-height:520px; box-shadow:0 24px 50px rgba(0,0,0,0.5);
+    transform-origin:left center; transform-style:preserve-3d; overflow:hidden;
+    padding:30px 30px 50px; margin-left:10px;
+  }
+  .viewer-page.flip-out-next{ transform:rotateY(-110deg); opacity:0.35; transition:transform .38s ease-in, opacity .38s ease-in; }
+  .viewer-page.flip-out-prev{ transform:rotateY(110deg); opacity:0.35; transition:transform .38s ease-in, opacity .38s ease-in; }
+  .viewer-page.flip-in-next{ transform:rotateY(110deg); opacity:0.35; transition:none; }
+  .viewer-page.flip-in-prev{ transform:rotateY(-110deg); opacity:0.35; transition:none; }
+  .viewer-page.flip-in-active{ transform:rotateY(0deg); opacity:1; transition:transform .38s ease-out, opacity .38s ease-out; }
+
+  .v-turn-zone{ position:absolute; top:0; bottom:0; width:22%; z-index:3; cursor:pointer; }
+  .v-turn-zone.left{ left:0; } .v-turn-zone.right{ right:0; }
+
+  .v-cover-content{
+    position:relative; z-index:2; display:flex; flex-direction:column; align-items:center;
+    text-align:center; justify-content:flex-start; height:100%; min-height:440px; gap:6px; padding-top:14px;
+  }
+  .v-cover-eyebrow{ font-size:0.72em; letter-spacing:3px; text-transform:uppercase; color:var(--ink-soft); }
+  .v-cover-title{ font-family: "Trebuchet MS", sans-serif; font-size:1.7em; font-weight:600; margin:2px 0 8px; color:var(--ink); }
+  .v-cover-art{ position:relative; margin:10px auto 6px; max-width:210px; background:#fff; padding:10px 10px 24px; box-shadow:0 12px 26px rgba(0,0,0,0.3); transform:rotate(-1deg); }
+  .v-cover-art img{ display:block; max-width:100%; max-height:170px; margin:0 auto; }
+  .v-cover-rule{ width:60px; height:1px; background:var(--gold); margin:8px 0; opacity:0.7; }
+  .v-cover-stats{ display:flex; gap:24px; margin-top:6px; }
+  .v-cover-stat-value{ font-family: "Playfair Display", serif; font-size:1.3em; color:var(--ink); }
+  .v-cover-stat-label{ font-size:0.64em; letter-spacing:1.5px; text-transform:uppercase; color:var(--ink-soft); margin-top:2px; }
+
+  .v-draw-page{ position:relative; z-index:2; height:100%; display:flex; flex-direction:column; }
+  .v-draw-tag{ font-size:0.66em; letter-spacing:1.5px; text-transform:uppercase; color:var(--ink-soft); }
+  .v-draw-title{ font-family: Inter, sans-serif; font-weight:600; font-size:1.2em; margin:4px 0 6px; color:var(--ink); }
+  .v-draw-date{ font-size:0.7em; letter-spacing:0.5px; color:var(--ink-soft); }
+  .v-draw-frame{
+    position:relative; margin:6px auto 14px; max-width:100%; background:#fff;
+    padding:14px 14px 28px; box-shadow:0 10px 24px rgba(0,0,0,0.28); transform:rotate(var(--tilt,-0.6deg));
+  }
+  .v-draw-frame img{ display:block; max-width:100%; max-height:230px; margin:0 auto; }
+  .v-draw-status{ margin-top:auto; display:flex; align-items:center; justify-content:center; font-size:0.78em; border-top:1px solid rgba(80,60,30,0.15); padding-top:10px; }
+  .v-status-label{ font-size:0.7em; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; }
+  .v-status-label.done{ color:#5c7a4f; } .v-status-label.progress{ color:#a07a2e; }
+
+  .v-page-number{ position:absolute; bottom:14px; left:0; right:0; text-align:center; font-size:0.68em; letter-spacing:1px; color:var(--ink-soft); opacity:0.6; z-index:2; }
+
+  .viewer-nav-row{ display:flex; align-items:center; justify-content:center; gap:22px; margin-top:18px; }
+  .viewer-nav-btn{
+    background:rgba(255,255,255,0.06); border:1px solid var(--gold); color:var(--gold-soft);
+    font-weight:bold; width:40px; height:40px; border-radius:50%; font-size:1em; cursor:pointer; transition:all .2s ease;
+  }
+  .viewer-nav-btn:hover{ background:rgba(201,162,75,0.18); }
+  .viewer-nav-btn:disabled{ opacity:0.3; cursor:not-allowed; background:none; }
+  .viewer-nav-label{ font-size:0.78em; letter-spacing:1px; opacity:0.75; min-width:110px; text-align:center; color:#ddd; }
+
+  @media (max-width:600px){
+    .viewer-page{ min-height:480px; padding:22px 18px 46px; }
+    .v-draw-frame img{ max-height:190px; }
+    .v-cover-title{ font-size:1.4em; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Merriweather:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Playfair+Display:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Lato:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap"></head>
+<body>
+
+  <div class="gallery-hero">
+    <h1> Galerie ART ETUDES</h1>
+    <p>Les carnets de croquis publiés par les élèves des écoles ZNK </p>
+  </div>
+
+  <div class="central-screen">
+    <div class="count-indicator">📔 <span id="artistCount">0</span> carnet(s) publié(s)</div>
+    <button class="refresh-btn" onclick="loadGallery()">🔄 Actualiser</button>
+  </div>
+
+  <div class="artists-grid" id="artistsGrid">
+    <div class="loading-indicator">📡 Chargement de la galerie...</div>
+  </div>
+
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="empty-icon">🖼️</div>
+    <div class="empty-title">Aucun carnet publié pour l'instant</div>
+    <div class="empty-sub">
+      Un carnet de croquis est publié ici automatiquement dès qu'un élève a rempli
+      <strong>10 pages</strong> dans son Carnet de Croquis personnel.
+    </div>
+  </div>
+
+  <!-- Visionneuse (carnet en lecture seule) -->
+  <div class="viewer-overlay" id="viewerOverlay">
+    <div class="viewer-topbar">
+      <div class="viewer-name" id="viewerName">Carnet</div>
+      <button class="viewer-close" onclick="closeViewer()">✕</button>
+    </div>
+    <div class="viewer-book-wrap">
+      <div class="viewer-book-shell">
+        <div class="v-stack-shadow"></div>
+        <div class="v-spine"></div>
+        <div class="viewer-page" id="viewerPageFlip">
+          <div class="v-turn-zone left" onclick="turnViewerPage(-1)" title="Page précédente"></div>
+          <div class="v-turn-zone right" onclick="turnViewerPage(1)" title="Page suivante"></div>
+          <div id="viewerPageContent"></div>
+          <div class="v-page-number" id="viewerPageNumber"></div>
+        </div>
+      </div>
+      <div class="viewer-nav-row">
+        <button class="viewer-nav-btn" id="viewerPrevBtn" onclick="turnViewerPage(-1)">‹</button>
+        <div class="viewer-nav-label" id="viewerNavLabel">Couverture</div>
+        <button class="viewer-nav-btn" id="viewerNextBtn" onclick="turnViewerPage(1)">›</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ===================================================================
+  // ===== GALERIE DES ARTISTES — agrège les carnets de croquis de tous
+  // ===== les élèves (znk_carnet_croquis_<idZNK>, écrits par dessin-kids.html
+  // ===== et les leçons ArtEtudes-*.html) et publie automatiquement la
+  // ===== carte d'un élève dès que son carnet atteint 10 pages.
+  // ===== Le nom / niveau de chaque élève vient de l'annuaire partagé
+  // ===== znk_carnet_annuaire, alimenté par mesCroquis.html à chaque visite.
+  // ===================================================================
+
+  const PUBLISH_THRESHOLD = 10;
+  const CARNET_PREFIX = 'znk_carnet_croquis_';
+
+  // Contenu PARTAGÉ (visible par tous) : même mécanisme que ZNK-LIVREmoi.html /
+  // ZNKLibrairie.html / artflow.html — vide = uniquement les carnets présents
+  // sur cet appareil (comportement actuel, inchangé).
+  const ZNK_CLOUD_URL = (function(){
+    try{ return localStorage.getItem('znk_cloud_url') || ''; }catch(e){ return ''; }
+  })();
+  function znkCloudPath(path){ return (ZNK_CLOUD_URL || '') + path; }
+
+  function loadAnnuaire() {
+    try { return JSON.parse(localStorage.getItem('znk_carnet_annuaire') || '{}'); }
+    catch (e) { return {}; }
+  }
+
+  function getPagesForStudent(id) {
+    try {
+      const pages = JSON.parse(localStorage.getItem(CARNET_PREFIX + id) || '[]');
+      return pages.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    } catch (e) { return []; }
+  }
+
+  // Recense tous les identifiants élèves connus : ceux de l'annuaire, plus
+  // tout carnet trouvé directement dans localStorage (élève jamais listé).
+  function discoverStudentIds(annuaire) {
+    const ids = new Set(Object.keys(annuaire));
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(CARNET_PREFIX)) ids.add(key.slice(CARNET_PREFIX.length));
+    }
+    return Array.from(ids);
+  }
+
+  function displayNameFor(id, entry) {
+    if (entry) {
+      const full = `${entry.prenom || ''} ${entry.nom || ''}`.trim();
+      if (full) return full;
+    }
+    return 'Artiste ZNK';
+  }
+
+  function buildPublishedArtists() {
+    const annuaire = loadAnnuaire();
+    const ids = discoverStudentIds(annuaire);
+    const artists = [];
+
+    ids.forEach(id => {
+      const pages = getPagesForStudent(id);
+      if (pages.length < PUBLISH_THRESHOLD) return; // pas encore publié
+
+      const entry = annuaire[id];
+      const validated = pages.filter(p => p.validated).length;
+      const artist = {
+        id,
+        name: displayNameFor(id, entry),
+        niveau: entry && entry.niveau ? entry.niveau : '',
+        pages,
+        total: pages.length,
+        validated,
+        cover: pages[0] // premier dessin créé = couverture, comme dans mesCroquis.html
+      };
+      artists.push(artist);
+      publishCarnetIfChanged(artist);
+    });
+
+    // Les carnets les plus fournis d'abord, puis par ordre alphabétique.
+    artists.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'fr'));
+    return artists;
+  }
+
+  // Publie (ou republie) un carnet local vers le serveur partagé dès qu'il
+  // franchit le seuil — mais seulement si le nombre de pages a changé depuis
+  // la dernière publication, pour ne pas republier à chaque simple ouverture
+  // de la galerie.
+  function publishCarnetIfChanged(artist) {
+    if (!ZNK_CLOUD_URL) return;
+    const trackKey = 'znk_carnet_publishedCount_' + artist.id;
+    const lastPublishedCount = Number(localStorage.getItem(trackKey) || 0);
+    if (lastPublishedCount === artist.total) return; // déjà à jour
+
+    fetch(znkCloudPath(`/api/carnets/${artist.id}`), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        displayName: artist.name,
+        niveau: artist.niveau,
+        pages: artist.pages,
+        thumbnail: artist.cover && artist.cover.imageDataUrl
+      })
+    }).then(resp => {
+      if (resp.ok) localStorage.setItem(trackKey, String(artist.total));
+    }).catch(e => console.warn('⚠️ Publication du carnet distante échouée:', e));
+  }
+
+  function artistCardHTML(artist) {
+    const niveauBadge = artist.niveau
+      ? `<div class="niveau-badge">${artist.niveau}</div>`
+      : '';
+    const metaLine = artist.validated == null
+      ? `${artist.total} page${artist.total > 1 ? 's' : ''}`
+      : `<span class="validated-count">${artist.validated} validée${artist.validated > 1 ? 's' : ''}</span> · ${artist.total - artist.validated} en cours`;
+    return `
+      <div class="artist-card" onclick="openViewer('${artist.id}')">
+        <div class="artist-cover">
+          <div class="pages-badge">${artist.total} pages</div>
+          ${niveauBadge}
+          <img src="${artist.cover.imageDataUrl}" alt="${artist.name}">
+          <div class="cover-play-overlay">Voir le carnet ▶</div>
+        </div>
+        <div class="artist-info">
+          <div class="artist-name">${artist.name}</div>
+          <div class="artist-meta">${metaLine}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  let currentArtists = [];
+
+  async function loadGallery() {
+    const grid = document.getElementById('artistsGrid');
+    const emptyState = document.getElementById('emptyState');
+    grid.innerHTML = `<div class="loading-indicator">📡 Chargement de la galerie...</div>`;
+
+    const localArtists = buildPublishedArtists();
+
+    let remoteArtists = [];
+    if (ZNK_CLOUD_URL) {
+      try {
+        const resp = await fetch(znkCloudPath('/api/carnets'));
+        if (resp.ok) {
+          const data = await resp.json();
+          const localIds = new Set(localArtists.map(a => a.id));
+          remoteArtists = (data.carnets || [])
+            .filter(c => !localIds.has(c.id)) // évite le doublon si ce carnet est aussi local
+            .map(c => ({
+              id: c.id,
+              name: c.displayName || 'Artiste ZNK',
+              niveau: c.niveau || '',
+              pages: null, // chargées à l'ouverture, voir openViewer
+              total: c.pageCount || 0,
+              validated: null, // inconnu tant que le carnet complet n'est pas chargé
+              cover: { imageDataUrl: c.thumbnail },
+              isRemote: true
+            }));
+        }
+      } catch (e) {
+        console.warn('⚠️ Carnets distants injoignables:', e);
+      }
+    }
+
+    currentArtists = [...localArtists, ...remoteArtists]
+      .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'fr'));
+    document.getElementById('artistCount').textContent = currentArtists.length;
+
+    if (currentArtists.length === 0) {
+      grid.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    grid.innerHTML = currentArtists.map(artistCardHTML).join('');
+  }
+
+  // ===== Visionneuse (lecture seule, même mécanique de livre que mesCroquis.html) =====
+
+  let viewerPages = [];
+  let viewerIndex = 0; // 0 = couverture
+  let viewerName = '';
+  let viewerAnimating = false;
+
+  const viewerOverlay = document.getElementById('viewerOverlay');
+  const viewerPageFlipEl = document.getElementById('viewerPageFlip');
+  const viewerPageContentEl = document.getElementById('viewerPageContent');
+  const viewerPageNumberEl = document.getElementById('viewerPageNumber');
+  const viewerPrevBtn = document.getElementById('viewerPrevBtn');
+  const viewerNextBtn = document.getElementById('viewerNextBtn');
+  const viewerNavLabel = document.getElementById('viewerNavLabel');
+
+  function formatFrenchDate(isoString) {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '---';
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  async function openViewer(studentId) {
+    const artist = currentArtists.find(a => a.id === studentId);
+    if (!artist) return;
+
+    if (artist.isRemote && !artist.pages) {
+      try {
+        const resp = await fetch(znkCloudPath(`/api/carnets/${studentId}`));
+        if (resp.ok) {
+          const data = await resp.json();
+          artist.pages = data.carnet.pages || [];
+          artist.validated = artist.pages.filter(p => p.validated).length;
+        } else {
+          artist.pages = [];
+        }
+      } catch (e) {
+        console.warn('⚠️ Impossible de charger ce carnet distant:', e);
+        artist.pages = [];
+      }
+    }
+
+    viewerPages = artist.pages;
+    viewerName = artist.name;
+    viewerIndex = 0;
+    document.getElementById('viewerName').textContent = viewerName;
+    viewerOverlay.classList.add('open');
+    renderViewerPage();
+  }
+  window.openViewer = openViewer;
+
+  function closeViewer() {
+    viewerOverlay.classList.remove('open');
+  }
+  window.closeViewer = closeViewer;
+
+  function viewerCoverHTML() {
+    const total = viewerPages.length;
+    const validated = viewerPages.filter(p => p.validated).length;
+    const firstDrawing = viewerPages[0];
+    return `
+      <div class="v-cover-content">
+        <div class="v-cover-eyebrow">Carnet de Croquis</div>
+        <div class="v-cover-title">${viewerName}</div>
+        <div class="v-cover-art">
+          <img src="${firstDrawing.imageDataUrl}" alt="${firstDrawing.lessonTitle || 'Premier dessin'}">
+        </div>
+        <div class="v-cover-rule"></div>
+        <div class="v-cover-stats">
+          <div><div class="v-cover-stat-value">${total}</div><div class="v-cover-stat-label">Pages</div></div>
+          <div><div class="v-cover-stat-value">${validated}</div><div class="v-cover-stat-label">Validées</div></div>
+          <div><div class="v-cover-stat-value">${total - validated}</div><div class="v-cover-stat-label">En cours</div></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function viewerDrawPageHTML(page, indexInBook) {
+    const tilt = (indexInBook % 2 === 0) ? '-0.6deg' : '0.7deg';
+    const statusHTML = page.validated
+      ? `<span class="v-status-label done">Validé${typeof page.score === 'number' ? ` — ${page.score}/20` : ''}</span>`
+      : `<span class="v-status-label progress">En cours de coloriage</span>`;
+    return `
+      <div class="v-draw-page">
+        <div>
+          ${page.categoryName ? `<div class="v-draw-tag">${page.categoryName}</div>` : ''}
+          <h2 class="v-draw-title">${page.lessonTitle || 'Sans titre'}</h2>
+          <div class="v-draw-date">${formatFrenchDate(page.date)}</div>
+        </div>
+        <div class="v-draw-frame" style="--tilt:${tilt};">
+          <img src="${page.imageDataUrl}" alt="${page.lessonTitle || 'Dessin'}">
+        </div>
+        <div class="v-draw-status">${statusHTML}</div>
+      </div>
+    `;
+  }
+
+  function renderViewerPage() {
+    if (viewerIndex === 0) {
+      viewerPageContentEl.innerHTML = viewerCoverHTML();
+      viewerPageNumberEl.textContent = `Couverture · ${viewerPages.length} page${viewerPages.length > 1 ? 's' : ''}`;
+      viewerNavLabel.textContent = 'Couverture';
+    } else {
+      const page = viewerPages[viewerIndex - 1];
+      viewerPageContentEl.innerHTML = viewerDrawPageHTML(page, viewerIndex - 1);
+      viewerPageNumberEl.textContent = `${viewerIndex} / ${viewerPages.length}`;
+      viewerNavLabel.textContent = `Page ${viewerIndex} / ${viewerPages.length}`;
+    }
+    viewerPrevBtn.disabled = viewerIndex === 0;
+    viewerNextBtn.disabled = viewerIndex >= viewerPages.length;
+  }
+
+  function turnViewerPage(direction) {
+    const target = viewerIndex + direction;
+    if (target < 0 || target > viewerPages.length || viewerAnimating) return;
+    viewerAnimating = true;
+    viewerPageFlipEl.classList.add(direction === 1 ? 'flip-out-next' : 'flip-out-prev');
+    setTimeout(() => {
+      viewerIndex = target;
+      renderViewerPage();
+      viewerPageFlipEl.classList.remove('flip-out-next', 'flip-out-prev');
+      viewerPageFlipEl.classList.add(direction === 1 ? 'flip-in-next' : 'flip-in-prev');
+      void viewerPageFlipEl.offsetWidth;
+      requestAnimationFrame(() => viewerPageFlipEl.classList.add('flip-in-active'));
+      setTimeout(() => {
+        viewerPageFlipEl.classList.remove('flip-in-next', 'flip-in-prev', 'flip-in-active');
+        viewerAnimating = false;
+      }, 400);
+    }, 380);
+  }
+  window.turnViewerPage = turnViewerPage;
+
+  document.addEventListener('keydown', (e) => {
+    if (!viewerOverlay.classList.contains('open')) return;
+    if (e.key === 'ArrowRight') turnViewerPage(1);
+    if (e.key === 'ArrowLeft') turnViewerPage(-1);
+    if (e.key === 'Escape') closeViewer();
+  });
+
+  viewerOverlay.addEventListener('click', (e) => {
+    if (e.target === viewerOverlay) closeViewer();
+  });
+
+  // Rafraîchit la galerie si un carnet est modifié depuis un autre onglet,
+  // ou quand on revient sur cet onglet (nouvelle publication possible).
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'znk_carnet_annuaire' || (e.key && e.key.startsWith(CARNET_PREFIX))) loadGallery();
+  });
+  window.addEventListener('focus', loadGallery);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') loadGallery();
+  });
+
+  loadGallery();
+</script>
+</body>
+</html>

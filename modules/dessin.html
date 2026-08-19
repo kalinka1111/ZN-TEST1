@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNK Dessin</title>
+<style>
+:root{
+  --mac-bg:#e8e8ea;
+  --toolbar-bg: rgba(246,246,247,0.86);
+  --toolbar-border:#d6d6d6;
+  --accent:#0a84ff;
+  --accent-dim:rgba(10,132,255,0.12);
+  --text:#1d1d1f;
+  --text-secondary:#6e6e73;
+  --panel-bg:#d6d6d6;
+  --divider:#d7d7d9;
+  --btn-hover:#ebebeb;
+  --danger:#ff3b30;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  background:var(--mac-bg);
+  color:var(--text);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+.app{display:flex;flex-direction:column;height:100vh;}
+
+/* ===== TOOLBAR ===== */
+.toolbar{
+  height:60px;flex:0 0 60px;
+  display:flex;align-items:center;gap:6px;
+  padding:0 10px;
+  background:var(--toolbar-bg);
+  backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);
+  border-bottom:1px solid var(--toolbar-border);
+  position:relative;z-index:20;
+  overflow-x:auto;overflow-y:hidden;
+}
+.tool-group{
+  display:flex;gap:2px;padding:3px;
+  background:rgba(0,0,0,0.045);
+  border-radius:9px;flex:0 0 auto;
+}
+.tool-btn{
+  width:42px;height:42px;border:none;border-radius:13px;
+  background:transparent;color:var(--text);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .12s ease, transform .12s ease;
+  position:relative;flex:0 0 auto;
+  font-size:21px;line-height:1;
+}
+.tool-btn svg{width:18px;height:18px;}
+.tool-btn:hover{background:var(--btn-hover);transform:scale(1.08);}
+.tool-btn:active{transform:scale(0.94);}
+.tool-btn.active{background:var(--accent-dim);box-shadow:0 0 0 2.5px var(--accent) inset;transform:scale(1.05);}
+.tool-btn:disabled{opacity:.32;cursor:not-allowed;}
+.tool-btn:disabled:hover{background:transparent;transform:none;}
+.emoji-btn{filter:saturate(1.15);}
+.divider{width:1px;height:24px;background:var(--divider);flex:0 0 auto;margin:0 4px;}
+.spacer{flex:1 1 auto;min-width:8px;}
+
+.popover-wrap{position:relative;flex:0 0 auto;}
+.popover{
+  position:fixed;top:0;left:0;
+  background:var(--panel-bg);border:1px solid var(--toolbar-border);
+  border-radius:10px;padding:4px;display:none;gap:2px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.18);z-index:9999;
+}
+.popover.open{display:flex;}
+
+.context-controls{display:flex;align-items:center;gap:10px;padding:0 8px;flex:0 0 auto;}
+.ctx-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);white-space:nowrap;}
+.ctx-item input[type="color"]{
+  width:26px;height:26px;border:1px solid var(--toolbar-border);border-radius:7px;
+  padding:0;background:none;cursor:pointer;
+}
+.ctx-item input[type="range"]{width:90px;accent-color:var(--accent);}
+.ctx-item label.fill-toggle{
+  display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;
+}
+.ctx-item label.fill-toggle input{accent-color:var(--accent);}
+
+.btn-primary{
+  height:32px;padding:0 14px;border:none;border-radius:7px;
+  background:var(--accent);color:#fff;font-size:13px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:6px;flex:0 0 auto;
+}
+.btn-primary:hover{background:#0074e0;}
+.btn-primary svg{width:15px;height:15px;}
+
+/* ===== WORKSPACE ===== */
+.workspace{flex:1;display:flex;overflow:hidden;}
+.canvas-scroll{
+  flex:1;overflow:auto;display:flex;
+  padding:40px;position:relative;
+  background:#aaaaaa; /* fond plus foncé que la fenêtre pour bien distinguer "hors canvas" */
+}
+/* Le centrage se fait via margin:auto plutôt que align-items/justify-content:center.
+   Avec align-items/justify-content:center, dès que le contenu dépasse la zone
+   visible, le navigateur le décale "en négatif" pour le centrer - et comme le
+   scroll ne peut pas aller en négatif, cette partie devient inaccessible
+   (ça donne l'impression que l'image est rognée). margin:auto centre de la
+   même façon quand il y a de la place, mais cède proprement vers le coin
+   haut-gauche quand le contenu déborde : tout reste alors atteignable au scroll. */
+.canvas-wrap{
+  position:relative;flex:0 0 auto;margin:auto;
+  box-shadow:0 12px 40px rgba(0,0,0,0.25), 0 0 0 2px rgba(0,0,0,0.18); /* ombre + fin contour pour délimiter nettement le canvas */
+}
+#stage{background:#fff;display:block;cursor:crosshair;}
+.text-editor{
+  position:absolute;background:transparent;border:1.5px dashed var(--accent);
+  outline:none;resize:none;overflow:hidden;padding:2px;min-width:60px;min-height:1.4em;
+  line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+}
+.text-editor-confirm{
+  position:absolute;width:26px;height:26px;border-radius:50%;background:var(--accent);
+  border:2px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-size:13px;z-index:70;
+}
+/* Poignée de déplacement du texte/titre avant validation (même esprit que
+   les éléments modulaires déplaçables de l'affiche). */
+.text-move-handle{
+  position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;
+  border:2px solid var(--accent);color:var(--accent);display:flex;align-items:center;
+  justify-content:center;cursor:move;box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  font-size:13px;z-index:70;touch-action:none;user-select:none;
+}
+
+/* Poignées de redimensionnement d'image importée (coins), même principe que
+   les poignées de coin des éléments modulaires de l'affiche : on glisse un
+   coin pour agrandir/réduire l'image, au lieu d'un curseur dans le panneau. */
+.img-resize-handle{
+  position:absolute;width:18px;height:18px;transform:translate(-50%,-50%);
+  background:var(--accent);border:2.5px solid #fff;border-radius:5px;
+  box-shadow:0 1px 5px rgba(0,0,0,0.35);z-index:60;touch-action:none;
+}
+.img-resize-handle.handle-nw,.img-resize-handle.handle-se{cursor:nwse-resize;}
+.img-resize-handle.handle-ne,.img-resize-handle.handle-sw{cursor:nesw-resize;}
+
+/* ===== LAYERS PANEL ===== */
+.layers-panel{
+  width:250px;flex:0 0 250px;background:var(--panel-bg);
+  border-left:1px solid var(--toolbar-border);
+  display:flex;flex-direction:column;transition:margin-right .2s ease;
+}
+.layers-panel.hidden{margin-right:-250px;}
+.panel-header{
+  height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;border-bottom:1px solid var(--divider);
+}
+.panel-header h3{font-size:12px;font-weight:700;letter-spacing:.3px;color:var(--text-secondary);text-transform:uppercase;}
+.panel-header-actions{display:flex;gap:4px;}
+.icon-btn{
+  width:28px;height:28px;border:none;border-radius:8px;background:transparent;
+  color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:15px;line-height:1;transition:background .12s ease, transform .12s ease;
+}
+.icon-btn svg{width:15px;height:15px;}
+.icon-btn:hover{background:var(--btn-hover);transform:scale(1.1);}
+
+.layers-list{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;}
+.layer-card{
+  border-radius:8px;background:#fff;border:1.5px solid transparent;
+  padding:7px;cursor:pointer;transition:border-color .12s ease;
+}
+.layer-card.active{border-color:var(--accent);background:var(--accent-dim);}
+.layer-row{display:flex;align-items:center;gap:8px;}
+.layer-thumb{
+  width:42px;height:30px;border-radius:4px;border:1px solid var(--divider);
+  background:
+    linear-gradient(45deg,#ddd 25%,transparent 25%) 0 0/8px 8px,
+    linear-gradient(-45deg,#ddd 25%,transparent 25%) 0 0/8px 8px,
+    linear-gradient(45deg,transparent 75%,#ddd 75%) 0 0/8px 8px,
+    linear-gradient(-45deg,transparent 75%,#ddd 75%) 0 0/8px 8px,#fff;
+  flex:0 0 auto;overflow:hidden;
+}
+.layer-thumb canvas{width:100%;height:100%;}
+.layer-name{
+  flex:1;font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.layer-actions{display:flex;gap:2px;}
+.layer-extra{display:flex;align-items:center;gap:8px;margin-top:7px;padding-top:7px;border-top:1px solid var(--divider);}
+.layer-extra input[type="range"]{flex:1;accent-color:var(--accent);}
+.layer-extra span{font-size:11px;color:var(--text-secondary);width:32px;text-align:right;}
+.layer-reorder{display:flex;gap:2px;margin-left:auto;}
+
+.empty-hint{padding:20px 12px;font-size:12px;color:var(--text-secondary);text-align:center;line-height:1.5;}
+
+.layer-card.locked{background:#fff8e6;}
+.layer-card.locked .layer-name{color:#8a6d00;}
+
+/* ===== FOOTER (choix des couleurs) ===== */
+.footer{
+  height:78px;flex:0 0 78px;
+  display:flex;align-items:center;gap:12px;
+  padding:0 14px;
+  background:var(--toolbar-bg);
+  backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);
+  border-top:1px solid var(--toolbar-border);
+  position:relative;z-index:20;
+  overflow-x:auto;overflow-y:hidden;
+}
+.footer-label{
+  font-size:11px;font-weight:700;color:var(--text-secondary);
+  text-transform:uppercase;letter-spacing:.3px;flex:0 0 auto;
+}
+.palette{display:flex;gap:9px;flex:0 0 auto;align-items:center;}
+.swatch{
+  width:40px;height:40px;border-radius:50%;border:3px solid #fff;
+  box-shadow:0 0 0 1.5px var(--toolbar-border), 0 2px 5px rgba(0,0,0,0.15);
+  cursor:pointer;flex:0 0 auto;transition:transform .12s ease, box-shadow .12s ease;
+  padding:0;
+}
+.swatch:hover{transform:scale(1.08);}
+.swatch.active{box-shadow:0 0 0 3px var(--accent), 0 2px 6px rgba(0,0,0,0.28);transform:scale(1.12);}
+.swatch-custom{
+  width:40px;height:40px;border-radius:50%;border:3px solid #fff;
+  box-shadow:0 0 0 1.5px var(--toolbar-border);
+  cursor:pointer;flex:0 0 auto;position:relative;overflow:hidden;display:block;
+  background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);
+}
+.swatch-custom input[type="color"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:none;padding:0;}
+.footer-divider{width:1px;height:34px;background:var(--divider);flex:0 0 auto;}
+.footer-current{display:flex;align-items:center;gap:8px;flex:0 0 auto;font-size:11px;color:var(--text-secondary);white-space:nowrap;}
+.footer-current .dot{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--toolbar-border);flex:0 0 auto;}
+
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#0061ff;border-radius:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ===== MOBILE ===== */
+@media (max-width: 700px){
+  .canvas-scroll{padding:16px;}
+  .btn-primary{padding:0 10px;font-size:0;} /* garde l'icône, cache le texte "Enregistrer" pour économiser la place */
+  .btn-primary svg{width:16px;height:16px;}
+  .ctx-item input[type="range"]{width:60px;}
+  .footer{height:64px;flex:0 0 64px;gap:8px;padding:0 10px;}
+  .swatch, .swatch-custom{width:32px;height:32px;}
+  .footer-label{display:none;} /* gagner de la place sur petit écran */
+  .footer-current span:last-child{display:none;}
+
+  /* Le panneau de calques passait de 250px poussant le canvas (inutilisable
+     sur un écran de ~375px de large) à une superposition qui ne mange pas
+     la place du dessin. Le bouton #layersToggleBtn existant garde le même
+     comportement (toggle de la classe .hidden), seul le mécanisme visuel change. */
+  .layers-panel{
+    position:fixed; top:60px; right:0; bottom:0;
+    width:min(80vw, 250px);
+    box-shadow:-8px 0 24px rgba(0,0,0,0.25);
+    z-index:500;
+    transform:translateX(0);
+    transition:transform .2s ease;
+    margin-right:0; /* neutralise le mécanisme desktop (margin-right négatif) */
+  }
+  .layers-panel.hidden{
+    transform:translateX(100%);
+    margin-right:0;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== TOOLBAR ===== -->
+  <div class="toolbar">
+
+    <div class="tool-group">
+      <button class="tool-btn active emoji-btn" data-tool="select" title="Déplacer">👆</button>
+      <button class="tool-btn emoji-btn" data-tool="brush" title="Pinceau">🖌️</button>
+      <button class="tool-btn emoji-btn" data-tool="eraser" title="Gomme">🧽</button>
+      <button class="tool-btn emoji-btn" data-tool="bucket" title="Pot de peinture (remplir une zone)">🪣</button>
+    </div>
+
+    <div class="popover-wrap">
+      <button class="tool-btn emoji-btn" id="shapesBtn" title="Formes">🔷</button>
+    </div>
+
+    <div class="tool-group">
+      <button class="tool-btn emoji-btn" data-tool="text" title="Texte">🔤</button>
+      <button class="tool-btn emoji-btn" data-tool="title" title="Titre (texte grand et gras)">🅰️</button>
+      <button class="tool-btn emoji-btn" id="imageBtn" title="Importer une image">🖼️</button>
+      <button class="tool-btn emoji-btn" id="lessonBtn" title="Importer une leçon (fond blanc supprimé, traits fixes au 1er plan)">📖</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="tool-btn emoji-btn" id="undoBtn" title="Annuler le dernier trait (Ctrl+Z)" disabled>↩️</button>
+
+    <div class="context-controls" id="contextControls"></div>
+
+    <div class="spacer"></div>
+
+    <div class="tool-group">
+      <button class="tool-btn emoji-btn" id="zoomOutBtn" title="Zoom arrière">➖</button>
+      <span id="zoomLabel" style="font-size:11px;font-weight:600;color:var(--text-secondary);min-width:38px;text-align:center;">100%</span>
+      <button class="tool-btn emoji-btn" id="zoomInBtn" title="Zoom avant">➕</button>
+    </div>
+
+    <button class="tool-btn emoji-btn" id="newDocBtn" title="Nouveau dessin">🆕</button>
+    <button class="tool-btn emoji-btn" id="layersToggleBtn" title="Calques">🗂️</button>
+    <button class="btn-primary" id="saveBtn">
+      <span class="emoji-btn" style="font-size:16px;">💾</span>
+      Enregistrer
+    </button>
+  </div>
+
+  <!-- ===== WORKSPACE ===== -->
+  <div class="workspace">
+    <div class="canvas-scroll">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="stage" width="1000" height="650"></canvas>
+      </div>
+    </div>
+
+    <aside class="layers-panel" id="layersPanel">
+      <div class="panel-header">
+        <h3>🗂️ Calques</h3>
+        <div class="panel-header-actions">
+          <button class="icon-btn emoji-btn" id="addLayerBtn" title="Ajouter un calque">➕</button>
+          <button class="icon-btn emoji-btn" id="addImageLayerBtn" title="Importer une image">🖼️</button>
+        </div>
+      </div>
+      <div class="layers-list" id="layersList"></div>
+    </aside>
+  </div>
+
+  <!-- ===== PIED DE PAGE : CHOIX DES COULEURS ===== -->
+  <div class="footer" id="footer">
+    <span class="footer-label">Couleurs</span>
+    <div class="palette" id="palette"></div>
+    <label class="swatch-custom" title="Autre couleur">
+      <input type="color" id="customColorInput" value="#e6194b">
+    </label>
+    <div class="footer-divider"></div>
+    <div class="footer-current">
+      <span class="dot" id="currentColorDot"></span>
+      <span>couleur choisie</span>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/png,image/jpeg" hidden>
+  <input type="file" id="lessonFileInput" accept="image/png" hidden>
+</div>
+
+<!-- Rendered at body level (not inside .toolbar) because backdrop-filter on an
+     ancestor would otherwise create a containing block that traps this
+     fixed-position popover and clips it out of view. -->
+<div class="popover" id="shapesPopover">
+  <button class="tool-btn emoji-btn" data-tool="line" title="Ligne">➖</button>
+  <button class="tool-btn emoji-btn" data-tool="arrow" title="Flèche">➡️</button>
+  <button class="tool-btn emoji-btn" data-tool="rect" title="Rectangle">⬜</button>
+  <button class="tool-btn emoji-btn" data-tool="ellipse" title="Ovale">⚪</button>
+</div>
+
+<script>
+(function(){
+
+  "use strict";
+
+  const stage = document.getElementById('stage');
+  const stageCtx = stage.getContext('2d');
+  const W = stage.width, H = stage.height;
+  const canvasWrap = document.getElementById('canvasWrap');
+  const fileInput = document.getElementById('fileInput');
+
+  // ---------- STATE ----------
+  let layers = [];          // {id, name, canvas, ctx, visible, opacity}
+  let activeLayerIndex = 0;
+  let layerCounter = 0;
+  let currentTool = 'select';
+  let brushColor = '#e6194b';
+  let brushSize = 6;
+  let fontSize = 28;
+  let shapeFill = false;
+
+  // Calque "leçon" : traits importés (fond blanc supprimé), toujours
+  // affiché fixe au 1er plan, au-dessus de tous les calques de coloriage.
+  // Volontairement séparé du tableau `layers` : non déplaçable, non
+  // peignable, non réordonnable.
+  let lineArt = null; // {canvas, ctx, visible}
+
+  let drawing = false;
+  let startX = 0, startY = 0, lastX = 0, lastY = 0;
+  let activeTextEditor = null;
+
+  // ---------- UNDO (annuler une action de dessin) ----------
+  let undoStack = []; // { layerId, imageData }
+  const UNDO_LIMIT = 20;
+  const undoBtn = document.getElementById('undoBtn');
+
+  function updateUndoBtn(){
+    undoBtn.disabled = undoStack.length === 0;
+  }
+
+  function pushUndo(layer){
+    if (!layer) return;
+    const snapshot = layer.ctx.getImageData(0, 0, W, H);
+    undoStack.push({ layerId: layer.id, imageData: snapshot });
+    if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+    updateUndoBtn();
+  }
+
+  function undo(){
+    if (!undoStack.length) return;
+    const { layerId, imageData } = undoStack.pop();
+    const layer = layers.find(l => l.id === layerId);
+    if (layer){
+      layer.ctx.putImageData(imageData, 0, 0);
+      renderStage();
+      renderLayersList();
+    }
+    updateUndoBtn();
+  }
+
+  undoBtn.addEventListener('click', undo);
+  document.addEventListener('keydown', (e) => {
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'TEXTAREA' || tag === 'INPUT') return; // ne pas gêner la saisie de texte
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){
+      e.preventDefault();
+      undo();
+    }
+  });
+
+  // ---------- LAYER HELPERS ----------
+  function makeLayerCanvas(){
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    return c;
+  }
+
+  function createLayer(name){
+    layerCounter++;
+    const c = makeLayerCanvas();
+    const layer = { id: layerCounter, name: name || ('Calque ' + layerCounter), canvas: c, ctx: c.getContext('2d'), visible: true, opacity: 1 };
+    return layer;
+  }
+
+  function addLayer(name){
+    const layer = createLayer(name);
+    layers.push(layer);
+    activeLayerIndex = layers.length - 1;
+    renderStage();
+    renderLayersList();
+  }
+
+  function redrawImageLayer(layer){
+    const img = layer.sourceImage;
+    const baseScale = Math.min(W / img.width, H / img.height);
+    const scale = baseScale * layer.imgScale;
+    const w = img.width * scale, h = img.height * scale;
+    const x = (W - w) / 2 + (layer.imgOffsetX || 0), y = (H - h) / 2 + (layer.imgOffsetY || 0);
+    layer.ctx.clearRect(0, 0, W, H);
+    layer.ctx.drawImage(img, x, y, w, h);
+  }
+
+  // Un texte/titre validé devient son propre calque (comme une image importée) :
+  // il reste ainsi déplaçable après coup avec l'outil ✋, au lieu d'être figé
+  // dans les pixels du calque actif au moment de la validation.
+  function redrawTextLayer(layer){
+    const ctx = layer.ctx;
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    ctx.fillStyle = layer.textColor;
+    ctx.font = (layer.textBold ? 'bold ' : '') + layer.textFontSize + 'px -apple-system, "Helvetica Neue", Arial, sans-serif';
+    ctx.textBaseline = 'top';
+    layer.textLines.forEach((line, i) => ctx.fillText(line, layer.textX, layer.textY + i * layer.textFontSize * 1.25));
+    ctx.restore();
+  }
+
+  function isMovableLayer(layer){
+    return !!(layer && (layer.sourceImage || layer.isText));
+  }
+
+  function addImageAsLayer(img){
+    const layer = createLayer('Image ' + (layerCounter));
+    layer.sourceImage = img;
+    layer.imgScale = 1; // multiplier on top of the initial "contain" fit
+    layer.imgOffsetX = 0; // décalage (déplacement) par rapport au centrage automatique
+    layer.imgOffsetY = 0;
+    redrawImageLayer(layer);
+    layers.push(layer);
+    activeLayerIndex = layers.length - 1;
+    renderStage();
+    renderLayersList();
+  }
+
+  function activeLayer(){ return layers[activeLayerIndex]; }
+
+  // ---------- LEÇON : fond blanc -> transparent, traits fixes au 1er plan ----------
+  function removeWhiteBackground(img){
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const octx = off.getContext('2d');
+    // Cadrage "contain", comme pour les images normales.
+    const scale = Math.min(W / img.width, H / img.height);
+    const w = img.width * scale, h = img.height * scale;
+    const x = (W - w) / 2, y = (H - h) / 2;
+    octx.drawImage(img, x, y, w, h);
+
+    // Si l'image vient d'une autre origine sans en-têtes CORS, le canvas est
+    // "tainted" et getImageData() lève une SecurityError. Sans ce try/catch,
+    // toute l'importation du visuel échouait en silence (rien à l'écran,
+    // aucun message clair) : on affiche maintenant l'image telle quelle
+    // (sans transparence du fond blanc) plutôt que de tout faire échouer.
+    try {
+      const imgData = octx.getImageData(0, 0, W, H);
+      const px = imgData.data;
+      for (let i = 0; i < px.length; i += 4){
+        const lum = (px[i] + px[i + 1] + px[i + 2]) / 3;
+        if (lum > 246){
+          px[i + 3] = 0; // blanc pur -> transparent
+        } else if (lum > 190){
+          // Adoucit les bords anti-aliasés pour éviter un halo blanc dur.
+          const t = (lum - 190) / (246 - 190);
+          px[i + 3] = Math.round(px[i + 3] * (1 - t));
+        }
+      }
+      octx.putImageData(imgData, 0, 0);
+    } catch (e) {
+      console.warn('⚠️ Fond blanc non supprimé (image cross-origin sans CORS) :', e);
+    }
+    return off;
+  }
+
+  function ensureColoringLayer(){
+    let coloring = layers.find(l => l.isColoring);
+    if (!coloring){
+      coloring = createLayer('Calque 2 (coloriage)');
+      coloring.isColoring = true;
+      layers.push(coloring);
+    }
+    // Sélection automatique du calque de coloriage dès qu'une leçon est importée.
+    activeLayerIndex = layers.indexOf(coloring);
+  }
+
+  function setLessonImage(img){
+    const canvas = removeWhiteBackground(img);
+    lineArt = { canvas, ctx: canvas.getContext('2d'), visible: true };
+    ensureColoringLayer();
+    setTool('brush'); // prêt à colorier tout de suite
+    renderStage();
+    renderLayersList();
+  }
+
+  function deleteLayer(id){
+    const idx = layers.findIndex(l => l.id === id);
+    if (idx === -1) return;
+    if (layers.length === 1){ alert("Impossible de supprimer le dernier calque."); return; }
+    layers.splice(idx, 1);
+    activeLayerIndex = Math.min(activeLayerIndex, layers.length - 1);
+    undoStack = undoStack.filter(u => u.layerId !== id);
+    updateUndoBtn();
+    renderStage();
+    renderLayersList();
+  }
+
+  function moveLayer(id, dir){
+    const idx = layers.findIndex(l => l.id === id);
+    const swapWith = dir === 'up' ? idx + 1 : idx - 1;
+    if (swapWith < 0 || swapWith >= layers.length) return;
+    [layers[idx], layers[swapWith]] = [layers[swapWith], layers[idx]];
+    if (activeLayerIndex === idx) activeLayerIndex = swapWith;
+    else if (activeLayerIndex === swapWith) activeLayerIndex = idx;
+    renderStage();
+    renderLayersList();
+  }
+
+  // ---------- COMPOSITE RENDER ----------
+  function renderStage(){
+    stageCtx.clearRect(0, 0, W, H);
+    stageCtx.fillStyle = '#ffffff';
+    stageCtx.fillRect(0, 0, W, H);
+    for (const layer of layers){
+      if (!layer.visible) continue;
+      stageCtx.globalAlpha = layer.opacity;
+      stageCtx.drawImage(layer.canvas, 0, 0);
+    }
+    stageCtx.globalAlpha = 1;
+    // Traits de la leçon : toujours fixes au 1er plan, par-dessus tout.
+    if (lineArt && lineArt.visible){
+      stageCtx.drawImage(lineArt.canvas, 0, 0);
+    }
+  }
+
+  // ---------- LAYERS PANEL UI ----------
+  const layersList = document.getElementById('layersList');
+
+  function svgEye(open){
+    return open ? '👁️' : '🙈';
+  }
+  const trashSvg = '🗑️';
+  const upSvg = '⬆️';
+  const downSvg = '⬇️';
+
+  function renderLessonCard(){
+    if (!lineArt) return;
+    const card = document.createElement('div');
+    card.className = 'layer-card locked';
+
+    const row = document.createElement('div');
+    row.className = 'layer-row';
+
+    const thumbWrap = document.createElement('div');
+    thumbWrap.className = 'layer-thumb';
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 42; thumbCanvas.height = 30;
+    thumbCanvas.getContext('2d').drawImage(lineArt.canvas, 0, 0, 42, 30);
+    thumbWrap.appendChild(thumbCanvas);
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'layer-name';
+    nameEl.textContent = '🔒 Leçon (traits fixes)';
+    nameEl.title = 'Calque verrouillé, toujours au 1er plan';
+
+    const actions = document.createElement('div');
+    actions.className = 'layer-actions';
+
+    const eyeBtn = document.createElement('button');
+    eyeBtn.className = 'icon-btn';
+    eyeBtn.innerHTML = svgEye(lineArt.visible);
+    eyeBtn.title = lineArt.visible ? 'Masquer les traits' : 'Afficher les traits';
+    eyeBtn.onclick = (e) => { e.stopPropagation(); lineArt.visible = !lineArt.visible; renderStage(); renderLayersList(); };
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'icon-btn';
+    delBtn.innerHTML = trashSvg;
+    delBtn.title = 'Retirer la leçon';
+    delBtn.onclick = (e) => { e.stopPropagation(); if (confirm("Retirer l'image de la leçon ?")) { lineArt = null; renderStage(); renderLayersList(); } };
+
+    actions.appendChild(eyeBtn);
+    actions.appendChild(delBtn);
+    row.appendChild(thumbWrap);
+    row.appendChild(nameEl);
+    row.appendChild(actions);
+    card.appendChild(row);
+    layersList.appendChild(card);
+  }
+
+  function renderLayersList(){
+    layersList.innerHTML = '';
+    renderLessonCard();
+    // top of stack shown first
+    for (let i = layers.length - 1; i >= 0; i--){
+      const layer = layers[i];
+      const card = document.createElement('div');
+      card.className = 'layer-card' + (i === activeLayerIndex ? ' active' : '');
+
+      const row = document.createElement('div');
+      row.className = 'layer-row';
+
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'layer-thumb';
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = 42; thumbCanvas.height = 30;
+      thumbCanvas.getContext('2d').drawImage(layer.canvas, 0, 0, 42, 30);
+      thumbWrap.appendChild(thumbCanvas);
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'layer-name';
+      nameEl.textContent = layer.name;
+      nameEl.title = 'Double-clic pour renommer';
+      nameEl.ondblclick = (e) => {
+        e.stopPropagation();
+        const newName = prompt('Nom du calque :', layer.name);
+        if (newName && newName.trim()) { layer.name = newName.trim(); renderLayersList(); }
+      };
+
+      const actions = document.createElement('div');
+      actions.className = 'layer-actions';
+
+      const eyeBtn = document.createElement('button');
+      eyeBtn.className = 'icon-btn';
+      eyeBtn.innerHTML = svgEye(layer.visible);
+      eyeBtn.title = layer.visible ? 'Masquer' : 'Afficher';
+      eyeBtn.onclick = (e) => { e.stopPropagation(); layer.visible = !layer.visible; renderStage(); renderLayersList(); };
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'icon-btn';
+      delBtn.innerHTML = trashSvg;
+      delBtn.title = 'Supprimer le calque';
+      delBtn.onclick = (e) => { e.stopPropagation(); if (confirm('Supprimer ce calque ?')) deleteLayer(layer.id); };
+
+      actions.appendChild(eyeBtn);
+      actions.appendChild(delBtn);
+
+      row.appendChild(thumbWrap);
+      row.appendChild(nameEl);
+      row.appendChild(actions);
+      card.appendChild(row);
+
+      if (i === activeLayerIndex){
+        const extra = document.createElement('div');
+        extra.className = 'layer-extra';
+
+        const opacityLabel = document.createElement('span');
+        opacityLabel.textContent = Math.round(layer.opacity * 100) + '%';
+
+        const opacitySlider = document.createElement('input');
+        opacitySlider.type = 'range';
+        opacitySlider.min = 0; opacitySlider.max = 100; opacitySlider.value = Math.round(layer.opacity * 100);
+        opacitySlider.oninput = () => {
+          layer.opacity = opacitySlider.value / 100;
+          opacityLabel.textContent = opacitySlider.value + '%';
+          renderStage();
+        };
+
+        const reorder = document.createElement('div');
+        reorder.className = 'layer-reorder';
+        const upBtn = document.createElement('button');
+        upBtn.className = 'icon-btn'; upBtn.innerHTML = upSvg; upBtn.title = 'Monter';
+        upBtn.onclick = (e) => { e.stopPropagation(); moveLayer(layer.id, 'up'); };
+        const downBtn = document.createElement('button');
+        downBtn.className = 'icon-btn'; downBtn.innerHTML = downSvg; downBtn.title = 'Descendre';
+        downBtn.onclick = (e) => { e.stopPropagation(); moveLayer(layer.id, 'down'); };
+        reorder.appendChild(upBtn);
+        reorder.appendChild(downBtn);
+
+        extra.appendChild(opacitySlider);
+        extra.appendChild(opacityLabel);
+        extra.appendChild(reorder);
+        card.appendChild(extra);
+
+        // La mise à l'échelle des images ne se fait plus ici : elle se fait
+        // directement sur le canvas en glissant les poignées aux coins de
+        // l'image (comme dans l'affiche). Voir updateImageHandles().
+      }
+
+      card.onclick = () => { activeLayerIndex = i; renderLayersList(); };
+      layersList.appendChild(card);
+    }
+    updateImageHandles();
+  }
+
+  // ---------- TOOL SELECTION ----------
+  const toolButtons = document.querySelectorAll('[data-tool]');
+  const shapesBtn = document.getElementById('shapesBtn');
+  const shapesPopover = document.getElementById('shapesPopover');
+  const shapeTools = ['line', 'arrow', 'rect', 'ellipse'];
+
+  function setTool(tool){
+    currentTool = tool;
+    toolButtons.forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+    shapesBtn.classList.toggle('active', shapeTools.includes(tool));
+    stage.style.cursor = tool === 'select' ? 'default' : ((tool === 'text' || tool === 'title') ? 'text' : (tool === 'bucket' ? 'copy' : 'crosshair'));
+    renderContextControls();
+    updateImageHandles();
+  }
+
+  toolButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      setTool(btn.dataset.tool);
+      shapesPopover.classList.remove('open');
+    });
+  });
+
+  shapesBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !shapesPopover.classList.contains('open');
+    if (willOpen){
+      const rect = shapesBtn.getBoundingClientRect();
+      shapesPopover.style.top = (rect.bottom + 6) + 'px';
+      shapesPopover.style.left = rect.left + 'px';
+    }
+    shapesPopover.classList.toggle('open', willOpen);
+  });
+  document.addEventListener('click', () => shapesPopover.classList.remove('open'));
+  shapesPopover.addEventListener('click', (e) => e.stopPropagation());
+
+  // ---------- CONTEXTUAL CONTROLS ----------
+  const contextControls = document.getElementById('contextControls');
+
+  function renderContextControls(){
+    contextControls.innerHTML = '';
+    // Le choix de la couleur se fait désormais dans la palette du pied de page.
+
+    if (currentTool === 'brush' || currentTool === 'eraser' || shapeTools.includes(currentTool)){
+      const sizeItem = document.createElement('div');
+      sizeItem.className = 'ctx-item';
+      const label = document.createElement('span');
+      label.textContent = 'Taille ' + brushSize;
+      const sizeInput = document.createElement('input');
+      sizeInput.type = 'range'; sizeInput.min = 1; sizeInput.max = 60; sizeInput.value = brushSize;
+      sizeInput.oninput = () => { brushSize = +sizeInput.value; label.textContent = 'Taille ' + brushSize; };
+      sizeItem.appendChild(label);
+      sizeItem.appendChild(sizeInput);
+      contextControls.appendChild(sizeItem);
+    }
+
+    if (currentTool === 'rect' || currentTool === 'ellipse'){
+      const fillItem = document.createElement('div');
+      fillItem.className = 'ctx-item';
+      const fillLabel = document.createElement('label');
+      fillLabel.className = 'fill-toggle';
+      const fillCheckbox = document.createElement('input');
+      fillCheckbox.type = 'checkbox'; fillCheckbox.checked = shapeFill;
+      fillCheckbox.onchange = () => shapeFill = fillCheckbox.checked;
+      fillLabel.appendChild(fillCheckbox);
+      fillLabel.appendChild(document.createTextNode('Remplir'));
+      fillItem.appendChild(fillLabel);
+      contextControls.appendChild(fillItem);
+    }
+
+    if (currentTool === 'text' || currentTool === 'title'){
+      const sizeItem = document.createElement('div');
+      sizeItem.className = 'ctx-item';
+      const label = document.createElement('span');
+      label.textContent = 'Police ' + fontSize;
+      const sizeInput = document.createElement('input');
+      sizeInput.type = 'range'; sizeInput.min = 10; sizeInput.max = 96; sizeInput.value = fontSize;
+      sizeInput.oninput = () => { fontSize = +sizeInput.value; label.textContent = 'Police ' + fontSize; };
+      sizeItem.appendChild(label);
+      sizeItem.appendChild(sizeInput);
+      contextControls.appendChild(sizeItem);
+    }
+  }
+
+  // ---------- ZOOM (comme dans l'affiche) ----------
+  // On agrandit/réduit simplement l'affichage CSS du canvas (pas sa
+  // résolution) : getPos() et le placement du texte/des poignées, qui se
+  // basent déjà sur le ratio taille-affichée / taille-réelle, restent donc
+  // corrects sans aucune autre modification.
+  let canvasZoom = 1;
+  const ZOOM_MIN = 0.25, ZOOM_MAX = 4, ZOOM_STEP = 1.2;
+  const zoomLabel = document.getElementById('zoomLabel');
+
+  function applyZoom(){
+    stage.style.width = Math.round(W * canvasZoom) + 'px';
+    stage.style.height = Math.round(H * canvasZoom) + 'px';
+    zoomLabel.textContent = Math.round(canvasZoom * 100) + '%';
+    updateImageHandles();
+  }
+  function zoomIn(){ canvasZoom = Math.min(ZOOM_MAX, canvasZoom * ZOOM_STEP); applyZoom(); }
+  function zoomOut(){ canvasZoom = Math.max(ZOOM_MIN, canvasZoom / ZOOM_STEP); applyZoom(); }
+  document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+  document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+  window.addEventListener('resize', () => updateImageHandles());
+
+  // ---------- POIGNÉES DE REDIMENSIONNEMENT D'IMAGE (comme dans l'affiche) ----------
+  // Remplace l'ancien curseur "Taille" du panneau de calques : on glisse un
+  // coin de l'image directement sur le canvas, pointe d'ancrage restant le
+  // centre de l'image (qui ne bouge pas quand on redimensionne).
+  const IMG_SCALE_MIN = 0.1, IMG_SCALE_MAX = 4;
+  let imgHandleEls = null;
+  let resizingImage = false;
+  let resizeStartScale = 1;
+  let resizeStartDist = 1;
+  let resizeCenterCanvas = { x: 0, y: 0 };
+
+  function imageLayerGeometry(layer){
+    const img = layer.sourceImage;
+    const baseScale = Math.min(W / img.width, H / img.height);
+    const scale = baseScale * layer.imgScale;
+    const w = img.width * scale, h = img.height * scale;
+    const offsetX = layer.imgOffsetX || 0, offsetY = layer.imgOffsetY || 0;
+    return {
+      x: (W - w) / 2 + offsetX, y: (H - h) / 2 + offsetY, w, h,
+      centerX: W / 2 + offsetX, centerY: H / 2 + offsetY
+    };
+  }
+
+  function ensureImgHandles(){
+    if (imgHandleEls) return imgHandleEls;
+    const els = {};
+    ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+      const el = document.createElement('div');
+      el.className = 'img-resize-handle handle-' + pos;
+      el.style.display = 'none';
+      canvasWrap.appendChild(el);
+      el.addEventListener('pointerdown', (e) => startImageResize(e, pos));
+      els[pos] = el;
+    });
+    imgHandleEls = els;
+    return els;
+  }
+
+  function updateImageHandles(){
+    const els = ensureImgHandles();
+    const layer = typeof activeLayer === 'function' ? activeLayer() : null;
+
+    // Curseur : indique qu'on peut attraper le calque actif (image ou texte/titre)
+    // avec l'outil sélection, même sans poignées de redimensionnement (cas du texte).
+    if (currentTool === 'select' && !draggingImage && !resizingImage){
+      stage.style.cursor = isMovableLayer(layer) ? 'grab' : 'default';
+    }
+
+    const show = currentTool === 'select' && layer && layer.sourceImage;
+    Object.values(els).forEach(el => el.style.display = show ? 'block' : 'none');
+    if (!show) return;
+    const rect = stage.getBoundingClientRect();
+    const scaleX = rect.width / W, scaleY = rect.height / H;
+    const { x, y, w, h } = imageLayerGeometry(layer);
+    const corners = {
+      nw: { x: x, y: y }, ne: { x: x + w, y: y },
+      sw: { x: x, y: y + h }, se: { x: x + w, y: y + h }
+    };
+    Object.keys(corners).forEach(pos => {
+      els[pos].style.left = (corners[pos].x * scaleX) + 'px';
+      els[pos].style.top = (corners[pos].y * scaleY) + 'px';
+    });
+  }
+
+  function startImageResize(e, pos){
+    e.stopPropagation(); e.preventDefault();
+    const layer = activeLayer();
+    if (!layer || !layer.sourceImage) return;
+    pushUndo(layer);
+    resizingImage = true;
+    const geo = imageLayerGeometry(layer);
+    resizeCenterCanvas = { x: geo.centerX, y: geo.centerY };
+    const startPos = getPos(e);
+    resizeStartDist = Math.hypot(startPos.x - geo.centerX, startPos.y - geo.centerY) || 1;
+    resizeStartScale = layer.imgScale;
+    window.addEventListener('pointermove', onImageResizeMove);
+    window.addEventListener('pointerup', endImageResize);
+  }
+
+  function onImageResizeMove(e){
+    if (!resizingImage) return;
+    const layer = activeLayer();
+    if (!layer) return;
+    const pos = getPos(e);
+    const dist = Math.hypot(pos.x - resizeCenterCanvas.x, pos.y - resizeCenterCanvas.y) || 1;
+    const ratio = dist / resizeStartDist;
+    layer.imgScale = Math.max(IMG_SCALE_MIN, Math.min(IMG_SCALE_MAX, resizeStartScale * ratio));
+    redrawImageLayer(layer);
+    renderStage();
+    updateImageHandles();
+  }
+
+  function endImageResize(){
+    if (!resizingImage) return;
+    resizingImage = false;
+    window.removeEventListener('pointermove', onImageResizeMove);
+    window.removeEventListener('pointerup', endImageResize);
+    renderLayersList(); // rafraîchit la miniature une fois le geste terminé
+  }
+
+  // ---------- COORDINATE HELPERS ----------
+  function getPos(e){
+    const rect = stage.getBoundingClientRect();
+    const scaleX = W / rect.width, scaleY = H / rect.height;
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+  }
+
+  // ---------- DRAWING (brush / eraser) ----------
+  function beginFreehand(x, y){
+    const ctx = activeLayer().ctx;
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = brushColor;
+    ctx.lineWidth = brushSize;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  }
+  function continueFreehand(x, y){
+    const ctx = activeLayer().ctx;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+  function endFreehand(){
+    activeLayer().ctx.restore();
+  }
+
+  // ---------- SHAPE PREVIEW / COMMIT ----------
+  function drawShapeOn(ctx, tool, x0, y0, x1, y1){
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = brushColor;
+    ctx.fillStyle = brushColor;
+    ctx.lineWidth = brushSize;
+
+    if (tool === 'line' || tool === 'arrow'){
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+      if (tool === 'arrow'){
+        const angle = Math.atan2(y1 - y0, x1 - x0);
+        const headLen = Math.max(12, brushSize * 2.2);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 - headLen * Math.cos(angle - Math.PI / 7), y1 - headLen * Math.sin(angle - Math.PI / 7));
+        ctx.lineTo(x1 - headLen * Math.cos(angle + Math.PI / 7), y1 - headLen * Math.sin(angle + Math.PI / 7));
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (tool === 'rect'){
+      const rx = Math.min(x0, x1), ry = Math.min(y0, y1), rw = Math.abs(x1 - x0), rh = Math.abs(y1 - y0);
+      shapeFill ? ctx.fillRect(rx, ry, rw, rh) : ctx.strokeRect(rx, ry, rw, rh);
+    } else if (tool === 'ellipse'){
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = Math.abs(x1 - x0) / 2, ry = Math.abs(y1 - y0) / 2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      shapeFill ? ctx.fill() : ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ---------- BUCKET (remplissage borné par les traits de la leçon) ----------
+  function hexToRgb(hex){
+    const h = hex.replace('#', '');
+    return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
+  }
+
+  function floodFill(x0, y0, hexColor){
+    x0 = Math.floor(x0); y0 = Math.floor(y0);
+    if (x0 < 0 || y0 < 0 || x0 >= W || y0 >= H) return;
+
+    const ctx = activeLayer().ctx;
+    const imgData = ctx.getImageData(0, 0, W, H);
+    const data = imgData.data;
+    const [fr, fg, fb] = hexToRgb(hexColor);
+    const startIdx = y0 * W + x0;
+
+    let canFill; // (idx) => vrai si ce pixel peut être peint
+
+    if (lineArt){
+      // Mode "leçon" : la barrière vient de l'opacité du calque de traits
+      // fixe (fond blanc déjà rendu transparent). On peut peindre partout
+      // sauf sur un trait, quelle que soit la couleur déjà présente.
+      const barrier = lineArt.ctx.getImageData(0, 0, W, H).data;
+      const isBarrier = (idx) => barrier[idx * 4 + 3] > 80;
+      if (isBarrier(startIdx)) return; // clic sur un trait : rien à faire
+      canFill = (idx) => !isBarrier(idx);
+    } else {
+      // Mode "image classique" (sans calque leçon dédié) : remplissage
+      // par similarité de couleur, comme un pot de peinture standard.
+      // Le clic remplit la zone de couleur/luminosité proche de celle du
+      // pixel cliqué, en s'arrêtant aux contours (traits plus sombres).
+      const p0 = startIdx * 4;
+      const tR = data[p0], tG = data[p0 + 1], tB = data[p0 + 2], tA = data[p0 + 3];
+      if (tR === fr && tG === fg && tB === fb && tA === 255) return; // déjà cette couleur
+      const TOLERANCE = 42; // marge pour l'anti-aliasing des bords scannés
+      canFill = (idx) => {
+        const p = idx * 4;
+        return Math.abs(data[p] - tR) <= TOLERANCE &&
+               Math.abs(data[p + 1] - tG) <= TOLERANCE &&
+               Math.abs(data[p + 2] - tB) <= TOLERANCE &&
+               Math.abs(data[p + 3] - tA) <= TOLERANCE;
+      };
+    }
+
+    const visited = new Uint8Array(W * H);
+    const stack = [startIdx];
+    visited[startIdx] = 1;
+
+    while (stack.length){
+      const idx = stack.pop();
+      const p = idx * 4;
+      data[p] = fr; data[p + 1] = fg; data[p + 2] = fb; data[p + 3] = 255;
+
+      const x = idx % W, y = (idx / W) | 0;
+      const neighbors = [];
+      if (x > 0) neighbors.push(idx - 1);
+      if (x < W - 1) neighbors.push(idx + 1);
+      if (y > 0) neighbors.push(idx - W);
+      if (y < H - 1) neighbors.push(idx + W);
+
+      for (const n of neighbors){
+        if (visited[n] || !canFill(n)) continue;
+        visited[n] = 1;
+        stack.push(n);
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  // ---------- TEXTE / TITRE (avec déplacement avant validation, comme dans l'affiche) ----------
+  function openTextEditor(canvasX, canvasY, isTitle){
+    if (activeTextEditor) return;
+    const rect = stage.getBoundingClientRect();
+    const scaleX = rect.width / W, scaleY = rect.height / H;
+
+    // Position modifiable par glisser-déposer avant validation, comme les
+    // éléments modulaires déplaçables de l'affiche.
+    let curX = canvasX, curY = canvasY;
+    const useSize = isTitle ? Math.max(fontSize, 40) : fontSize;
+    const useBold = !!isTitle;
+
+    const editor = document.createElement('textarea');
+    editor.className = 'text-editor';
+    editor.style.color = brushColor;
+    editor.style.fontSize = (useSize * scaleX) + 'px';
+    editor.style.fontWeight = useBold ? '700' : '400';
+    editor.placeholder = isTitle ? 'Titre…' : 'Texte…';
+    canvasWrap.appendChild(editor);
+
+    const confirmBtn = document.createElement('div');
+    confirmBtn.className = 'text-editor-confirm';
+    confirmBtn.innerHTML = '✓';
+    canvasWrap.appendChild(confirmBtn);
+
+    // Poignée de déplacement : on glisse cette pastille pour repositionner
+    // le texte/titre sur le canvas avant de le valider (icône ✓).
+    const moveHandle = document.createElement('div');
+    moveHandle.className = 'text-move-handle';
+    moveHandle.innerHTML = '✥';
+    moveHandle.title = 'Glisser pour déplacer';
+    canvasWrap.appendChild(moveHandle);
+
+    function reposition(){
+      const pageX = curX * scaleX, pageY = curY * scaleY;
+      editor.style.left = pageX + 'px';
+      editor.style.top = pageY + 'px';
+      confirmBtn.style.left = (pageX - 30) + 'px';
+      confirmBtn.style.top = pageY + 'px';
+      moveHandle.style.left = (pageX - 30) + 'px';
+      moveHandle.style.top = (pageY - 30) + 'px';
+    }
+    reposition();
+    editor.focus();
+
+    activeTextEditor = editor;
+
+    let draggingText = false;
+    let dragStartClientX = 0, dragStartClientY = 0, dragOrigX = 0, dragOrigY = 0;
+
+    moveHandle.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      draggingText = true;
+      dragStartClientX = e.clientX; dragStartClientY = e.clientY;
+      dragOrigX = curX; dragOrigY = curY;
+      moveHandle.setPointerCapture(e.pointerId);
+    });
+    moveHandle.addEventListener('pointermove', (e) => {
+      if (!draggingText) return;
+      curX = dragOrigX + (e.clientX - dragStartClientX) / scaleX;
+      curY = dragOrigY + (e.clientY - dragStartClientY) / scaleY;
+      reposition();
+    });
+    moveHandle.addEventListener('pointerup', () => { draggingText = false; });
+
+    function commit(){
+      const value = editor.value;
+      if (value && value.trim()){
+        // Le texte devient son propre calque (comme une image importée),
+        // ce qui permet de le repositionner plus tard avec l'outil ✋.
+        const layer = createLayer(isTitle ? 'Titre' : 'Texte');
+        layer.isText = true;
+        layer.textLines = value.split('\n');
+        layer.textFontSize = useSize;
+        layer.textBold = useBold;
+        layer.textColor = brushColor;
+        layer.textX = curX;
+        layer.textY = curY;
+        redrawTextLayer(layer);
+        layers.push(layer);
+        activeLayerIndex = layers.length - 1;
+        renderStage();
+        renderLayersList();
+      }
+      editor.remove();
+      confirmBtn.remove();
+      moveHandle.remove();
+      activeTextEditor = null;
+    }
+
+    confirmBtn.onclick = (e) => { e.stopPropagation(); commit(); };
+    editor.addEventListener('blur', () => setTimeout(() => { if (activeTextEditor === editor && !draggingText) commit(); }, 120));
+    editor.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape'){ editor.value=''; commit(); }
+    });
+  }
+
+  // ---------- POINTER EVENTS ----------
+  let draggingImage = false; // sert au déplacement des calques image ET texte/titre
+  let imgDragStartX = 0, imgDragStartY = 0, imgDragOrigOffsetX = 0, imgDragOrigOffsetY = 0;
+
+  stage.addEventListener('pointerdown', (e) => {
+    if (currentTool === 'select'){
+      // Permet de déplacer à la souris/au doigt le calque actif s'il s'agit
+      // d'une image importée ou d'un texte/titre validé.
+      const layer = activeLayer();
+      if (isMovableLayer(layer)){
+        const { x, y } = getPos(e);
+        pushUndo(layer);
+        draggingImage = true;
+        imgDragStartX = x; imgDragStartY = y;
+        if (layer.sourceImage){
+          imgDragOrigOffsetX = layer.imgOffsetX || 0;
+          imgDragOrigOffsetY = layer.imgOffsetY || 0;
+        } else {
+          imgDragOrigOffsetX = layer.textX;
+          imgDragOrigOffsetY = layer.textY;
+        }
+        stage.setPointerCapture(e.pointerId);
+        stage.style.cursor = 'grabbing';
+      }
+      return;
+    }
+    const { x, y } = getPos(e);
+
+    if (currentTool === 'text' || currentTool === 'title'){
+      e.preventDefault();
+      const isTitle = currentTool === 'title';
+      // Deferred so it runs after the browser's default mousedown focus
+      // handling (which would otherwise steal focus back to <body> since
+      // <canvas> itself isn't focusable).
+      setTimeout(() => openTextEditor(x, y, isTitle), 0);
+      return;
+    }
+
+    if (currentTool === 'bucket'){
+      pushUndo(activeLayer());
+      floodFill(x, y, brushColor);
+      renderStage();
+      renderLayersList();
+      return;
+    }
+
+    pushUndo(activeLayer());
+    drawing = true;
+    startX = x; startY = y; lastX = x; lastY = y;
+    stage.setPointerCapture(e.pointerId);
+
+    if (currentTool === 'brush' || currentTool === 'eraser'){
+      beginFreehand(x, y);
+    }
+  });
+
+  stage.addEventListener('pointermove', (e) => {
+    if (draggingImage){
+      const layer = activeLayer();
+      if (!layer) return;
+      const { x, y } = getPos(e);
+      if (layer.sourceImage){
+        layer.imgOffsetX = imgDragOrigOffsetX + (x - imgDragStartX);
+        layer.imgOffsetY = imgDragOrigOffsetY + (y - imgDragStartY);
+        redrawImageLayer(layer);
+      } else if (layer.isText){
+        layer.textX = imgDragOrigOffsetX + (x - imgDragStartX);
+        layer.textY = imgDragOrigOffsetY + (y - imgDragStartY);
+        redrawTextLayer(layer);
+      }
+      renderStage();
+      updateImageHandles();
+      return;
+    }
+    if (!drawing) return;
+    const { x, y } = getPos(e);
+
+    if (currentTool === 'brush' || currentTool === 'eraser'){
+      continueFreehand(x, y);
+      renderStage();
+    } else if (shapeTools.includes(currentTool)){
+      renderStage();
+      drawShapeOn(stageCtx, currentTool, startX, startY, x, y);
+    }
+    lastX = x; lastY = y;
+  });
+
+  function finishDrawing(e){
+    if (draggingImage){
+      draggingImage = false;
+      renderLayersList(); // rafraîchit la miniature du calque (et le curseur, via updateImageHandles)
+      return;
+    }
+    if (!drawing) return;
+    drawing = false;
+
+    if (currentTool === 'brush' || currentTool === 'eraser'){
+      endFreehand();
+    } else if (shapeTools.includes(currentTool)){
+      drawShapeOn(activeLayer().ctx, currentTool, startX, startY, lastX, lastY);
+    }
+    renderStage();
+    renderLayersList();
+  }
+  stage.addEventListener('pointerup', finishDrawing);
+  stage.addEventListener('pointerleave', (e) => { if (drawing || draggingImage) finishDrawing(e); });
+
+  // ---------- IMAGE IMPORT ----------
+  function triggerImageImport(){ fileInput.click(); }
+  document.getElementById('imageBtn').addEventListener('click', triggerImageImport);
+  document.getElementById('addImageLayerBtn').addEventListener('click', triggerImageImport);
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => addImageAsLayer(img);
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    fileInput.value = '';
+  });
+
+  // ---------- IMPORT D'UNE LEÇON (fond blanc -> transparent, fixe au 1er plan) ----------
+  const lessonFileInput = document.getElementById('lessonFileInput');
+  document.getElementById('lessonBtn').addEventListener('click', () => lessonFileInput.click());
+
+  lessonFileInput.addEventListener('change', () => {
+    const file = lessonFileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => setLessonImage(img);
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    lessonFileInput.value = '';
+  });
+
+  // ---------- PIED DE PAGE : PALETTE DE COULEURS ----------
+  const PALETTE = [
+    '#e6194b', '#f58231', '#ffe119', '#bfef45', '#3cb44b', '#42d4f4',
+    '#4363d8', '#911eb4', '#f032e6', '#9a6324', '#000000', '#ffffff'
+  ];
+  const paletteEl = document.getElementById('palette');
+  const currentColorDot = document.getElementById('currentColorDot');
+  const customColorInput = document.getElementById('customColorInput');
+
+  function updatePaletteActive(){
+    paletteEl.querySelectorAll('.swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.color.toLowerCase() === brushColor.toLowerCase());
+    });
+  }
+
+  function setBrushColor(color){
+    brushColor = color;
+    currentColorDot.style.background = color;
+    updatePaletteActive();
+  }
+
+  function buildPalette(){
+    paletteEl.innerHTML = '';
+    PALETTE.forEach(color => {
+      const btn = document.createElement('button');
+      btn.className = 'swatch';
+      btn.style.background = color;
+      btn.title = color;
+      btn.dataset.color = color;
+      btn.addEventListener('click', () => setBrushColor(color));
+      paletteEl.appendChild(btn);
+    });
+    updatePaletteActive();
+  }
+
+  customColorInput.addEventListener('input', () => setBrushColor(customColorInput.value));
+
+  buildPalette();
+  currentColorDot.style.background = brushColor;
+
+  // ---------- LAYERS PANEL TOGGLE ----------
+  const layersPanel = document.getElementById('layersPanel');
+  document.getElementById('layersToggleBtn').addEventListener('click', () => {
+    layersPanel.classList.toggle('hidden');
+  });
+  // Sur petit écran, le panneau devient une superposition (voir media query) :
+  // on le garde replié par défaut pour laisser toute la place au dessin.
+  // On utilise matchMedia (et pas un simple innerWidth ponctuel) car dans un
+  // <webview> Electron, la taille réelle au moment où ce script tourne peut
+  // ne pas encore être stabilisée : un listener permet de rattraper le coup
+  // si la taille change juste après le chargement.
+  const mobileLayoutQuery = window.matchMedia('(max-width: 700px)');
+  let userToggledPanel = false;
+  document.getElementById('layersToggleBtn').addEventListener('click', () => { userToggledPanel = true; }, { once: true });
+  function applyMobileDefault(e){
+    if (userToggledPanel) return; // ne pas écraser un choix explicite de l'élève
+    layersPanel.classList.toggle('hidden', e.matches);
+  }
+  applyMobileDefault(mobileLayoutQuery);
+  mobileLayoutQuery.addEventListener('change', applyMobileDefault);
+  document.getElementById('addLayerBtn').addEventListener('click', () => addLayer());
+
+  // ---------- NEW DOCUMENT ----------
+  document.getElementById('newDocBtn').addEventListener('click', () => {
+    if (!confirm('Nouveau dessin ? Le travail actuel sera perdu.')) return;
+    layers = [];
+    layerCounter = 0;
+    lineArt = null;
+    undoStack = [];
+    updateUndoBtn();
+    addLayer('Calque 1');
+  });
+
+  // ---------- SAVE / DOWNLOAD ----------
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    renderStage();
+    const dataUrl = stage.toDataURL('image/png');
+
+    const link = document.createElement('a');
+    link.download = 'znk-dessin.png';
+    link.href = dataUrl;
+    link.click();
+  });
+
+  // ---------- INIT ----------
+  addLayer('Calque 1');
+  setTool('select');
+  renderContextControls();
+})();
+</script>
+
+<script src="../../znk-auto-nav.js"></script>
+<script src="../../module-mapping.js"></script>
+</body>
+</html>

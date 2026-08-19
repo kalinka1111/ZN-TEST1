@@ -1,0 +1,454 @@
+{
+  "icons": [
+    {
+      "id": "logo-actv-live-cla",
+      "src": "assets/icons/logo-actv-live-cla.png",
+      "label": "Logo-actv-live .cla.png"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla.png",
+      "label": "actv.cla.png"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla.png",
+      "label": "1smart-actv.cla.png"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla.png",
+      "label": "5smart-music.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-1.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla-1.png",
+      "label": "1smart-actv.cla.png"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla-1.png",
+      "label": "5smart-music.cla.png"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla-1.png",
+      "label": "actv.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-2.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "logo-actv",
+      "src": "assets/icons/logo-actv.png",
+      "label": "logo-ACTV.png"
+    },
+    {
+      "id": "logo-actv-cla",
+      "src": "assets/icons/logo-actv-cla.png",
+      "label": "logo-actv.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-3.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "music-modules-cla",
+      "src": "assets/icons/music-modules-cla.png",
+      "label": "music.modules.cla .png"
+    },
+    {
+      "id": "music-rec-cla",
+      "src": "assets/icons/music-rec-cla.png",
+      "label": "music.rec.cla.png"
+    },
+    {
+      "id": "music-timeline-cla",
+      "src": "assets/icons/music-timeline-cla.png",
+      "label": "music.timeline.cla.png"
+    },
+    {
+      "id": "music-total-cla",
+      "src": "assets/icons/music-total-cla.png",
+      "label": "music.total.cla.png"
+    },
+    {
+      "id": "syst-actv-cla",
+      "src": "assets/icons/syst-actv-cla.png",
+      "label": "syst.actv.cla  .png"
+    },
+    {
+      "id": "hub-visiteur",
+      "src": "assets/icons/hub-visiteur.svg",
+      "label": "hub-visiteur.svg"
+    },
+    {
+      "id": "visiteur",
+      "src": "assets/icons/visiteur.svg",
+      "label": "visiteur.svg"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla.jpeg",
+      "label": "1smart-actv.cla.jpeg"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla-2.png",
+      "label": "1smart-actv.cla.png"
+    },
+    {
+      "id": "2music-cla",
+      "src": "assets/icons/2music-cla.jpeg",
+      "label": "2music.cla.jpeg"
+    },
+    {
+      "id": "2music-cla",
+      "src": "assets/icons/2music-cla.png",
+      "label": "2music.cla.png"
+    },
+    {
+      "id": "3music-cla",
+      "src": "assets/icons/3music-cla.jpeg",
+      "label": "3music.cla.jpeg"
+    },
+    {
+      "id": "4music-cla",
+      "src": "assets/icons/4music-cla.jpeg",
+      "label": "4music.cla.jpeg"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla.jpeg",
+      "label": "5smart-music.cla.jpeg"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla-2.png",
+      "label": "5smart-music.cla.png"
+    },
+    {
+      "id": "6-music-cla",
+      "src": "assets/icons/6-music-cla.png",
+      "label": "6.music.cla.png"
+    },
+    {
+      "id": "logo-actv-live-cla",
+      "src": "assets/icons/logo-actv-live-cla-1.png",
+      "label": "Logo-actv-live .cla.png"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla.jpeg",
+      "label": "actv.cla.jpeg"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla-2.png",
+      "label": "actv.cla.png"
+    },
+    {
+      "id": "logo-actv-cla",
+      "src": "assets/icons/logo-actv-cla-1.png",
+      "label": "logo-actv.cla.png"
+    },
+    {
+      "id": "music-archives-cla",
+      "src": "assets/icons/music-archives-cla.png",
+      "label": "music.archives.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla.jpeg",
+      "label": "music.cla.jpeg"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-4.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "music-modules-cla",
+      "src": "assets/icons/music-modules-cla-1.png",
+      "label": "music.modules.cla .png"
+    },
+    {
+      "id": "music-rec-cla",
+      "src": "assets/icons/music-rec-cla-1.png",
+      "label": "music.rec.cla.png"
+    },
+    {
+      "id": "music-timeline-cla",
+      "src": "assets/icons/music-timeline-cla-1.png",
+      "label": "music.timeline.cla.png"
+    },
+    {
+      "id": "music-total-cla",
+      "src": "assets/icons/music-total-cla-1.png",
+      "label": "music.total.cla.png"
+    },
+    {
+      "id": "syst-actv-cla",
+      "src": "assets/icons/syst-actv-cla-1.png",
+      "label": "syst.actv.cla  .png"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla-1.jpeg",
+      "label": "1smart-actv.cla.jpeg"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla-3.png",
+      "label": "1smart-actv.cla.png"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla-1.jpeg",
+      "label": "5smart-music.cla.jpeg"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla-3.png",
+      "label": "5smart-music.cla.png"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla-1.jpeg",
+      "label": "actv.cla.jpeg"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla-3.png",
+      "label": "actv.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-1.jpeg",
+      "label": "music.cla.jpeg"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-5.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "layout-hub-visiteur-1765407300283",
+      "src": "assets/icons/layout-hub-visiteur-1765407300283.png",
+      "label": "layout-hub-visiteur-1765407300283.png"
+    },
+    {
+      "id": "layout-hub-visiteur-1765407300283",
+      "src": "assets/icons/layout-hub-visiteur-1765407300283-1.png",
+      "label": "layout-hub-visiteur-1765407300283.png"
+    },
+    {
+      "id": "logo-actv-live-cla",
+      "src": "assets/icons/logo-actv-live-cla-2.png",
+      "label": "Logo-actv-live .cla.png"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla-4.png",
+      "label": "actv.cla.png"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla-4.png",
+      "label": "1smart-actv.cla.png"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla-4.png",
+      "label": "5smart-music.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-6.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-7.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla-5.png",
+      "label": "1smart-actv.cla.png"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla-5.png",
+      "label": "5smart-music.cla.png"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla-5.png",
+      "label": "actv.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-8.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "logo-actv",
+      "src": "assets/icons/logo-actv-1.png",
+      "label": "logo-ACTV.png"
+    },
+    {
+      "id": "logo-actv-cla",
+      "src": "assets/icons/logo-actv-cla-2.png",
+      "label": "logo-actv.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-9.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "music-modules-cla",
+      "src": "assets/icons/music-modules-cla-2.png",
+      "label": "music.modules.cla .png"
+    },
+    {
+      "id": "music-rec-cla",
+      "src": "assets/icons/music-rec-cla-2.png",
+      "label": "music.rec.cla.png"
+    },
+    {
+      "id": "music-timeline-cla",
+      "src": "assets/icons/music-timeline-cla-2.png",
+      "label": "music.timeline.cla.png"
+    },
+    {
+      "id": "music-total-cla",
+      "src": "assets/icons/music-total-cla-2.png",
+      "label": "music.total.cla.png"
+    },
+    {
+      "id": "syst-actv-cla",
+      "src": "assets/icons/syst-actv-cla-2.png",
+      "label": "syst.actv.cla  .png"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla-2.jpeg",
+      "label": "1smart-actv.cla.jpeg"
+    },
+    {
+      "id": "1smart-actv-cla",
+      "src": "assets/icons/1smart-actv-cla-6.png",
+      "label": "1smart-actv.cla.png"
+    },
+    {
+      "id": "2music-cla",
+      "src": "assets/icons/2music-cla-1.jpeg",
+      "label": "2music.cla.jpeg"
+    },
+    {
+      "id": "2music-cla",
+      "src": "assets/icons/2music-cla-1.png",
+      "label": "2music.cla.png"
+    },
+    {
+      "id": "3music-cla",
+      "src": "assets/icons/3music-cla-1.jpeg",
+      "label": "3music.cla.jpeg"
+    },
+    {
+      "id": "4music-cla",
+      "src": "assets/icons/4music-cla-1.jpeg",
+      "label": "4music.cla.jpeg"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla-2.jpeg",
+      "label": "5smart-music.cla.jpeg"
+    },
+    {
+      "id": "5smart-music-cla",
+      "src": "assets/icons/5smart-music-cla-6.png",
+      "label": "5smart-music.cla.png"
+    },
+    {
+      "id": "6-music-cla",
+      "src": "assets/icons/6-music-cla-1.png",
+      "label": "6.music.cla.png"
+    },
+    {
+      "id": "logo-actv-live-cla",
+      "src": "assets/icons/logo-actv-live-cla-3.png",
+      "label": "Logo-actv-live .cla.png"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla-2.jpeg",
+      "label": "actv.cla.jpeg"
+    },
+    {
+      "id": "actv-cla",
+      "src": "assets/icons/actv-cla-6.png",
+      "label": "actv.cla.png"
+    },
+    {
+      "id": "logo-actv-cla",
+      "src": "assets/icons/logo-actv-cla-3.png",
+      "label": "logo-actv.cla.png"
+    },
+    {
+      "id": "music-archives-cla",
+      "src": "assets/icons/music-archives-cla-1.png",
+      "label": "music.archives.cla.png"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-2.jpeg",
+      "label": "music.cla.jpeg"
+    },
+    {
+      "id": "music-cla",
+      "src": "assets/icons/music-cla-10.png",
+      "label": "music.cla.png"
+    },
+    {
+      "id": "music-modules-cla",
+      "src": "assets/icons/music-modules-cla-3.png",
+      "label": "music.modules.cla .png"
+    },
+    {
+      "id": "music-rec-cla",
+      "src": "assets/icons/music-rec-cla-3.png",
+      "label": "music.rec.cla.png"
+    },
+    {
+      "id": "music-timeline-cla",
+      "src": "assets/icons/music-timeline-cla-3.png",
+      "label": "music.timeline.cla.png"
+    },
+    {
+      "id": "music-total-cla",
+      "src": "assets/icons/music-total-cla-3.png",
+      "label": "music.total.cla.png"
+    },
+    {
+      "id": "syst-actv-cla",
+      "src": "assets/icons/syst-actv-cla-3.png",
+      "label": "syst.actv.cla  .png"
+    }
+  ]
+}

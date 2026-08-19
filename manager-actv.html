@@ -1,0 +1,972 @@
+ZNK ACTV MANAGER<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNK Studio - Publication Vidéo</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --bg-primary: #1a1300;
+        --bg-secondary: #3f3902;
+        --bg-tertiary: #343434;
+        --accent: #6d560f;
+        --accent-hover: #a77b00;
+        --accent-video: #d54375;
+        --accent-artflow: #a855f7;
+        --text-primary: #ffffff;
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
+        --border: #785e02;
+        --success: #10b981;
+        --warning: #d29d00;
+        --error: #d54375;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1300 0%, #3f3902 100%);
+        color: var(--text-primary);
+        min-height: 100vh;
+        padding: 30px 20px 80px;
+    }
+
+    .container { max-width: 880px; margin: 0 auto; }
+
+    .header { text-align: center; margin-bottom: 24px; }
+    .header h1 { color: var(--warning); font-size: 1.6rem; margin-bottom: 6px; }
+    .header p { color: var(--text-secondary); font-size: 13px; }
+    #modeBadge { display: inline-block; margin-top: 10px; padding: 4px 12px; border-radius: 12px; font-size: 12px; background: var(--bg-tertiary); border: 1px solid var(--border); }
+
+    .card {
+        background: rgba(0,0,0,0.35);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px;
+        margin-bottom: 20px;
+    }
+
+    .card h2 { font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+    /* Target switch */
+    .target-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .target-option {
+        padding: 16px; border-radius: 12px; text-align: center; cursor: pointer;
+        border: 2px solid var(--border); background: var(--bg-tertiary); transition: all .2s;
+    }
+    .target-option:hover { transform: translateY(-2px); }
+    .target-option.selected.actv { border-color: var(--accent-video); background: rgba(213,67,117,0.15); }
+    .target-option.selected.artflow { border-color: var(--accent-artflow); background: rgba(168,85,247,0.15); }
+    .target-option .icon { font-size: 26px; margin-bottom: 6px; }
+    .target-option .label { font-weight: 700; font-size: 14px; }
+    .target-option .sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Drop zone */
+    .drop-zone {
+        border: 3px dashed rgba(255,255,255,0.25); border-radius: 12px; padding: 40px 20px;
+        text-align: center; cursor: pointer; transition: all .2s;
+    }
+    .drop-zone:hover, .drop-zone.dragover { background: rgba(255,255,255,0.04); }
+    .drop-zone .big { font-size: 44px; }
+    .drop-zone .hint { opacity: .7; margin-top: 8px; font-size: 12px; }
+
+    .files-list { margin-top: 14px; }
+    .file-item {
+        padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,0.05);
+        margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    }
+    .file-item .name { font-weight: 600; font-size: 13px; }
+    .file-item .meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .file-item .status-pill { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.08); white-space: nowrap; }
+    .file-item .remove-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; }
+    .progress-track { margin-top: 8px; height: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--warning), var(--success)); width: 0%; transition: width .25s; }
+
+    /* Profiles */
+    .profiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .profile-card {
+        padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.25); cursor: pointer;
+        text-align: center; border: 2px solid transparent; transition: all .2s;
+    }
+    .profile-card.selected { border-color: var(--success); background: rgba(16,185,129,0.12); }
+    .profile-card .picon { font-size: 20px; }
+    .profile-card .pname { font-weight: 700; font-size: 12px; margin: 4px 0 2px; }
+    .profile-card small { color: var(--text-muted); font-size: 10px; }
+
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .form-input, .form-select, .form-textarea {
+        padding: 10px 12px; background: var(--bg-tertiary); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent-hover); }
+    .form-textarea { resize: vertical; min-height: 70px; }
+    .field-hidden { display: none !important; }
+
+    /* Publish button + status */
+    .publish-btn {
+        width: 100%; padding: 16px; border: none; border-radius: 12px; color: #fff;
+        font-weight: 700; font-size: 15px; cursor: pointer; transition: all .2s;
+        background: linear-gradient(135deg, var(--accent-video), var(--accent-hover));
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .publish-btn.artflow-theme { background: linear-gradient(135deg, var(--accent-artflow), #7c3aed); }
+    .publish-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .publish-btn:not(:disabled):hover { transform: translateY(-2px); }
+
+    .steps { display: flex; justify-content: space-between; margin: 18px 0 6px; font-size: 11px; color: var(--text-muted); }
+    .steps .step { flex: 1; text-align: center; position: relative; }
+    .steps .step.active { color: var(--warning); font-weight: 700; }
+    .steps .step.done { color: var(--success); font-weight: 700; }
+
+    .result-box {
+        display: none; margin-top: 18px; padding: 20px; border-radius: 12px;
+        background: rgba(16,185,129,0.1); border: 2px solid var(--success); text-align: center;
+    }
+    .result-box.error { background: rgba(213,67,117,0.1); border-color: var(--error); }
+    .result-box h3 { margin-bottom: 10px; }
+    .result-actions { display: flex; gap: 10px; margin-top: 14px; }
+    .result-actions .btn { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; }
+    .btn-view { background: var(--accent-hover); color: #fff; }
+    .btn-again { background: var(--bg-tertiary); color: #fff; border: 1px solid var(--border) !important; }
+
+    .notification {
+        position: fixed; top: 20px; right: 20px; padding: 12px 18px; border-radius: 10px;
+        transform: translateX(400px); transition: transform .25s; z-index: 1000; font-size: 13px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .notification.show { transform: translateX(0); }
+    .notification.error { background: rgba(213,67,117,0.95); }
+    .notification.ok { background: rgba(16,185,129,0.95); }
+
+    .diag-toggle { text-align: center; font-size: 11px; color: var(--text-muted); cursor: pointer; margin-top: -8px; margin-bottom: 20px; }
+    .diag-panel { display: none; font-family: monospace; font-size: 12px; line-height: 1.6; }
+
+    /* Promotion ArtFlow → ACTV */
+    .promote-item {
+        padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,0.05);
+        margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start;
+        gap: 12px; flex-wrap: wrap;
+    }
+    .promote-item .name { font-weight: 600; font-size: 13px; }
+    .promote-item .meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .promote-item .promo-controls { display: flex; flex-direction: column; gap: 6px; min-width: 210px; }
+    .promote-item select, .promote-item input { font-size: 12px; padding: 7px 9px; }
+    .promote-item .promo-btn {
+        padding: 8px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px;
+        font-weight: 600; background: var(--accent-hover); color: #fff;
+    }
+    .promote-item .promo-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .promoted-pill {
+        display: inline-block; margin-top: 6px; padding: 3px 9px; border-radius: 10px;
+        font-size: 10px; background: rgba(16,185,129,0.2); color: #9ef0c8; border: 1px solid rgba(16,185,129,0.4);
+    }
+</style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>🎬 ZNK ACTV — Manager</h1>
+        <p>Upload → Conversion → Persistance → Publication, en une seule fenêtre</p>
+        <div id="modeBadge">⚙️ Détection...</div>
+    </div>
+
+    <div class="diag-toggle" onclick="toggleDiag()">🔍 Diagnostic technique</div>
+    <div class="card diag-panel" id="diagPanel"></div>
+
+    <!-- Destination -->
+    <div class="card">
+        <h2>📍 Où publier ?</h2>
+        <div class="target-switch">
+            <div class="target-option selected actv" id="targetActv" onclick="selectTarget('actv')">
+                <div class="icon">📺</div>
+                <div class="label">ACTV</div>
+                <div class="sub">Chaîne publique de l'app</div>
+            </div>
+            <div class="target-option artflow" id="targetArtflow" onclick="selectTarget('artflow')">
+                <div class="icon">🎨</div>
+                <div class="label">ArtFlow (mon profil)</div>
+                <div class="sub">Mes créations personnelles</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promotion ArtFlow → ACTV -->
+    <div class="card">
+        <h2>🏆 Promouvoir une création ArtFlow vers ACTV</h2>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
+            Choisissez une vidéo publiée par un user sur ArtFlow et republiez-la sur ACTV 
+        </p>
+        <div id="promoteList"></div>
+    </div>
+
+    <!-- Upload -->
+    <div class="card">
+        <h2>📤 Vidéo(s) à publier</h2>
+        <div class="drop-zone" id="dropZone">
+            <div class="big">🎥</div>
+            <div>Cliquez pour sélectionner ou glissez vos vidéos ici</div>
+            <div class="hint">MP4, MOV, AVI, MKV, WebM</div>
+            <input id="hiddenFileInput" type="file" accept="video/*" multiple style="display:none">
+        </div>
+        <div class="files-list" id="filesList"></div>
+    </div>
+
+    <!-- Compression profile -->
+    <div class="card">
+        <h2>⚙️ Qualité de conversion</h2>
+        <div class="profiles">
+            <div class="profile-card selected" data-profile="light" onclick="selectProfile('light')">
+                <div class="picon">🪶</div><div class="pname">LIGHT</div><small>720p • ~1.5 Mbps</small>
+            </div>
+            <div class="profile-card" data-profile="medium" onclick="selectProfile('medium')">
+                <div class="picon">⚡</div><div class="pname">MEDIUM</div><small>1080p • ~2.5 Mbps</small>
+            </div>
+            <div class="profile-card" data-profile="high" onclick="selectProfile('high')">
+                <div class="picon">💎</div><div class="pname">HIGH</div><small>1080p • ~4 Mbps</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metadata -->
+    <div class="card">
+        <h2>📝 Informations</h2>
+        <div class="form-grid">
+            <div class="form-group full">
+                <label class="form-label">Titre de l'émission <span id="titleHintMulti" style="display:none; font-weight:400;">(les vidéos deviendront les épisodes de cette émission)</span></label>
+                <input type="text" class="form-input" id="fieldTitle" placeholder="Ex: Studio Sessions Live #12">
+            </div>
+
+            <div class="form-group" id="categoryGroup">
+                <label class="form-label">Catégorie (ACTV)</label>
+                <select class="form-select" id="fieldCategory">
+                    <option value="emission-znk-artistes">Emission ZNK Artistes</option>
+                    <option value="emission-znk-actu">Emission ZNK Actualité</option>
+                    <option value="serie-znk-les-reveurs">Serie ZNK Les Rêveurs</option>
+                    <option value="studios-effets">Studios Effets</option>
+                    <option value="general">Général</option>
+                    <option value="__custom__">➕ Autre (créer une nouvelle émission)</option>
+                </select>
+            </div>
+
+            <div class="form-group full field-hidden" id="categoryCustomGroup">
+                <label class="form-label">Nom de la nouvelle émission</label>
+                <input type="text" class="form-input" id="fieldCategoryCustom" placeholder="Ex: Emission ZNK Cuisine">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Durée estimée</label>
+                <input type="text" class="form-input" id="fieldDuration" placeholder="Ex: 2h 15min">
+            </div>
+
+            <div class="form-group full">
+                <label class="form-label">Description</label>
+                <textarea class="form-textarea" id="fieldDescription" placeholder="Décrivez le contenu..."></textarea>
+            </div>
+
+            <div class="form-group" id="viewsGroup">
+                <label class="form-label">Vues estimées (ACTV)</label>
+                <input type="text" class="form-input" id="fieldViews" placeholder="Ex: 125K">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Priorité d'affichage</label>
+                <select class="form-select" id="fieldPriority">
+                    <option value="high">Haute (Featured)</option>
+                    <option value="medium" selected>Moyenne</option>
+                    <option value="low">Basse</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action -->
+    <div class="card">
+        <div class="steps" id="stepsBar">
+            <div class="step" id="step1">1. Conversion</div>
+            <div class="step" id="step2">2. Persistance</div>
+            <div class="step" id="step3">3. Publication</div>
+        </div>
+        <button class="publish-btn" id="publishBtn" onclick="startFullPipeline()" disabled>
+            🚀 Convertir &amp; Publier
+        </button>
+
+        <div class="result-box" id="resultBox">
+            <h3 id="resultTitle"></h3>
+            <div id="resultText"></div>
+            <div class="result-actions">
+                <button class="btn btn-view" id="viewBtn" onclick="openDestination()">👀 Voir la publication</button>
+                <button class="btn btn-again" onclick="resetPipeline()">🔄 Publier une autre vidéo</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="notification" class="notification"></div>
+
+<script>
+(function () {
+    // ---------- Electron API bridge (identique au convertisseur existant) ----------
+    const api = window.znkApi || window.electronAPI || (window.require ? (function () {
+        const { ipcRenderer } = require('electron');
+        return {
+            selectFiles: (opts) => ipcRenderer.invoke('select-files', opts),
+            convertVideo: (p) => ipcRenderer.invoke('convert-video', p),
+            onConversionProgress: (cb) => {
+                const h = (e, d) => cb(d);
+                ipcRenderer.on('conversion-progress', h);
+                return () => ipcRenderer.removeListener('conversion-progress', h);
+            },
+            openOutputFolder: () => ipcRenderer.invoke('open-output-folder'),
+            makeVideoPersistent: (opts) => ipcRenderer.invoke('make-video-persistent', opts),
+            getVideoUrl: (opts) => ipcRenderer.invoke('get-video-url', opts),
+            getPathForFile: (file) => {
+                try {
+                    const { webUtils } = require('electron');
+                    return webUtils.getPathForFile(file);
+                } catch (e) { return file && file.path ? file.path : null; }
+            }
+        };
+    })() : null);
+
+    const isElectron = !!api;
+    let fs = null;
+    try { fs = require && require('fs'); } catch (e) { fs = null; }
+
+    // ---------- State ----------
+    let selectedFiles = [];       // {id, name, size, path, status, progress}
+    let selectedProfile = 'light';
+    let currentTarget = 'actv';   // 'actv' | 'artflow'
+    let isRunning = false;
+    let lastPublished = [];       // published items from the last run, for "voir la publication"
+
+    // ---------- Diagnostic panel ----------
+    function toggleDiag() {
+        const p = document.getElementById('diagPanel');
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+    }
+    window.toggleDiag = toggleDiag;
+
+    (function renderDiag() {
+        const el = document.getElementById('diagPanel');
+        const rows = [
+            ['Mode Electron', isElectron ? '✅ oui' : '❌ non'],
+            ['window.electronAPI', typeof window.electronAPI],
+            ['window.znkApi', typeof window.znkApi],
+            ['api.selectFiles', typeof (api && api.selectFiles)],
+            ['api.convertVideo', typeof (api && api.convertVideo)],
+            ['api.makeVideoPersistent', typeof (api && api.makeVideoPersistent)],
+            ['api.getVideoUrl', typeof (api && api.getVideoUrl)]
+        ];
+        el.innerHTML = '<h3 style="margin-bottom:8px;">Diagnostic</h3>' +
+            rows.map(r => `<div>${r[0]} : <b>${r[1]}</b></div>`).join('');
+    })();
+
+    const modeBadge = document.getElementById('modeBadge');
+    if (isElectron) {
+        modeBadge.textContent = '✅ Mode Electron — conversion disponible';
+        modeBadge.style.color = '#9ef0c8';
+    } else {
+        modeBadge.textContent = '⚠️ Mode navigateur — ouvrez ce fichier depuis l\'app ZNK pour publier';
+        modeBadge.style.color = '#ffd6a5';
+    }
+
+    // ---------- Target selection ----------
+    function selectTarget(target) {
+        currentTarget = target;
+        document.getElementById('targetActv').classList.toggle('selected', target === 'actv');
+        document.getElementById('targetArtflow').classList.toggle('selected', target === 'artflow');
+
+        const isActv = target === 'actv';
+        document.getElementById('categoryGroup').classList.toggle('field-hidden', !isActv);
+        document.getElementById('viewsGroup').classList.toggle('field-hidden', !isActv);
+        updateCategoryCustomVisibility();
+
+        const btn = document.getElementById('publishBtn');
+        btn.classList.toggle('artflow-theme', !isActv);
+        btn.textContent = isActv ? '🚀 Convertir & Publier sur ACTV' : '🚀 Convertir & Publier sur ArtFlow';
+    }
+    window.selectTarget = selectTarget;
+    selectTarget('actv');
+
+    // Affiche le champ "nom de la nouvelle émission" seulement si "Autre" est choisi (et cible = ACTV)
+    function updateCategoryCustomVisibility() {
+        const isCustom = document.getElementById('fieldCategory').value === '__custom__';
+        document.getElementById('categoryCustomGroup').classList.toggle('field-hidden', !(currentTarget === 'actv' && isCustom));
+    }
+    document.getElementById('fieldCategory').addEventListener('change', updateCategoryCustomVisibility);
+
+    // Valeur de catégorie effective : le nom personnalisé si "Autre" est sélectionné, sinon la valeur du select
+    function getSelectedCategoryValue() {
+        const select = document.getElementById('fieldCategory');
+        if (select.value === '__custom__') {
+            return document.getElementById('fieldCategoryCustom').value.trim();
+        }
+        return select.value;
+    }
+
+    // ---------- File selection ----------
+    const dropZone = document.getElementById('dropZone');
+    const hiddenInput = document.getElementById('hiddenFileInput');
+    const filesListEl = document.getElementById('filesList');
+    const publishBtn = document.getElementById('publishBtn');
+
+    dropZone.addEventListener('click', () => {
+        if (isElectron && api && api.selectFiles) {
+            api.selectFiles().then(result => {
+                if (!result || result.canceled) return;
+                if (result.success && Array.isArray(result.files)) {
+                    handleFiles(result.files);
+                } else if (Array.isArray(result)) {
+                    handleFiles(result);
+                } else {
+                    hiddenInput.click();
+                }
+            }).catch(() => hiddenInput.click());
+        } else {
+            hiddenInput.click();
+        }
+    });
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const dtFiles = Array.from(e.dataTransfer.files || []);
+        if (dtFiles.length === 0) { showNotification('Aucun fichier détecté', true); return; }
+        handleFiles(dtFiles);
+    });
+
+    hiddenInput.addEventListener('change', (e) => {
+        handleFiles(Array.from(e.target.files || []));
+        hiddenInput.value = '';
+    });
+
+    function handleFiles(items) {
+        // On ACCUMULE les nouveaux fichiers avec ceux déjà sélectionnés
+        // (au lieu d'écraser la sélection à chaque appel). C'est ce qui
+        // empêchait de construire une émission à partir de plusieurs
+        // sélections successives (ex: dialog Electron qui ne renvoie
+        // qu'un fichier par appel selon la config du main process).
+        const now = Date.now();
+        const newFiles = [];
+        for (let i = 0; i < items.length; i++) {
+            const it = items[i];
+            let f = { id: `file_${now}_${i}`, name: '', size: 0, path: null, status: 'pending', progress: 0 };
+            if (typeof it === 'string') {
+                f.path = it; f.name = it.split(/[\\/]/).pop();
+                try { if (fs) f.size = fs.statSync(it).size; } catch (e) {}
+            } else if (it && it.path) {
+                f.path = it.path; f.name = it.name || it.path.split(/[\\/]/).pop(); f.size = it.size || 0;
+            } else if (it && it.name) {
+                f.name = it.name; f.size = it.size || 0;
+                // File.path n'existe plus depuis Electron 32+ (retiré pour
+                // raisons de sécurité) : il faut passer par webUtils.getPathForFile,
+                // exposé côté preload sous api.getPathForFile(). C'est le chemin
+                // pris par le drag & drop et par <input type="file">.
+                if (api && typeof api.getPathForFile === 'function') {
+                    try {
+                        f.path = api.getPathForFile(it) || null;
+                    } catch (e) {
+                        console.warn('getPathForFile a échoué:', e);
+                        f.path = it.path || null; // repli ancien comportement
+                    }
+                } else {
+                    f.path = it.path || null;
+                }
+            } else { continue; }
+            newFiles.push(f);
+        }
+
+        // Dédoublonnage par path (ou par nom+taille si pas de path) pour éviter
+        // d'ajouter deux fois la même vidéo si l'utilisateur la resélectionne.
+        let addedCount = 0;
+        newFiles.forEach(f => {
+            const key = f.path || `${f.name}_${f.size}`;
+            const exists = selectedFiles.some(sf => (sf.path || `${sf.name}_${sf.size}`) === key);
+            if (!exists) { selectedFiles.push(f); addedCount++; }
+        });
+
+        document.getElementById('titleHintMulti').style.display = selectedFiles.length > 1 ? 'inline' : 'none';
+
+        if (addedCount > 0) {
+            renderFiles();
+            publishBtn.disabled = false;
+            showNotification(`✅ ${addedCount} fichier(s) ajouté(s) — ${selectedFiles.length} au total`);
+        } else if (newFiles.length > 0) {
+            showNotification('ℹ️ Ces fichiers sont déjà dans la liste');
+        } else {
+            showNotification('❌ Aucun fichier valide trouvé', true);
+        }
+    }
+
+    function renderFiles() {
+        const header = selectedFiles.length > 0 ? `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:11px; color:var(--text-muted);">${selectedFiles.length} vidéo(s) — seront publiées ensemble comme UNE émission avec ${selectedFiles.length} épisode(s)</span>
+                <button type="button" onclick="clearAllFiles()" style="background:none; border:none; color:var(--text-muted); font-size:11px; cursor:pointer; text-decoration:underline;">Tout effacer</button>
+            </div>` : '';
+        filesListEl.innerHTML = header + selectedFiles.map(f => `
+            <div class="file-item" id="${f.id}">
+                <div style="flex:1;">
+                    <div class="name">${escapeHtml(f.name)}</div>
+                    <div class="meta">${formatSize(f.size)}</div>
+                    ${f.status === 'converting' ? `
+                        <div class="progress-track"><div class="progress-fill" style="width:${f.progress}%"></div></div>
+                    ` : ''}
+                </div>
+                <div class="status-pill">${statusText(f.status)}</div>
+                ${f.status === 'pending' ? `<button class="remove-btn" onclick="removeFile('${f.id}')">✕</button>` : ''}
+            </div>
+        `).join('');
+    }
+
+    function clearAllFiles() {
+        selectedFiles = [];
+        renderFiles();
+        publishBtn.disabled = true;
+        document.getElementById('titleHintMulti').style.display = 'none';
+    }
+    window.clearAllFiles = clearAllFiles;
+
+    function removeFile(id) {
+        selectedFiles = selectedFiles.filter(f => f.id !== id);
+        renderFiles();
+        publishBtn.disabled = selectedFiles.length === 0;
+        document.getElementById('titleHintMulti').style.display = selectedFiles.length > 1 ? 'inline' : 'none';
+    }
+    window.removeFile = removeFile;
+
+    function statusText(s) {
+        return s === 'pending' ? '⏳ En attente' : s === 'converting' ? '🔄 Conversion...' :
+               s === 'persisting' ? '💾 Persistance...' : s === 'publishing' ? '📡 Publication...' :
+               s === 'done' ? '✅ Publié' : '❌ Erreur';
+    }
+
+    // ---------- Profile selection ----------
+    function selectProfile(p) {
+        selectedProfile = p;
+        document.querySelectorAll('.profile-card').forEach(c => c.classList.toggle('selected', c.dataset.profile === p));
+    }
+    window.selectProfile = selectProfile;
+
+    // ---------- Steps UI ----------
+    function setStep(n) {
+        [1, 2, 3].forEach(i => {
+            const el = document.getElementById('step' + i);
+            el.classList.remove('active', 'done');
+            if (i < n) el.classList.add('done');
+            if (i === n) el.classList.add('active');
+        });
+    }
+
+    // ---------- Full pipeline ----------
+    async function startFullPipeline() {
+        if (!isElectron || !api || !api.convertVideo) {
+            showNotification('❌ Conversion disponible uniquement dans l\'app ZNK (Electron)', true);
+            return;
+        }
+        if (isRunning) return;
+        if (selectedFiles.length === 0) { showNotification('Sélectionnez au moins une vidéo', true); return; }
+
+        const baseTitle = document.getElementById('fieldTitle').value.trim();
+        if (!baseTitle) {
+            showNotification('Le titre de l\'émission est requis', true);
+            return;
+        }
+        if (currentTarget === 'actv' && document.getElementById('fieldCategory').value === '__custom__' && !document.getElementById('fieldCategoryCustom').value.trim()) {
+            showNotification('Merci d\'indiquer le nom de la nouvelle émission', true);
+            return;
+        }
+
+        isRunning = true;
+        publishBtn.disabled = true;
+        publishBtn.textContent = '⏳ Traitement en cours...';
+        document.getElementById('resultBox').style.display = 'none';
+        lastPublished = [];
+
+        let offProgress = api.onConversionProgress ? api.onConversionProgress((data) => {
+            const file = selectedFiles.find(f => f.name === data.fileName);
+            if (file) { file.status = 'converting'; file.progress = Math.round(data.progress || 0); renderFiles(); }
+        }) : null;
+
+        let okCount = 0, errCount = 0;
+        const lastErrors = []; // messages d'erreur réels, pour affichage (au lieu du seul console.error)
+        const episodeVideos = []; // toutes les vidéos converties/persistées avec succès -> deviendront les épisodes d'UNE émission
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const f = selectedFiles[i];
+            if (!f.path) { f.status = 'error'; renderFiles(); errCount++; lastErrors.push(`${f.name || 'fichier'} : chemin introuvable (f.path vide)`); continue; }
+
+            // Titre de l'épisode : nom du fichier si plusieurs vidéos, sinon le titre saisi
+            const episodeTitle = selectedFiles.length > 1 ? stripExt(f.name) : (baseTitle || stripExt(f.name));
+
+            try {
+                // 1) Conversion
+                setStep(1);
+                f.status = 'converting'; f.progress = 0; renderFiles();
+                const conv = await api.convertVideo({ filePath: f.path, fileName: f.name, profile: selectedProfile });
+                if (!conv || !conv.success) throw new Error((conv && conv.error) || 'Conversion échouée');
+
+                // 2) Persistance
+                setStep(2);
+                f.status = 'persisting'; renderFiles();
+                const videoId = `video_${Date.now()}_${i}`;
+                const persistRes = await api.makeVideoPersistent({ sourcePath: conv.outputPath, videoId });
+                const urlRes = await api.getVideoUrl({ videoId, fileName: conv.outputFileName });
+                const fileUrl = (urlRes && urlRes.success) ? urlRes.url : `file://${conv.outputPath.replace(/\\/g, '/')}`;
+                const persistentPath = (persistRes && persistRes.persistentPath) ? persistRes.persistentPath : conv.outputPath;
+                const persistentFlag = !!(persistRes && persistRes.success);
+
+                let sizeMb = 0;
+                try { if (fs && persistentPath) sizeMb = (fs.statSync(persistentPath).size / (1024 * 1024)).toFixed(2); } catch (e) {}
+
+                // Add to global video manifest (znk_videos) so Video Manager / autres outils restent synchronisés
+                upsertVideoManifest({
+                    id: videoId,
+                    title: episodeTitle,
+                    description: document.getElementById('fieldDescription').value,
+                    filename: conv.outputFileName,
+                    size: sizeMb,
+                    category: getSelectedCategoryValue(),
+                    persistent: persistentFlag,
+                    converted: true,
+                    path: persistentPath,
+                    url: fileUrl,
+                    dashboard: { addedAt: new Date().toISOString(), status: 'ready', source: 'znk-publish-studio' }
+                });
+
+                episodeVideos.push({
+                    videoId,
+                    order: episodeVideos.length + 1,
+                    title: episodeTitle,
+                    // fileUrl est une vraie URL chargeable (file:// ou protocole
+                    // custom via api.getVideoUrl) ; persistentPath n'est qu'un
+                    // chemin disque brut, invalide comme src de <video>/<img>.
+                    // On le garde seulement en dernier repli.
+                    videoUrl: fileUrl || persistentPath,
+                    videoPath: persistentPath,
+                    videoFilename: conv.outputFileName,
+                    videoPersistent: persistentFlag,
+                    videoConverted: true,
+                    thumbnail: fileUrl || persistentPath,
+                    coverImage: fileUrl || persistentPath
+                });
+
+                f.status = 'done'; renderFiles();
+                okCount++;
+
+            } catch (err) {
+                console.error('Pipeline error', err);
+                f.status = 'error'; renderFiles();
+                errCount++;
+                lastErrors.push(`${f.name || 'fichier'} : ${err && err.message || err}`);
+            }
+        }
+
+        if (typeof offProgress === 'function') { try { offProgress(); } catch (e) {} }
+
+        // 3) Publication — UNE SEULE émission/publication regroupant tous les épisodes réussis
+        if (episodeVideos.length > 0) {
+            setStep(3);
+            const groupTitle = baseTitle || episodeVideos[0].title;
+            const published = currentTarget === 'actv'
+                ? publishToActv({ title: groupTitle, episodes: episodeVideos })
+                : publishToArtflow({ title: groupTitle, episodes: episodeVideos });
+            lastPublished = [published];
+        }
+
+        isRunning = false;
+        publishBtn.disabled = false;
+        publishBtn.textContent = currentTarget === 'actv' ? '🚀 Convertir & Publier sur ACTV' : '🚀 Convertir & Publier sur ArtFlow';
+
+        showResult(okCount, errCount, lastErrors);
+    }
+    window.startFullPipeline = startFullPipeline;
+
+    function stripExt(name) { return name.replace(/\.[^/.]+$/, ''); }
+
+    // ---------- Manifest & publication writers ----------
+    function upsertVideoManifest(entry) {
+        try {
+            const raw = localStorage.getItem('znk_videos');
+            let videos = raw ? JSON.parse(raw) : [];
+            const idx = videos.findIndex(v => v.id === entry.id || v.filename === entry.filename);
+            if (idx >= 0) videos[idx] = { ...videos[idx], ...entry };
+            else videos.push(entry);
+            localStorage.setItem('znk_videos', JSON.stringify(videos));
+        } catch (e) { console.error('Erreur manifest znk_videos', e); }
+    }
+
+    // episodes: [{ videoId, order, title, videoUrl, videoPath, videoFilename, videoPersistent, videoConverted, thumbnail, coverImage }]
+    function publishToActv({ title, episodes }) {
+        const first = episodes[0];
+        const emission = {
+            id: `emission_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            title: title,
+            type: getSelectedCategoryValue(),
+            duration: document.getElementById('fieldDuration').value || 'N/A',
+            description: document.getElementById('fieldDescription').value,
+            views: document.getElementById('fieldViews').value || '0',
+            priority: document.getElementById('fieldPriority').value,
+            episodeCount: episodes.length,
+            videos: episodes,
+            // Champs à plat = épisode 1, gardés pour compatibilité avec les lecteurs
+            // existants (actv.html) qui ne connaissent pas encore le tableau "videos".
+            // ⚠️ Pour afficher tous les épisodes, actv.html doit être mis à jour pour lire emission.videos.
+            videoId: first.videoId,
+            videoUrl: first.videoUrl,
+            videoPath: first.videoPath,
+            videoFilename: first.videoFilename,
+            videoPersistent: first.videoPersistent,
+            videoConverted: first.videoConverted,
+            thumbnail: first.thumbnail,
+            coverImage: first.coverImage,
+            publishedAt: new Date().toISOString(),
+            status: 'published'
+        };
+        try {
+            const raw = localStorage.getItem('znk_actv_emissions');
+            const emissions = raw ? JSON.parse(raw) : [];
+            emissions.push(emission);
+            localStorage.setItem('znk_actv_emissions', JSON.stringify(emissions));
+        } catch (e) { console.error('Erreur publication ACTV', e); }
+        return emission;
+    }
+
+    function publishToArtflow({ title, episodes }) {
+        const first = episodes[0];
+        const publication = {
+            id: `pub_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            title: title,
+            description: document.getElementById('fieldDescription').value,
+            duration: document.getElementById('fieldDuration').value || 'N/A',
+            views: document.getElementById('fieldViews').value || '0',
+            priority: document.getElementById('fieldPriority').value,
+            episodeCount: episodes.length,
+            videos: episodes,
+            // Champs à plat = épisode 1, gardés pour compatibilité (voir note ci-dessus, artflow.html idem).
+            videoId: first.videoId,
+            videoUrl: first.videoUrl,
+            thumbnail: first.thumbnail,
+            videoFilename: first.videoFilename,
+            publishedAt: new Date().toISOString(),
+            status: 'published'
+        };
+        try {
+            const raw = localStorage.getItem('artflow_user_publications');
+            const pubs = raw ? JSON.parse(raw) : [];
+            pubs.push(publication);
+            localStorage.setItem('artflow_user_publications', JSON.stringify(pubs));
+        } catch (e) { console.error('Erreur publication ArtFlow', e); }
+        return publication;
+    }
+
+    // ---------- Result screen ----------
+    function showResult(okCount, errCount, lastErrors) {
+        const box = document.getElementById('resultBox');
+        const title = document.getElementById('resultTitle');
+        const text = document.getElementById('resultText');
+        box.style.display = 'block';
+
+        const errorDetails = (lastErrors && lastErrors.length)
+            ? '<br><br><span style="font-size:12px;opacity:0.85;">' + lastErrors.map(e => e.replace(/</g, '&lt;')).join('<br>') + '</span>'
+            : '';
+
+        if (okCount > 0 && errCount === 0) {
+            box.classList.remove('error');
+            title.textContent = '✅ Publication terminée !';
+            text.textContent = okCount > 1
+                ? `Émission publiée sur ${currentTarget === 'actv' ? 'ACTV' : 'ArtFlow'} avec ${okCount} épisode(s).`
+                : `Vidéo convertie, rendue persistante et publiée sur ${currentTarget === 'actv' ? 'ACTV' : 'ArtFlow'}.`;
+        } else if (okCount > 0 && errCount > 0) {
+            box.classList.remove('error');
+            title.textContent = '⚠️ Publication partielle';
+            text.innerHTML = `${okCount} vidéo(s) publiée(s) dans l'émission, ${errCount} en erreur (non incluse(s)).` + errorDetails;
+        } else {
+            box.classList.add('error');
+            title.textContent = '❌ Échec';
+            text.innerHTML = `Aucune vidéo n'a pu être publiée.` + errorDetails;
+        }
+    }
+
+    function openDestination() {
+        const url = currentTarget === 'actv' ? 'actv.html' : 'artflow.html';
+        navigateInDashboard(url);
+    }
+    window.openDestination = openDestination;
+
+    function navigateInDashboard(url) {
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'navigate', url: url }, '*');
+        } else {
+            window.location.href = url;
+        }
+    }
+
+    function resetPipeline() {
+        selectedFiles = [];
+        renderFiles();
+        publishBtn.disabled = true;
+        document.getElementById('resultBox').style.display = 'none';
+        document.getElementById('fieldTitle').value = '';
+        document.getElementById('fieldDescription').value = '';
+        document.getElementById('fieldDuration').value = '';
+        document.getElementById('fieldViews').value = '';
+        setStep(0);
+    }
+    window.resetPipeline = resetPipeline;
+
+    // ---------- Utils ----------
+    function formatSize(bytes) {
+        if (!bytes && bytes !== 0) return '';
+        const kb = 1024, mb = kb * 1024, gb = mb * 1024;
+        if (bytes >= gb) return (bytes / gb).toFixed(2) + ' GB';
+        if (bytes >= mb) return (bytes / mb).toFixed(2) + ' MB';
+        if (bytes >= kb) return (bytes / kb).toFixed(2) + ' KB';
+        return bytes + ' B';
+    }
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function showNotification(text, isError = false, timeout = 3500) {
+        const el = document.getElementById('notification');
+        el.textContent = text;
+        el.className = 'notification ' + (isError ? 'error' : 'ok') + ' show';
+        setTimeout(() => el.classList.remove('show'), timeout);
+    }
+
+    // ---------- Promotion ArtFlow → ACTV (récompense pour les créateurs) ----------
+    const PROMOTE_CATEGORY_OPTIONS = `
+        <option value="emission-znk-artistes">Emission ZNK Artistes</option>
+        <option value="emission-znk-actu">Emission ZNK Actualité</option>
+        <option value="serie-znk-les-reveurs">Serie ZNK Les Rêveurs</option>
+        <option value="studios-effets">Studios Effets</option>
+        <option value="general">Général</option>
+        <option value="__custom__">➕ Autre (nouvelle émission)</option>
+    `;
+
+    function loadArtflowPublications() {
+        try {
+            const raw = localStorage.getItem('artflow_user_publications');
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) { return []; }
+    }
+
+    function renderPromoteList() {
+        const container = document.getElementById('promoteList');
+        const pubs = loadArtflowPublications()
+            .slice()
+            .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
+
+        if (pubs.length === 0) {
+            container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Aucune publication ArtFlow pour le moment.</div>';
+            return;
+        }
+
+        container.innerHTML = pubs.map((p, i) => `
+            <div class="promote-item">
+                <div style="flex:1; min-width: 180px;">
+                    <div class="name">${escapeHtml(p.title || 'Sans titre')}</div>
+                    <div class="meta">👤 ${escapeHtml(p.userName || 'Utilisateur inconnu')} • 🎬 ${escapeHtml(p.showName || 'Mes créations')} • ${escapeHtml(p.duration || 'N/A')}</div>
+                    ${p.promotedToActv ? '<div class="promoted-pill">✅ Déjà publiée sur ACTV</div>' : ''}
+                </div>
+                <div class="promo-controls">
+                    <select class="form-select" id="promoCategory-${i}">${PROMOTE_CATEGORY_OPTIONS}</select>
+                    <input type="text" class="form-input field-hidden" id="promoCategoryCustom-${i}" placeholder="Nom de la nouvelle émission">
+                    <button class="promo-btn" id="promoBtn-${i}" onclick="promoteToActv('${p.id}', ${i})">
+                        🚀 Publier sur ACTV
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        pubs.forEach((p, i) => {
+            const sel = document.getElementById(`promoCategory-${i}`);
+            sel.addEventListener('change', () => {
+                document.getElementById(`promoCategoryCustom-${i}`).classList.toggle('field-hidden', sel.value !== '__custom__');
+            });
+        });
+    }
+    window.renderPromoteList = renderPromoteList;
+
+    function promoteToActv(pubId, i) {
+        const pubs = loadArtflowPublications();
+        const pub = pubs.find(p => p.id === pubId);
+        if (!pub) { showNotification('❌ Publication introuvable', true); return; }
+
+        const sel = document.getElementById(`promoCategory-${i}`);
+        let category = sel.value;
+        if (category === '__custom__') {
+            category = document.getElementById(`promoCategoryCustom-${i}`).value.trim();
+            if (!category) { showNotification('Merci d\'indiquer le nom de la nouvelle émission', true); return; }
+        }
+
+        const emission = {
+            id: `emission_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            videoId: pub.videoId,
+            title: pub.title,
+            type: category,
+            duration: pub.duration || 'N/A',
+            description: pub.description,
+            views: '0',
+            priority: 'medium',
+            videoUrl: pub.videoUrl,
+            videoPath: pub.videoUrl,
+            videoFilename: pub.videoFilename,
+            videoPersistent: true,
+            videoConverted: true,
+            thumbnail: pub.videoUrl,
+            coverImage: pub.videoUrl,
+            publishedAt: new Date().toISOString(),
+            status: 'published',
+            // Traçabilité : d'où vient cette promotion
+            promotedFromArtflow: true,
+            promotedFromUserId: pub.userId,
+            promotedFromUserName: pub.userName,
+            promotedFromPublicationId: pub.id
+        };
+
+        try {
+            const raw = localStorage.getItem('znk_actv_emissions');
+            const emissions = raw ? JSON.parse(raw) : [];
+            emissions.push(emission);
+            localStorage.setItem('znk_actv_emissions', JSON.stringify(emissions));
+        } catch (e) {
+            console.error('Erreur promotion ACTV', e);
+            showNotification('❌ Erreur lors de la publication sur ACTV', true);
+            return;
+        }
+
+        // Marque la publication ArtFlow d'origine comme promue (le user peut le voir sur Ma Télé)
+        try {
+            const allPubs = loadArtflowPublications();
+            const idx = allPubs.findIndex(p => p.id === pubId);
+            if (idx >= 0) {
+                allPubs[idx].promotedToActv = true;
+                allPubs[idx].promotedAt = new Date().toISOString();
+                localStorage.setItem('artflow_user_publications', JSON.stringify(allPubs));
+            }
+        } catch (e) { /* non bloquant */ }
+
+        showNotification(`🏆 "${pub.title}" publiée sur ACTV (${category}) !`);
+        renderPromoteList();
+    }
+    window.promoteToActv = promoteToActv;
+
+    renderFiles();
+    renderPromoteList();
+})();
+</script>
+</body>
+</html>

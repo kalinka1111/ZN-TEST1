@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>ZNK ACTV - Accès</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1300 0%, #3f3902 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Loading Screen */
+        #loadingScreen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1300 0%, #3f3902 100%);
+            z-index: 9999;
+        }
+
+        .loader {
+            text-align: center;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(210, 157, 0, 0.2);
+            border-top-color: #d29d00;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Upgrade Screen (si pas d'abonnement) */
+        #upgradeScreen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1300 0%, #3f3902 100%);
+            padding: 40px;
+        }
+
+        .upgrade-container {
+            max-width: 900px;
+            text-align: center;
+        }
+
+        .upgrade-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upgrade-title {
+            font-size: 42px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #d29d00, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+
+        .upgrade-subtitle {
+            font-size: 18px;
+            color: #a1a1aa;
+            margin-bottom: 40px;
+        }
+
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .plan-card {
+            background: rgba(63, 57, 2, 0.3);
+            border: 2px solid #785e02;
+            border-radius: 16px;
+            padding: 32px 24px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-card:hover {
+            border-color: #d29d00;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(210, 157, 0, 0.3);
+        }
+
+        .plan-card.popular {
+            border-color: #d29d00;
+            background: rgba(210, 157, 0, 0.1);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #d29d00;
+            color: #1a1300;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .plan-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .plan-price {
+            font-size: 36px;
+            font-weight: bold;
+            color: #d29d00;
+            margin-bottom: 8px;
+        }
+
+        .plan-price span {
+            font-size: 16px;
+            color: #a1a1aa;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin: 24px 0;
+            text-align: left;
+        }
+
+        .plan-features li {
+            padding: 8px 0;
+            font-size: 14px;
+            color: #e5e5e5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .plan-features li::before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .plan-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #d29d00, #785e02);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .plan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(210, 157, 0, 0.4);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #785e02;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ACTV Content (si abonnement actif) */
+        #actvContent {
+            display: none;
+            width: 100%;
+            height: 100vh;
+        }
+
+        #actvFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(63, 57, 2, 0.95);
+            border: 1px solid #d29d00;
+            border-radius: 12px;
+            padding: 16px 20px;
+            max-width: 350px;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            z-index: 10000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success { border-color: #10b981; }
+        .notification.error { border-color: #ef4444; }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="loader">
+            <div class="spinner"></div>
+            <div style="font-size: 18px; color: #d29d00;">Vérification de l'accès ACTV...</div>
+        </div>
+    </div>
+
+    <!-- Upgrade Screen (pas d'abonnement) -->
+    <div id="upgradeScreen">
+        <div class="upgrade-container">
+            <div class="upgrade-icon">📺</div>
+            <h1 class="upgrade-title">ZNK ACTV</h1>
+            <p class="upgrade-subtitle">
+                Débloquez l'accès à notre télévision digitale avec des centaines d'émissions,<br>
+                des lives exclusifs et du contenu premium de nos studios partenaires.
+            </p>
+
+            <div class="plans-grid">
+                <!-- Plan Basic -->
+                <div class="plan-card">
+                    <div class="plan-name">Basic</div>
+                    <div class="plan-price">9,99€ <span>/mois</span></div>
+                    <ul class="plan-features">
+                        <li>Accès ZNK TV</li>
+                        <li>Tous les lives</li>
+                        <li>Bibliothèque complète</li>
+                        <li>Qualité HD</li>
+                        <li>1 appareil</li>
+                    </ul>
+                    <button class="plan-btn" onclick="subscribeToPlan('basic')">
+                        Souscrire
+                    </button>
+                </div>
+
+                <!-- Plan Premium -->
+                <div class="plan-card popular">
+                    <span class="popular-badge">POPULAIRE</span>
+                    <div class="plan-name">Premium</div>
+                    <div class="plan-price">19,99€ <span>/mois</span></div>
+                    <ul class="plan-features">
+                        <li>Tout de Basic +</li>
+                        <li>Contenu exclusif</li>
+                        <li>Téléchargements offline</li>
+                        <li>Créer vos studios</li>
+                        <li>Qualité 4K</li>
+                        <li>3 appareils</li>
+                    </ul>
+                    <button class="plan-btn" onclick="subscribeToPlan('premium')">
+                        Souscrire
+                    </button>
+                </div>
+
+                <!-- Plan Pro -->
+                <div class="plan-card">
+                    <div class="plan-name">Pro</div>
+                    <div class="plan-price">49,99€ <span>/mois</span></div>
+                    <ul class="plan-features">
+                        <li>Tout de Premium +</li>
+                        <li>Analytics avancés</li>
+                        <li>Streaming prioritaire</li>
+                        <li>Branding personnalisé</li>
+                        <li>Support dédié</li>
+                        <li>5 appareils</li>
+                    </ul>
+                    <button class="plan-btn" onclick="subscribeToPlan('pro')">
+                        Souscrire
+                    </button>
+                </div>
+            </div>
+
+            <button class="back-btn" onclick="goBack()">
+                ← Retour au dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- ACTV Content (iframe vers actv.html) -->
+    <div id="actvContent">
+        <iframe id="actvFrame" src="actv.html"></iframe>
+    </div>
+
+    <script>
+        // ============================================
+        // VÉRIFICATION D'ACCÈS ACTV
+        // ============================================
+
+        async function checkACTVAccess() {
+            try {
+                // 1. Récupérer l'utilisateur connecté depuis votre base ZNK
+                const currentUser = getCurrentUser(); // Votre fonction existante
+                
+                if (!currentUser) {
+                    showNotification('Veuillez vous connecter pour accéder à ACTV', 'error');
+                    setTimeout(() => goBack(), 2000);
+                    return;
+                }
+
+                console.log('✅ Utilisateur connecté:', currentUser.email);
+
+                // 2. Vérifier l'abonnement
+                const hasSubscription = await checkUserSubscription(currentUser);
+
+                // 3. Afficher l'écran approprié
+                document.getElementById('loadingScreen').style.display = 'none';
+
+                if (hasSubscription) {
+                    // ✅ ACCÈS ACCORDÉ
+                    console.log('🎬 Accès ACTV accordé');
+                    showACTV();
+                } else {
+                    // ❌ ABONNEMENT REQUIS
+                    console.log('📺 Abonnement requis');
+                    showUpgradeScreen();
+                }
+
+            } catch (error) {
+                console.error('❌ Erreur vérification accès:', error);
+                document.getElementById('loadingScreen').style.display = 'none';
+                showNotification('Erreur lors de la vérification', 'error');
+                setTimeout(() => goBack(), 2000);
+            }
+        }
+
+        // ============================================
+        // FONCTIONS D'ACCÈS À VOTRE BASE ZNK
+        // ============================================
+
+        function getCurrentUser() {
+            // 📌 REMPLACER PAR VOTRE CODE EXISTANT
+            // Exemple : récupérer depuis localStorage, ou votre système d'auth
+            
+            const userStr = localStorage.getItem('znk_current_user');
+            if (userStr) {
+                return JSON.parse(userStr);
+            }
+            return null;
+
+            // Ou si vous utilisez une autre méthode :
+            // return window.znkAuth.getCurrentUser();
+        }
+
+        async function checkUserSubscription(user) {
+            // 📌 REMPLACER PAR VOTRE LOGIQUE D'ABONNEMENT
+            
+            // Option 1 : Vérifier dans localStorage
+            const subscription = localStorage.getItem('znk_subscription');
+            if (subscription) {
+                const sub = JSON.parse(subscription);
+                
+                // Vérifier si actif et pas expiré
+                if (sub.status === 'active' && new Date(sub.expiresAt) > new Date()) {
+                    return true;
+                }
+            }
+
+            // Option 2 : Vérifier via API externe (si vous avez un backend)
+            /*
+            try {
+                const response = await fetch(`https://api.znk.com/user/${user.id}/subscription`, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                });
+                const data = await response.json();
+                return data.subscription?.status === 'active';
+            } catch (e) {
+                console.error('Erreur API:', e);
+                return false;
+            }
+            */
+
+            // Option 3 : Vérifier depuis votre DB Electron locale
+            /*
+            const db = window.znkDB; // Votre base de données
+            const userSub = await db.subscriptions.findOne({ userId: user.id });
+            return userSub && userSub.status === 'active';
+            */
+
+            // Par défaut : pas d'abonnement
+            return false;
+        }
+
+        // ============================================
+        // SOUSCRIPTION À UN PLAN
+        // ============================================
+
+        async function subscribeToPlan(planName) {
+            console.log('📝 Souscription au plan:', planName);
+
+            // 📌 OPTION 1 : Ouvrir une page de paiement externe (Stripe, PayPal, etc.)
+            /*
+            const user = getCurrentUser();
+            const paymentUrl = `https://payment.znk.com/subscribe?plan=${planName}&userId=${user.id}`;
+            
+            // Ouvrir dans le navigateur par défaut
+            if (window.electron) {
+                window.electron.openExternal(paymentUrl);
+            } else {
+                window.open(paymentUrl, '_blank');
+            }
+            
+            showNotification('Redirection vers la page de paiement...', 'success');
+            */
+
+            // 📌 OPTION 2 : Simuler un abonnement (pour dev/test)
+            const user = getCurrentUser();
+            const subscription = {
+                userId: user.id,
+                plan: planName,
+                status: 'active',
+                startedAt: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // +30 jours
+            };
+
+            localStorage.setItem('znk_subscription', JSON.stringify(subscription));
+            
+            showNotification(`✅ Abonnement ${planName} activé!`, 'success');
+            
+            setTimeout(() => {
+                checkACTVAccess(); // Recharger pour afficher ACTV
+            }, 1500);
+        }
+
+        // ============================================
+        // AFFICHAGE DES ÉCRANS
+        // ============================================
+
+        function showUpgradeScreen() {
+            document.getElementById('upgradeScreen').style.display = 'flex';
+        }
+
+        function showACTV() {
+            document.getElementById('actvContent').style.display = 'block';
+            
+            // Envoyer les infos utilisateur à l'iframe ACTV
+            const user = getCurrentUser();
+            const iframe = document.getElementById('actvFrame');
+            
+            iframe.onload = () => {
+                iframe.contentWindow.postMessage({
+                    type: 'USER_DATA',
+                    user: user
+                }, '*');
+            };
+        }
+
+        function goBack() {
+            // 📌 REMPLACER PAR VOTRE NAVIGATION
+            // Option 1 : Si c'est dans Electron avec votre routing
+            if (window.navigateInDashboard) {
+                window.navigateInDashboard('dashboard.html');
+            }
+            // Option 2 : Si c'est une SPA
+            else if (window.history.length > 1) {
+                window.history.back();
+            }
+            // Option 3 : Redirection simple
+            else {
+                window.location.href = 'dashboard.html';
+            }
+        }
+
+        // ============================================
+        // NOTIFICATIONS
+        // ============================================
+
+        function showNotification(message, type = 'info') {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+
+            setTimeout(() => notif.classList.add('show'), 100);
+            setTimeout(() => {
+                notif.classList.remove('show');
+                setTimeout(() => notif.remove(), 300);
+            }, 4000);
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎬 ZNK ACTV - Initialisation...');
+            checkACTVAccess();
+        });
+
+        // Écouter les messages de l'iframe ACTV
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'ACTV_READY') {
+                console.log('✅ ACTV chargé et prêt');
+            }
+        });
+    </script>
+
+</body>
+</html>

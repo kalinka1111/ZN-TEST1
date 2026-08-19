@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK System - Dashboard Professeur</title>
+    <script src="/assets/js/znk-header-system.js" onerror="console.warn('⚠️ znk-header-system.js non disponible')"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e, #1e293b);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(30, 41, 59, 0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .logo { display: flex; align-items: center; gap: 15px; }
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 18px;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+        .logo-text {
+            font-size: 22px; font-weight: 700;
+            background: linear-gradient(135deg, #ff6b35, #f7931e, #8b5cf6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        .admin-info { display: flex; align-items: center; gap: 15px; font-size: 14px; color: #a0a0a0; flex-wrap: wrap; }
+        .status-indicator { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            50% { opacity: 0.5; box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+        .sync-badge { font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 10px; }
+        .sync-badge.on { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .sync-badge.partitioned { background: rgba(139,92,246,0.2); color: #c084fc; }
+        .sync-badge.off { background: rgba(255,255,255,0.08); color: #999; }
+
+        .main-container { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+        .dashboard-title { text-align: center; margin-bottom: 2rem; }
+        .dashboard-title h1 {
+            font-size: 2.6rem; font-weight: 700; margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff, #ff6b35, #8b5cf6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .dashboard-title p { font-size: 1.1rem; color: #a0a0a0; }
+
+        /* ===== Carte compte (identité du prof) ===== */
+        .account-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+        }
+        .avatar {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; flex-shrink: 0;
+            background-size: cover; background-position: center;
+            border: 2px solid rgba(255,255,255,0.15);
+        }
+        .account-info { flex: 1; min-width: 200px; }
+        .account-info .name { font-size: 1.2rem; font-weight: 700; }
+        .account-info .meta { font-size: 0.85rem; color: #a0a0a0; margin-top: 3px; }
+        .account-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .local-mode-banner {
+            background: rgba(247,147,30,0.12);
+            border: 1px solid rgba(247,147,30,0.3);
+            color: #f7931e;
+            border-radius: 10px;
+            padding: 0.5rem 0.9rem;
+            font-size: 0.8rem;
+            flex-basis: 100%;
+        }
+
+        .btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff; padding: 0.5rem 1rem; border-radius: 10px;
+            font-size: 0.85rem; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn:hover { background: rgba(124,58,237,0.25); border-color: rgba(124,58,237,0.5); }
+        .btn.primary { background: linear-gradient(135deg, #7c3aed, #6d28d9); border: none; font-weight: 600; }
+        .btn.small { padding: 0.35rem 0.7rem; font-size: 0.75rem; }
+        .btn.danger { background: rgba(220,38,38,0.15); border-color: rgba(220,38,38,0.4); color: #fca5a5; }
+        .btn.danger:hover { background: rgba(220,38,38,0.3); }
+
+        /* ===== Stats rapides (mes interrogations) ===== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .stat-card .num { font-size: 1.8rem; font-weight: 700; color: #f7931e; }
+        .stat-card .label { font-size: 0.8rem; color: #a0a0a0; margin-top: 4px; }
+
+        .sections { display: grid; gap: 2.5rem; }
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+        .section-title {
+            font-size: 1.4rem; font-weight: 600; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-icon {
+            width: 24px; height: 24px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+        }
+
+        .modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+        .module-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .module-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 107, 53, 0.3); }
+        .module-header { display: flex; align-items: center; gap: 15px; margin-bottom: 1rem; }
+        .module-icon {
+            width: 50px; height: 50px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: white;
+        }
+        .module-title { font-size: 1.1rem; font-weight: 600; }
+        .module-description { color: #a0a0a0; font-size: 0.88rem; line-height: 1.4; margin-bottom: 1rem; }
+        .module-status {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: rgba(0, 255, 136, 0.15); color: #00ff88;
+            padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .empty { text-align: center; color: #a0a0a0; padding: 2rem; }
+
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+        }
+        .modal-content {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 15, 35, 0.95));
+            margin: 6% auto; padding: 2rem; border: 1px solid rgba(255, 107, 53, 0.3);
+            border-radius: 20px; width: 90%; max-width: 600px; position: relative;
+        }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: #ff6b35; }
+        .modal h2 { color: #ff6b35; margin-bottom: 1rem; font-size: 1.4rem; }
+        .modal p { color: #c9c9d6; line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .modules-grid { grid-template-columns: 1fr; }
+            .dashboard-title h1 { font-size: 2rem; }
+            .main-container { padding: 1rem; }
+            .eleve-form { grid-template-columns: 1fr; }
+            .devoir-form { grid-template-columns: 1fr; }
+            .header-content { justify-content: center; text-align: center; }
+        }
+
+        @media (max-width: 480px) {
+            .main-container { padding: 0.75rem; }
+            .dashboard-title h1 { font-size: 1.5rem; }
+            .dashboard-title p { font-size: 0.9rem; }
+            .header { padding: 0.75rem 1rem; }
+            .logo-text { font-size: 18px; }
+            .account-card { padding: 1.1rem 1.2rem; }
+            .account-actions { width: 100%; }
+            .account-actions .btn { flex: 1 1 auto; justify-content: center; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+            .stat-card { padding: 0.9rem; }
+            .stat-card .num { font-size: 1.4rem; }
+            .section { padding: 1.25rem 1.1rem; }
+            .section-title { font-size: 1.15rem; }
+            .results-filters { flex-direction: column; align-items: stretch; }
+            .eleves-toolbar { flex-direction: column; align-items: stretch; }
+            .eleves-count { margin-left: 0; }
+            .result-row, .eleve-row { flex-direction: column; align-items: stretch; }
+            .result-score { align-self: flex-start; }
+            .eleve-row .e-actions { width: 100%; }
+            .eleve-row .e-actions .btn { flex: 1; justify-content: center; }
+            .classroom-status-row { flex-direction: column; align-items: stretch; }
+            .classroom-status-row .btn { width: 100%; justify-content: center; }
+        }
+
+        /* ===== Résultats des interrogations (envoyés depuis ArtEtudes-*.html) ===== */
+        .results-filters { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+        .results-filters select {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff;
+            padding: 0.45rem 0.8rem; border-radius: 10px; font-size: 0.85rem;
+        }
+        .results-list { display: flex; flex-direction: column; gap: 0.8rem; }
+        .result-row {
+            display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; padding: 1rem 1.2rem;
+        }
+        .result-thumb {
+            width: 56px; height: 56px; border-radius: 10px; object-fit: contain;
+            background: rgba(255,255,255,0.08); flex-shrink: 0;
+        }
+        .result-info { flex: 1; min-width: 200px; }
+        .result-info .r-title { font-weight: 700; }
+        .result-info .r-meta { color: #a0a0a0; font-size: 0.82rem; margin-top: 2px; }
+        .result-score {
+            font-size: 1.3rem; font-weight: 700; color: #f7931e;
+            background: rgba(247,147,30,0.12); border-radius: 12px; padding: 0.4rem 0.9rem;
+        }
+        .result-score.none { color: #a0a0a0; background: rgba(255,255,255,0.06); font-size: 0.85rem; font-weight: 500; }
+
+        /* Recherche élève (au-dessus de la liste de résultats) */
+        .student-search-wrap { position: relative; flex: 1; min-width: 220px; }
+        .student-search-wrap input {
+            width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff;
+            padding: 0.45rem 0.8rem; border-radius: 10px; font-size: 0.85rem;
+        }
+        .student-search-wrap .clear-btn {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #a0a0a0; cursor: pointer; font-size: 0.9rem; display: none;
+        }
+        .student-search-wrap.has-value .clear-btn { display: block; }
+
+        /* ===== Module "Mes élèves" ===== */
+        .eleves-toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.2rem; align-items: center; }
+        .eleves-count { font-size: 0.8rem; color: #a0a0a0; margin-left: auto; }
+        .eleve-form {
+            display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.7rem; align-items: end;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; padding: 1rem; margin-bottom: 1.2rem;
+        }
+        .eleve-form label { display: block; font-size: 0.75rem; color: #a0a0a0; margin-bottom: 0.3rem; }
+        .eleve-form input[type=text], .eleve-form select {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; padding: 0.55rem 0.7rem; color: #fff; font-size: 0.85rem; font-family: inherit;
+        }
+        @media (max-width: 700px) { .eleve-form { grid-template-columns: 1fr; } }
+        .eleves-list { display: flex; flex-direction: column; gap: 0.7rem; }
+        .eleve-row {
+            display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; padding: 0.9rem 1.1rem;
+        }
+        .eleve-row .e-info { flex: 1; min-width: 180px; }
+        .eleve-row .e-name { font-weight: 700; }
+        .eleve-row .e-meta { color: #a0a0a0; font-size: 0.8rem; margin-top: 2px; }
+        .eleve-row .e-creds {
+            font-size: 0.78rem; color: #c084fc; background: rgba(139,92,246,0.12);
+            border-radius: 8px; padding: 0.3rem 0.6rem; white-space: nowrap;
+        }
+        .eleve-row .e-actions { display: flex; gap: 0.4rem; }
+
+        /* ===== Module "Classe locale" (serveur réseau école, znk-classroom-*) ===== */
+        .classroom-status-row {
+            display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1.2rem;
+        }
+        .classroom-status-row .cs-info { flex: 1; min-width: 220px; }
+        .classroom-status-row .cs-title { font-weight: 700; font-size: 0.95rem; }
+        .classroom-status-row .cs-meta { font-size: 0.8rem; color: #a0a0a0; margin-top: 3px; }
+        .classroom-badge {
+            font-size: 0.75rem; padding: 0.3rem 0.7rem; border-radius: 10px; font-weight: 600; white-space: nowrap;
+        }
+        .classroom-badge.on { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .classroom-badge.off { background: rgba(255,255,255,0.08); color: #999; }
+        .classroom-badge.unavailable { background: rgba(220,38,38,0.15); color: #fca5a5; }
+
+        .devoir-form {
+            display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 0.7rem;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; padding: 1rem; margin-bottom: 1.2rem;
+        }
+        .devoir-form label { display: block; font-size: 0.75rem; color: #a0a0a0; margin-bottom: 0.3rem; }
+        .devoir-form input, .devoir-form textarea {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; padding: 0.55rem 0.7rem; color: #fff; font-size: 0.85rem; font-family: inherit;
+        }
+        .devoir-form .full-row { grid-column: 1 / -1; }
+        .devoir-form textarea { min-height: 70px; resize: vertical; }
+        @media (max-width: 700px) { .devoir-form { grid-template-columns: 1fr; } }
+
+        .devoirs-list { display: flex; flex-direction: column; gap: 0.7rem; }
+        .devoir-row {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; padding: 0.9rem 1.1rem;
+        }
+        .devoir-row .d-title { font-weight: 700; }
+        .devoir-row .d-meta { color: #a0a0a0; font-size: 0.78rem; margin-top: 2px; }
+        .devoir-row .d-contenu { font-size: 0.85rem; color: #e5e5e5; margin-top: 6px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <header class="header" id="znkHeader">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">Z</div>
+                <div class="logo-text">ZNK SYSTEM</div>
+            </div>
+            <div class="admin-info">
+                <div class="status-indicator"></div>
+                <span>Dashboard Professeur</span>
+                <span id="syncBadge" class="sync-badge">…</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="dashboard-title">
+            <h1>Dashboard Professeur</h1>
+            <p>Plateforme d'enseignement et gestion de classe ZNK</p>
+        </div>
+
+        <!-- ID du prof + École : chaque école n'a qu'un seul ID École, calculé
+             automatiquement à partir de son nom (normalisé). Si plusieurs professeurs
+             saisissent exactement le même nom d'école — même sur des appareils
+             différents et hors ligne — ils obtiennent tous le même ID École, sans
+             avoir besoin d'un serveur central ou d'une saisie manuelle d'ID. -->
+        <div class="account-card" id="ecoleCard" style="flex-direction: column; align-items: stretch; gap: 1rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.8rem;">
+                <div>
+                    <div style="font-size:0.8rem; color:#a0a0a0;">ID du professeur</div>
+                    <div style="font-size:1rem; font-weight:700;" id="profIdDisplay">---</div>
+                </div>
+                <button class="btn small" onclick="copyProfId()">📋 Copier mon ID</button>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.8rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:0.9rem;">
+                <div style="flex:1; min-width:220px;">
+                    <div style="font-size:0.8rem; color:#a0a0a0;">École</div>
+                    <div style="font-size:1.05rem; font-weight:700;" id="ecoleNomDisplay">Aucune école renseignée</div>
+                    <div style="font-size:0.82rem; color:#c084fc; margin-top:3px;" id="ecoleIdDisplay"></div>
+                </div>
+                <button class="btn primary small" onclick="editEcoleNom()">🏫 Renseigner l'école</button>
+            </div>
+        </div>
+
+        <!-- Identité du prof (même logique que etudes.html : compte znk_account) -->
+        <div class="account-card">
+            <div class="avatar" id="avatarDisplay"><span id="avatarEmoji">🧑‍🏫</span></div>
+            <div class="account-info">
+                <div class="name" id="profNameDisplay">Professeur</div>
+                <div class="meta" id="profMetaDisplay">Identifiant : ---</div>
+            </div>
+            <div class="account-actions">
+                <label class="btn" style="cursor:pointer;">
+                    📷 Photo
+                    <input type="file" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+                </label>
+                <a class="btn primary" href="terminal-interrogations.html">❓ Mes interrogations</a>
+                <a class="btn" href="terminal-professeurs.html">🛠️ Modules & réglages</a>
+            </div>
+            <div class="local-mode-banner" id="localModeBanner" style="display:none;">
+                ⚠️ Aucun compte détecté — mode local uniquement. Les interrogations créées ici resteront liées à cet
+                appareil tant qu'aucun compte n'est associé (via inscription.html).
+            </div>
+        </div>
+
+        <!-- Stats rapides sur MES interrogations uniquement -->
+        <div class="stats-row" id="statsRow"></div>
+
+        <!-- Création de Contenu Pédagogique : accès direct aux outils de création
+             (studio d'enregistrement, création d'interrogations, gestion des devoirs,
+             publication de vidéos publiques sur ZNK TV). -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-icon" style="background:#ff6b35">🎬</div>
+                Création de Contenu Pédagogique
+            </div>
+            <div class="modules-grid">
+                <a class="module-card" href="./modules/Live.html" style="text-decoration:none; color:inherit; display:block;">
+                    <div class="module-header">
+                        <div class="module-icon" style="background:#ff6b35">🎙️</div>
+                        <div class="module-title">Studio d'enregistrement</div>
+                    </div>
+                    <div class="module-description">Enregistrez vos cours en direct ou en vidéo pour vos élèves.</div>
+                </a>
+                <a class="module-card" href="#" onclick="event.preventDefault(); window.location.href = getCreerLeconPath();" style="text-decoration:none; color:inherit; display:block;">
+                    <div class="module-header">
+                        <div class="module-icon" style="background:#7c3aed">📝</div>
+                        <div class="module-title">Création d'interrogations</div>
+                    </div>
+                    <div class="module-description">Créez des leçons et interrogations à publier à vos élèves.</div>
+                </a>
+                <a class="module-card" href="./modules-etudes/terminal-lecons.html" style="text-decoration:none; color:inherit; display:block;">
+                    <div class="module-header">
+                        <div class="module-icon" style="background:#00a3d7">📋</div>
+                        <div class="module-title">Gestion des devoirs</div>
+                    </div>
+                    <div class="module-description">Gérez et suivez les devoirs donnés à vos élèves.</div>
+                </a>
+                <a class="module-card" href="./modules-etudes/artflow-publish-etudes.html" style="text-decoration:none; color:inherit; display:block;">
+                    <div class="module-header">
+                        <div class="module-icon" style="background:#f7931e">📡</div>
+                        <div class="module-title">Publication sur notre télé</div>
+                    </div>
+                    <div class="module-description">Publiez vos vidéos pédagogiques publiquement sur ZNK TV.</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Notifications parents + Interface Parents & Contrôles -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-icon" style="background:#43e97b">👨‍👩‍👧</div>
+                Notifications parents & Contrôles
+            </div>
+            <div class="modules-grid">
+                <a class="module-card" href="./modules-etudes/parents.html" style="text-decoration:none; color:inherit; display:block;">
+                    <div class="module-header">
+                        <div class="module-icon" style="background:#43e97b">🔔</div>
+                        <div class="module-title">Interface Parents & Contrôles</div>
+                    </div>
+                    <div class="module-description">Consultez les notifications envoyées aux parents et gérez les contrôles associés à vos élèves.</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Mes élèves : création/gestion des comptes élèves (compatible auth-hub.html,
+             même contrat de données que celui écrit historiquement par inscription.html :
+             clé localStorage znk_eleves_<profId>, objets {loginId, pin, prenom, nom, niveau, niveauGroupe, profId}). -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-icon" style="background:#43e97b">👩‍🎓</div>
+                Mes élèves
+            </div>
+
+            <div class="eleve-form">
+                <div>
+                    <label>Prénom</label>
+                    <input type="text" id="eleveFormPrenom" placeholder="Ex: Léa">
+                </div>
+                <div>
+                    <label>Nom</label>
+                    <input type="text" id="eleveFormNom" placeholder="Ex: Girard">
+                </div>
+                <div>
+                    <label>Niveau</label>
+                    <select id="eleveFormNiveau">
+                        <option value="">-- Niveau --</option>
+                        <optgroup label="Maternelle">
+                            <option value="ps">Petite Section (PS)</option>
+                            <option value="ms">Moyenne Section (MS)</option>
+                            <option value="gs">Grande Section (GS)</option>
+                        </optgroup>
+                        <optgroup label="Primaire">
+                            <option value="cp">CP</option>
+                            <option value="ce1">CE1</option>
+                            <option value="ce2">CE2</option>
+                            <option value="cm1">CM1</option>
+                            <option value="cm2">CM2</option>
+                        </optgroup>
+                        <optgroup label="Collège">
+                            <option value="6eme">6ème</option>
+                            <option value="5eme">5ème</option>
+                            <option value="4eme">4ème</option>
+                            <option value="3eme">3ème</option>
+                        </optgroup>
+                        <optgroup label="Lycée">
+                            <option value="seconde">Seconde</option>
+                            <option value="premiere">Première</option>
+                            <option value="terminale">Terminale</option>
+                        </optgroup>
+                        <optgroup label="Supérieur">
+                            <option value="bts">BTS</option>
+                            <option value="licence">Licence</option>
+                            <option value="master">Master</option>
+                            <option value="doctorat">Doctorat</option>
+                        </optgroup>
+                        <optgroup label="Autre">
+                            <option value="formation">Formation professionnelle</option>
+                            <option value="autre">Autre</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <button class="btn primary" onclick="addEleveFromForm()">➕ Ajouter</button>
+            </div>
+
+            <div class="eleves-toolbar">
+                <span class="eleves-count" id="elevesCount">0 élève(s)</span>
+            </div>
+            <div class="eleves-list" id="elevesList">
+                <div class="empty">Chargement des élèves…</div>
+            </div>
+        </div>
+
+        <!-- Classe locale : serveur réseau école (znk-classroom-server.js) + publication
+             de devoirs. Quand ce serveur est actif, "Ajouter" un élève ci-dessus l'inscrit
+             aussi ici (avec un PIN unique généré par le serveur, distinct du 1234 partagé),
+             ce qui lui permet de se connecter depuis SON PROPRE PC via ZNKClassroomClient,
+             sans avoir besoin d'être sur cet appareil ni d'avoir Internet (réseau école
+             suffit). Sans serveur actif, "Mes élèves" continue de fonctionner comme avant
+             (compte élève utilisable seulement sur cet appareil, PIN 1234 partagé). -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-icon" style="background:#00a3d7">🏫</div>
+                Classe locale (réseau de l'école)
+            </div>
+
+            <div class="classroom-status-row">
+                <div class="cs-info">
+                    <div class="cs-title" id="classroomStatusTitle">Vérification…</div>
+                    <div class="cs-meta" id="classroomStatusMeta">Permet aux élèves de se connecter depuis leur propre PC, sur le réseau de l'école, sans Internet.</div>
+                </div>
+                <span class="classroom-badge off" id="classroomBadge">…</span>
+                <button class="btn primary small" id="classroomToggleBtn" onclick="toggleClassroomServer()">Activer</button>
+            </div>
+
+            <div class="devoir-form">
+                <div>
+                    <label>Titre du devoir</label>
+                    <input type="text" id="devoirFormTitre" placeholder="Ex: Poésie à apprendre">
+                </div>
+                <div>
+                    <label>Matière</label>
+                    <input type="text" id="devoirFormMatiere" placeholder="Ex: Français">
+                </div>
+                <div>
+                    <label>Date limite</label>
+                    <input type="date" id="devoirFormDateLimite">
+                </div>
+                <div class="full-row">
+                    <label>Contenu / consignes</label>
+                    <textarea id="devoirFormContenu" placeholder="Ex: Apprendre la poésie page 12 et être capable de la réciter."></textarea>
+                </div>
+                <div class="full-row">
+                    <button class="btn primary" onclick="publishDevoirFromForm()">📤 Publier aux élèves</button>
+                </div>
+            </div>
+
+            <div class="devoirs-list" id="devoirsClasseList">
+                <div class="empty">Activez la classe locale pour publier des devoirs.</div>
+            </div>
+        </div>
+
+        <!-- Résultat des interrogations : notes envoyées depuis ArtEtudes-*.html
+             quand un élève valide le résultat final d'une leçon (quiz + dessin). -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-icon" style="background:#7c3aed">🧪</div>
+                Résultat des interrogations
+            </div>
+            <div class="results-filters">
+                <div class="student-search-wrap" id="studentSearchWrap">
+                    <input type="text" id="resultsStudentFilter" list="elevesDatalist"
+                           placeholder="🔎 Rechercher un élève..." oninput="onStudentFilterInput()">
+                    <datalist id="elevesDatalist"></datalist>
+                    <button type="button" class="clear-btn" onclick="clearStudentFilter()" title="Effacer">✕</button>
+                </div>
+                <select id="resultsLevelFilter" onchange="renderQuizResults()">
+                    <option value="">Tous les niveaux</option>
+                    <option value="maternelle">🧸 Maternelle</option>
+                    <option value="primaire">📚 Primaire</option>
+                    <option value="college">🎓 Collège</option>
+                    <option value="lycee">🏆 Lycée</option>
+                </select>
+            </div>
+            <div class="results-list" id="quizResultsList">
+                <div class="empty">Chargement des résultats…</div>
+            </div>
+        </div>
+
+        <div class="sections" id="sectionsContainer">
+            <div class="empty">Chargement du dashboard…</div>
+        </div>
+    </div>
+
+    <div class="modal" id="moduleModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <p id="modalDescription"></p>
+        </div>
+    </div>
+
+    <!-- Modal de saisie générique, utilisée à la place de window.prompt() : Electron
+         désactive volontairement prompt() ("prompt() is not supported."), ce qui
+         cassait silencieusement "Renseigner l'école" et le changement de PIN élève
+         dans le build Electron alors que ça fonctionnait dans un navigateur classique. -->
+    <div class="modal" id="inputModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeInputModal(false)">&times;</span>
+            <h2 id="inputModalTitle"></h2>
+            <input type="text" id="inputModalField"
+                   style="width:100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 0.6rem 0.8rem; color: #fff; font-size: 0.9rem; font-family: inherit; margin: 1rem 0;">
+            <div style="display:flex; gap:0.6rem; justify-content:flex-end;">
+                <button class="btn" onclick="closeInputModal(false)">Annuler</button>
+                <button class="btn primary" onclick="closeInputModal(true)">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="znk-professeur-manifest.js" onerror="window.__znkManifestLoadFailed = true;"></script>
+    <script>
+        // Compte Admin Enseignant officiel (artetudes@echo.znk) : même convention
+        // que dans ZNKartEtudesDash-prof.html — seul ce compte est redirigé vers
+        // l'outil admin de création de leçon.
+        const SUPER_PROF_ID = 'ZNK-2026-6020';
+        function isSuperProf() {
+            try {
+                const account = JSON.parse(localStorage.getItem('znk_account') || '{}');
+                return account.idZNK === SUPER_PROF_ID;
+            } catch (e) { return false; }
+        }
+        function getCreerLeconPath() {
+            return isSuperProf() ? './modules-etudes/creer-lecon-admin.html' : './modules-etudes/creer-lecon.html';
+        }
+
+        // ================= Identité du prof =================
+        // Réutilise la même convention que etudes.html : un compte créé par inscription.html
+        // et stocké dans localStorage sous 'znk_account' : { idZNK, email, prenom, nom, role, ... }.
+        // Si aucun compte n'est trouvé (app pas encore reliée à un système de connexion, ou
+        // usage mono-poste hors ligne), on génère et on conserve un identifiant local persistant,
+        // pour que les données restent quand même cohérentes d'une session à l'autre.
+        let currentProfId = null;
+        let avatarStorageKey = 'znk_avatar_photo_prof';
+
+        function getStoredAccount() {
+            try {
+                const raw = localStorage.getItem('znk_account');
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) { return null; }
+        }
+
+        function resolveProfIdentity() {
+            const account = getStoredAccount();
+            if (account && account.idZNK) {
+                const fullName = `${account.prenom || ''} ${account.nom || ''}`.trim();
+                document.getElementById('profNameDisplay').textContent = fullName || 'Professeur';
+                document.getElementById('profMetaDisplay').textContent =
+                    `Identifiant : ${account.idZNK}${account.email ? ' · ' + account.email : ''}`;
+                document.getElementById('localModeBanner').style.display = 'none';
+                avatarStorageKey = `znk_avatar_photo_${account.idZNK}`;
+                return account.idZNK;
+            }
+
+            // Repli local : pas de compte, mais on garde un identifiant stable sur cet appareil
+            let localId = localStorage.getItem('znk_prof_local_id');
+            if (!localId) {
+                localId = 'prof-local-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+                localStorage.setItem('znk_prof_local_id', localId);
+            }
+            document.getElementById('profNameDisplay').textContent = 'Professeur (mode local)';
+            document.getElementById('profMetaDisplay').textContent = `Identifiant local : ${localId}`;
+            document.getElementById('localModeBanner').style.display = 'block';
+            avatarStorageKey = `znk_avatar_photo_${localId}`;
+            return localId;
+        }
+
+        function handleAvatarUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                applyAvatarPhoto(e.target.result);
+                try { localStorage.setItem(avatarStorageKey, e.target.result); } catch (err) {}
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ================= École (ID unique déterminé à partir du nom) =================
+        // Un professeur saisit simplement le nom de son école ; l'ID École est calculé
+        // localement à partir de ce nom (normalisé : accents/majuscules/espaces ignorés).
+        // Comme le calcul est déterministe, deux professeurs qui saisissent exactement
+        // le même nom d'école obtiennent automatiquement le même ID École — même hors
+        // ligne, sur des appareils différents, sans compte central ni saisie d'ID.
+        function ecoleStorageKey() { return `znk_ecole_nom_${currentProfId}`; }
+
+        function getEcoleNom() {
+            try { return localStorage.getItem(ecoleStorageKey()) || ''; }
+            catch (e) { return ''; }
+        }
+
+        function saveEcoleNom(nom) {
+            try { localStorage.setItem(ecoleStorageKey(), nom); }
+            catch (e) { console.warn('Impossible d\'enregistrer le nom de l\'école', e); }
+        }
+
+        function normalizeEcoleNom(nom) {
+            return (nom || '').toString()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().trim().replace(/\s+/g, ' ');
+        }
+
+        // Hash déterministe (djb2) : même chaîne en entrée => toujours le même résultat.
+        function hashString(str) {
+            let hash = 5381;
+            for (let i = 0; i < str.length; i++) {
+                hash = (((hash << 5) + hash) + str.charCodeAt(i)) >>> 0;
+            }
+            return hash;
+        }
+
+        function generateEcoleId(nom) {
+            const norm = normalizeEcoleNom(nom);
+            if (!norm) return null;
+            return 'ECO-' + hashString(norm).toString(36).toUpperCase();
+        }
+
+        // Si l'enseignant avait déjà indiqué son établissement lors de l'inscription
+        // (compte "enseignant" / statut "école", champ etablissement dans znk_account),
+        // on le reprend automatiquement ici — pas besoin de le ressaisir. On ne touche
+        // en revanche jamais à un nom d'école déjà défini/modifié depuis ce dashboard.
+        function seedEcoleNomFromAccount() {
+            if (getEcoleNom()) return;
+            const account = getStoredAccount();
+            const nomInscription = account && account.etablissement ? account.etablissement.trim() : '';
+            if (nomInscription) saveEcoleNom(nomInscription);
+        }
+
+        function renderEcoleCard() {
+            const nomDisplay = document.getElementById('ecoleNomDisplay');
+            const idDisplay = document.getElementById('ecoleIdDisplay');
+            if (!nomDisplay || !idDisplay) return;
+            const nom = getEcoleNom();
+            if (!nom) {
+                nomDisplay.textContent = 'Aucune école renseignée';
+                idDisplay.textContent = '';
+                return;
+            }
+            nomDisplay.textContent = nom;
+            idDisplay.textContent = `ID École : ${generateEcoleId(nom)}`;
+        }
+
+        async function editEcoleNom() {
+            const current = getEcoleNom();
+            const nom = await showInputModal('Nom de l\'école', current);
+            if (nom === null) return;
+            const trimmed = nom.trim();
+            if (!trimmed) { alert('⚠️ Le nom de l\'école ne peut pas être vide'); return; }
+            saveEcoleNom(trimmed);
+            renderEcoleCard();
+        }
+
+        function copyProfId() {
+            if (!currentProfId) return;
+            copyTextToClipboard(currentProfId);
+        }
+
+        // navigator.clipboard nécessite un "contexte sécurisé" (https/localhost) : en
+        // Electron (protocole file:// ou app://) elle peut être indisponible, et son
+        // repli historique était window.prompt() — désactivé par Electron. On utilise
+        // donc ici document.execCommand('copy') comme repli, qui fonctionne dans les
+        // deux environnements.
+        function copyTextToClipboard(text) {
+            const done = () => alert('✅ ID copié : ' + text);
+            const fallbackCopy = () => {
+                try {
+                    const temp = document.createElement('textarea');
+                    temp.value = text;
+                    temp.style.position = 'fixed';
+                    temp.style.opacity = '0';
+                    document.body.appendChild(temp);
+                    temp.focus();
+                    temp.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(temp);
+                    done();
+                } catch (err) {
+                    alert('Copiez manuellement cet ID : ' + text);
+                }
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(fallbackCopy);
+            } else {
+                fallbackCopy();
+            }
+        }
+        // ================= Mes élèves =================
+        // Même contrat de données que celui historiquement écrit par inscription.html,
+        // pour rester 100% compatible avec auth-hub.html (findEleveByLoginId scanne
+        // toutes les clés localStorage 'znk_eleves_<profId>', peu importe qui les a créées) :
+        //   clé   : znk_eleves_<profId>
+        //   objet : { loginId, pin, prenom, nom, niveau, niveauGroupe, profId, createdAt }
+        const NIVEAU_TO_GROUPE = {
+            ps: 'maternelle', ms: 'maternelle', gs: 'maternelle',
+            cp: 'primaire', ce1: 'primaire', ce2: 'primaire', cm1: 'primaire', cm2: 'primaire',
+            '6eme': 'college', '5eme': 'college', '4eme': 'college', '3eme': 'college',
+            seconde: 'lycee', premiere: 'lycee', terminale: 'lycee',
+            bts: 'superieur', licence: 'superieur', master: 'superieur',
+            doctorat: 'superieur', formation: 'autre', autre: 'autre'
+        };
+
+        function slugify(str) {
+            return (str || '')
+                .toString()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z]/g, '');
+        }
+
+        function niveauToGroupe(niveau) { return NIVEAU_TO_GROUPE[niveau] || 'autre'; }
+
+        function niveauLabelFromValue(niveau) {
+            if (!niveau) return 'Niveau non renseigné';
+            const opt = document.querySelector(`#eleveFormNiveau option[value="${niveau}"]`);
+            return opt ? opt.textContent : niveau;
+        }
+
+        // Génère un identifiant de connexion unique (même algo que inscription.html) :
+        // prénom slugifié + 1ère lettre du nom, avec suffixe numérique en cas de collision.
+        function generateLoginId(prenom, nom, existingIds) {
+            const base = slugify(prenom) + slugify(nom).charAt(0);
+            let id = base || 'eleve';
+            let n = 1;
+            while (existingIds.has(id)) { id = base + n; n++; }
+            existingIds.add(id);
+            return id;
+        }
+
+        function elevesStorageKey() { return `znk_eleves_${currentProfId}`; }
+
+        function getEleves() {
+            try { return JSON.parse(localStorage.getItem(elevesStorageKey()) || '[]'); }
+            catch (e) { return []; }
+        }
+
+        function saveEleves(list) {
+            try { localStorage.setItem(elevesStorageKey(), JSON.stringify(list)); }
+            catch (e) { console.warn('Impossible d\'enregistrer la liste des élèves', e); }
+        }
+
+        async function addEleveFromForm() {
+            const prenomInput = document.getElementById('eleveFormPrenom');
+            const nomInput = document.getElementById('eleveFormNom');
+            const niveauSelect = document.getElementById('eleveFormNiveau');
+            const prenom = prenomInput.value.trim();
+            const nom = nomInput.value.trim();
+            const niveau = niveauSelect.value;
+
+            if (!prenom || !nom) { alert('⚠️ Renseignez le prénom et le nom de l\'élève'); return; }
+            if (!niveau) { alert('⚠️ Sélectionnez le niveau de l\'élève'); niveauSelect.focus(); return; }
+
+            const addBtn = document.querySelector('.eleve-form .btn.primary');
+            if (addBtn) { addBtn.disabled = true; addBtn.textContent = '⏳ Ajout…'; }
+
+            try {
+                let nouvelEleve;
+
+                if (classroomActive && window.electronAPI && window.electronAPI.classroomAddEleve) {
+                    // Classe locale active : le serveur (znk-classroom-server.js) est la
+                    // source de vérité — il génère un identifiant ET un PIN UNIQUE par
+                    // élève (contrairement au 1234 partagé ci-dessous), et l'enregistre
+                    // durablement sur disque (accessible depuis n'importe quel PC élève
+                    // du réseau de l'école, pas seulement celui-ci).
+                    const res = await window.electronAPI.classroomAddEleve({ prenom, nom, niveau });
+                    if (!res || !res.success) throw new Error((res && res.error) || 'Échec de l\'ajout côté serveur de classe');
+                    nouvelEleve = {
+                        loginId: res.data.loginId, pin: res.data.pin, prenom, nom,
+                        niveau, niveauGroupe: niveauToGroupe(niveau),
+                        profId: currentProfId, createdAt: res.data.createdAt, enReseau: true
+                    };
+                } else {
+                    // Pas de classe locale active (mode 100% hors ligne / mono-poste) :
+                    // comportement historique, compatible auth-hub.html sur CET appareil.
+                    const eleves = getEleves();
+                    const usedIds = new Set(eleves.map(e => (e.loginId || '').toLowerCase()));
+                    const loginId = generateLoginId(prenom, nom, usedIds);
+                    nouvelEleve = {
+                        loginId, pin: '1234', prenom, nom,
+                        niveau, niveauGroupe: niveauToGroupe(niveau),
+                        profId: currentProfId, createdAt: new Date().toISOString(), enReseau: false
+                    };
+                }
+
+                const eleves = getEleves();
+                eleves.push(nouvelEleve);
+                saveEleves(eleves);
+
+                prenomInput.value = ''; nomInput.value = '';
+                prenomInput.focus();
+                renderEleves();
+            } catch (err) {
+                console.error('Erreur ajout élève:', err);
+                alert('❌ ' + (err.message || 'Impossible d\'ajouter cet élève'));
+            } finally {
+                if (addBtn) { addBtn.disabled = false; addBtn.textContent = '➕ Ajouter'; }
+            }
+        }
+
+        function removeEleve(loginId) {
+            const eleves = getEleves();
+            const eleve = eleves.find(e => e.loginId === loginId);
+            let msg = 'Retirer définitivement cet élève ? Il ne pourra plus se connecter avec cet identifiant.';
+            if (eleve && eleve.enReseau) {
+                msg += '\n\n⚠️ Cet élève est enregistré sur le serveur de classe local : cette action le retire seulement de CETTE liste affichée ici, mais il pourra encore se connecter depuis son propre PC via le réseau de l\'école (pas encore de suppression côté serveur).';
+            }
+            if (!confirm(msg)) return;
+            saveEleves(eleves.filter(e => e.loginId !== loginId));
+            renderEleves();
+        }
+
+        async function resetPinEleve(loginId) {
+            const eleves = getEleves();
+            const eleve = eleves.find(e => e.loginId === loginId);
+            if (!eleve) return;
+            if (eleve.enReseau) {
+                alert('ℹ️ Le PIN de ' + eleve.prenom + ' a été généré aléatoirement et de façon unique par le serveur de classe : il ne peut pas être changé ici pour l\'instant (cela casserait sa connexion depuis son propre PC). Utilisez "🗑️" puis "➕ Ajouter" pour recréer son compte avec un nouveau PIN si besoin.');
+                return;
+            }
+            const newPin = await showInputModal(`Nouveau code PIN (4 chiffres) pour ${eleve.prenom} ${eleve.nom}`, eleve.pin || '1234');
+            if (newPin === null) return;
+            if (!/^\d{4}$/.test(newPin)) { alert('⚠️ Le code doit contenir exactement 4 chiffres'); return; }
+            eleve.pin = newPin;
+            saveEleves(eleves);
+            renderEleves();
+        }
+
+        function renderEleves() {
+            const list = document.getElementById('elevesList');
+            const countEl = document.getElementById('elevesCount');
+            if (!list) return;
+            const eleves = getEleves();
+            countEl.textContent = `${eleves.length} élève(s)`;
+
+            if (eleves.length === 0) {
+                list.innerHTML = '<div class="empty">Aucun élève pour le moment. Ajoutez-en avec le formulaire ci-dessus.</div>';
+            } else {
+                list.innerHTML = eleves.map(e => `
+                    <div class="eleve-row">
+                        <div class="e-info">
+                            <div class="e-name">${e.prenom} ${e.nom}</div>
+                            <div class="e-meta">${niveauLabelFromValue(e.niveau)}</div>
+                        </div>
+                        <div class="e-creds">ID: ${e.loginId} · PIN: ${e.pin || '1234'}</div>
+                        ${e.enReseau ? '<span class="classroom-badge on" title="Peut se connecter depuis son propre PC via le réseau de l\'école">🏫 Réseau</span>' : ''}
+                        <div class="e-actions">
+                            <button class="btn small" onclick="resetPinEleve('${e.loginId}')">🔑 PIN</button>
+                            <button class="btn small danger" onclick="removeEleve('${e.loginId}')">🗑️</button>
+                        </div>
+                    </div>`).join('');
+            }
+
+            populateElevesDatalist(eleves);
+        }
+
+        // ================= Recherche élève (filtre des résultats) =================
+        function populateElevesDatalist(eleves) {
+            const datalist = document.getElementById('elevesDatalist');
+            if (!datalist) return;
+            const names = Array.from(new Set(eleves.map(e => `${e.prenom} ${e.nom}`.trim()).filter(Boolean)));
+            datalist.innerHTML = names.map(n => `<option value="${n}"></option>`).join('');
+        }
+
+        function onStudentFilterInput() {
+            const wrap = document.getElementById('studentSearchWrap');
+            const input = document.getElementById('resultsStudentFilter');
+            wrap.classList.toggle('has-value', !!input.value.trim());
+            renderQuizResults();
+        }
+
+        function clearStudentFilter() {
+            const input = document.getElementById('resultsStudentFilter');
+            input.value = '';
+            document.getElementById('studentSearchWrap').classList.remove('has-value');
+            renderQuizResults();
+        }
+
+        function applyAvatarPhoto(dataUrl) {
+            const el = document.getElementById('avatarDisplay');
+            el.style.backgroundImage = `url('${dataUrl}')`;
+            const emoji = document.getElementById('avatarEmoji');
+            if (emoji) emoji.style.display = 'none';
+        }
+
+        // ================= Rendu dynamique du dashboard (depuis ZNKManifest, plus de HTML figé) =================
+        function renderStats() {
+            const row = document.getElementById('statsRow');
+            const mine = ZNKManifest.quiz.listMine();
+            const published = mine.filter(q => q.status === 'publie').length;
+            const totalAttempts = mine.reduce((sum, q) => sum + ZNKManifest.quiz.stats(q.id).count, 0);
+            row.innerHTML = `
+                <div class="stat-card"><div class="num">${mine.length}</div><div class="label">Interrogations créées</div></div>
+                <div class="stat-card"><div class="num">${published}</div><div class="label">Publiées</div></div>
+                <div class="stat-card"><div class="num">${totalAttempts}</div><div class="label">Réponses reçues</div></div>
+            `;
+        }
+
+        function renderSections() {
+            const container = document.getElementById('sectionsContainer');
+            const manifest = ZNKManifest.get();
+            const bySection = {};
+            manifest.modules.forEach(mo => {
+                if (!bySection[mo.section]) bySection[mo.section] = [];
+                bySection[mo.section].push(mo);
+            });
+
+            const html = manifest.sections
+                .filter(sec => bySection[sec.key] && bySection[sec.key].length)
+                .map(sec => `
+                    <div class="section">
+                        <div class="section-title">
+                            <div class="section-icon" style="background:${sec.color}">${sec.icon}</div>
+                            ${sec.label}
+                        </div>
+                        <div class="modules-grid">
+                            ${bySection[sec.key].map(mo => `
+                                <div class="module-card" onclick="openModule('${mo.id}')">
+                                    <div class="module-header">
+                                        <div class="module-icon" style="background:${sec.color}">${mo.icon}</div>
+                                        <div class="module-title">${mo.title}</div>
+                                    </div>
+                                    <div class="module-description">${mo.shortDescription}</div>
+                                    <div class="module-status">
+                                        <span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;"></span>
+                                        ${ZNKManifest.statusLabel(mo.status)}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+            container.innerHTML = html || '<div class="empty">Aucun module configuré. Ajoute-en depuis "Modules &amp; réglages".</div>';
+        }
+
+        function openModule(moduleId) {
+            const manifest = ZNKManifest.get();
+            const mo = manifest.modules.find(m => m.id === moduleId);
+            if (!mo) return;
+            document.getElementById('modalTitle').textContent = mo.title;
+            document.getElementById('modalDescription').textContent = mo.longDescription || mo.shortDescription;
+            document.getElementById('moduleModal').style.display = 'block';
+        }
+        function closeModal() { document.getElementById('moduleModal').style.display = 'none'; }
+        document.getElementById('moduleModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // ================= Modal de saisie (remplace window.prompt) =================
+        // window.prompt() est explicitement désactivé par Electron ("prompt() is not
+        // supported."), donc toute saisie utilisateur ponctuelle (nom d'école, PIN
+        // élève, etc.) doit passer par cette modal maison, qui fonctionne aussi bien
+        // en navigateur qu'en build Electron.
+        let inputModalResolve = null;
+
+        function showInputModal(title, defaultValue) {
+            return new Promise((resolve) => {
+                inputModalResolve = resolve;
+                document.getElementById('inputModalTitle').textContent = title;
+                const field = document.getElementById('inputModalField');
+                field.value = defaultValue || '';
+                document.getElementById('inputModal').style.display = 'block';
+                setTimeout(() => { field.focus(); field.select(); }, 50);
+            });
+        }
+
+        function closeInputModal(confirmed) {
+            const modal = document.getElementById('inputModal');
+            const field = document.getElementById('inputModalField');
+            const value = confirmed ? field.value : null;
+            modal.style.display = 'none';
+            if (inputModalResolve) { inputModalResolve(value); inputModalResolve = null; }
+        }
+
+        document.getElementById('inputModal').addEventListener('click', function (e) {
+            if (e.target === this) closeInputModal(false);
+        });
+        document.getElementById('inputModalField').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); closeInputModal(true); }
+            if (e.key === 'Escape') { e.preventDefault(); closeInputModal(false); }
+        });
+
+        // ================= Résultat des interrogations =================
+        // Lit les résultats déposés par ArtEtudes-*.html dans localStorage
+        // ('znk_quiz_results') quand un élève valide le résultat final d'une leçon.
+        function getQuizResults() {
+            try { return JSON.parse(localStorage.getItem('znk_quiz_results') || '[]'); }
+            catch (e) { return []; }
+        }
+
+        function renderQuizResults() {
+            const list = document.getElementById('quizResultsList');
+            if (!list) return;
+            const levelFilter = document.getElementById('resultsLevelFilter').value;
+            const studentFilterEl = document.getElementById('resultsStudentFilter');
+            const studentFilter = studentFilterEl ? studentFilterEl.value.trim().toLowerCase() : '';
+
+            // On n'affiche les résultats qu'une fois qu'un élève est recherché (tous
+            // niveaux confondus) : pas de liste complète par défaut.
+            if (!studentFilter) {
+                list.innerHTML = '<div class="empty">🔎 Recherchez un élève ci-dessus pour afficher ses résultats.</div>';
+                return;
+            }
+
+            let results = getQuizResults();
+            results = results.filter(r => (r.studentName || '').toLowerCase().includes(studentFilter));
+            if (levelFilter) results = results.filter(r => r.niveauLevel === levelFilter);
+            results = results.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (results.length === 0) {
+                list.innerHTML = '<div class="empty">Aucun résultat trouvé pour cet élève.</div>';
+                return;
+            }
+
+            list.innerHTML = results.map(r => `
+                <div class="result-row">
+                    ${r.drawingDataUrl ? `<img class="result-thumb" src="${r.drawingDataUrl}" alt="Dessin">` : ''}
+                    <div class="result-info">
+                        <div class="r-title">${r.studentName || 'Élève'} — ${r.lessonTitle || ''}</div>
+                        <div class="r-meta">
+                            ${r.niveauLabel || r.niveauLevel || ''}${r.quizTitle ? ' · 🧪 ' + r.quizTitle : ''}
+                            ${typeof r.correctCount === 'number' && typeof r.gradableCount === 'number' ? ` · ${r.correctCount}/${r.gradableCount} bonne(s) réponse(s)` : ''} ·
+                            ${new Date(r.date).toLocaleString('fr-FR')}
+                        </div>
+                    </div>
+                    <div class="result-score ${typeof r.score === 'number' ? '' : 'none'}">
+                        ${typeof r.score === 'number' ? r.score + '/' + (r.maxScore || 20) : 'Sans interrogation'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'znk_quiz_results') renderQuizResults();
+            if (e.key && e.key.startsWith('znk_eleves_')) renderEleves();
+        });
+
+        // ================= Classe locale (znk-classroom-server.js) =================
+        // Le PC du prof peut faire tourner un petit serveur HTTP réservé à SA classe,
+        // trouvable automatiquement par les PC élèves sur le réseau de l'école (UDP
+        // broadcast, znk-classroom-discovery.js) : aucune configuration réseau manuelle,
+        // aucun Internet requis. Voir window.electronAPI.classroomStart/.../Stop
+        // (exposés par preload.js) et l'IPC correspondant dans main.js.
+        let classroomActive = false;
+
+        function classroomEnabledKey() { return `znk_classroom_enabled_${currentProfId}`; }
+
+        function classroomAvailable() {
+            return !!(window.electronAPI && window.electronAPI.classroomStart);
+        }
+
+        function nomClasseParDefaut() {
+            const account = getStoredAccount();
+            const prenomProf = account && account.prenom ? account.prenom : '';
+            return prenomProf ? `Classe de ${prenomProf}` : 'Ma classe';
+        }
+
+        function niveauClasseParDefaut() {
+            const account = getStoredAccount();
+            return (account && account.niveauEnseigne) || null;
+        }
+
+        function renderClassroomStatus() {
+            const badge = document.getElementById('classroomBadge');
+            const title = document.getElementById('classroomStatusTitle');
+            const meta = document.getElementById('classroomStatusMeta');
+            const toggleBtn = document.getElementById('classroomToggleBtn');
+            if (!badge) return;
+
+            if (!classroomAvailable()) {
+                badge.textContent = '⚪ Indisponible';
+                badge.className = 'classroom-badge unavailable';
+                title.textContent = 'Classe locale non disponible';
+                meta.textContent = 'Cette fonctionnalité nécessite l\'application ZNK (Electron) — non disponible dans un simple navigateur.';
+                toggleBtn.disabled = true;
+                return;
+            }
+
+            toggleBtn.disabled = false;
+            if (classroomActive) {
+                badge.textContent = '🟢 Active';
+                badge.className = 'classroom-badge on';
+                title.textContent = nomClasseParDefaut();
+                meta.textContent = 'Les élèves peuvent se connecter depuis leur propre PC sur le réseau de l\'école (aucun Internet requis).';
+                toggleBtn.textContent = 'Désactiver';
+            } else {
+                badge.textContent = '⚪ Arrêtée';
+                badge.className = 'classroom-badge off';
+                title.textContent = 'Classe locale arrêtée';
+                meta.textContent = 'Activez pour permettre aux élèves de se connecter depuis leur propre PC, sur le réseau de l\'école.';
+                toggleBtn.textContent = 'Activer';
+            }
+        }
+
+        async function toggleClassroomServer() {
+            if (!classroomAvailable()) return;
+            const toggleBtn = document.getElementById('classroomToggleBtn');
+            toggleBtn.disabled = true;
+
+            try {
+                if (classroomActive) {
+                    await window.electronAPI.classroomStop();
+                    classroomActive = false;
+                    localStorage.setItem(classroomEnabledKey(), 'false');
+                } else {
+                    const res = await window.electronAPI.classroomStart({
+                        classeId: currentProfId,
+                        nom: nomClasseParDefaut(),
+                        niveau: niveauClasseParDefaut(),
+                        profId: currentProfId
+                    });
+                    if (!res || !res.success) throw new Error((res && (res.server && res.server.error)) || (res && res.error) || 'Démarrage impossible');
+                    classroomActive = true;
+                    localStorage.setItem(classroomEnabledKey(), 'true');
+                }
+            } catch (err) {
+                console.error('Erreur classe locale:', err);
+                alert('❌ ' + (err.message || 'Impossible de changer l\'état de la classe locale'));
+            } finally {
+                renderClassroomStatus();
+                renderDevoirsClasse();
+            }
+        }
+
+        // Démarre automatiquement le serveur si le prof l'avait activé lors d'une
+        // session précédente (le flag persiste, mais le process Electron, lui, ne
+        // persiste pas d'un lancement de l'appli à l'autre).
+        async function initClassroomStatus() {
+            if (!classroomAvailable()) { renderClassroomStatus(); return; }
+            const wasEnabled = localStorage.getItem(classroomEnabledKey()) === 'true';
+            if (wasEnabled) {
+                try {
+                    const res = await window.electronAPI.classroomStart({
+                        classeId: currentProfId,
+                        nom: nomClasseParDefaut(),
+                        niveau: niveauClasseParDefaut(),
+                        profId: currentProfId
+                    });
+                    classroomActive = !!(res && res.success);
+                } catch (err) {
+                    console.warn('Reprise automatique de la classe locale échouée:', err);
+                    classroomActive = false;
+                }
+            }
+            renderClassroomStatus();
+        }
+
+        // ================= Devoirs =================
+        async function publishDevoirFromForm() {
+            if (!classroomActive) { alert('⚠️ Activez d\'abord la classe locale ci-dessus pour publier un devoir.'); return; }
+
+            const titreInput = document.getElementById('devoirFormTitre');
+            const matiereInput = document.getElementById('devoirFormMatiere');
+            const dateLimiteInput = document.getElementById('devoirFormDateLimite');
+            const contenuInput = document.getElementById('devoirFormContenu');
+
+            const titre = titreInput.value.trim();
+            if (!titre) { alert('⚠️ Renseignez le titre du devoir'); titreInput.focus(); return; }
+
+            try {
+                const res = await window.electronAPI.classroomPublishDevoir({
+                    titre,
+                    matiere: matiereInput.value.trim(),
+                    contenu: contenuInput.value.trim(),
+                    dateLimite: dateLimiteInput.value || null
+                });
+                if (!res || !res.success) throw new Error((res && res.error) || 'Échec de la publication');
+
+                titreInput.value = ''; matiereInput.value = ''; dateLimiteInput.value = ''; contenuInput.value = '';
+                await renderDevoirsClasse();
+            } catch (err) {
+                console.error('Erreur publication devoir:', err);
+                alert('❌ ' + (err.message || 'Impossible de publier ce devoir'));
+            }
+        }
+
+        async function renderDevoirsClasse() {
+            const list = document.getElementById('devoirsClasseList');
+            if (!list) return;
+
+            if (!classroomActive) {
+                list.innerHTML = '<div class="empty">Activez la classe locale pour publier des devoirs.</div>';
+                return;
+            }
+            if (!window.electronAPI || !window.electronAPI.classroomListDevoirs) return;
+
+            try {
+                const res = await window.electronAPI.classroomListDevoirs();
+                const devoirs = (res && res.success && res.data) ? res.data : [];
+                if (devoirs.length === 0) {
+                    list.innerHTML = '<div class="empty">Aucun devoir publié pour le moment.</div>';
+                    return;
+                }
+                list.innerHTML = devoirs.slice().reverse().map(d => `
+                    <div class="devoir-row">
+                        <div class="d-title">${d.titre}${d.matiere ? ' · ' + d.matiere : ''}</div>
+                        <div class="d-meta">
+                            Publié le ${new Date(d.publieLe).toLocaleString('fr-FR')}
+                            ${d.dateLimite ? ' · à rendre pour le ' + new Date(d.dateLimite).toLocaleDateString('fr-FR') : ''}
+                        </div>
+                        ${d.contenu ? `<div class="d-contenu">${d.contenu}</div>` : ''}
+                    </div>`).join('');
+            } catch (err) {
+                console.warn('Erreur chargement devoirs:', err);
+            }
+        }
+
+        function renderDashboard() {
+            renderStats();
+            renderSections();
+            renderEleves();
+            renderQuizResults();
+        }
+
+        function updateSyncBadge() {
+            const badge = document.getElementById('syncBadge');
+            if (ZNKManifest.electron.availablePartitioned && ZNKManifest.electron.availablePartitioned()) {
+                badge.textContent = '🟣 Synchro partitionnée (par prof)';
+                badge.className = 'sync-badge partitioned';
+            } else if (ZNKManifest.electron.available()) {
+                badge.textContent = '🟢 Fichier partagé (Electron)';
+                badge.className = 'sync-badge on';
+            } else {
+                badge.textContent = '⚪ Local uniquement (navigateur)';
+                badge.className = 'sync-badge off';
+            }
+        }
+
+        window.addEventListener('znk-data-synced', renderDashboard);
+
+        (async function init() {
+            currentProfId = resolveProfIdentity();
+            document.getElementById('profIdDisplay').textContent = currentProfId;
+            seedEcoleNomFromAccount();
+            renderEcoleCard();
+
+            const savedPhoto = localStorage.getItem(avatarStorageKey);
+            if (savedPhoto) applyAvatarPhoto(savedPhoto);
+
+            if (window.__znkManifestLoadFailed || typeof window.ZNKManifest === 'undefined') {
+                document.getElementById('sectionsContainer').innerHTML = `
+                    <div class="empty" style="color:#fca5a5;">
+                        ⚠️ znk-professeur-manifest.js n'a pas pu être chargé (fichier introuvable ou erreur JS).<br>
+                        Vérifie qu'il se trouve dans le même dossier que cette page, puis recharge (Ctrl+Shift+R).
+                    </div>`;
+                return;
+            }
+            ZNKManifest.setCurrentProf(currentProfId);
+
+            renderDashboard();
+            await ZNKManifest.electron.sync();
+            updateSyncBadge();
+            renderDashboard();
+
+            await initClassroomStatus();
+            await renderDevoirsClasse();
+
+            if (window.ZNK && window.ZNK.Header) {
+                window.ZNK.Header.init({ title: "Dashboard Professeur ZNK", subtitle: "Espace professeur", context: "professeur", showBackBtn: true });
+            }
+        })();
+    </script>
+    <script src="../../znk-auto-nav.js" onerror="console.warn('⚠️ znk-auto-nav.js non disponible')"></script>
+    <script src="../../module-mapping.js" onerror="console.warn('⚠️ module-mapping.js non disponible')"></script>
+</body>
+</html>

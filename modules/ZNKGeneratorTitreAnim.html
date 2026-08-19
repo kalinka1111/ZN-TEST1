@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK Title Generator - 700x175 Animated Banner & Video Export</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@800;900&family=Orbitron:wght@700;900&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,700;1,900&family=Press+Start+2P&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0c10;
+            --panel-bg: #12161f;
+            --panel-border: #232a3b;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 2rem 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .badge-dim {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            margin-left: 0.5rem;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        /* Banner Stage */
+        .stage-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stage-title {
+            align-self: flex-start;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .rec-indicator {
+            display: none;
+            align-items: center;
+            gap: 0.4rem;
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 0.8rem;
+            animation: pulseRec 1s infinite alternate;
+        }
+
+        @keyframes pulseRec {
+            from { opacity: 0.4; }
+            to { opacity: 1; }
+        }
+
+        .rec-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+        }
+
+        .banner-viewport {
+            width: 100%;
+            max-width: 700px;
+            aspect-ratio: 700 / 175;
+            position: relative;
+            overflow: hidden;
+            border-radius: 6px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            background-color: #08080c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
+
+        /* Canvas overlaid on viewport — la résolution réelle (attributs width/height
+           HTML = 700x175) reste fixe pour que la vidéo exportée garde une qualité
+           constante ; seul l'affichage CSS s'adapte à la largeur du conteneur. */
+        #banner-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        /* Controls Grid */
+        .controls-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 100%;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        input[type="text"], input[type="number"], select {
+            background: #0b0e14;
+            border: 1px solid #2a3447;
+            color: #fff;
+            padding: 0.65rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .color-pickers {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .color-picker-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #0b0e14;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            border: 1px solid #2a3447;
+            flex: 1;
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+
+        .bg-image-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .bg-file-name {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .embed-banner {
+            width: 100%;
+            background: rgba(236, 72, 153, 0.12);
+            border: 1px solid rgba(236, 72, 153, 0.4);
+            color: #f9a8d4;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: -0.5rem;
+        }
+
+        .actions-bar {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-video {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            color: white;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+        }
+
+        .btn-video:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #1f293d;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #28354d;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status-msg {
+            font-size: 0.85rem;
+            color: #34d399;
+            display: none;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        footer {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>ZNK Generator <span class="badge-dim">Titre Animé</span></h1>
+        <p> Exportation Vidéo intégrée (Max 10s)</p>
+    </header>
+
+    <div class="app-container">
+
+        <div id="embed-banner" class="embed-banner" style="display:none;">
+            🔗 Mode intégré : la vidéo générée sera envoyée automatiquement vers votre profil ZNK.
+        </div>
+
+        <!-- Banner Display Area -->
+        <div class="stage-card">
+            <div class="stage-title">
+                <span>Ratio Fixe 700px × 175px</span>
+                <div id="rec-indicator" class="rec-indicator">
+                    <div class="rec-dot"></div>
+                    <span id="rec-status-text">ENREGISTREMENT... (0s / 10s)</span>
+                </div>
+            </div>
+            
+            <div id="banner-viewport" class="banner-viewport">
+                <canvas id="banner-canvas" width="700" height="175"></canvas>
+            </div>
+
+            <div id="status-msg" class="status-msg">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l4.992-5.99a.75.75 0 0 0-.018-1.042z"/></svg>
+                <span id="status-text">Exportation réussie !</span>
+            </div>
+        </div>
+
+        <!-- Controls Form -->
+        <div class="controls-card">
+            <div class="controls-grid">
+                
+                <div class="form-group full-width">
+                    <label for="input-title">Texte Principal</label>
+                    <input type="text" id="input-title" value="ZNK Text gen" placeholder="Entrez votre titre...">
+                </div>
+
+                <div class="form-group">
+                    <label for="input-sub">Sous-titre (Optionnel)</label>
+                    <input type="text" id="input-sub" value="2026 " placeholder="Sous-titre...">
+                </div>
+
+                <div class="form-group">
+                    <label for="select-scroll">Mode Défilement / Scroll</label>
+                    <select id="select-scroll">
+                        <option value="none">Aucun (Texte Centré)</option>
+                        <option value="left">Défilement Continu Vers la Gauche</option>
+                        <option value="right">Défilement Continu Vers la Droite</option>
+                        <option value="bounce">Aller-Retour (Ping-Pong)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-scroll-speed">Vitesse de Défilement</label>
+                    <input type="number" id="input-scroll-speed" value="3" min="1" max="15">
+                </div>
+
+                <div class="form-group">
+                    <label for="select-effect">Effet Lumineux / Animation</label>
+                    <select id="select-effect">
+                        <option value="neon">Néon Pulsant (Cyber Glow)</option>
+                        <option value="glitch">Glitch Digital RGB</option>
+                        <option value="gold">Shimmer / Or Cinématique</option>
+                        <option value="retrowave">Retro Synthwave 80s</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="select-font">Typographie / Police</label>
+                    <select id="select-font">
+                        <option value="Montserrat">Montserrat Heavy (Moderne)</option>
+                        <option value="Orbitron">Orbitron (Futuriste / Sci-Fi)</option>
+                        <option value="Cinzel">Cinzel Bold (Élégant / Luxe)</option>
+                        <option value="Playfair Display">Playfair (Artistique)</option>
+                        <option value="Permanent Marker">Permanent Marker (Street Art)</option>
+                        <option value="Press Start 2P">Press Start (Pixel 8-bit)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-fontsize">Taille de Police (px)</label>
+                    <input type="number" id="input-fontsize" value="55" min="20" max="120">
+                </div>
+
+                <div class="form-group">
+                    <label for="input-duration">Durée Export Vidéo (1 à 10s)</label>
+                    <input type="number" id="input-duration" value="10" min="2" max="10">
+                </div>
+
+                <div class="form-group">
+                    <label>Couleurs de l'Effet</label>
+                    <div class="color-pickers">
+                        <div class="color-picker-item">
+                            <input type="color" id="color-primary" value="#ff0055">
+                            <label for="color-primary" style="font-size: 0.7rem;">C1</label>
+                        </div>
+                        <div class="color-picker-item">
+                            <input type="color" id="color-secondary" value="#00f0ff">
+                            <label for="color-secondary" style="font-size: 0.7rem;">C2</label>
+                        </div>
+                        <div class="color-picker-item">
+                            <input type="color" id="color-tertiary" value="#ffee00">
+                            <label for="color-tertiary" style="font-size: 0.7rem;">C3</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="color-bg">Couleur de Fond</label>
+                    <div class="color-picker-item">
+                        <input type="color" id="color-bg" value="#08080c">
+                        <label for="color-bg" style="font-size: 0.75rem;">Fond Canvas</label>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Photo d'Arrière-Plan (Optionnel)</label>
+                    <div class="bg-image-row">
+                        <input type="file" id="input-bg-image" accept="image/*" style="display:none;">
+                        <button type="button" id="btn-bg-upload" class="btn btn-secondary">🖼️ Uploader une photo</button>
+                        <button type="button" id="btn-bg-remove" class="btn btn-secondary" disabled>🗑️ Retirer la photo</button>
+                        <span id="bg-file-name" class="bg-file-name">Aucune image sélectionnée</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-bg-overlay">Opacité Filtre (sur photo)</label>
+                    <input type="number" id="input-bg-overlay" value="45" min="0" max="100">
+                </div>
+
+            </div>
+
+            <div class="actions-bar">
+                <button id="btn-export-video" class="btn btn-video">
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M0 12V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm6.79-6.907A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814l-3.5-2.5z"/></svg>
+                    Générer & Exporter Vidéo (WebM / MP4)
+                </button>
+
+                <button id="btn-export-png" class="btn btn-primary">
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                    Capture PNG (700x175)
+                </button>
+
+                <button id="btn-reset" class="btn btn-secondary">
+                    Réinitialiser
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        ZNK Standalone Title Generator &bull; Défilement Canvas & Enregistrement Vidéo 700x175px
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('banner-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Form Inputs
+        const titleInput = document.getElementById('input-title');
+        const subInput = document.getElementById('input-sub');
+        const scrollSelect = document.getElementById('select-scroll');
+        const scrollSpeedInput = document.getElementById('input-scroll-speed');
+        const effectSelect = document.getElementById('select-effect');
+        const fontSelect = document.getElementById('select-font');
+        const fontSizeInput = document.getElementById('input-fontsize');
+        const durationInput = document.getElementById('input-duration');
+        const colorPrimary = document.getElementById('color-primary');
+        const colorSecondary = document.getElementById('color-secondary');
+        const colorTertiary = document.getElementById('color-tertiary');
+        const colorBg = document.getElementById('color-bg');
+        const bgImageInput = document.getElementById('input-bg-image');
+        const btnBgUpload = document.getElementById('btn-bg-upload');
+        const btnBgRemove = document.getElementById('btn-bg-remove');
+        const bgFileName = document.getElementById('bg-file-name');
+        const bgOverlayInput = document.getElementById('input-bg-overlay');
+
+        // ========================================
+        // MÉMOIRE DES DERNIERS RÉGLAGES — sauvegardés en localStorage à chaque
+        // modification, restaurés au prochain chargement (image de fond non
+        // incluse : pas re-proposée automatiquement, juste le texte/style).
+        // ========================================
+        const SETTINGS_KEY = 'znkGeneratorLastSettings';
+        const settingsFields = {
+            title: titleInput, sub: subInput, scroll: scrollSelect,
+            scrollSpeed: scrollSpeedInput, effect: effectSelect, font: fontSelect,
+            fontSize: fontSizeInput, duration: durationInput,
+            colorPrimary: colorPrimary, colorSecondary: colorSecondary, colorTertiary: colorTertiary, colorBg: colorBg,
+            bgOverlay: bgOverlayInput
+        };
+
+        function saveGeneratorSettings() {
+            const values = {};
+            for (const key in settingsFields) values[key] = settingsFields[key].value;
+            try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(values)); } catch (e) { console.warn('saveGeneratorSettings:', e); }
+        }
+
+        function loadGeneratorSettings() {
+            let saved;
+            try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); } catch (e) { return; }
+            if (!saved) return;
+            for (const key in settingsFields) {
+                if (saved[key] !== undefined) settingsFields[key].value = saved[key];
+            }
+        }
+
+        for (const key in settingsFields) {
+            settingsFields[key].addEventListener('change', saveGeneratorSettings);
+        }
+        loadGeneratorSettings();
+
+        const recIndicator = document.getElementById('rec-indicator');
+        const recStatusText = document.getElementById('rec-status-text');
+        const statusMsg = document.getElementById('status-msg');
+        const statusText = document.getElementById('status-text');
+        const btnExportVideo = document.getElementById('btn-export-video');
+
+        // ========================================
+        // Mode Intégration (ouvert en iframe depuis user-profile.html)
+        // Conservé pour compatibilité si ce fichier est encore intégré ailleurs
+        // en iframe un jour — mais le chemin principal désormais est la
+        // publication directe ci-dessous (utilisé quand ouvert comme Studio).
+        // ========================================
+        const isEmbedded = window.parent !== window;
+        if (isEmbedded) {
+            document.getElementById('embed-banner').style.display = 'block';
+            btnExportVideo.innerHTML = '🎬 Générer & Envoyer à mon Profil';
+        } else if (window.electronAPI) {
+            btnExportVideo.innerHTML = '🎬 Générer & Publier sur mon Profil';
+        }
+
+        // ========================================
+        // SESSION + PUBLICATION DIRECTE — mêmes clés/mécanismes que
+        // user-profile.html, pour publier la vidéo générée directement dans
+        // les publications du compte actuellement connecté, sans passer par
+        // une iframe/modale intermédiaire (utilisé quand ouvert comme Studio
+        // depuis hub-studios.html).
+        // ========================================
+        const SESSION_KEY = 'znk_userData';
+        const ACCOUNT_KEY = 'znk_account';
+        const MAX_POSTS = 10;
+        let currentUser = null;
+
+        function getUserId() {
+            if (!currentUser) return 'guest';
+            return currentUser.id || currentUser.idZNK || 'guest';
+        }
+
+        function scopedKey(baseKey) {
+            return `${baseKey}_${getUserId()}`;
+        }
+
+        async function loadSessionUser() {
+            if (window.ZNKSession) {
+                await window.ZNKSession.ready;
+                const current = window.ZNKSession.getCurrentUser();
+                if (current) return current;
+            }
+            const stored = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(ACCOUNT_KEY);
+            if (stored) {
+                try { return JSON.parse(stored); } catch (e) { console.warn('Session invalide:', e); }
+            }
+            return null;
+        }
+
+        const znkApi = window.electronAPI || null;
+        const isElectron = !!(znkApi && znkApi.getPathForFile);
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function persistVideoFile(file) {
+            if (isElectron && znkApi.makeVideoPersistent && znkApi.getVideoUrl) {
+                try {
+                    const realPath = znkApi.getPathForFile(file);
+                    if (realPath) {
+                        const mediaId = `post_${Date.now()}`;
+                        const persistRes = await znkApi.makeVideoPersistent({ sourcePath: realPath, videoId: mediaId, fileName: file.name });
+                        if (persistRes && persistRes.success) {
+                            const urlRes = await znkApi.getVideoUrl({ videoId: mediaId, fileName: persistRes.fileName || file.name });
+                            const src = (urlRes && urlRes.success) ? urlRes.url : persistRes.url;
+                            return { src, persistent: true };
+                        }
+                    }
+                } catch (e) { console.warn('persistVideoFile: repli base64 —', e); }
+            }
+            const src = await readFileAsDataUrl(file);
+            return { src, persistent: false };
+        }
+
+        // Publie la vidéo générée directement dans les publications du compte
+        // connecté — même structure de post que publishPost() dans
+        // user-profile.html, pour que loadPosts() l'affiche normalement.
+        async function publishGeneratedVideo(blob, title) {
+            currentUser = await loadSessionUser();
+
+            const cleanName = (title || 'znk_video').toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const file = new File([blob], `${cleanName}_${Date.now()}.webm`, { type: blob.type || 'video/webm' });
+            const { src, persistent } = await persistVideoFile(file);
+
+            let posts = JSON.parse(localStorage.getItem(scopedKey('znkUserPosts')) || '[]');
+            if (posts.length >= MAX_POSTS) posts = posts.slice(0, MAX_POSTS - 1);
+
+            const newPost = {
+                id: Date.now(),
+                content: title || '',
+                media: { type: 'video', icon: '🎥', title: file.name, src, persistent },
+                author: currentUser ? `${currentUser.prenom || ''} ${currentUser.nom || ''}`.trim() : 'Utilisateur ZNK',
+                authorId: currentUser?.id || currentUser?.idZNK || 'ZNK-000000',
+                avatar: currentUser?.avatar || null,
+                timestamp: Date.now(),
+                likes: 0,
+                comments: 0,
+                shares: 0,
+                likedByUser: false,
+                visibility: 'public',
+                monetization: null
+            };
+
+            posts.unshift(newPost);
+            localStorage.setItem(scopedKey('znkUserPosts'), JSON.stringify(posts));
+        }
+
+        // Animation State
+        let scrollX = 0;
+        let bounceDirection = 1;
+        let animationFrameId = null;
+        let isRecording = false;
+        let bgImage = null; // Image d'arrière-plan uploadée (optionnelle)
+
+        // Render Loop for 60fps Canvas Animation
+        function drawFrame(timestamp, scrollSpeedMultiplier) {
+            const time = timestamp / 1000; // time in seconds
+
+            const width = canvas.width; // 700
+            const height = canvas.height; // 175
+
+            const mainText = titleInput.value || 'ART ETUDES';
+            const subText = subInput.value || '';
+            const fontName = fontSelect.value;
+            const fontSize = parseInt(fontSizeInput.value, 10) || 55;
+            const scrollMode = scrollSelect.value;
+            const scrollSpeed = (parseFloat(scrollSpeedInput.value) || 3) * (scrollSpeedMultiplier || 1);
+            const effect = effectSelect.value;
+            const c1 = colorPrimary.value;
+            const c2 = colorSecondary.value;
+            const c3 = colorTertiary.value;
+
+            // 1. Clear & Background
+            if (bgImage) {
+                // Cover-fit : l'image remplit tout le canvas sans déformation, recadrée au besoin
+                const imgRatio = bgImage.width / bgImage.height;
+                const canvasRatio = width / height;
+                let drawW, drawH, offsetX, offsetY;
+                if (imgRatio > canvasRatio) {
+                    drawH = height;
+                    drawW = height * imgRatio;
+                    offsetX = (width - drawW) / 2;
+                    offsetY = 0;
+                } else {
+                    drawW = width;
+                    drawH = width / imgRatio;
+                    offsetX = 0;
+                    offsetY = (height - drawH) / 2;
+                }
+                ctx.drawImage(bgImage, offsetX, offsetY, drawW, drawH);
+
+                // Filtre sombre par-dessus la photo pour garder le texte lisible
+                const overlayOpacity = Math.min(100, Math.max(0, parseInt(bgOverlayInput.value, 10) || 0)) / 100;
+                if (overlayOpacity > 0) {
+                    ctx.fillStyle = colorBg.value;
+                    ctx.globalAlpha = overlayOpacity;
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.globalAlpha = 1;
+                }
+            } else {
+                ctx.fillStyle = colorBg.value;
+                ctx.fillRect(0, 0, width, height);
+
+                // Draw subtle background grid
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < width; x += 25) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < height; y += 25) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
+                    ctx.stroke();
+                }
+            }
+
+            // 2. Measure Main Text
+            ctx.font = `900 ${fontSize}px "${fontName}", sans-serif`;
+            const textMetrics = ctx.measureText(mainText);
+            const textWidth = textMetrics.width;
+
+            // Calculate Scroll Position
+            let textX = (width - textWidth) / 2;
+            let textY = subText.trim() !== '' ? 85 : 105;
+
+            if (scrollMode === 'left') {
+                scrollX -= scrollSpeed;
+                if (scrollX < -textWidth) scrollX = width;
+                textX = scrollX;
+            } else if (scrollMode === 'right') {
+                scrollX += scrollSpeed;
+                if (scrollX > width) scrollX = -textWidth;
+                textX = scrollX;
+            } else if (scrollMode === 'bounce') {
+                scrollX += scrollSpeed * bounceDirection;
+                const minX = 20;
+                const maxX = width - textWidth - 20;
+                if (maxX < minX) {
+                    if (scrollX < maxX || scrollX > minX) bounceDirection *= -1;
+                } else {
+                    if (scrollX > maxX || scrollX < minX) bounceDirection *= -1;
+                }
+                textX = scrollX;
+            } else {
+                scrollX = (width - textWidth) / 2; // Centered
+            }
+
+            // 3. Render Effects
+            ctx.save();
+            ctx.textAlign = 'left';
+
+            if (effect === 'neon') {
+                const pulse = (Math.sin(time * 4) + 1) / 2;
+                ctx.shadowColor = pulse > 0.5 ? c2 : c1;
+                ctx.shadowBlur = 10 + pulse * 25;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(mainText, textX, textY);
+                ctx.fillText(mainText, textX, textY); // Double fill for stronger neon
+            } 
+            else if (effect === 'glitch') {
+                const glitchOffset = (Math.random() - 0.5) * 4;
+                
+                // Red Channel
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = c1;
+                ctx.fillText(mainText, textX + glitchOffset, textY);
+
+                // Cyan Channel
+                ctx.fillStyle = c2;
+                ctx.fillText(mainText, textX - glitchOffset, textY);
+
+                // Main White Text
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(mainText, textX, textY);
+            } 
+            else if (effect === 'gold') {
+                const gradient = ctx.createLinearGradient(textX, 0, textX + textWidth, 0);
+                const shift = (time * 0.5) % 1;
+                gradient.addColorStop((0 + shift) % 1, c1);
+                gradient.addColorStop((0.5 + shift) % 1, c3);
+                gradient.addColorStop((1 + shift) % 1, c2);
+
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = gradient;
+                ctx.fillText(mainText, textX, textY);
+            } 
+            else if (effect === 'retrowave') {
+                const gradient = ctx.createLinearGradient(0, textY - fontSize, 0, textY);
+                gradient.addColorStop(0, c1);
+                gradient.addColorStop(0.5, c3);
+                gradient.addColorStop(1, c2);
+
+                const waveY = Math.sin(time * 3) * 4;
+                ctx.shadowColor = c1;
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = gradient;
+                ctx.fillText(mainText, textX, textY + waveY);
+            }
+
+            ctx.restore();
+
+            // 4. Render Subtitle (Centered)
+            if (subText.trim() !== '') {
+                ctx.save();
+                ctx.font = '700 15px "Space Grotesk", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#a1a1aa';
+                ctx.letterSpacing = '4px';
+                ctx.fillText(subText.toUpperCase(), width / 2, textY + 38);
+                ctx.restore();
+            }
+
+            if (!isRecording) {
+                animationFrameId = requestAnimationFrame(drawFrame);
+            }
+        }
+
+        // Start Loop
+        requestAnimationFrame(drawFrame);
+
+        // Background Image Upload
+        btnBgUpload.addEventListener('click', () => bgImageInput.click());
+
+        bgImageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                statusText.textContent = "Veuillez sélectionner un fichier image valide.";
+                statusMsg.style.display = 'flex';
+                setTimeout(() => { statusMsg.style.display = 'none'; }, 4000);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    bgImage = img;
+                    bgFileName.textContent = file.name;
+                    btnBgRemove.disabled = false;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        btnBgRemove.addEventListener('click', () => {
+            bgImage = null;
+            bgImageInput.value = '';
+            bgFileName.textContent = 'Aucune image sélectionnée';
+            btnBgRemove.disabled = true;
+        });
+
+        // Replace scrollX à une position de départ fixe selon le mode choisi,
+        // pour que le texte parte toujours d'un point prévisible (hors champ,
+        // prêt à entrer). Utilisé au changement de mode ET juste avant chaque
+        // export vidéo — sinon scrollX garde la valeur où il en était pendant
+        // les réglages, et sur une vidéo courte (5-10s) le texte peut tomber
+        // hors champ ou coupé pendant toute la durée, au hasard.
+        function resetScrollPosition() {
+            const width = canvas.width;
+            ctx.font = `900 ${fontSizeInput.value}px "${fontSelect.value}", sans-serif`;
+            const textWidth = ctx.measureText(titleInput.value || 'ART ETUDES').width;
+            const mode = scrollSelect.value;
+            if (mode === 'left') {
+                scrollX = width; // Entre par la droite
+            } else if (mode === 'right') {
+                scrollX = -textWidth; // Entre par la gauche
+            } else if (mode === 'bounce') {
+                scrollX = (width - textWidth) / 2;
+                bounceDirection = 1;
+            } else {
+                scrollX = (width - textWidth) / 2; // Centré
+            }
+        }
+
+        // Reset scroll position on mode change
+        scrollSelect.addEventListener('change', resetScrollPosition);
+
+        // PNG Snapshot
+        document.getElementById('btn-export-png').addEventListener('click', () => {
+            const link = document.createElement('a');
+            const cleanName = (titleInput.value || 'title').toLowerCase().replace(/[^a-z0-9]/g, '_');
+            link.download = `znk_${cleanName}_700x175.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            statusText.textContent = "Capture PNG (700x175) exportée !";
+            statusMsg.style.display = 'flex';
+            setTimeout(() => { statusMsg.style.display = 'none'; }, 4000);
+        });
+
+        // Video Export (MediaRecorder API) Max 10s
+        btnExportVideo.addEventListener('click', async () => {
+            let duration = parseInt(durationInput.value, 10);
+            if (isNaN(duration) || duration < 2) duration = 10;
+            if (duration > 10) duration = 10; // Max 10s strict limit
+
+            // UI Lockdown
+            btnExportVideo.disabled = true;
+            recIndicator.style.display = 'flex';
+            statusMsg.style.display = 'none';
+
+            // Départ fixe et prévisible pour que le texte soit bien visible
+            // pendant toute la courte durée de l'enregistrement (voir
+            // resetScrollPosition()).
+            resetScrollPosition();
+
+            // Capture Stream at 30 FPS — 60 demandait de redessiner l'effet
+            // néon (shadowBlur, coûteux) deux fois plus souvent que ce que
+            // l'appareil arrivait à tenir, d'où les saccades. 30 im/s reste
+            // parfaitement fluide à l'œil pour un texte qui défile.
+            const EXPORT_FPS = 30;
+            const stream = canvas.captureStream(EXPORT_FPS);
+            let mimeType = 'video/webm;codecs=vp9';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/webm';
+            }
+
+            const recorder = new MediaRecorder(stream, { mimeType: mimeType });
+            const chunks = [];
+
+            recorder.ondataavailable = e => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+
+            recorder.onstop = async () => {
+                const blob = new Blob(chunks, { type: mimeType });
+
+                if (isEmbedded) {
+                    // Compatibilité : intégration iframe encore possible ailleurs.
+                    console.log('[ZNK Generator] Vidéo générée, taille :', blob.size, 'octets, type :', blob.type);
+                    try {
+                        window.parent.postMessage({ type: 'znk-video-export', blob: blob, title: titleInput.value }, '*');
+                        console.log('[ZNK Generator] postMessage envoyé au parent.');
+                        statusText.textContent = `Vidéo (${duration}s) envoyée vers votre profil...`;
+                    } catch (e) {
+                        console.error('[ZNK Generator] Envoi vers le profil échoué :', e);
+                        statusText.textContent = `Erreur d'envoi vers le profil.`;
+                    }
+                } else if (isElectron) {
+                    // Ouvert comme Studio (hub-studios.html) : publication directe
+                    // dans les publications du compte connecté, sans étape intermédiaire.
+                    try {
+                        await publishGeneratedVideo(blob, titleInput.value);
+                        statusText.textContent = `✅ Vidéo publiée sur votre profil !`;
+                    } catch (e) {
+                        console.error('[ZNK Generator] Publication directe échouée :', e);
+                        statusText.textContent = `❌ Échec de la publication — vidéo non enregistrée.`;
+                    }
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    const cleanName = (titleInput.value || 'title').toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    a.href = url;
+                    a.download = `znk_${cleanName}_700x175.webm`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    statusText.textContent = `Vidéo 700x175 (${duration}s) exportée avec succès !`;
+                }
+
+                statusMsg.style.display = 'flex';
+                setTimeout(() => { statusMsg.style.display = 'none'; }, 5000);
+
+                // UI Cleanup
+                btnExportVideo.disabled = false;
+                recIndicator.style.display = 'none';
+
+                // Resume standard render loop
+                isRecording = false;
+                requestAnimationFrame(drawFrame);
+            };
+
+            // Start Recording & Synchronized Rendering Loop
+            isRecording = true;
+            recorder.start();
+
+            let startTime = performance.now();
+
+            function recordLoop(now) {
+                const elapsed = (now - startTime) / 1000;
+                recStatusText.textContent = `ENREGISTREMENT... (${elapsed.toFixed(1)}s / ${duration}s)`;
+
+                drawFrame(now);
+
+                if (elapsed < duration) {
+                    requestAnimationFrame(recordLoop);
+                } else {
+                    recorder.stop();
+                }
+            }
+
+            requestAnimationFrame(recordLoop);
+        });
+
+        // Reset Settings
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            titleInput.value = 'ZNK TEXT GENERATOR';
+            subInput.value = '2026 ';
+            scrollSelect.value = 'left';
+            scrollSpeedInput.value = '3';
+            effectSelect.value = 'neon';
+            fontSelect.value = 'Montserrat';
+            fontSizeInput.value = '55';
+            durationInput.value = '5';
+            colorPrimary.value = '#ff0055';
+            colorSecondary.value = '#00f0ff';
+            colorTertiary.value = '#ffee00';
+            colorBg.value = '#08080c';
+            bgImage = null;
+            bgImageInput.value = '';
+            bgFileName.textContent = 'Aucune image sélectionnée';
+            btnBgRemove.disabled = true;
+            bgOverlayInput.value = '45';
+            scrollX = 0;
+            saveGeneratorSettings();
+        });
+    </script>
+</body>
+</html>

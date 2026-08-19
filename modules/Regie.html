@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Régie Master Studio</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e);
+            color: white;
+            overflow: hidden;
+        }
+
+        .regie-layout {
+            display: grid;
+            grid-template-areas: 
+                "previews previews controls"
+                "timeline timeline audio-mixer";
+            grid-template-rows: 1fr 200px;
+            grid-template-columns: 1fr 1fr 300px;
+            height: 100vh;
+            gap: 2px;
+            background: #000;
+        }
+
+        .preview-section {
+            grid-area: previews;
+            background: #1a1a2e;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .main-preview {
+            background: #000;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .overlay-info {
+            background: rgba(0,0,0,0.8);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .sources-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .source-preview {
+            background: #000;
+            border-radius: 6px;
+            position: relative;
+            aspect-ratio: 16/9;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .source-preview:hover {
+            border-color: #3498db;
+        }
+
+        .source-preview.active {
+            border-color: #e74c3c;
+        }
+
+        .source-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .source-label {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        .controls-panel {
+            grid-area: controls;
+            background: #16213e;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h3 {
+            color: #3498db;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+            padding-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .switch-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .switch-btn {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .switch-btn:hover {
+            background: #34495e;
+        }
+
+        .switch-btn.active {
+            background: #e74c3c;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+
+        .transition-controls {
+            display: grid;
+            gap: 10px;
+        }
+
+        .transition-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .transition-btn:hover {
+            background: #2ecc71;
+            transform: translateY(-1px);
+        }
+
+        .slider-control {
+            margin: 10px 0;
+        }
+
+        .slider-control label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #ecf0f1;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #34495e;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+        }
+
+        .timeline-section {
+            grid-area: timeline;
+            background: #2c3e50;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .timeline-btn {
+            background: #34495e;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .timeline-btn:hover {
+            background: #4a6741;
+        }
+
+        .timeline-btn.recording {
+            background: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+
+        .timeline-track {
+            flex: 1;
+            background: #34495e;
+            border-radius: 4px;
+            height: 80px;
+            position: relative;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .timeline-clips {
+            display: flex;
+            height: 100%;
+            align-items: center;
+            padding: 5px;
+            min-width: 100%;
+        }
+
+        .timeline-clip {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            height: 30px;
+            margin: 0 2px;
+            border-radius: 3px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 10px;
+            white-space: nowrap;
+            min-width: 80px;
+        }
+
+        .timeline-clip:active {
+            cursor: grabbing;
+        }
+
+        .timeline-clip.audio {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        .timeline-clip.transition {
+            background: linear-gradient(135deg, #f39c12, #d68910);
+        }
+
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e74c3c;
+            z-index: 10;
+            left: 0;
+            transition: left 0.1s;
+        }
+
+        .audio-mixer {
+            grid-area: audio-mixer;
+            background: #1a1a2e;
+            padding: 15px;
+        }
+
+        .mixer-channels {
+            display: flex;
+            gap: 15px;
+            height: 100%;
+        }
+
+        .mixer-channel {
+            flex: 1;
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .channel-label {
+            text-align: center;
+            font-size: 12px;
+            margin-bottom: 10px;
+            color: #ecf0f1;
+        }
+
+        .channel-fader {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fader {
+            writing-mode: bt-lr;
+            -webkit-appearance: slider-vertical;
+            width: 30px;
+            height: 120px;
+            background: #34495e;
+            outline: none;
+        }
+
+        .channel-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .channel-btn {
+            background: #34495e;
+            color: white;
+            border: none;
+            padding: 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .channel-btn.active {
+            background: #e74c3c;
+        }
+
+        .channel-btn.mute.active {
+            background: #c0392b;
+        }
+
+        .vu-meter {
+            width: 20px;
+            height: 120px;
+            background: #000;
+            border-radius: 2px;
+            position: relative;
+            margin-right: 10px;
+        }
+
+        .vu-level {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, #27ae60, #f1c40f, #e74c3c);
+            border-radius: 2px;
+            transition: height 0.1s;
+        }
+
+        .live-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .recording-indicator {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="regie-layout">
+        <div class="preview-section">
+            <div class="main-preview">
+                <video class="main-video" id="mainOutput" autoplay></video>
+                <div class="preview-overlay">
+                    <div class="overlay-info">PROGRAMME</div>
+                    <div class="overlay-info" id="mainTimer">00:00</div>
+                </div>
+            </div>
+            
+            <div class="sources-grid">
+                <div class="source-preview active" data-source="cam1">
+                    <video class="source-video" id="cam1" autoplay muted></video>
+                    <div class="source-label">CAM 1</div>
+                </div>
+                <div class="source-preview" data-source="cam2">
+                    <video class="source-video" id="cam2" autoplay muted></video>
+                    <div class="source-label">CAM 2</div>
+                </div>
+                <div class="source-preview" data-source="screen">
+                    <video class="source-video" id="screen" autoplay muted></video>
+                    <div class="source-label">ÉCRAN</div>
+                </div>
+                <div class="source-preview" data-source="media">
+                    <video class="source-video" id="media" autoplay muted loop></video>
+                    <div class="source-label">MÉDIA</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="control-group">
+                <h3>COMMUTATION</h3>
+                <div class="switch-buttons">
+                    <button class="switch-btn active" onclick="switchToSource('cam1')">CAM 1</button>
+                    <button class="switch-btn" onclick="switchToSource('cam2')">CAM 2</button>
+                    <button class="switch-btn" onclick="switchToSource('screen')">ÉCRAN</button>
+                    <button class="switch-btn" onclick="switchToSource('media')">MÉDIA</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>TRANSITIONS</h3>
+                <div class="transition-controls">
+                    <button class="transition-btn" onclick="transition('cut')">CUT</button>
+                    <button class="transition-btn" onclick="transition('fade')">FADE</button>
+                    <button class="transition-btn" onclick="transition('wipe')">WIPE</button>
+                </div>
+                <div class="slider-control">
+                    <label>Durée Transition:</label>
+                    <input type="range" class="slider" id="transitionSpeed" min="0" max="3000" value="1000">
+                    <span id="transitionSpeedValue">1.0s</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>EFFETS</h3>
+                <div class="slider-control">
+                    <label>Luminosité:</label>
+                    <input type="range" class="slider" id="brightness" min="0" max="200" value="100">
+                </div>
+                <div class="slider-control">
+                    <label>Contraste:</label>
+                    <input type="range" class="slider" id="contrast" min="0" max="200" value="100">
+                </div>
+                <div class="slider-control">
+                    <label>Saturation:</label>
+                    <input type="range" class="slider" id="saturation" min="0" max="200" value="100">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>STREAMING</h3>
+                <button class="transition-btn" id="liveBtn" onclick="toggleLive()">DÉMARRER LIVE</button>
+                <button class="transition-btn" id="recordBtn" onclick="toggleRecord()">REC</button>
+            </div>
+        </div>
+
+        <div class="timeline-section">
+            <div class="timeline-header">
+                <h3>TIMELINE</h3>
+                <div class="timeline-controls">
+                    <button class="timeline-btn" onclick="playTimeline()">▶</button>
+                    <button class="timeline-btn" onclick="pauseTimeline()">⏸</button>
+                    <button class="timeline-btn" onclick="stopTimeline()">⏹</button>
+                    <button class="timeline-btn" onclick="addClip()">+ CLIP</button>
+                </div>
+            </div>
+            <div class="timeline-track">
+                <div class="playhead" id="playhead"></div>
+                <div class="timeline-clips" id="timelineClips">
+                    <div class="timeline-clip">Intro</div>
+                    <div class="timeline-clip audio">Audio 1</div>
+                    <div class="timeline-clip">Cam 1</div>
+                    <div class="timeline-clip transition">Fade</div>
+                    <div class="timeline-clip">Cam 2</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="audio-mixer">
+            <div class="mixer-channels">
+                <div class="mixer-channel">
+                    <div class="channel-label">MIC 1</div>
+                    <div class="channel-fader">
+                        <div class="vu-meter">
+                            <div class="vu-level" id="vu1"></div>
+                        </div>
+                        <input type="range" class="fader" id="fader1" min="0" max="100" value="80" orient="vertical">
+                    </div>
+                    <div class="channel-controls">
+                        <button class="channel-btn" onclick="toggleSolo(1)">SOLO</button>
+                        <button class="channel-btn mute" onclick="toggleMute(1)">MUTE</button>
+                    </div>
+                </div>
+
+                <div class="mixer-channel">
+                    <div class="channel-label">MIC 2</div>
+                    <div class="channel-fader">
+                        <div class="vu-meter">
+                            <div class="vu-level" id="vu2"></div>
+                        </div>
+                        <input type="range" class="fader" id="fader2" min="0" max="100" value="70" orient="vertical">
+                    </div>
+                    <div class="channel-controls">
+                        <button class="channel-btn" onclick="toggleSolo(2)">SOLO</button>
+                        <button class="channel-btn mute" onclick="toggleMute(2)">MUTE</button>
+                    </div>
+                </div>
+
+                <div class="mixer-channel">
+                    <div class="channel-label">MUSIQUE</div>
+                    <div class="channel-fader">
+                        <div class="vu-meter">
+                            <div class="vu-level" id="vu3"></div>
+                        </div>
+                        <input type="range" class="fader" id="fader3" min="0" max="100" value="50" orient="vertical">
+                    </div>
+                    <div class="channel-controls">
+                        <button class="channel-btn" onclick="toggleSolo(3)">SOLO</button>
+                        <button class="channel-btn mute" onclick="toggleMute(3)">MUTE</button>
+                    </div>
+                </div>
+
+                <div class="mixer-channel">
+                    <div class="channel-label">MASTER</div>
+                    <div class="channel-fader">
+                        <div class="vu-meter">
+                            <div class="vu-level" id="vuMaster"></div>
+                        </div>
+                        <input type="range" class="fader" id="masterFader" min="0" max="100" value="85" orient="vertical">
+                    </div>
+                    <div class="channel-controls">
+                        <button class="channel-btn mute" onclick="toggleMasterMute()">MUTE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="live-indicator" id="liveIndicator">● LIVE</div>
+    <div class="recording-indicator" id="recordingIndicator">● REC 00:00</div>
+
+    <script>
+        let currentSource = 'cam1';
+        let isLive = false;
+        let isRecording = false;
+        let streams = {};
+        let mediaRecorder = null;
+        let recordingStartTime = null;
+        let audioContext = null;
+        let analysers = {};
+
+        async function initializeRegie() {
+            try {
+                await setupMediaSources();
+                setupAudioAnalysis();
+                setupEventListeners();
+                updateMainOutput();
+                console.log('Régie Master initialisée');
+            } catch (error) {
+                console.error('Erreur initialisation régie:', error);
+            }
+        }
+
+        async function setupMediaSources() {
+            try {
+                // Caméra principale
+                streams.cam1 = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 1920, height: 1080 },
+                    audio: true
+                });
+                document.getElementById('cam1').srcObject = streams.cam1;
+
+                // Caméra secondaire (ou autre source)
+                try {
+                    streams.cam2 = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 1280, height: 720 },
+                        audio: true
+                    });
+                    document.getElementById('cam2').srcObject = streams.cam2;
+                } catch (e) {
+                    console.log('Cam2 non disponible');
+                }
+
+                // Partage d'écran
+                try {
+                    streams.screen = await navigator.mediaDevices.getDisplayMedia({
+                        video: { width: 1920, height: 1080 },
+                        audio: true
+                    });
+                    document.getElementById('screen').srcObject = streams.screen;
+                } catch (e) {
+                    console.log('Partage écran non autorisé');
+                }
+
+                // Source média (vidéo de test)
+                setupMediaSource();
+
+            } catch (error) {
+                console.error('Erreur setup sources:', error);
+            }
+        }
+
+        function setupMediaSource() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1920;
+            canvas.height = 1080;
+            const ctx = canvas.getContext('2d');
+            
+            // Générer une vidéo de test
+            function drawTestPattern() {
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, `hsl(${Date.now() / 50 % 360}, 70%, 50%)`);
+                gradient.addColorStop(1, `hsl(${(Date.now() / 50 + 180) % 360}, 70%, 50%)`);
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('MÉDIA TEST', canvas.width/2, canvas.height/2);
+                ctx.fillText(new Date().toLocaleTimeString(), canvas.width/2, canvas.height/2 + 60);
+                
+                requestAnimationFrame(drawTestPattern);
+            }
+            
+            drawTestPattern();
+            streams.media = canvas.captureStream(30);
+            document.getElementById('media').srcObject = streams.media;
+        }
+
+        function setupAudioAnalysis() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            Object.keys(streams).forEach((sourceKey, index) => {
+                if (streams[sourceKey] && streams[sourceKey].getAudioTracks().length > 0) {
+                    const analyser = audioContext.createAnalyser();
+                    const source = audioContext.createMediaStreamSource(streams[sourceKey]);
+                    source.connect(analyser);
+                    analyser.fftSize = 256;
+                    analysers[sourceKey] = analyser;
+                }
+            });
+
+            updateVUMeters();
+        }
+
+        function updateVUMeters() {
+            const vuElements = ['vu1', 'vu2', 'vu3', 'vuMaster'];
+            const sourceKeys = Object.keys(analysers);
+
+            vuElements.forEach((vuId, index) => {
+                const sourceKey = sourceKeys[index];
+                if (analysers[sourceKey]) {
+                    const analyser = analysers[sourceKey];
+                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                    const level = (average / 255) * 100;
+                    
+                    document.getElementById(vuId).style.height = level + '%';
+                }
+            });
+
+            requestAnimationFrame(updateVUMeters);
+        }
+
+        function setupEventListeners() {
+            // Sliders effets
+            document.getElementById('brightness').addEventListener('input', updateEffects);
+            document.getElementById('contrast').addEventListener('input', updateEffects);
+            document.getElementById('saturation').addEventListener('input', updateEffects);
+            
+            // Slider transition
+            document.getElementById('transitionSpeed').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('transitionSpeedValue').textContent = (value / 1000).toFixed(1) + 's';
+            });
+
+            // Faders audio
+            ['fader1', 'fader2', 'fader3', 'masterFader'].forEach(faderId => {
+                document.getElementById(faderId).addEventListener('input', updateAudioMix);
+            });
+
+            // Sélection des sources
+            document.querySelectorAll('.source-preview').forEach(preview => {
+                preview.addEventListener('click', function() {
+                    const source = this.dataset.source;
+                    switchToSource(source);
+                });
+            });
+        }
+
+        function switchToSource(sourceKey) {
+            if (!streams[sourceKey]) return;
+
+            currentSource = sourceKey;
+            
+            // Mettre à jour interface
+            document.querySelectorAll('.source-preview').forEach(preview => {
+                preview.classList.remove('active');
+            });
+            document.querySelector(`[data-source="${sourceKey}"]`).classList.add('active');
+            
+            document.querySelectorAll('.switch-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            updateMainOutput();
+        }
+
+        function updateMainOutput() {
+            if (streams[currentSource]) {
+                document.getElementById('mainOutput').srcObject = streams[currentSource];
+            }
+        }
+
+        function transition(type) {
+            const mainVideo = document.getElementById('mainOutput');
+            const duration = parseInt(document.getElementById('transitionSpeed').value);
+
+            switch(type) {
+                case 'cut':
+                    updateMainOutput();
+                    break;
+                    
+                case 'fade':
+                    mainVideo.style.transition = `opacity ${duration}ms`;
+                    mainVideo.style.opacity = '0';
+                    setTimeout(() => {
+                        updateMainOutput();
+                        mainVideo.style.opacity = '1';
+                    }, duration / 2);
+                    break;
+                    
+                case 'wipe':
+                    mainVideo.style.transition = `transform ${duration}ms`;
+                    mainVideo.style.transform = 'translateX(-100%)';
+                    setTimeout(() => {
+                        updateMainOutput();
+                        mainVideo.style.transform = 'translateX(0)';
+                    }, duration / 2);
+                    break;
+            }
+        }
+
+        function updateEffects() {
+            const brightness = document.getElementById('brightness').value;
+            const contrast = document.getElementById('contrast').value;
+            const saturation = document.getElementById('saturation').value;
+            
+            const filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+            document.getElementById('mainOutput').style.filter = filter;
+        }
+
+        function toggleLive() {
+            const btn = document.getElementById('liveBtn');
+            const indicator = document.getElementById('liveIndicator');
+            
+            if (!isLive) {
+                isLive = true;
+                btn.textContent = 'ARRÊTER LIVE';
+                btn.style.background = '#e74c3c';
+                indicator.style.display = 'block';
+                
+                // Ici tu pourrais intégrer avec un service de streaming
+                console.log('Stream live démarré');
+            } else {
+                isLive = false;
+                btn.textContent = 'DÉMARRER LIVE';
+                btn.style.background = '#27ae60';
+                indicator.style.display = 'none';
+                
+                console.log('Stream live arrêté');
+            }
+        }
+
+        function toggleRecord() {
+            const btn = document.getElementById('recordBtn');
+            const indicator = document.getElementById('recordingIndicator');
+            
+            if (!isRecording) {
+                startRecording();
+                isRecording = true;
+                btn.textContent = 'STOP REC';
+                btn.classList.add('recording');
+                indicator.style.display = 'block';
+                recordingStartTime = Date.now();
+                updateRecordingTimer();
+            } else {
+                stopRecording();
+                isRecording = false;
+                btn.textContent = 'REC';
+                btn.classList.remove('recording');
+                indicator.style.display = 'none';
+            }
+        }
+
+        function startRecording() {
+            if (!streams[currentSource]) return;
+            
+            try {
+                mediaRecorder = new MediaRecorder(streams[currentSource]);
+                const chunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        chunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `regie-recording-${new Date().toISOString().slice(0,19)}.webm`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                };
+                
+                mediaRecorder.start();
+                console.log('Enregistrement démarré');
+            } catch (error) {
+                console.error('Erreur enregistrement:', error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                console.log('Enregistrement arrêté');
+            }
+        }
+
+        function updateRecordingTimer() {
+            if (!isRecording || !recordingStartTime) return;
+            
+            const elapsed = Date.now() - recordingStartTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('recordingIndicator').textContent = `● REC ${timeStr}`;
+            
+            setTimeout(updateRecordingTimer, 1000);
+        }
+
+        function toggleSolo(channel) {
+            const btn = event.target;
+            btn.classList.toggle('active');
+            console.log(`Solo channel ${channel}:`, btn.classList.contains('active'));
+        }
+
+        function toggleMute(channel) {
+            const btn = event.target;
+            btn.classList.toggle('active');
+            console.log(`Mute channel ${channel}:`, btn.classList.contains('active'));
+        }
+
+        function toggleMasterMute() {
+            const btn = event.target;
+            btn.classList.toggle('active');
+            const mainVideo = document.getElementById('mainOutput');
+            mainVideo.muted = btn.classList.contains('active');
+        }
+
+        function updateAudioMix() {
+            // Logique de mixage audio
+            console.log('Mix audio mis à jour');
+        }
+
+        // Timeline functions
+        function playTimeline() {
+            console.log('Timeline play');
+        }
+
+        function pauseTimeline() {
+            console.log('Timeline pause');
+        }
+
+        function stopTimeline() {
+            console.log('Timeline stop');
+        }
+
+        function addClip() {
+            const clips = document.getElementById('timelineClips');
+            const newClip = document.createElement('div');
+            newClip.className = 'timeline-clip';
+            newClip.textContent = `Clip ${clips.children.length}`;
+            clips.appendChild(newClip);
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeRegie();
+        });
+
+        // Nettoyage
+        window.addEventListener('beforeunload', function() {
+            Object.values(streams).forEach(stream => {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+            });
+            if (audioContext) {
+                audioContext.close();
+            }
+        });
+    </script>
+   <script src="../../znk-module-mapping-complete.js"></script>
+<script src="../../znk-widget-generator.js"></script>
+<script src="../../znk-auto-nav.js"></script>
+<script src="../../znk-template-activator.js"></script>
+
+</body>
+</html>

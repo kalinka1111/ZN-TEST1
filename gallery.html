@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK Galerie - Selected Artists Collection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 30%, #ffffff 100%);
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
+            color: #1a1a1a;
+            overflow-x: hidden;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        /* Effet de vagues discret inspiré du style japonais */
+        .ambient-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.02;
+            z-index: -1;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(139, 69, 19, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(210, 180, 140, 0.1) 0%, transparent 50%);
+            animation: ambientFlow 25s linear infinite;
+        }
+
+        @keyframes ambientFlow {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        .main-container {
+            width: 100vw;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Navigation NYC Showroom style */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(30px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            transition: all 0.4s ease;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .znk-logo {
+            font-size: 28px;
+            font-weight: 100;
+            background: linear-gradient(135deg, #2c2c2c, #8b4513, #1a1a1a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 6px;
+            position: relative;
+        }
+
+        .znk-logo::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #8b4513, transparent);
+            opacity: 0.4;
+        }
+
+        .galerie-subtitle {
+            font-size: 11px;
+            color: #666;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-left: 20px;
+            border-left: 1px solid #ddd;
+            padding-left: 20px;
+        }
+
+        .nav-section {
+            display: flex;
+            gap: 50px;
+            align-items: center;
+        }
+
+        .nav-item {
+            padding: 12px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #8b4513, #cd853f);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item:hover::before {
+            width: 100%;
+        }
+
+        .nav-item:hover {
+            color: #8b4513;
+            transform: translateY(-2px);
+        }
+
+        .nav-item.premium {
+            background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 0;
+        }
+
+        .nav-item.premium:hover {
+            background: linear-gradient(135deg, #8b4513, #a0522d);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        /* Menu déroulant Artists */
+        .nav-dropdown-wrap {
+            position: relative;
+        }
+
+        .nav-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 18px;
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.12);
+            min-width: 260px;
+            max-height: 360px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1500;
+            padding: 8px 0;
+        }
+
+        .nav-dropdown.open {
+            display: block;
+        }
+
+        .nav-dropdown-item {
+            padding: 12px 22px;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            color: #333;
+            cursor: pointer;
+            transition: background .2s ease;
+            text-transform: none;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .nav-dropdown-item:hover {
+            background: #faf8f5;
+            color: #8b4513;
+        }
+
+        .nav-dropdown-item .sub {
+            display: block;
+            font-size: 10px;
+            color: #aaa;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .nav-dropdown-empty {
+            padding: 14px 22px;
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .nav-dropdown-divider {
+            height: 1px;
+            background: #eee;
+            margin: 6px 0;
+        }
+
+        /* Hero section showroom NYC */
+        .hero-section {
+            width: 100%;
+            background: linear-gradient(135deg, 
+                rgba(255,255,255,0.95) 0%, 
+                rgba(250,250,250,0.98) 100%);
+            margin-top: 64px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+            max-width: 800px;
+            padding: 0 40px;
+        }
+
+        .hero-title {
+            font-size: 42px;
+            font-weight: 100;
+            color: #1a1a1a;
+            margin-bottom: 14px;
+            letter-spacing: 3px;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-size: 15px;
+            color: #666;
+            font-weight: 300;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+        }
+
+        .hero-cta {
+            background: transparent;
+            border: 2px solid #1a1a1a;
+            color: #1a1a1a;
+            padding: 12px 32px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+
+        .hero-cta:hover {
+            background: #1a1a1a;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .znk-hero-title {
+            font-size: 64px;
+            letter-spacing: 10px;
+            background: linear-gradient(135deg, #2c2c2c, #8b4513, #cd853f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 18px;
+        }
+
+        /* Grille des boutons-artistes (blanc et or, largeur adaptée au nom) */
+        .artist-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px 22px;
+            padding: 10px 0 20px;
+        }
+
+        .artist-btn {
+            background: white;
+            border: 1px solid #8b4513;
+            color: #1a1a1a;
+            padding: 16px 26px;
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 6px 18px rgba(139, 69, 19, 0.06);
+        }
+
+        .artist-btn:hover {
+            background: linear-gradient(135deg, #8b4513, #cd853f);
+            color: white;
+            border-color: #8b4513;
+            transform: translateY(-4px);
+            box-shadow: 0 14px 30px rgba(139, 69, 19, 0.25);
+        }
+
+        .artist-grid-empty {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            letter-spacing: 1px;
+            padding: 40px 0;
+            text-transform: uppercase;
+        }
+
+        /* Modal iframe : affichage de l'exposition d'un artiste sans quitter gallery.html */
+        .expo-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.92);
+            z-index: 4000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .expo-modal-overlay.open {
+            display: flex;
+        }
+
+        .expo-modal-bar {
+            height: 56px;
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            background: #1a1a1a;
+        }
+
+        .expo-modal-artist {
+            color: #f4e4c1;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        .expo-modal-close {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 18px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .expo-modal-close:hover {
+            background: #8b4513;
+            border-color: #8b4513;
+        }
+
+        .expo-modal-frame {
+            flex: 1 1 auto;
+            width: 100%;
+            border: none;
+            background: white;
+        }
+
+        @media (max-width: 768px) {
+            .znk-hero-title { font-size: 34px; letter-spacing: 5px; }
+            .artist-btn { padding: 13px 18px; font-size: 12px; }
+        }
+
+        /* Section artistes */
+        .artists-section {
+            width: 90%;
+            max-width: 1600px;
+            margin: 40px auto;
+            padding: 0 40px;
+        }
+
+        .section-header {
+            margin-bottom: 36px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 32px;
+            font-weight: 100;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .section-description {
+            font-size: 14px;
+            color: #666;
+            max-width: 600px;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        /* Grille showroom */
+        .showroom-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 34px;
+            margin-top: 0;
+        }
+
+        .artwork-showcase {
+            background: white;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.08),
+                0 5px 20px rgba(0, 0, 0, 0.04);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .artwork-showcase:hover {
+            transform: translateY(-15px);
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.12),
+                0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .artwork-visual {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+            background: #f4f4f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .artwork-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 72px;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .artwork-visual img.artwork-placeholder {
+            color: transparent;
+            text-shadow: none;
+            object-fit: contain;
+            background: #f4f4f4;
+        }
+
+        /* Overlay effet NYC gallery */
+        .artwork-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                180deg, 
+                rgba(0, 0, 0, 0) 0%, 
+                rgba(0, 0, 0, 0.8) 100%
+            );
+            opacity: 0;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 30px;
+        }
+
+        .artwork-showcase:hover .artwork-overlay {
+            opacity: 1;
+        }
+
+        .overlay-info {
+            color: white;
+            font-size: 15px;
+            font-weight: 300;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .overlay-price {
+            color: rgba(255,255,255,0.65);
+            font-size: 11px;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .artwork-details {
+            padding: 24px 26px;
+            background: white;
+        }
+
+        .artwork-title {
+            font-size: 19px;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .artist-name {
+            font-size: 14px;
+            color: #8b4513;
+            font-style: italic;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .artwork-medium {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .artwork-format {
+            font-size: 11px;
+            color: #8b4513;
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+            font-weight: 300;
+        }
+
+        .price-hint {
+            font-size: 11px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 18px;
+        }
+
+        .artwork-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .inquire-button {
+            background: transparent;
+            color: #1a1a1a;
+            border: 1px solid #1a1a1a;
+            padding: 10px 16px;
+            border-radius: 0;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 300;
+            flex: 1;
+        }
+
+        .inquire-button:hover {
+            background: #1a1a1a;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .buy-button {
+            background: #8b4513;
+            color: white;
+            border: 1px solid #8b4513;
+            padding: 10px 16px;
+            border-radius: 0;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 300;
+            flex: 1;
+        }
+
+        .buy-button:hover {
+            background: #6b3410;
+            border-color: #6b3410;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139,69,19,0.3);
+        }
+
+        /* Section curator's note */
+        .curator-section {
+            background: linear-gradient(135deg, #fafafa 0%, #f8f8f8 100%);
+            padding: 50px 0;
+            margin: 50px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .curator-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 60px;
+            text-align: center;
+        }
+
+        .curator-title {
+            font-size: 24px;
+            font-weight: 100;
+            color: #1a1a1a;
+            margin-bottom: 18px;
+            letter-spacing: 2px;
+        }
+
+        .curator-text {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.7;
+            font-weight: 300;
+            max-width: 800px;
+            margin: 0 auto;
+            font-style: italic;
+        }
+
+        .curator-signature {
+            margin-top: 24px;
+            font-size: 13px;
+            color: #8b4513;
+            letter-spacing: 1px;
+        }
+
+        /* Footer minimal */
+        .gallery-footer {
+            background: white;
+            padding: 30px 0;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: #999;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 0 20px;
+                height: 58px;
+            }
+            
+            .znk-logo {
+                font-size: 22px;
+                letter-spacing: 3px;
+            }
+            
+            .nav-section {
+                gap: 18px;
+            }
+            
+            .nav-item {
+                font-size: 11px;
+            }
+            
+            .hero-section {
+                margin-top: 58px;
+                padding: 36px 24px;
+            }
+            
+            .hero-title {
+                font-size: 30px;
+            }
+            
+            .showroom-grid {
+                grid-template-columns: 1fr;
+                gap: 28px;
+            }
+            
+            .artists-section {
+                width: 95%;
+                padding: 0 20px;
+            }
+        }
+
+        /* Animations subtiles */
+        @keyframes subtileFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .artwork-showcase {
+            animation: fadeInScale 0.8s ease forwards;
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        @keyframes fadeInScale {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .artwork-showcase:nth-child(1) { animation-delay: 0.1s; }
+        .artwork-showcase:nth-child(2) { animation-delay: 0.2s; }
+        .artwork-showcase:nth-child(3) { animation-delay: 0.3s; }
+        .artwork-showcase:nth-child(4) { animation-delay: 0.4s; }
+        .artwork-showcase:nth-child(5) { animation-delay: 0.5s; }
+        .artwork-showcase:nth-child(6) { animation-delay: 0.6s; }
+
+        /* Scrollbar minimal */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f8f8f8;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #ccc, #999);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #999, #666);
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-background"></div>
+
+    <div class="main-container">
+        <!-- Navigation NYC Showroom -->
+        <nav class="top-nav">
+            <div class="logo-section">
+                <div class="znk-logo">ZNK</div>
+                <div class="galerie-subtitle">Selected Artists Collection</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-dropdown-wrap">
+                    <div class="nav-item" onclick="toggleArtistsDropdown(event)">Artists ▾</div>
+                    <div class="nav-dropdown" id="artistsDropdown">
+                        <div class="nav-dropdown-item" onclick="openArtistOfMonth()">★ Artiste du mois</div>
+                        <div class="nav-dropdown-divider"></div>
+                        <div id="artistsDropdownList">
+                            <div class="nav-dropdown-empty">Chargement…</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-item premium" onclick="openCollection()">Collection</div>
+                <div class="nav-item" onclick="showContact()">Contact</div>
+            </div>
+        </nav>
+
+        <!-- Hero Section : uniquement le titre + sous-titre, aucun visuel -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-title znk-hero-title">ZNK ART GALLERY</div>
+                <div class="hero-subtitle">Découvrez nos artistes</div>
+            </div>
+        </div>
+
+        <!-- Section Artistes : grille de boutons-noms (4 x 6 = 24 places) -->
+        <div class="artists-section">
+            <div class="artist-grid" id="artistGrid">
+                <!-- Les boutons-artistes sont générés par JavaScript depuis le roster admin -->
+            </div>
+            <div class="artist-grid-empty" id="artistGridEmpty" style="display:none;">
+                Aucun artiste n'a encore été publié dans la galerie.
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="gallery-footer">
+            <div class="footer-content">
+                <div class="footer-text">ZNK Gallery • New York • Private Collection</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal iframe : ouverte au clic sur un nom d'artiste -->
+    <div class="expo-modal-overlay" id="expoModalOverlay">
+        <div class="expo-modal-bar">
+            <div class="expo-modal-artist" id="expoModalArtist"></div>
+            <button class="expo-modal-close" onclick="closeArtistExpo()">✕ Fermer</button>
+        </div>
+        <iframe class="expo-modal-frame" id="expoModalFrame" src="about:blank"></iframe>
+    </div>
+
+    <script>
+        const GALLERY_MANIFEST_URL = './znk-gallery-manifest.json';
+        const GALLERY_STORAGE_KEY = 'znk_gallery_manifest';
+        const EXPO_INDEX_KEY = 'znk_expo_index';
+        const MAX_ARTIST_SLOTS = 24;
+
+        // Config backend unifiée avec WhatsZNK.html / user-profile.html / expo-manager.html / ZNKExpos.html / gallery-manager.html.
+        function znkResolveBackendUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const fromUrl = params.get('backend');
+            if (fromUrl) {
+                localStorage.setItem('znk_backend_url', fromUrl);
+                return fromUrl;
+            }
+            return localStorage.getItem('znk_backend_url') || 'http://localhost:5000';
+        }
+        const ZNK_BACKEND_URL = znkResolveBackendUrl();
+        if (window.electronAPI && window.electronAPI.getRegistryUrl) {
+            window.electronAPI.getRegistryUrl().then(url => {
+                if (url && localStorage.getItem('znk_backend_url') !== url) {
+                    localStorage.setItem('znk_backend_url', url);
+                }
+            }).catch(() => {});
+        }
+
+        // ---------- Amorçage du premier artiste (persistant, inclus dans le build) ----------
+        // Si aucune exposition n'a encore été publiée localement, on crée une exposition de
+        // démonstration avec les visuels persistants de ./assets/gallery-seed/, pour que la
+        // galerie ne soit jamais vide au premier lancement.
+        const SEED_ARTIST_ID = 'ZNK-SEED-001';
+        const SEED_EXPO_ID = 'znk-seed-artist-01';
+
+        function seedFirstArtistIfNeeded() {
+            try {
+                const hasIndex = localStorage.getItem(EXPO_INDEX_KEY);
+                const hasRoster = localStorage.getItem(GALLERY_STORAGE_KEY);
+                if (hasIndex || hasRoster) return; // déjà initialisé, on ne touche à rien
+
+                const seedExpo = {
+                    id: SEED_EXPO_ID,
+                    title: 'Lumières Nomades',
+                    subtitle: 'Exposition inaugurale — collection permanente ZNK',
+                    artist: 'Amara Bello',
+                    artistId: SEED_ARTIST_ID,
+                    displayFont: 'Fraunces',
+                    bodyFont: 'Inter',
+                    accent: '#b08d57',
+                    panels: [
+                        { id: 'seed_panel_1', type: 'image', src: './assets/gallery-seed/piece-01.svg', orientation: 'vertical', frame: 'none', title: 'Aurore Urbaine', price: '450 €', caption: '' },
+                        { id: 'seed_panel_2', type: 'image', src: './assets/gallery-seed/piece-02.svg', orientation: 'vertical', frame: 'none', title: 'Trois Silhouettes', price: '620 €', caption: '' },
+                        { id: 'seed_panel_3', type: 'image', src: './assets/gallery-seed/piece-03.svg', orientation: 'vertical', frame: 'none', title: 'Nuit Dorée', price: '540 €', caption: '' }
+                    ]
+                };
+
+                localStorage.setItem('znk_expo_' + SEED_EXPO_ID, JSON.stringify(seedExpo));
+                localStorage.setItem(EXPO_INDEX_KEY, JSON.stringify([{ id: SEED_EXPO_ID, title: seedExpo.title }]));
+                localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify({
+                    roster: [{ position: 1, artistId: SEED_ARTIST_ID, expoId: SEED_EXPO_ID, artistName: seedExpo.artist, expoTitle: seedExpo.title }],
+                    featuredArtist: {}
+                }));
+            } catch (e) {
+                console.warn('⚠️ Amorçage du premier artiste impossible:', e);
+            }
+        }
+
+        // Charge le manifest complet (roster d'artistes + artiste du mois) :
+        // 1) serveur ZNK (galerie en direct, mise à jour par gallery-manager.html
+        //    sans nécessiter une nouvelle version de l'app) 2) fichier publié dans
+        //    le build (utile hors-ligne / avant toute connexion serveur) 3) sauvegarde
+        //    locale (gallery-manager.html utilisé dans ce même navigateur) 4) rien
+        async function loadGalleryManifest() {
+            try {
+                const res = await fetch(`${ZNK_BACKEND_URL}/api/gallery`, { cache: 'no-store' });
+                if (res.ok) {
+                    const result = await res.json();
+                    const manifest = result && result.data;
+                    if (manifest && (manifest.roster || manifest.featuredArtist)) {
+                        return manifest;
+                    }
+                }
+            } catch (e) {
+                console.log('ℹ️ Serveur galerie injoignable, on tente le fichier publié dans le build.');
+            }
+
+            try {
+                const res = await fetch(GALLERY_MANIFEST_URL, { cache: 'no-store' });
+                if (res.ok) {
+                    const manifest = await res.json();
+                    if (manifest && (manifest.roster || manifest.featuredArtist)) {
+                        return manifest;
+                    }
+                }
+            } catch (e) {
+                console.log('ℹ️ Pas de manifest galerie publié, on tente le stockage local.');
+            }
+
+            try {
+                const raw = localStorage.getItem(GALLERY_STORAGE_KEY);
+                if (raw) {
+                    const manifest = JSON.parse(raw);
+                    if (manifest && (manifest.roster || manifest.featuredArtist)) {
+                        return manifest;
+                    }
+                }
+            } catch (e) {
+                console.warn('⚠️ Erreur lecture manifest galerie local:', e);
+            }
+
+            return null;
+        }
+
+        // Génère la grille des boutons-artistes (4 x 6 = 24 places), largeur adaptée au nom
+        async function renderArtistGrid() {
+            const grid = document.getElementById('artistGrid');
+            const emptyMsg = document.getElementById('artistGridEmpty');
+            grid.innerHTML = '';
+
+            const manifest = await loadGalleryManifest();
+            const roster = (manifest && Array.isArray(manifest.roster)) ? manifest.roster.slice(0, MAX_ARTIST_SLOTS) : [];
+
+            if (!roster.length) {
+                emptyMsg.style.display = 'block';
+                return;
+            }
+            emptyMsg.style.display = 'none';
+
+            roster
+                .sort((a, b) => (a.position || 0) - (b.position || 0))
+                .forEach((entry) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'artist-btn';
+                    btn.textContent = entry.artistName || 'Artiste';
+                    btn.onclick = () => openArtistExpo(entry.expoId, entry.artistName);
+                    grid.appendChild(btn);
+                });
+        }
+
+        // Ouvre l'exposition d'un artiste dans une iframe, directement dans gallery.html
+        function openArtistExpo(expoId, artistName) {
+            document.getElementById('expoModalArtist').textContent = artistName || '';
+            document.getElementById('expoModalFrame').src = `./ZNKExpos.html?expo=${encodeURIComponent(expoId)}`;
+            document.getElementById('expoModalOverlay').classList.add('open');
+        }
+
+        function closeArtistExpo() {
+            document.getElementById('expoModalOverlay').classList.remove('open');
+            document.getElementById('expoModalFrame').src = 'about:blank';
+        }
+
+        // Envoie un message dans la messagerie interne ZNK (@echo.znk), utilisée par email.html
+        const ZNK_GALLERY_MAILBOX = 'znkgallery@echo.znk';
+
+        async function sendToGalleryMailbox(subject, body) {
+            try {
+                const response = await fetch(`${ZNK_BACKEND_URL}/api/messages/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to: ZNK_GALLERY_MAILBOX, subject, body, canal: 'email' })
+                });
+                const result = await response.json();
+
+                if (result.delivered) {
+                    showNotification('Message envoyé', 'Votre message a été livré à la galerie. Notre curateur vous recontactera rapidement.');
+                } else {
+                    showNotification('Message en attente', 'La galerie n\'est pas connectée en ce moment. Votre message sera livré dès sa reconnexion.');
+                }
+            } catch (e) {
+                console.error('Erreur envoi message galerie:', e);
+                showNotification('Message non envoyé', 'Impossible de joindre la messagerie ZNK pour le moment. Réessayez plus tard.');
+            }
+        }
+
+        // Page "Artiste du Mois" - photo + présentation longue, alimentée depuis le module admin
+        async function openArtistOfMonth() {
+            const manifest = await loadGalleryManifest();
+            const featured = manifest && manifest.featuredArtist;
+
+            const existing = document.getElementById('artistOfMonthModal');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'artistOfMonthModal';
+            overlay.style.cssText = `
+                position: fixed; top:0; left:0; right:0; bottom:0;
+                background: rgba(0,0,0,0.75); z-index: 3000;
+                display:flex; align-items:center; justify-content:center;
+                padding: 30px; overflow-y: auto;
+            `;
+
+            if (!featured || !featured.name) {
+                overlay.innerHTML = `
+                    <div style="background:#fff; max-width:520px; width:100%; padding:50px; text-align:center; font-family:'Helvetica Neue', Arial, sans-serif;">
+                        <div style="font-size:20px; font-weight:100; letter-spacing:1px; margin-bottom:15px;">Artiste du Mois</div>
+                        <div style="color:#888; font-size:14px; line-height:1.6;">Aucun artiste du mois n'a encore été publié. Rendez-vous bientôt pour découvrir notre prochaine mise en avant.</div>
+                        <button onclick="document.getElementById('artistOfMonthModal').remove()" style="margin-top:30px; background:#1a1a1a; color:#fff; border:none; padding:12px 30px; font-size:11px; text-transform:uppercase; letter-spacing:2px; cursor:pointer;">Fermer</button>
+                    </div>
+                `;
+            } else {
+                overlay.innerHTML = `
+                    <div style="background:#fff; max-width:820px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 30px 80px rgba(0,0,0,0.3); font-family:'Helvetica Neue', Arial, sans-serif;">
+                        ${featured.photo ? `<img src="${featured.photo}" alt="${featured.name}" style="width:100%; max-height:420px; object-fit:contain; background:#f4f4f4; display:block;">` : ''}
+                        <div style="padding:50px;">
+                            <div style="font-size:11px; text-transform:uppercase; letter-spacing:2px; color:#8b4513; margin-bottom:10px;">Artiste du Mois</div>
+                            <div style="font-size:32px; font-weight:100; letter-spacing:1px; margin-bottom:25px;">${featured.name}</div>
+                            <div style="font-size:15px; line-height:1.9; color:#444; white-space:pre-line;">${featured.bio || ''}</div>
+                            <button onclick="document.getElementById('artistOfMonthModal').remove()" style="margin-top:35px; background:transparent; border:1px solid #1a1a1a; color:#1a1a1a; padding:12px 30px; font-size:11px; text-transform:uppercase; letter-spacing:2px; cursor:pointer;">Fermer</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        }
+
+        // ---------- Menu déroulant "Artists" ----------
+        // Lit le même roster curé par l'admin (gallery-manager.html) que la grille
+        // principale, pour n'afficher que les artistes validés — pas toutes les
+        // expositions publiées localement.
+        function toggleArtistsDropdown(e) {
+            e.stopPropagation();
+            const dd = document.getElementById('artistsDropdown');
+            const willOpen = !dd.classList.contains('open');
+            closeAllDropdowns();
+            if (willOpen) {
+                dd.classList.add('open');
+                populateArtistsDropdown();
+            }
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.nav-dropdown.open').forEach(d => d.classList.remove('open'));
+        }
+        document.addEventListener('click', closeAllDropdowns);
+
+        async function populateArtistsDropdown() {
+            const listEl = document.getElementById('artistsDropdownList');
+            const manifest = await loadGalleryManifest();
+            const roster = (manifest && Array.isArray(manifest.roster)) ? manifest.roster : [];
+
+            if (!roster.length) {
+                listEl.innerHTML = '<div class="nav-dropdown-empty">Aucun artiste publié pour le moment.</div>';
+                return;
+            }
+
+            listEl.innerHTML = roster
+                .sort((a, b) => (a.position || 0) - (b.position || 0))
+                .map(e => `
+                    <div class="nav-dropdown-item" onclick="openArtistExpo('${e.expoId}', '${(e.artistName || '').replace(/'/g, "\\'")}')">
+                        ${e.artistName || 'Artiste'}
+                        <span class="sub">${e.expoTitle || ''}</span>
+                    </div>
+                `).join('');
+        }
+
+        // Navigation (exhibitions / about restent gérés ici tant qu'ils existent)
+       
+
+        function openCollection() {
+            showNotification('Private Collection', 'Access to exclusive collection catalog');
+        }
+
+        function showContact() {
+            showNotification(
+                'Contact Information',
+                'ZNK Gallery\nNew York Showroom\n\nBy appointment only\nznkgallery@echo.znk'
+            );
+        }
+
+        function scrollToArtists() {
+            document.querySelector('.artists-section').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // Système de notifications élégant
+        function showNotification(title, message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 255, 255, 0.98);
+                color: #1a1a1a;
+                padding: 40px 50px;
+                border-radius: 0;
+                z-index: 2000;
+                font-size: 14px;
+                backdrop-filter: blur(25px);
+                border: 1px solid rgba(0,0,0,0.08);
+                box-shadow: 0 30px 80px rgba(0,0,0,0.15);
+                text-align: center;
+                min-width: 400px;
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+                font-weight: 300;
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-size: 18px; font-weight: 100; margin-bottom: 20px; color: #1a1a1a; letter-spacing: 1px;">${title}</div>
+                <div style="line-height: 1.6; white-space: pre-line; color: #555;">${message}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            seedFirstArtistIfNeeded();
+            renderArtistGrid();
+
+            // Message d'accueil discret
+            setTimeout(() => {
+                showNotification(
+                    'Welcome to ZNK Gallery',
+                    'Discover our carefully curated collection\nof contemporary masters'
+                );
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

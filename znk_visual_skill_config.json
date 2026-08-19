@@ -1,0 +1,405 @@
+{
+  "skill_id": "znk_visual_navigator",
+  "name": "ZNK-VISUAL-NAVIGATOR",
+  "version": "2.0.0",
+  "extends": "znk-visual-navigator.html",
+  
+  "triggers": [
+    "ouvrir dashboard",
+    "visualiser structure",
+    "carte interactive",
+    "éditer fichier",
+    "verrouiller code",
+    "changer couleur module"
+  ],
+  
+  "features": {
+    "visual_dashboard": {
+      "description": "Interface graphique interactive pour navigation",
+      "views": [
+        {
+          "name": "tree_view",
+          "icon": "🌳",
+          "description": "Arborescence avec codes couleurs",
+          "interactions": [
+            "Click fichier → Détails",
+            "Click icône lock → Verrouiller/déverrouiller",
+            "Hover → Preview imports/exports"
+          ]
+        },
+        {
+          "name": "graph_view",
+          "icon": "🔗",
+          "description": "Graphe de dépendances visuelles",
+          "shows": [
+            "Nœuds = fichiers",
+            "Flèches = imports/exports",
+            "Épaisseur ligne = force connexion",
+            "Groupes = modules colorés"
+          ]
+        },
+        {
+          "name": "timeline_view",
+          "icon": "⚡",
+          "description": "Ordre d'exécution chronologique",
+          "phases": [
+            "Phase 1: Boot Critical (rouge)",
+            "Phase 2: Init Phase (orange)",
+            "Phase 3: Runtime Lazy (vert)",
+            "Phase 4: Background (bleu)"
+          ]
+        }
+      ]
+    },
+    
+    "color_system": {
+      "description": "Système de couleurs personnalisable",
+      "customization": {
+        "folder_colors": {
+          "auth": "#ef4444",
+          "studio": "#3b82f6",
+          "config": "#f59e0b",
+          "components": "#10b981",
+          "services": "#8b5cf6",
+          "utils": "#6b7280",
+          "api": "#ec4899",
+          "hooks": "#14b8a6"
+        },
+        "type_colors": {
+          "component": "#10b981",
+          "service": "#3b82f6",
+          "util": "#6b7280",
+          "config": "#f59e0b",
+          "hook": "#14b8a6",
+          "api": "#ec4899",
+          "model": "#8b5cf6",
+          "test": "#64748b"
+        },
+        "phase_colors": {
+          "boot_critical": "#dc2626",
+          "init_phase": "#f59e0b",
+          "runtime_lazy": "#10b981",
+          "background_worker": "#6366f1"
+        }
+      },
+      "commands": {
+        "set_module_color": "couleur auth rouge",
+        "reset_colors": "réinitialiser couleurs",
+        "export_theme": "exporter thème couleurs",
+        "import_theme": "importer thème [nom]"
+      }
+    },
+    
+    "security_system": {
+      "description": "Système de verrouillage avancé",
+      "lock_levels": [
+        {
+          "level": 0,
+          "name": "unlocked",
+          "icon": "🔓",
+          "color": "green",
+          "permissions": ["read", "write", "delete"],
+          "description": "Édition libre"
+        },
+        {
+          "level": 1,
+          "name": "soft_lock",
+          "icon": "🔒",
+          "color": "yellow",
+          "permissions": ["read", "write_with_warning"],
+          "description": "Édition avec confirmation"
+        },
+        {
+          "level": 2,
+          "name": "hard_lock",
+          "icon": "🔐",
+          "color": "orange",
+          "permissions": ["read_only"],
+          "description": "Lecture seule, unlock admin requis"
+        },
+        {
+          "level": 3,
+          "name": "system_lock",
+          "icon": "⛔",
+          "color": "red",
+          "permissions": ["hidden"],
+          "description": "Fichiers système protégés"
+        }
+      ],
+      "unlock_methods": {
+        "password": {
+          "enabled": true,
+          "description": "Mot de passe maître ZNK",
+          "storage": "encrypted_local"
+        },
+        "2fa_code": {
+          "enabled": false,
+          "description": "Code à 6 chiffres généré"
+        },
+        "time_window": {
+          "enabled": true,
+          "description": "Unlock temporaire 15min",
+          "auto_relock": true
+        }
+      },
+      "auto_lock_rules": [
+        {
+          "rule": "critical_files",
+          "files": ["config/*", "security/*", "*.env"],
+          "default_level": 2
+        },
+        {
+          "rule": "production_code",
+          "files": ["build/*", "dist/*"],
+          "default_level": 3
+        },
+        {
+          "rule": "team_shared",
+          "files": ["shared/*"],
+          "default_level": 1
+        }
+      ]
+    },
+    
+    "code_editor": {
+      "description": "Éditeur intégré avec intelligence OMia",
+      "features": [
+        "Syntax highlighting Electron compatible",
+        "Auto-completion basée sur index local",
+        "Live preview changements",
+        "Diff view avant/après",
+        "Rollback one-click",
+        "Suggestions OMia contextuelles"
+      ],
+      "edit_modes": {
+        "quick_edit": {
+          "description": "Modification rapide inline",
+          "use_case": "Changer valeur, fix typo",
+          "interface": "Modal popup"
+        },
+        "full_editor": {
+          "description": "Éditeur complet split screen",
+          "use_case": "Refactoring, ajout fonctions",
+          "interface": "Panel droit avec preview"
+        },
+        "ai_assisted": {
+          "description": "OMia guide les modifications",
+          "use_case": "Optimisation, refactoring complexe",
+          "interface": "Chat + éditeur synchronisé"
+        }
+      },
+      "safety_features": {
+        "auto_backup": "Sauvegarde avant chaque edit",
+        "syntax_check": "Validation avant save",
+        "dependency_alert": "Alerte si impact autres fichiers",
+        "test_runner": "Run tests après modification"
+      }
+    },
+    
+    "omia_integration": {
+      "description": "OMia comprend et suggère via le dashboard",
+      "capabilities": [
+        {
+          "action": "code_suggestion",
+          "trigger": "User clique 'Où placer X?'",
+          "omia_response": {
+            "highlights_file": "Illumine fichier recommandé en vert",
+            "shows_position": "Ligne exacte clignotante",
+            "explains": "Popup avec raisonnement"
+          }
+        },
+        {
+          "action": "dependency_warning",
+          "trigger": "User unlock fichier critique",
+          "omia_response": {
+            "shows_graph": "Affiche graphe impactés en rouge",
+            "lists_risks": "Énumère fichiers dépendants",
+            "suggests_tests": "Recommande tests à lancer"
+          }
+        },
+        {
+          "action": "optimization_scan",
+          "trigger": "Détection code dupliqué",
+          "omia_response": {
+            "highlights_duplicates": "Marque fichiers similaires",
+            "suggests_refactor": "Propose extraction util",
+            "estimates_gain": "Calcule lignes économisées"
+          }
+        }
+      ]
+    },
+    
+    "electron_integration": {
+      "description": "Fonctionnement total hors ligne Electron",
+      "file_system_access": {
+        "read": "fs.readFileSync via Node API",
+        "write": "fs.writeFileSync avec backup auto",
+        "watch": "chokidar pour auto-update",
+        "permissions": "Sandbox Electron respecté"
+      },
+      "storage": {
+        "index": "~/.znk/index.json",
+        "config": "~/.znk/config.json",
+        "colors": "~/.znk/themes.json",
+        "locks": "~/.znk/security.encrypted",
+        "backups": "~/.znk/backups/[timestamp]/"
+      },
+      "performance": {
+        "lazy_load": "Charge uniquement vue active",
+        "virtual_scroll": "Arborescence grande apps",
+        "debounced_search": "500ms délai recherche",
+        "cached_graphs": "Graphe régénéré si modifs"
+      }
+    },
+    
+    "studios_pro_sync": {
+      "description": "Synchronisation multi-studios",
+      "sync_options": [
+        {
+          "mode": "local_only",
+          "description": "Chaque studio indépendant"
+        },
+        {
+          "mode": "shared_index",
+          "description": "Index partagé, couleurs locales"
+        },
+        {
+          "mode": "full_sync",
+          "description": "Tout synchronisé (couleurs, locks, notes)"
+        }
+      ],
+      "conflict_resolution": {
+        "strategy": "last_write_wins",
+        "manual_merge": "UI pour résoudre conflits",
+        "version_history": "Garde 10 dernières versions"
+      }
+    }
+  },
+  
+  "commands_extended": {
+    "visual": {
+      "ouvrir dashboard": "Lance interface graphique",
+      "vue [tree|graph|timeline]": "Change vue active",
+      "chercher [terme]": "Recherche avec highlight visuel",
+      "focus [module]": "Zoom sur module spécifique"
+    },
+    "colors": {
+      "couleur [module] [couleur]": "Change couleur module",
+      "thème [dark|light|custom]": "Change thème global",
+      "exporter thème": "Sauvegarde couleurs custom",
+      "réinitialiser couleurs": "Retour palette défaut"
+    },
+    "security": {
+      "verrouiller [fichier]": "Lock fichier niveau 1",
+      "verrouiller hard [fichier]": "Lock niveau 2",
+      "déverrouiller [fichier]": "Demande password",
+      "status locks": "Liste fichiers verrouillés"
+    },
+    "edit": {
+      "éditer [fichier]": "Ouvre éditeur (si unlocked)",
+      "quick edit [fichier] ligne [N]": "Modification rapide",
+      "ai assist [fichier]": "Édition assistée OMia",
+      "rollback [fichier]": "Annule dernière modif"
+    },
+    "analysis": {
+      "dépendances [fichier]": "Graphe visuel connexions",
+      "impact [fichier]": "Simulation changement",
+      "duplicates scan": "Détecte code similaire",
+      "hotspots": "Fichiers les plus connectés"
+    }
+  },
+  
+  "example_workflows": {
+    "workflow_1_new_feature": {
+      "title": "Ajouter nouvelle feature 'analytics'",
+      "steps": [
+        {
+          "step": 1,
+          "user": "ouvrir dashboard",
+          "omia": "Lance interface, vue tree active"
+        },
+        {
+          "step": 2,
+          "user": "couleur analytics violet",
+          "omia": "Crée dossier analytics avec couleur #8b5cf6"
+        },
+        {
+          "step": 3,
+          "user": "où placer service tracking",
+          "omia": "Highlight analytics/services/, suggère AnalyticsService.ts"
+        },
+        {
+          "step": 4,
+          "user": "créer fichier",
+          "omia": "Génère code + placement + imports + tests"
+        },
+        {
+          "step": 5,
+          "user": "vue timeline",
+          "omia": "Affiche analytics en phase 3 (runtime_lazy)"
+        }
+      ]
+    },
+    "workflow_2_refactor_critical": {
+      "title": "Refactoring fichier critique",
+      "steps": [
+        {
+          "step": 1,
+          "user": "éditer config.ts",
+          "omia": "⚠️ Fichier verrouillé niveau 2, password requis"
+        },
+        {
+          "step": 2,
+          "user": "[entre password]",
+          "omia": "✓ Unlock temporaire 15min, backup auto créé"
+        },
+        {
+          "step": 3,
+          "omia": "Affiche graphe: 12 fichiers dépendent de config.ts",
+          "highlights": "auth/, studio/, services/ en rouge"
+        },
+        {
+          "step": 4,
+          "user": "ai assist config.ts",
+          "omia": "Ouvre éditeur split, suggestions temps réel"
+        },
+        {
+          "step": 5,
+          "omia": "⚠️ Modification détectée, lancer tests recommandé",
+          "user": "run tests",
+          "omia": "✓ Tests passed, auto-relock dans 14min"
+        }
+      ]
+    }
+  },
+  
+  "ui_customization": {
+    "themes": {
+      "light": "Fond blanc, couleurs vives",
+      "dark": "Fond sombre, couleurs néon",
+      "pro": "Minimaliste, focus productivité",
+      "custom": "Couleurs définies par user"
+    },
+    "layouts": {
+      "split_70_30": "Navigation 70% | Détails 30%",
+      "three_columns": "Tree | Graph | Details",
+      "fullscreen_graph": "Graphe immersif plein écran"
+    },
+    "shortcuts": {
+      "Ctrl+K": "Quick search",
+      "Ctrl+E": "Quick edit selected",
+      "Ctrl+L": "Toggle lock selected",
+      "Ctrl+G": "Switch to graph view",
+      "Ctrl+T": "Switch to timeline",
+      "Ctrl+R": "Refresh index",
+      "Ctrl+F": "Find in files"
+    }
+  },
+  
+  "export_options": {
+    "export_map_svg": "Exporte graphe en SVG",
+    "export_index_json": "Index pour autres outils",
+    "export_report_pdf": "Rapport structure app",
+    "export_config_yaml": "Config pour CI/CD"
+  }
+}

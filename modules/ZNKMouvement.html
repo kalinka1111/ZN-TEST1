@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNKMouvement — Déformation d'image</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #201d19;
+    --bg-panel: #444444;
+    --bg-canvas: #171512;
+    --ink: #ece6db;
+    --ink-dim: #a89f8f;
+    --line: #3c352c;
+    --brass: #c98a4b;
+    --brass-dim: #8a5f37;
+    --teal: #6f9c8f;
+    --danger: #b0563f;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #606060 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  header{
+    padding:28px clamp(16px,4vw,48px) 14px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:baseline; gap:12px; }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(22px,3vw,30px);
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .brand small{
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size:11px;
+    letter-spacing:1.5px;
+    color:var(--brass);
+    text-transform:uppercase;
+    border:1px solid var(--brass-dim);
+    padding:3px 8px;
+    border-radius:3px;
+  }
+  header p{
+    margin:0;
+    color:var(--ink-dim);
+    font-size:13.5px;
+    max-width:560px;
+    line-height:1.5;
+  }
+
+  main{
+    flex:1;
+    display:grid;
+    grid-template-columns: 260px 1fr;
+    gap:0;
+  }
+  @media (max-width:820px){
+    main{ grid-template-columns: 1fr; }
+  }
+
+  .panel{
+    background:var(--bg-panel);
+    border-right:1px solid var(--line);
+    padding:22px 20px 28px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  @media (max-width:820px){
+    .panel{ border-right:none; border-bottom:1px solid var(--line); }
+  }
+
+  .field label{
+    display:flex;
+    justify-content:space-between;
+    font-family: ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:8px;
+  }
+  .field label span.val{ color:var(--brass); }
+
+  input[type="range"]{
+    -webkit-appearance:none;
+    width:100%;
+    height:2px;
+    background:var(--line);
+    border-radius:2px;
+    outline:none;
+    position:relative;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:15px; height:15px;
+    border-radius:50%;
+    background:var(--brass);
+    border:2px solid var(--bg-panel);
+    box-shadow:0 0 0 1px var(--brass-dim);
+    cursor:pointer;
+    margin-top:-6.5px;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:13px; height:13px;
+    border-radius:50%;
+    background:var(--brass);
+    border:2px solid var(--bg-panel);
+    box-shadow:0 0 0 1px var(--brass-dim);
+    cursor:pointer;
+  }
+
+  .upload-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+    padding:12px 10px;
+    background:transparent;
+    border:1px dashed var(--brass-dim);
+    color:var(--ink);
+    font-size:13.5px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .upload-btn:hover{ border-color:var(--brass); background:#232323; }
+  input[type="file"]{ display:none; }
+
+  .btn{
+    width:100%;
+    padding:10px 10px;
+    background:#d357fe;
+    border:1px solid var(--line);
+    color:var(--ink);
+    font-size:13px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+    font-family:inherit;
+  }
+  .btn:hover{ background:#3c332a; border-color:var(--brass-dim); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.primary{ background:var(--brass); border-color:var(--brass); color:#211a10; font-weight:600; }
+  .btn.primary:hover{ background:#d99a5e; }
+  .btn.ghost{ background:transparent; }
+  .btn-row{ display:flex; gap:8px; }
+  .btn-row .btn{ flex:1; }
+
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:13px;
+    color:var(--ink-dim);
+  }
+  .switch{
+    width:36px; height:20px;
+    background:var(--line);
+    border-radius:20px;
+    position:relative;
+    cursor:pointer;
+    flex-shrink:0;
+    transition:background .15s;
+  }
+  .switch.on{ background:var(--teal); }
+  .switch::after{
+    content:'';
+    position:absolute;
+    top:2px; left:2px;
+    width:16px; height:16px;
+    border-radius:50%;
+    background:var(--ink);
+    transition:left .15s;
+  }
+  .switch.on::after{ left:18px; }
+
+  .divider{ height:1px; background:var(--line); margin:2px 0; }
+
+  .hint{
+    font-size:12px;
+    line-height:1.6;
+    color:var(--ink-dim);
+    border-left:2px solid var(--brass-dim);
+    padding-left:10px;
+  }
+  .hint b{ color:var(--ink); font-weight:600; }
+
+  .stage{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:clamp(16px,3vw,40px);
+    background:
+      linear-gradient(var(--bg-canvas), var(--bg-canvas)) padding-box,
+      repeating-linear-gradient(0deg, #221e19 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, #221e19 0 1px, transparent 1px 28px);
+    overflow:auto;
+  }
+
+  .canvas-wrap{
+    position:relative;
+    max-width:100%;
+    box-shadow: 0 0 0 1px var(--line), 0 20px 60px -20px #000000aa;
+    border-radius:4px;
+    line-height:0;
+    touch-action:none;
+  }
+  #baseCanvas, #overlayCanvas{
+    max-width:min(80vw, 900px);
+    max-height:75vh;
+    width:auto;
+    height:auto;
+    display:block;
+    border-radius:4px;
+  }
+  #overlayCanvas{
+    position:absolute;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    cursor:none;
+    z-index:2;
+  }
+  #baseCanvas{ position:relative; z-index:1; }
+
+  .placeholder{
+    width:min(560px, 82vw);
+    aspect-ratio: 4/3;
+    border:1px dashed var(--line);
+    border-radius:8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    color:var(--ink-dim);
+    text-align:center;
+    padding:24px;
+    cursor:pointer;
+    transition:border-color .15s, color .15s;
+  }
+  .placeholder:hover, .placeholder.drag{
+    border-color:var(--brass);
+    color:var(--ink);
+  }
+  .placeholder svg{ opacity:.7; }
+  .placeholder .big{ font-family:'Fraunces', serif; font-size:17px; color:var(--ink); }
+  .placeholder .small{ font-size:12px; }
+
+  footer{
+    padding:10px clamp(16px,4vw,48px);
+    border-top:1px solid var(--line);
+    font-size:11.5px;
+    color:var(--ink-dim);
+    font-family: ui-monospace, monospace;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>ZNK Image en Mouvement</h1>
+    <small>Warp Tool</small>
+  </div>
+  <p>Choisissez une image, puis cliquez-glissez sur la zone à animer (une queue, une patte, une mèche de crinière...). L'image s'étire pour suivre le mouvement — aucun trou n'apparaît.</p>
+</header>
+
+<main>
+  <div class="panel">
+
+    <button class="upload-btn" id="uploadBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M12 4l-5 5M12 4l5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+      Choisir une image
+    </button>
+    <input type="file" id="fileInput" accept="image/*">
+
+    <div class="field">
+      <label>Taille du pinceau <span class="val" id="radiusVal">60</span></label>
+      <input type="range" id="radiusInput" min="12" max="220" value="60">
+    </div>
+
+    <div class="field">
+      <label>Force du déplacement <span class="val" id="strengthVal">1.0</span></label>
+      <input type="range" id="strengthInput" min="20" max="220" value="100">
+    </div>
+
+    <div class="toggle-row">
+      <span>Afficher la grille</span>
+      <div class="switch" id="gridSwitch"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="btn-row">
+      <button class="btn" id="undoBtn" disabled>↶ Annuler</button>
+      <button class="btn" id="resetBtn" disabled>Réinitialiser</button>
+    </div>
+    <button class="btn primary" id="downloadBtn" disabled>Télécharger l'image</button>
+
+    <div class="divider"></div>
+
+    <div class="hint">
+      <b>Astuce.</b> Un pinceau <b>petit</b> déplace juste une partie précise (le bout de la queue). Un pinceau <b>large</b> entraîne toute une zone avec lui (toute la crinière). Faites plusieurs petits gestes plutôt qu'un seul grand geste pour un résultat naturel.
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="placeholder" id="placeholder">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <div class="big">Déposez une image ici</div>
+      <div class="small">ou cliquez pour en choisir une — JPG, PNG...</div>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap" style="display:none;">
+      <canvas id="baseCanvas"></canvas>
+      <canvas id="overlayCanvas"></canvas>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>Traitement 100% local — l'image ne quitte jamais votre navigateur.</span>
+  <span id="dimsLabel"></span>
+</footer>
+
+<script>
+(function(){
+  const fileInput = document.getElementById('fileInput');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const placeholder = document.getElementById('placeholder');
+  const stage = document.getElementById('stage');
+  const canvasWrap = document.getElementById('canvasWrap');
+  const baseCanvas = document.getElementById('baseCanvas');
+  const overlayCanvas = document.getElementById('overlayCanvas');
+  const baseCtx = baseCanvas.getContext('2d');
+  const overlayCtx = overlayCanvas.getContext('2d');
+  const radiusInput = document.getElementById('radiusInput');
+  const strengthInput = document.getElementById('strengthInput');
+  const radiusVal = document.getElementById('radiusVal');
+  const strengthVal = document.getElementById('strengthVal');
+  const gridSwitch = document.getElementById('gridSwitch');
+  const undoBtn = document.getElementById('undoBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const dimsLabel = document.getElementById('dimsLabel');
+
+  const srcCanvas = document.createElement('canvas');
+  const srcCtx = srcCanvas.getContext('2d');
+
+  let cols = 0, rows = 0;
+  let srcPoints = [];
+  let curPoints = [];
+  let history = [];
+  let showGrid = false;
+  let brushRadius = 60;
+  let strength = 1.0;
+  let hasImage = false;
+  let isDragging = false;
+  let lastPos = null;
+  let cursorPos = null;
+  let cursorInside = false;
+
+  // ---------- setup / grid ----------
+
+  function buildGrid(w, h){
+    const cell = clamp(Math.round(Math.max(w, h) / 32), 12, 40);
+    cols = Math.ceil(w / cell);
+    rows = Math.ceil(h / cell);
+    srcPoints = [];
+    for (let i = 0; i <= rows; i++){
+      const row = [];
+      const y = Math.min(i * cell, h);
+      for (let j = 0; j <= cols; j++){
+        const x = Math.min(j * cell, w);
+        row.push({ x, y });
+      }
+      srcPoints.push(row);
+    }
+    curPoints = cloneGrid(srcPoints);
+    history = [];
+    updateHistoryButtons();
+  }
+
+  function cloneGrid(g){
+    return g.map(row => row.map(p => ({ x: p.x, y: p.y })));
+  }
+
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+  // ---------- loading ----------
+
+  function loadFile(file){
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 900;
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+
+        srcCanvas.width = w; srcCanvas.height = h;
+        srcCtx.clearRect(0, 0, w, h);
+        srcCtx.drawImage(img, 0, 0, w, h);
+
+        baseCanvas.width = w; baseCanvas.height = h;
+        overlayCanvas.width = w; overlayCanvas.height = h;
+
+        buildGrid(w, h);
+        hasImage = true;
+
+        placeholder.style.display = 'none';
+        canvasWrap.style.display = 'block';
+        [undoBtn, resetBtn, downloadBtn].forEach(b => b.disabled = false);
+        undoBtn.disabled = true;
+        dimsLabel.textContent = w + ' × ' + h + ' px';
+
+        renderBase();
+        renderOverlay();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  uploadBtn.addEventListener('click', () => fileInput.click());
+  placeholder.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+  });
+
+  ['dragover','dragenter'].forEach(ev => {
+    stage.addEventListener(ev, (e) => { e.preventDefault(); placeholder.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(ev => {
+    stage.addEventListener(ev, (e) => { e.preventDefault(); placeholder.classList.remove('drag'); });
+  });
+  stage.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  // ---------- affine triangle warp ----------
+
+  function computeAffine(s0, s1, s2, d0, d1, d2){
+    const x0=s0.x,y0=s0.y, x1=s1.x,y1=s1.y, x2=s2.x,y2=s2.y;
+    const denom = x0*(y1-y2) + x1*(y2-y0) + x2*(y0-y1);
+    if (Math.abs(denom) < 1e-8) return null;
+    const X0=d0.x,Y0=d0.y, X1=d1.x,Y1=d1.y, X2=d2.x,Y2=d2.y;
+    const a = (X0*(y1-y2) + X1*(y2-y0) + X2*(y0-y1)) / denom;
+    const c = (X0*(x2-x1) + X1*(x0-x2) + X2*(x1-x0)) / denom;
+    const e = (X0*(x1*y2-x2*y1) + X1*(x2*y0-x0*y2) + X2*(x0*y1-x1*y0)) / denom;
+    const b = (Y0*(y1-y2) + Y1*(y2-y0) + Y2*(y0-y1)) / denom;
+    const d = (Y0*(x2-x1) + Y1*(x0-x2) + Y2*(x1-x0)) / denom;
+    const f = (Y0*(x1*y2-x2*y1) + Y1*(x2*y0-x0*y2) + Y2*(x0*y1-x1*y0)) / denom;
+    return [a, b, c, d, e, f];
+  }
+
+  function expandTriangle(d0, d1, d2, amt){
+    const cx = (d0.x + d1.x + d2.x) / 3;
+    const cy = (d0.y + d1.y + d2.y) / 3;
+    function push(p){
+      const dx = p.x - cx, dy = p.y - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      return { x: p.x + (dx/len)*amt, y: p.y + (dy/len)*amt };
+    }
+    return [push(d0), push(d1), push(d2)];
+  }
+
+  function drawTriangle(s0, s1, s2, d0, d1, d2){
+    const m = computeAffine(s0, s1, s2, d0, d1, d2);
+    if (!m) return;
+    const [e0, e1, e2] = expandTriangle(d0, d1, d2, 0.75);
+    baseCtx.save();
+    baseCtx.beginPath();
+    baseCtx.moveTo(e0.x, e0.y);
+    baseCtx.lineTo(e1.x, e1.y);
+    baseCtx.lineTo(e2.x, e2.y);
+    baseCtx.closePath();
+    baseCtx.clip();
+    baseCtx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+    baseCtx.drawImage(srcCanvas, 0, 0);
+    baseCtx.restore();
+  }
+
+  function renderBase(){
+    baseCtx.clearRect(0, 0, baseCanvas.width, baseCanvas.height);
+    for (let i = 0; i < rows; i++){
+      for (let j = 0; j < cols; j++){
+        const s00=srcPoints[i][j], s01=srcPoints[i][j+1], s10=srcPoints[i+1][j], s11=srcPoints[i+1][j+1];
+        const d00=curPoints[i][j], d01=curPoints[i][j+1], d10=curPoints[i+1][j], d11=curPoints[i+1][j+1];
+        drawTriangle(s00, s01, s10, d00, d01, d10);
+        drawTriangle(s01, s11, s10, d01, d11, d10);
+      }
+    }
+  }
+
+  function renderOverlay(){
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    if (showGrid){
+      overlayCtx.strokeStyle = 'rgba(111, 156, 143, 0.55)';
+      overlayCtx.lineWidth = 1;
+      for (let i = 0; i <= rows; i++){
+        overlayCtx.beginPath();
+        for (let j = 0; j <= cols; j++){
+          const p = curPoints[i][j];
+          if (j === 0) overlayCtx.moveTo(p.x, p.y); else overlayCtx.lineTo(p.x, p.y);
+        }
+        overlayCtx.stroke();
+      }
+      for (let j = 0; j <= cols; j++){
+        overlayCtx.beginPath();
+        for (let i = 0; i <= rows; i++){
+          const p = curPoints[i][j];
+          if (i === 0) overlayCtx.moveTo(p.x, p.y); else overlayCtx.lineTo(p.x, p.y);
+        }
+        overlayCtx.stroke();
+      }
+    }
+    if (cursorInside && cursorPos && hasImage){
+      overlayCtx.beginPath();
+      overlayCtx.arc(cursorPos.x, cursorPos.y, brushRadius, 0, Math.PI*2);
+      overlayCtx.strokeStyle = 'rgba(201, 138, 75, 0.9)';
+      overlayCtx.lineWidth = 1.5;
+      overlayCtx.stroke();
+      overlayCtx.beginPath();
+      overlayCtx.moveTo(cursorPos.x - 6, cursorPos.y);
+      overlayCtx.lineTo(cursorPos.x + 6, cursorPos.y);
+      overlayCtx.moveTo(cursorPos.x, cursorPos.y - 6);
+      overlayCtx.lineTo(cursorPos.x, cursorPos.y + 6);
+      overlayCtx.strokeStyle = 'rgba(201, 138, 75, 0.9)';
+      overlayCtx.stroke();
+    }
+  }
+
+  // ---------- warping interaction ----------
+
+  function getPos(e){
+    const rect = overlayCanvas.getBoundingClientRect();
+    const scaleX = overlayCanvas.width / rect.width;
+    const scaleY = overlayCanvas.height / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  }
+
+  function warp(center, dx, dy){
+    const r2 = brushRadius * brushRadius;
+    for (let i = 0; i < curPoints.length; i++){
+      for (let j = 0; j < curPoints[i].length; j++){
+        const p = curPoints[i][j];
+        const ddx = p.x - center.x, ddy = p.y - center.y;
+        const d2 = ddx*ddx + ddy*ddy;
+        if (d2 < r2){
+          const d = Math.sqrt(d2) / brushRadius;
+          const w = Math.pow(1 - d*d, 2);
+          p.x += dx * w * strength;
+          p.y += dy * w * strength;
+        }
+      }
+    }
+  }
+
+  function pushHistory(){
+    history.push(cloneGrid(curPoints));
+    if (history.length > 40) history.shift();
+    updateHistoryButtons();
+  }
+
+  function updateHistoryButtons(){
+    undoBtn.disabled = history.length === 0;
+  }
+
+  overlayCanvas.addEventListener('pointerdown', (e) => {
+    if (!hasImage) return;
+    isDragging = true;
+    overlayCanvas.setPointerCapture(e.pointerId);
+    lastPos = getPos(e);
+    pushHistory();
+  });
+
+  overlayCanvas.addEventListener('pointermove', (e) => {
+    if (!hasImage) return;
+    cursorPos = getPos(e);
+    cursorInside = true;
+    if (isDragging && lastPos){
+      const dx = cursorPos.x - lastPos.x;
+      const dy = cursorPos.y - lastPos.y;
+      if (dx !== 0 || dy !== 0){
+        warp(cursorPos, dx, dy);
+        lastPos = cursorPos;
+        renderBase();
+      }
+    }
+    renderOverlay();
+  });
+
+  function endDrag(){
+    isDragging = false;
+    lastPos = null;
+  }
+  overlayCanvas.addEventListener('pointerup', endDrag);
+  overlayCanvas.addEventListener('pointercancel', endDrag);
+  overlayCanvas.addEventListener('pointerleave', () => {
+    cursorInside = false;
+    renderOverlay();
+  });
+  overlayCanvas.addEventListener('pointerenter', () => {
+    cursorInside = true;
+  });
+
+  // ---------- controls ----------
+
+  radiusInput.addEventListener('input', () => {
+    brushRadius = parseInt(radiusInput.value, 10);
+    radiusVal.textContent = brushRadius;
+    renderOverlay();
+  });
+
+  strengthInput.addEventListener('input', () => {
+    strength = parseInt(strengthInput.value, 10) / 100;
+    strengthVal.textContent = strength.toFixed(1);
+  });
+
+  gridSwitch.addEventListener('click', () => {
+    showGrid = !showGrid;
+    gridSwitch.classList.toggle('on', showGrid);
+    renderOverlay();
+  });
+
+  undoBtn.addEventListener('click', () => {
+    if (history.length){
+      curPoints = history.pop();
+      updateHistoryButtons();
+      renderBase();
+      renderOverlay();
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (!hasImage) return;
+    pushHistory();
+    curPoints = cloneGrid(srcPoints);
+    renderBase();
+    renderOverlay();
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    if (!hasImage) return;
+    const link = document.createElement('a');
+    link.download = 'ZNKMouvement.png';
+    link.href = baseCanvas.toDataURL('image/png');
+    link.click();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){
+      e.preventDefault();
+      undoBtn.click();
+    }
+  });
+
+  // init labels
+  radiusVal.textContent = brushRadius;
+  strengthVal.textContent = strength.toFixed(1);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK Radio - Ma Collection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00ff88, #00ccff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .user-avatar:hover {
+            transform: scale(1.1);
+        }
+        .header-info {
+            flex: 1;
+        }
+        .header-info h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .header-info p {
+            opacity: 0.7;
+            font-size: 14px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .add-track-btn {
+            background: #00ff88;
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .add-track-btn:hover {
+            background: #00cc6a;
+            transform: translateY(-2px);
+        }
+        .admin-btn {
+            background: linear-gradient(135deg, #ff0080, #ff8c00);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,0,128,0.4);
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* LAYOUT 2 COLONNES */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        /* COLONNE GAUCHE */
+        .left-column {
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+        .stat-card .label {
+            opacity: 0.7;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        /* SÉLECTEUR D'ÉMISSION */
+        .emission-selector {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .emission-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+        .emission-selector select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .track {
+            background: rgba(255,255,255,0.08);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+        }
+        .track:hover {
+            background: rgba(255,255,255,0.12);
+            transform: translateX(5px);
+        }
+        .track.playing {
+            background: rgba(0,255,136,0.1);
+            border-color: #00ff88;
+        }
+        .track-cover {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .track-info {
+            flex: 1;
+        }
+        .track-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .track-meta {
+            opacity: 0.7;
+            font-size: 13px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .track-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* COLONNE DROITE - LECTEUR + PLAYLIST */
+        .right-column {
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 120px);
+            position: sticky;
+            top: 20px;
+        }
+        
+        .player-section {
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .now-playing-big {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .now-playing-big img {
+            width: 200px;
+            height: 200px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .now-playing-big .title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .now-playing-big .artist {
+            opacity: 0.7;
+            font-size: 14px;
+        }
+        
+        .player-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+        .nav-btn.play-pause {
+            background: #00ff88;
+            color: black;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+        }
+        .nav-btn.play-pause:hover {
+            background: #00cc6a;
+        }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .player-options {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .control-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .control-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .control-btn.active {
+            background: #00ff88;
+            color: black;
+            border-color: #00ff88;
+        }
+        
+        audio {
+            width: 100%;
+            height: 40px;
+            margin-top: 10px;
+        }
+        
+        /* PLAYLIST DANS COLONNE DROITE */
+        .playlist-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .playlist-header h3 {
+            font-size: 16px;
+            color: #00ff88;
+        }
+        .playlist-track {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        .playlist-track:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .playlist-track.active {
+            background: rgba(0,255,136,0.15);
+            border-color: #00ff88;
+        }
+        .playlist-track img {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+        }
+        .playlist-track-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .playlist-track-title {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .playlist-track-artist {
+            font-size: 11px;
+            opacity: 0.7;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .playlist-track-duration {
+            font-size: 11px;
+            opacity: 0.5;
+        }
+        
+        .btn {
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .delete-btn {
+            background: rgba(255,50,50,0.2);
+            color: #ff5050;
+            border: 1px solid #ff5050;
+            padding: 6px 12px;
+        }
+        .delete-btn:hover {
+            background: #ff5050;
+            color: white;
+        }
+        
+        /* MODALS */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #00ff88;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            opacity: 0.9;
+            font-weight: 600;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .form-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .emissions-list {
+            margin-top: 20px;
+        }
+        .emission-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .emission-item h4 {
+            color: #00ff88;
+            margin-bottom: 5px;
+        }
+        .emission-item p {
+            opacity: 0.7;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        .emission-item .stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+        .emission-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            opacity: 0.7;
+        }
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            .right-column {
+                position: relative;
+                top: 0;
+                max-height: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="user-avatar" onclick="openUserProfile()">
+            <span id="userInitial">Z</span>
+        </div>
+        <div class="header-info">
+            <h1>📻 <span id="userName">ZNK</span> Radio</h1>
+            <p id="userTagline">Ma collection personnelle</p>
+        </div>
+        <div class="header-actions">
+            <button class="back-btn" onclick="goBackToMain()">
+                ← Retour aux stations
+            </button>
+            <button class="add-track-btn" onclick="openAddModal()">
+                <span>➕</span> Ajouter une piste
+            </button>
+            <button class="admin-btn" id="adminBtn" onclick="openAdminPanel()" style="display: none;">
+                <span>👑</span> Admin
+            </button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- COLONNE GAUCHE -->
+        <div class="left-column">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="value" id="totalTracks">0</div>
+                    <div class="label">Pistes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value" id="totalDuration">0:00</div>
+                    <div class="label">Durée totale</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value" id="totalPlays">0</div>
+                    <div class="label">Lectures</div>
+                </div>
+            </div>
+
+            <!-- SÉLECTEUR D'ÉMISSION -->
+            <div class="emission-selector">
+                <label>📡 Sélectionner une émission</label>
+                <select id="emissionSelect" onchange="changeEmission()">
+                    <option value="user-uploads">Ma Collection Principale</option>
+                </select>
+            </div>
+
+            <h2 style="margin-bottom: 20px;">🎵 Pistes</h2>
+            <div id="tracksList"></div>
+        </div>
+
+        <!-- COLONNE DROITE - LECTEUR + PLAYLIST -->
+        <div class="right-column">
+            <div class="player-section">
+                <div class="now-playing-big">
+                    <img id="currentCoverBig" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect fill='%23333' width='200' height='200'/><text x='100' y='110' font-size='60' text-anchor='middle' fill='%2300ff88'>♪</text></svg>" alt="Cover">
+                    <div class="title" id="currentTitleBig">Aucune lecture</div>
+                    <div class="artist" id="currentArtistBig">-</div>
+                </div>
+
+                <div class="player-controls">
+                    <button class="nav-btn" id="prevBtn" onclick="playPrevious()">⏮️</button>
+                    <button class="nav-btn play-pause" id="playPauseBtn" onclick="togglePlayPause()">▶️</button>
+                    <button class="nav-btn" id="nextBtn" onclick="playNext()">⏭️</button>
+                </div>
+
+                <audio id="audioPlayer"></audio>
+
+                <div class="player-options">
+                    <button class="control-btn" id="shuffleBtn" onclick="toggleShuffle()">
+                        🔀 Aléatoire
+                    </button>
+                    <button class="control-btn" id="repeatBtn" onclick="toggleRepeat()">
+                        🔁 Répéter
+                    </button>
+                </div>
+            </div>
+
+            <div class="playlist-section">
+                <div class="playlist-header">
+                    <h3>📋 Playlist (<span id="playlistCount">0</span>)</h3>
+                </div>
+                <div id="playlistView"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AJOUTER PISTE -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h2>➕ Ajouter une piste</h2>
+            <div class="form-group">
+                <label>Titre *</label>
+                <input type="text" id="trackTitle" placeholder="Nom de la piste">
+            </div>
+            <div class="form-group">
+                <label>Artiste *</label>
+                <input type="text" id="trackArtist" placeholder="Nom de l'artiste">
+            </div>
+            <div class="form-group">
+                <label>Fichier audio/vidéo *</label>
+                <input type="file" id="trackFile" accept="audio/*,video/*">
+            </div>
+            <div class="form-group">
+                <label>Image de couverture (optionnel)</label>
+                <input type="file" id="coverFile" accept="image/*">
+            </div>
+            <div class="form-actions">
+                <button onclick="closeAddModal()" style="background: rgba(255,255,255,0.1); color: white;">Annuler</button>
+                <button onclick="addTrack()" style="background: #00ff88; color: black;">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ADMIN -->
+    <div class="modal" id="adminModal">
+        <div class="modal-content">
+            <h2>👑 Panneau Admin ZNKsystem</h2>
+            
+            <div class="form-group">
+                <label>Nom de la nouvelle émission *</label>
+                <input type="text" id="emissionName" placeholder="Ex: Rock Classics, Jazz Evening...">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="emissionDesc" placeholder="Description de l'émission..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button onclick="closeAdminPanel()" style="background: rgba(255,255,255,0.1); color: white;">Fermer</button>
+                <button onclick="createEmission()" style="background: #00ff88; color: black;">Créer l'émission</button>
+            </div>
+
+            <div class="emissions-list">
+                <h3 style="color: #00ff88; margin-bottom: 15px;">Mes Émissions</h3>
+                <div id="emissionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentTracks = [];
+        let currentPlayingId = null;
+        let shuffleMode = false;
+        let repeatMode = false;
+        let currentEmission = 'user-uploads';
+        let isPlaying = false;
+
+        // API de synchronisation
+        class ZNKRadioSync {
+            constructor() {
+                this.STORAGE_KEY = 'znk_radio_tracks';
+                this.USER_KEY = 'znk_radio_user';
+                this.EMISSIONS_KEY = 'znk_radio_emissions';
+            }
+
+            getTracks() {
+                const data = localStorage.getItem(this.STORAGE_KEY);
+                return data ? JSON.parse(data) : [];
+            }
+
+            addTrack(track) {
+                const znkAudio = window.znkAudio;
+                const tracks = this.getTracks();
+                const newTrack = {
+                    id: `track_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    title: track.title,
+                    artist: track.artist,
+                    album: track.album || 'Ma Collection',
+                    duration: track.duration || 0,
+                    audioUrl: track.audioUrl,
+                    coverArt: track.coverArt || this.getDefaultCover(),
+                    genre: track.genre || 'Personnalisé',
+                    year: track.year || new Date().getFullYear(),
+                    addedAt: new Date().toISOString(),
+                    plays: 0,
+                    userCreated: true,
+                    stationId: currentEmission
+                };
+                tracks.push(newTrack);
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(tracks));
+                return newTrack;
+            }
+
+            deleteTrack(trackId) {
+                let tracks = this.getTracks();
+                tracks = tracks.filter(t => t.id !== trackId);
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(tracks));
+            }
+
+            incrementPlays(trackId) {
+                const tracks = this.getTracks();
+                const track = tracks.find(t => t.id === trackId);
+                if (track) {
+                    track.plays = (track.plays || 0) + 1;
+                    track.lastPlayed = new Date().toISOString();
+                    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(tracks));
+                }
+            }
+
+            getDefaultCover() {
+                return "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect fill='%23333' width='100' height='100'/><text x='50' y='55' font-size='40' text-anchor='middle' fill='%2300ff88'>♪</text></svg>";
+            }
+
+            getUserData() {
+                const data = localStorage.getItem(this.USER_KEY);
+                return data ? JSON.parse(data) : { name: 'ZNK', avatar: 'Z' };
+            }
+
+            updateUserData(userData) {
+                localStorage.setItem(this.USER_KEY, JSON.stringify(userData));
+            }
+
+            // GESTION DES ÉMISSIONS
+            getEmissions() {
+                const data = localStorage.getItem(this.EMISSIONS_KEY);
+                return data ? JSON.parse(data) : [];
+            }
+
+            addEmission(emission) {
+                const emissions = this.getEmissions();
+                const newEmission = {
+                    id: `emission_${Date.now()}`,
+                    name: emission.name,
+                    description: emission.description || '',
+                    createdAt: new Date().toISOString(),
+                    trackCount: 0
+                };
+                emissions.push(newEmission);
+                localStorage.setItem(this.EMISSIONS_KEY, JSON.stringify(emissions));
+                return newEmission;
+            }
+
+            deleteEmission(emissionId) {
+                let emissions = this.getEmissions();
+                emissions = emissions.filter(e => e.id !== emissionId);
+                localStorage.setItem(this.EMISSIONS_KEY, JSON.stringify(emissions));
+                
+                // Supprimer les pistes associées
+                let tracks = this.getTracks();
+                tracks = tracks.filter(t => t.stationId !== emissionId);
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(tracks));
+            }
+        }
+
+        const radioAPI = new ZNKRadioSync();
+
+        function loadRadioTracks() {
+            currentTracks = radioAPI.getTracks().filter(t => t.stationId === currentEmission);
+            updateStats();
+            renderTracks();
+            renderPlaylist();
+        }
+        
+        function updateStats() {
+            document.getElementById('totalTracks').textContent = currentTracks.length;
+            const totalSeconds = currentTracks.reduce((sum, t) => sum + (t.duration || 0), 0);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            document.getElementById('totalDuration').textContent = 
+                hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+            const totalPlays = currentTracks.reduce((sum, t) => sum + (t.plays || 0), 0);
+            document.getElementById('totalPlays').textContent = totalPlays;
+            document.getElementById('playlistCount').textContent = currentTracks.length;
+        }
+        
+        function renderTracks() {
+            const container = document.getElementById('tracksList');
+            if (currentTracks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🎵</div>
+                        <h3>Aucune piste pour le moment</h3>
+                        <p>Ajoutez vos premiers morceaux pour créer votre radio !</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = currentTracks.map((track, index) => `
+                <div class="track ${currentPlayingId === track.id ? 'playing' : ''}" onclick="playTrackById('${track.id}')">
+                    <img class="track-cover" src="${track.coverArt}" alt="${track.title}">
+                    <div class="track-info">
+                        <div class="track-title">${track.title}</div>
+                        <div class="track-meta">
+                            <span>🎤 ${track.artist}</span>
+                            <span>⏱️ ${formatDuration(track.duration)}</span>
+                            <span>▶️ ${track.plays || 0}</span>
+                        </div>
+                    </div>
+                    <div class="track-actions">
+                        <button class="btn delete-btn" onclick="event.stopPropagation(); deleteTrack('${track.id}')">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPlaylist() {
+            const container = document.getElementById('playlistView');
+            if (currentTracks.length === 0) {
+                container.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 20px;">Aucune piste</div>';
+                return;
+            }
+            
+            container.innerHTML = currentTracks.map(track => `
+                <div class="playlist-track ${currentPlayingId === track.id ? 'active' : ''}" 
+                     onclick="playTrackById('${track.id}')">
+                    <img src="${track.coverArt}" alt="${track.title}">
+                    <div class="playlist-track-info">
+                        <div class="playlist-track-title">${track.title}</div>
+                        <div class="playlist-track-artist">${track.artist}</div>
+                    </div>
+                    <div class="playlist-track-duration">${formatDuration(track.duration)}</div>
+                </div>
+            `).join('');
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function playTrackById(id) {
+            const track = currentTracks.find(t => t.id === id);
+            if (track) {
+                playTrack(track);
+            }
+        }
+        
+        function playTrack(track) {
+            const audio = document.getElementById('audioPlayer');
+            
+            if (currentPlayingId === track.id) {
+                togglePlayPause();
+                return;
+            }
+            
+            currentPlayingId = track.id;
+            audio.src = track.audioUrl;
+            audio.play();
+            isPlaying = true;
+            radioAPI.incrementPlays(track.id);
+            
+            // Mettre à jour l'affichage
+            document.getElementById('currentCoverBig').src = track.coverArt;
+            document.getElementById('currentTitleBig').textContent = track.title;
+            document.getElementById('currentArtistBig').textContent = track.artist;
+            document.getElementById('playPauseBtn').textContent = '⏸️';
+            
+            renderTracks();
+            renderPlaylist();
+            updateStats();
+            updateNavigationButtons();
+        }
+
+        function togglePlayPause() {
+            const audio = document.getElementById('audioPlayer');
+            if (audio.paused) {
+                audio.play();
+                isPlaying = true;
+                document.getElementById('playPauseBtn').textContent = '⏸️';
+            } else {
+                audio.pause();
+                isPlaying = false;
+                document.getElementById('playPauseBtn').textContent = '▶️';
+            }
+        }
+
+        function updateNavigationButtons() {
+            const currentIndex = currentTracks.findIndex(t => t.id === currentPlayingId);
+            document.getElementById('prevBtn').disabled = currentIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentIndex >= currentTracks.length - 1 && !repeatMode;
+        }
+        
+        function deleteTrack(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette piste ?')) return;
+            radioAPI.deleteTrack(id);
+            if (currentPlayingId === id) {
+                document.getElementById('audioPlayer').pause();
+                currentPlayingId = null;
+                isPlaying = false;
+                document.getElementById('currentTitleBig').textContent = 'Aucune lecture';
+                document.getElementById('currentArtistBig').textContent = '-';
+                document.getElementById('playPauseBtn').textContent = '▶️';
+            }
+            loadRadioTracks();
+        }
+        
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('active');
+        }
+        
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+            document.getElementById('trackTitle').value = '';
+            document.getElementById('trackArtist').value = '';
+            document.getElementById('trackFile').value = '';
+            document.getElementById('coverFile').value = '';
+        }
+        
+        async function addTrack() {
+            const title = document.getElementById('trackTitle').value.trim();
+            const artist = document.getElementById('trackArtist').value.trim();
+            const audioFile = document.getElementById('trackFile').files[0];
+            const coverFile = document.getElementById('coverFile').files[0];
+            
+            if (!title || !artist || !audioFile) {
+                alert('Veuillez remplir tous les champs obligatoires (*)');
+                return;
+            }
+            
+            const audioUrl = URL.createObjectURL(audioFile);
+            const coverUrl = coverFile ? URL.createObjectURL(coverFile) : null;
+            const audio = new Audio(audioUrl);
+            await new Promise(resolve => {
+                audio.addEventListener('loadedmetadata', resolve);
+            });
+            
+            radioAPI.addTrack({
+                title,
+                artist,
+                duration: Math.floor(audio.duration),
+                audioUrl,
+                coverArt: coverUrl
+            });
+            
+            closeAddModal();
+            loadRadioTracks();
+        }
+        
+        function toggleShuffle() {
+            shuffleMode = !shuffleMode;
+            document.getElementById('shuffleBtn').classList.toggle('active', shuffleMode);
+        }
+        
+        function toggleRepeat() {
+            repeatMode = !repeatMode;
+            document.getElementById('repeatBtn').classList.toggle('active', repeatMode);
+            updateNavigationButtons();
+        }
+        
+        function playNext() {
+            if (currentTracks.length === 0) return;
+            const currentIndex = currentTracks.findIndex(t => t.id === currentPlayingId);
+            let nextIndex = shuffleMode 
+                ? Math.floor(Math.random() * currentTracks.length)
+                : currentIndex + 1;
+            if (nextIndex >= currentTracks.length) {
+                nextIndex = repeatMode ? 0 : currentIndex;
+            }
+            const track = currentTracks[nextIndex];
+            if (track) playTrack(track);
+        }
+        
+        function playPrevious() {
+            if (currentTracks.length === 0) return;
+            const currentIndex = currentTracks.findIndex(t => t.id === currentPlayingId);
+            let prevIndex = currentIndex - 1;
+            if (prevIndex < 0) prevIndex = repeatMode ? currentTracks.length - 1 : 0;
+            const track = currentTracks[prevIndex];
+            if (track) playTrack(track);
+        }
+
+        // GESTION DES ÉMISSIONS
+        function loadEmissions() {
+            const select = document.getElementById('emissionSelect');
+            const emissions = radioAPI.getEmissions();
+            
+            select.innerHTML = '<option value="user-uploads">Ma Collection Principale</option>';
+            emissions.forEach(emission => {
+                const option = document.createElement('option');
+                option.value = emission.id;
+                option.textContent = emission.name;
+                select.appendChild(option);
+            });
+            
+            select.value = currentEmission;
+        }
+
+        function changeEmission() {
+            currentEmission = document.getElementById('emissionSelect').value;
+            loadRadioTracks();
+        }
+
+        function openAdminPanel() {
+            document.getElementById('adminModal').classList.add('active');
+            renderEmissionsList();
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('adminModal').classList.remove('active');
+            document.getElementById('emissionName').value = '';
+            document.getElementById('emissionDesc').value = '';
+        }
+
+        function createEmission() {
+            const name = document.getElementById('emissionName').value.trim();
+            const description = document.getElementById('emissionDesc').value.trim();
+            
+            if (!name) {
+                alert('Veuillez entrer un nom pour l\'émission');
+                return;
+            }
+            
+            const emission = radioAPI.addEmission({ name, description });
+            alert(`✅ Émission "${name}" créée avec succès !`);
+            
+            document.getElementById('emissionName').value = '';
+            document.getElementById('emissionDesc').value = '';
+            
+            loadEmissions();
+            renderEmissionsList();
+        }
+
+        function renderEmissionsList() {
+            const container = document.getElementById('emissionsList');
+            const emissions = radioAPI.getEmissions();
+            
+            if (emissions.length === 0) {
+                container.innerHTML = '<p style="opacity: 0.5; text-align: center;">Aucune émission créée</p>';
+                return;
+            }
+            
+            container.innerHTML = emissions.map(emission => {
+                const tracks = radioAPI.getTracks().filter(t => t.stationId === emission.id);
+                return `
+                    <div class="emission-item">
+                        <h4>${emission.name}</h4>
+                        <p>${emission.description || 'Pas de description'}</p>
+                        <div class="stats">
+                            <span>📊 ${tracks.length} pistes</span>
+                            <span>📅 ${new Date(emission.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div class="emission-actions">
+                            <button class="btn" style="background: #00ff88; color: black; font-size: 12px;" 
+                                    onclick="selectEmission('${emission.id}')">
+                                Sélectionner
+                            </button>
+                            <button class="btn delete-btn" style="font-size: 12px;" 
+                                    onclick="deleteEmission('${emission.id}')">
+                                Supprimer
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectEmission(emissionId) {
+            currentEmission = emissionId;
+            document.getElementById('emissionSelect').value = emissionId;
+            closeAdminPanel();
+            loadRadioTracks();
+        }
+
+        function deleteEmission(emissionId) {
+            const emission = radioAPI.getEmissions().find(e => e.id === emissionId);
+            if (!confirm(`Voulez-vous vraiment supprimer l'émission "${emission.name}" et toutes ses pistes ?`)) return;
+            
+            radioAPI.deleteEmission(emissionId);
+            loadEmissions();
+            renderEmissionsList();
+            
+            if (currentEmission === emissionId) {
+                currentEmission = 'user-uploads';
+                document.getElementById('emissionSelect').value = 'user-uploads';
+                loadRadioTracks();
+            }
+        }
+        
+        function openUserProfile() {
+            const name = prompt('Votre nom ou pseudo:', document.getElementById('userName').textContent);
+            if (name && name.trim()) {
+                const userData = { name: name.trim(), avatar: name.trim().charAt(0).toUpperCase() };
+                
+                // Vérifier si c'est l'admin
+                if (name.trim().toLowerCase() === 'znksystem') {
+                    userData.isAdmin = true;
+                    document.getElementById('adminBtn').style.display = 'flex';
+                }
+                
+                radioAPI.updateUserData(userData);
+                document.getElementById('userName').textContent = name.trim();
+                document.getElementById('userInitial').textContent = userData.avatar;
+            }
+        }
+
+        function goBackToMain() {
+            window.location.href = 'radio.html';
+        }
+
+        // Initialisation
+        const userData = radioAPI.getUserData();
+        document.getElementById('userName').textContent = userData.name;
+        document.getElementById('userInitial').textContent = userData.avatar;
+        
+        // Afficher le bouton admin si l'utilisateur est ZNKsystem
+        if (userData.isAdmin || userData.name.toLowerCase() === 'znksystem') {
+            document.getElementById('adminBtn').style.display = 'flex';
+        }
+        
+        document.getElementById('audioPlayer').addEventListener('ended', playNext);
+        document.getElementById('addModal').addEventListener('click', (e) => {
+            if (e.target.id === 'addModal') closeAddModal();
+        });
+        document.getElementById('adminModal').addEventListener('click', (e) => {
+            if (e.target.id === 'adminModal') closeAdminPanel();
+        });
+        
+        loadEmissions();
+        loadRadioTracks();
+        console.log('✅ ZNK Radio User V2 chargée - Lecteur colonne droite + Multi-émissions');
+    </script>
+</body>
+</html>

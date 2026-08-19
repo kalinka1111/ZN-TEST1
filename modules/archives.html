@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>ZNK System - Gestionnaire d'Archives</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363654;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border: #374151;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --sidebar-width: 280px;
+            --titlebar-height: 40px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* TITLEBAR STYLE ELECTRON */
+        .titlebar {
+            height: var(--titlebar-height);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--border);
+            -webkit-app-region: drag;
+            position: relative;
+            z-index: 1000;
+        }
+
+        .app-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-logo {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: white;
+        }
+
+        .app-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .app-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .control-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .control-btn:hover {
+            opacity: 0.8;
+        }
+
+        .control-btn.close { background: #ff5f56; }
+        .control-btn.minimize { background: #ffbd2e; }
+        .control-btn.maximize { background: #27ca3f; }
+
+        /* LAYOUT PRINCIPAL */
+        .app-container {
+            display: flex;
+            height: calc(100vh - var(--titlebar-height));
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus {
+            border-color: var(--accent);
+        }
+
+        .search-box::placeholder {
+            color: var(--text-muted);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .sidebar-section {
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            padding: 16px 20px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .nav-item.active {
+            background: rgba(99, 102, 241, 0.1);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .nav-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-text {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--accent);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 16px;
+            text-align: center;
+        }
+
+        /* ZONE PRINCIPALE */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .main-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+
+        .btn.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .btn.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .main-body {
+            flex: 1;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* ZONE D'IMPORT DRAG & DROP */
+        .import-zone {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .import-area {
+            flex: 1;
+            margin: 24px;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary);
+        }
+
+        .import-area.drag-over {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+            transform: scale(1.02);
+        }
+
+        .import-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .import-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .import-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .file-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            max-width: 600px;
+            margin-bottom: 32px;
+        }
+
+        .file-type {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-type:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .file-type-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .file-type-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .import-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .browse-btn {
+            padding: 12px 24px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .browse-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .or-text {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* LISTE DES FICHIERS IMPORTÉS */
+        .files-list {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .files-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .files-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .view-btn {
+            width: 32px;
+            height: 32px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .view-btn:hover,
+        .view-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .files-grid {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            align-content: start;
+        }
+
+        .file-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-card:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .file-thumbnail {
+            width: 100%;
+            height: 120px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            font-size: 36px;
+            color: var(--text-muted);
+        }
+
+        .file-info {
+            margin-bottom: 8px;
+        }
+
+        .file-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-size {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .file-card:hover .file-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            width: 24px;
+            height: 24px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* NOTIFICATIONS */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            max-width: 320px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-color: var(--success);
+        }
+
+        .notification.error {
+            border-color: var(--error);
+        }
+
+        .notification.warning {
+            border-color: var(--warning);
+        }
+
+        .notification-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .notification-icon {
+            font-size: 16px;
+        }
+
+        .notification-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .notification-message {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* MODAL */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+
+        /* PROGRESS BAR */
+        .progress-container {
+            margin: 16px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #8b5cf6);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        /* SCROLLBAR PERSONNALISÉE */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* INPUT FILE CACHÉ */
+        .hidden-input {
+            display: none;
+        }
+
+        /* ANIMATIONS */
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-width: 240px;
+            }
+            
+            .files-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre de titre Electron -->
+    <div class="titlebar">
+        <div class="app-info">
+            <div class="app-logo">Z</div>
+            <div class="app-title">ZNK System</div>
+            <div class="app-subtitle">Gestionnaire d'Archives</div>
+        </div>
+        
+        <div class="window-controls">
+            <div class="control-btn close" onclick="closeApp()"></div>
+            <div class="control-btn minimize" onclick="minimizeApp()"></div>
+            <div class="control-btn maximize" onclick="maximizeApp()"></div>
+        </div>
+    </div>
+
+    <!-- Conteneur principal -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <input type="text" class="search-box" placeholder="🔍 Rechercher..." id="searchBox">
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="section-header">Navigation</div>
+                    <div class="nav-item active" data-view="import">
+                        <div class="nav-icon">📥</div>
+                        <div class="nav-text">Import</div>
+                    </div>
+                    <div class="nav-item" data-view="files">
+                        <div class="nav-icon">📁</div>
+                        <div class="nav-text">Mes Fichiers</div>
+                        <div class="nav-badge" id="filesBadge">0</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-header">Types de Fichiers</div>
+                    <div class="nav-item" data-filter="video">
+                        <div class="nav-icon">🎥</div>
+                        <div class="nav-text">Vidéos</div>
+                        <div class="nav-badge" id="videoBadge">0</div>
+                    </div>
+                    <div class="nav-item" data-filter="audio">
+                        <div class="nav-icon">🎵</div>
+                        <div class="nav-text">Audio</div>
+                        <div class="nav-badge" id="audioBadge">0</div>
+                    </div>
+                    <div class="nav-item" data-filter="image">
+                        <div class="nav-icon">🖼️</div>
+                        <div class="nav-text">Images</div>
+                        <div class="nav-badge" id="imageBadge">0</div>
+                    </div>
+                    <div class="nav-item" data-filter="document">
+                        <div class="nav-icon">📄</div>
+                        <div class="nav-text">Documents</div>
+                        <div class="nav-badge" id="documentBadge">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone principale -->
+        <div class="main-content">
+            <div class="main-header">
+                <h1 class="page-title" id="pageTitle">Import de Fichiers</h1>
+                <div class="header-actions">
+                    <button class="btn" onclick="clearAll()">
+                        🗑️ Tout effacer
+                    </button>
+                    <button class="btn primary" onclick="browseFiles()">
+                        📁 Parcourir
+                    </button>
+                </div>
+            </div>
+
+            <div class="main-body">
+                <!-- Zone d'import -->
+                <div class="import-zone" id="importView">
+                    <div class="import-area" id="dropZone">
+                        <div class="import-icon">📥</div>
+                        <h2 class="import-title">Glissez vos fichiers ici</h2>
+                        <p class="import-subtitle">
+                            Ou cliquez pour parcourir et sélectionner vos fichiers.<br>
+                            Tous les types de fichiers sont supportés.
+                        </p>
+                        
+                        <div class="file-types">
+                            <div class="file-type" onclick="browseSpecificFiles('video')">
+                                <div class="file-type-icon">🎥</div>
+                                <div class="file-type-name">Vidéos</div>
+                            </div>
+                            <div class="file-type" onclick="browseSpecificFiles('audio')">
+                                <div class="file-type-icon">🎵</div>
+                                <div class="file-type-name">Audio</div>
+                            </div>
+                            <div class="file-type" onclick="browseSpecificFiles('image')">
+                                <div class="file-type-icon">🖼️</div>
+                                <div class="file-type-name">Images</div>
+                            </div>
+                            <div class="file-type" onclick="browseSpecificFiles('document')">
+                                <div class="file-type-icon">📄</div>
+                                <div class="file-type-name">Documents</div>
+                            </div>
+                        </div>
+
+                        <div class="import-buttons">
+                            <button class="browse-btn" onclick="browseFiles()">
+                                📁 Parcourir les fichiers
+                            </button>
+                            <span class="or-text">ou glissez-déposez</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liste des fichiers -->
+                <div class="files-list" id="filesView">
+                    <div class="files-header">
+                        <div class="files-count" id="filesCount">0 fichiers importés</div>
+                        <div class="view-controls">
+                            <button class="view-btn active" data-view="grid" title="Grille">
+                                ⊞
+                            </button>
+                            <button class="view-btn" data-view="list" title="Liste">
+                                ☰
+                            </button>
+                        </div>
+                    </div>
+                    <div class="files-grid" id="filesGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inputs cachés pour les fichiers -->
+    <input type="file" class="hidden-input" id="fileInput" multiple accept="*/*">
+    <input type="file" class="hidden-input" id="videoInput" multiple accept="video/*">
+    <input type="file" class="hidden-input" id="audioInput" multiple accept="audio/*">
+    <input type="file" class="hidden-input" id="imageInput" multiple accept="image/*">
+    <input type="file" class="hidden-input" id="documentInput" multiple accept=".pdf,.doc,.docx,.txt,.rtf">
+
+    <!-- Modal de progression -->
+    <div class="modal" id="progressModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Import en cours...</h3>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Préparation...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // État global de l'application
+        const appState = {
+            files: new Map(),
+            currentView: 'import',
+            currentFilter: null,
+            isDragOver: false
+        };
+
+        // Types de fichiers supportés
+        const fileTypes = {
+            video: {
+                extensions: ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv'],
+                icon: '🎥',
+                color: '#ef4444'
+            },
+            audio: {
+                extensions: ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a'],
+                icon: '🎵',
+                color: '#8b5cf6'
+            },
+            image: {
+                extensions: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp'],
+                icon: '🖼️',
+                color: '#06b6d4'
+            },
+            document: {
+                extensions: ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.md'],
+                icon: '📄',
+                color: '#10b981'
+            },
+            other: {
+                extensions: [],
+                icon: '📎',
+                color: '#6b7280'
+            }
+        };
+
+        // ==========================================================
+        // Persistance locale (IndexedDB) — 100% local, aucun serveur
+        // Stocke aussi le fichier (Blob) lui-même, pas juste ses infos
+        // ==========================================================
+        const DB_NAME = 'znk_archives_db';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'files';
+        let dbInstance = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                if (dbInstance) return resolve(dbInstance);
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+
+                request.onsuccess = (e) => {
+                    dbInstance = e.target.result;
+                    resolve(dbInstance);
+                };
+
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function dbPutFile(fileInfo) {
+            try {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    tx.objectStore(STORE_NAME).put(fileInfo);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Erreur sauvegarde locale:', err);
+                showNotification('Sauvegarde locale impossible pour ce fichier', 'error');
+            }
+        }
+
+        async function dbDeleteFile(id) {
+            try {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    tx.objectStore(STORE_NAME).delete(id);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Erreur suppression locale:', err);
+            }
+        }
+
+        async function dbClearAll() {
+            try {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    tx.objectStore(STORE_NAME).clear();
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Erreur vidage local:', err);
+            }
+        }
+
+        async function dbGetAllFiles() {
+            try {
+                const db = await openDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const request = tx.objectStore(STORE_NAME).getAll();
+                    request.onsuccess = () => resolve(request.result || []);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            } catch (err) {
+                console.error('Erreur lecture locale:', err);
+                return [];
+            }
+        }
+
+        async function loadFilesFromDB() {
+            const stored = await dbGetAllFiles();
+            stored.forEach(fileInfo => {
+                appState.files.set(fileInfo.id, fileInfo);
+            });
+            updateFileCounters();
+            if (appState.files.size > 0) {
+                switchView('files');
+            }
+        }
+
+        // ==========================================================
+        // Téléchargements ZNK (main.js / preload.js) — fichiers sauvegardés
+        // ailleurs dans ZNK via saveFile() (dialogue natif "Enregistrer") et
+        // enregistrés dans le manifeste partagé znk-downloads-manifest.json.
+        // Ce ne sont PAS des File objects du navigateur mais des chemins sur
+        // disque (diskPath) : on les affiche via electronAPI.openPath() au
+        // lieu d'un Blob, et on ne les duplique pas dans IndexedDB (le
+        // manifeste sur disque est déjà la source de vérité).
+        // ==========================================================
+        function hasElectronDownloadsAPI() {
+            return !!(window.electronAPI && window.electronAPI.listDownloads);
+        }
+
+        function downloadEntryToFileInfo(entry) {
+            return {
+                id: entry.id,
+                name: entry.name,
+                size: entry.size || 0,
+                type: getFileType(entry.name),
+                lastModified: entry.savedAt ? new Date(entry.savedAt).getTime() : Date.now(),
+                file: null,
+                diskPath: entry.path,
+                imported: entry.savedAt ? new Date(entry.savedAt) : new Date()
+            };
+        }
+
+        async function loadDownloadsFromManifest() {
+            if (!hasElectronDownloadsAPI()) return;
+            try {
+                const res = await window.electronAPI.listDownloads();
+                if (!res || !res.success) return;
+                res.entries.forEach(entry => {
+                    appState.files.set(entry.id, downloadEntryToFileInfo(entry));
+                });
+                updateFileCounters();
+                if (appState.files.size > 0) {
+                    switchView('files');
+                }
+            } catch (err) {
+                console.error('Erreur chargement téléchargements ZNK:', err);
+            }
+        }
+
+        function initDownloadsListener() {
+            if (!hasElectronDownloadsAPI() || !window.electronAPI.onDownloadAdded) return;
+            window.electronAPI.onDownloadAdded((entry) => {
+                appState.files.set(entry.id, downloadEntryToFileInfo(entry));
+                updateFileCounters();
+                if (appState.currentView === 'files') {
+                    renderFilesList(appState.currentFilter);
+                }
+                showNotification(`${entry.name} téléchargé et ajouté automatiquement`, 'success');
+            });
+        }
+
+        // Fonctions de contrôle de fenêtre
+        function closeApp() {
+            showNotification('Fermeture de l\'application...', 'info');
+            setTimeout(() => window.close(), 1000);
+        }
+
+        function minimizeApp() {
+            showNotification('Fenêtre minimisée', 'info');
+        }
+
+        function maximizeApp() {
+            showNotification('Fenêtre maximisée', 'info');
+        }
+
+        // Gestion de la navigation
+        function initNavigation() {
+            document.querySelectorAll('[data-view]').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const view = e.currentTarget.dataset.view;
+                    if (view) {
+                        switchView(view);
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-filter]').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const filter = e.currentTarget.dataset.filter;
+                    switchView('files', filter);
+                });
+            });
+        }
+
+        function switchView(view, filter = null) {
+            // Mettre à jour la navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const activeItem = filter ? 
+                document.querySelector(`[data-filter="${filter}"]`) :
+                document.querySelector(`[data-view="${view}"]`);
+            
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+
+            // Mettre à jour l'état
+            appState.currentView = view;
+            appState.currentFilter = filter;
+
+            // Mettre à jour le titre et le contenu
+            updatePageTitle(view, filter);
+            updateMainContent(view, filter);
+        }
+
+        function updatePageTitle(view, filter) {
+            const titleElement = document.getElementById('pageTitle');
+            let title = '';
+
+            if (filter) {
+                const typeInfo = fileTypes[filter];
+                title = `${typeInfo.icon} ${filter.charAt(0).toUpperCase() + filter.slice(1)}s`;
+            } else {
+                switch (view) {
+                    case 'import':
+                        title = '📥 Import de Fichiers';
+                        break;
+                    case 'files':
+                        title = '📁 Mes Fichiers';
+                        break;
+                    default:
+                        title = 'ZNK System';
+                }
+            }
+
+            titleElement.textContent = title;
+        }
+
+        function updateMainContent(view, filter) {
+            const importView = document.getElementById('importView');
+            const filesView = document.getElementById('filesView');
+
+            // Masquer toutes les vues
+            importView.style.display = 'none';
+            filesView.style.display = 'none';
+
+            if (view === 'import') {
+                importView.style.display = 'flex';
+            } else if (view === 'files' || filter) {
+                filesView.style.display = 'flex';
+                renderFilesList(filter);
+            }
+        }
+
+        // Gestion du drag & drop
+        function initDragDrop() {
+            const dropZone = document.getElementById('dropZone');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+
+            dropZone.addEventListener('drop', handleDrop, false);
+            dropZone.addEventListener('click', browseFiles, false);
+        }
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            const dropZone = document.getElementById('dropZone');
+            dropZone.classList.add('drag-over');
+            appState.isDragOver = true;
+        }
+
+        function unhighlight(e) {
+            const dropZone = document.getElementById('dropZone');
+            dropZone.classList.remove('drag-over');
+            appState.isDragOver = false;
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // Gestion des fichiers
+        function browseFiles() {
+            document.getElementById('fileInput').click();
+        }
+
+        function browseSpecificFiles(type) {
+            const inputId = type + 'Input';
+            document.getElementById(inputId).click();
+        }
+
+        function handleFiles(fileList) {
+            if (fileList.length === 0) return;
+
+            showProgressModal();
+            const files = Array.from(fileList);
+            let processed = 0;
+
+            files.forEach((file, index) => {
+                setTimeout(() => {
+                    addFile(file);
+                    processed++;
+                    
+                    const progress = (processed / files.length) * 100;
+                    updateProgress(progress, `Traitement: ${processed}/${files.length} fichiers`);
+
+                    if (processed === files.length) {
+                        setTimeout(() => {
+                            hideProgressModal();
+                            showNotification(`${files.length} fichier(s) importé(s) avec succès!`, 'success');
+                            switchView('files');
+                        }, 500);
+                    }
+                }, index * 100);
+            });
+        }
+
+        function addFile(file) {
+            const fileInfo = {
+                id: generateId(),
+                name: file.name,
+                size: file.size,
+                type: getFileType(file.name),
+                lastModified: file.lastModified,
+                file: file,
+                imported: new Date()
+            };
+
+            appState.files.set(fileInfo.id, fileInfo);
+            updateFileCounters();
+            dbPutFile(fileInfo);
+        }
+
+        function getFileType(fileName) {
+            const extension = '.' + fileName.split('.').pop().toLowerCase();
+            
+            for (const [type, info] of Object.entries(fileTypes)) {
+                if (type === 'other') continue;
+                if (info.extensions.includes(extension)) {
+                    return type;
+                }
+            }
+            return 'other';
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Rendu de la liste des fichiers
+        function renderFilesList(filter = null) {
+            const filesGrid = document.getElementById('filesGrid');
+            const filesCount = document.getElementById('filesCount');
+            
+            let filesToShow = Array.from(appState.files.values());
+            
+            if (filter) {
+                filesToShow = filesToShow.filter(file => file.type === filter);
+            }
+
+            filesCount.textContent = `${filesToShow.length} fichier${filesToShow.length > 1 ? 's' : ''} ${filter ? 'de type ' + filter : ''}`;
+
+            if (filesToShow.length === 0) {
+                filesGrid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                        <div>Aucun fichier ${filter ? 'de ce type' : ''} trouvé</div>
+                    </div>
+                `;
+                return;
+            }
+
+            filesGrid.innerHTML = '';
+            filesToShow.forEach(file => {
+                const fileCard = createFileCard(file);
+                filesGrid.appendChild(fileCard);
+            });
+        }
+
+        function createFileCard(file) {
+            const card = document.createElement('div');
+            card.className = 'file-card fade-in';
+            
+            const typeInfo = fileTypes[file.type];
+            
+            card.innerHTML = `
+                <div class="file-thumbnail" style="color: ${typeInfo.color};">
+                    ${typeInfo.icon}
+                </div>
+                <div class="file-info">
+                    <div class="file-name" title="${file.name}">${file.name}</div>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                </div>
+                <div class="file-actions">
+                    <button class="action-btn" onclick="openFile('${file.id}')" title="Ouvrir">
+                        👁️
+                    </button>
+                    <button class="action-btn" onclick="archiveFile('${file.id}')" title="Archiver">
+                        📦
+                    </button>
+                    <button class="action-btn" onclick="deleteFile('${file.id}')" title="Supprimer">
+                        🗑️
+                    </button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Actions sur les fichiers
+        function openFile(fileId) {
+            const file = appState.files.get(fileId);
+            if (!file) return;
+
+            if (file.diskPath && window.electronAPI && window.electronAPI.openPath) {
+                // Fichier téléchargé ailleurs dans ZNK : vrai chemin disque
+                window.electronAPI.openPath(file.diskPath);
+                showNotification(`Ouverture de ${file.name}...`, 'info');
+            } else if (file.file) {
+                const url = URL.createObjectURL(file.file);
+                window.open(url, '_blank');
+                showNotification(`Ouverture de ${file.name}...`, 'info');
+            } else {
+                showNotification(`Impossible d'ouvrir ${file.name} (fichier indisponible)`, 'warning');
+            }
+        }
+
+        function archiveFile(fileId) {
+            const file = appState.files.get(fileId);
+            if (file) {
+                showNotification(`${file.name} archivé avec succès`, 'success');
+                // Logique d'archivage
+            }
+        }
+
+        function deleteFile(fileId) {
+            const file = appState.files.get(fileId);
+            if (file && confirm(`Supprimer ${file.name} ?`)) {
+                appState.files.delete(fileId);
+                updateFileCounters();
+                renderFilesList(appState.currentFilter);
+                showNotification(`${file.name} supprimé`, 'success');
+                if (file.diskPath && window.electronAPI && window.electronAPI.removeDownloadEntry) {
+                    window.electronAPI.removeDownloadEntry(fileId);
+                } else {
+                    dbDeleteFile(fileId);
+                }
+            }
+        }
+
+        function clearAll() {
+            if (appState.files.size === 0) {
+                showNotification('Aucun fichier à supprimer', 'warning');
+                return;
+            }
+
+            if (confirm(`Supprimer tous les ${appState.files.size} fichiers ?`)) {
+                appState.files.clear();
+                updateFileCounters();
+                renderFilesList();
+                showNotification('Tous les fichiers ont été supprimés', 'success');
+                switchView('import');
+                dbClearAll();
+                if (window.electronAPI && window.electronAPI.clearDownloads) {
+                    window.electronAPI.clearDownloads();
+                }
+            }
+        }
+
+        // Mise à jour des compteurs
+        function updateFileCounters() {
+            const counters = {
+                files: appState.files.size,
+                video: 0,
+                audio: 0,
+                image: 0,
+                document: 0,
+                other: 0
+            };
+
+            appState.files.forEach(file => {
+                counters[file.type]++;
+            });
+
+            // Mettre à jour les badges
+            document.getElementById('filesBadge').textContent = counters.files;
+            document.getElementById('videoBadge').textContent = counters.video;
+            document.getElementById('audioBadge').textContent = counters.audio;
+            document.getElementById('imageBadge').textContent = counters.image;
+            document.getElementById('documentBadge').textContent = counters.document;
+        }
+
+        // Modal de progression
+        function showProgressModal() {
+            document.getElementById('progressModal').classList.add('show');
+        }
+
+        function hideProgressModal() {
+            document.getElementById('progressModal').classList.remove('show');
+            updateProgress(0, 'Préparation...');
+        }
+
+        function updateProgress(percent, text) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+
+        // Système de notifications
+        function showNotification(message, type = 'info') {
+            // Supprimer les notifications existantes
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <div class="notification-icon">${icons[type]}</div>
+                    <div class="notification-title">ZNK System</div>
+                </div>
+                <div class="notification-message">${message}</div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Afficher la notification
+            setTimeout(() => notification.classList.add('show'), 100);
+
+            // Masquer après 4 secondes
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Recherche
+        function initSearch() {
+            const searchBox = document.getElementById('searchBox');
+            searchBox.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                if (query.length === 0) {
+                    renderFilesList(appState.currentFilter);
+                    return;
+                }
+
+                const filteredFiles = Array.from(appState.files.values())
+                    .filter(file => file.name.toLowerCase().includes(query));
+
+                const filesGrid = document.getElementById('filesGrid');
+                const filesCount = document.getElementById('filesCount');
+                
+                filesCount.textContent = `${filteredFiles.length} résultat${filteredFiles.length > 1 ? 's' : ''}`;
+                
+                if (filteredFiles.length === 0) {
+                    filesGrid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+                            <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+                            <div>Aucun résultat pour "${query}"</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                filesGrid.innerHTML = '';
+                filteredFiles.forEach(file => {
+                    const fileCard = createFileCard(file);
+                    filesGrid.appendChild(fileCard);
+                });
+
+                if (appState.currentView === 'import') {
+                    switchView('files');
+                }
+            });
+        }
+
+        // Raccourcis clavier
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ctrl/Cmd + O : Ouvrir des fichiers
+                if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+                    e.preventDefault();
+                    browseFiles();
+                }
+
+                // Ctrl/Cmd + F : Focus sur la recherche
+                if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                    e.preventDefault();
+                    document.getElementById('searchBox').focus();
+                }
+
+                // Échap : Fermer les modals
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal.show').forEach(modal => {
+                        modal.classList.remove('show');
+                    });
+                }
+
+                // Ctrl/Cmd + A : Tout sélectionner (simulation)
+                if ((e.ctrlKey || e.metaKey) && e.key === 'a' && appState.currentView === 'files') {
+                    e.preventDefault();
+                    showNotification(`${appState.files.size} fichiers sélectionnés`, 'info');
+                }
+
+                // Delete : Supprimer (simulation)
+                if (e.key === 'Delete' && appState.currentView === 'files') {
+                    showNotification('Fonction de suppression rapide', 'info');
+                }
+            });
+        }
+
+        // Gestion des inputs de fichiers
+        function initFileInputs() {
+            document.getElementById('fileInput').addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+                e.target.value = '';
+            });
+
+            document.getElementById('videoInput').addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+                e.target.value = '';
+            });
+
+            document.getElementById('audioInput').addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+                e.target.value = '';
+            });
+
+            document.getElementById('imageInput').addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+                e.target.value = '';
+            });
+
+            document.getElementById('documentInput').addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+                e.target.value = '';
+            });
+        }
+
+        // Contrôles de vue (grille/liste)
+        function initViewControls() {
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    
+                    const viewType = e.currentTarget.dataset.view;
+                    const filesGrid = document.getElementById('filesGrid');
+                    
+                    if (viewType === 'list') {
+                        filesGrid.style.gridTemplateColumns = '1fr';
+                        showNotification('Vue liste activée', 'info');
+                    } else {
+                        filesGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
+                        showNotification('Vue grille activée', 'info');
+                    }
+                });
+            });
+        }
+
+        // Initialisation de l'application
+        async function initApp() {
+            console.log('🚀 Initialisation de ZNK System...');
+            
+            // Initialiser les modules
+            initNavigation();
+            initDragDrop();
+            initFileInputs();
+            initSearch();
+            initKeyboardShortcuts();
+            initViewControls();
+            initDownloadsListener();
+            
+            // Charger les fichiers déjà importés (stockage local IndexedDB)
+            // + les fichiers téléchargés ailleurs dans ZNK (manifeste partagé)
+            await loadFilesFromDB();
+            await loadDownloadsFromManifest();
+            
+            // Mettre à jour les compteurs
+            updateFileCounters();
+            
+            // Animation d'entrée
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+                const message = appState.files.size > 0
+                    ? `ZNK System prêt! ${appState.files.size} fichier(s) retrouvé(s).`
+                    : 'ZNK System prêt! Glissez vos fichiers pour commencer.';
+                showNotification(message, 'success');
+            }, 100);
+            
+            console.log('✅ ZNK System initialisé avec succès');
+        }
+
+        // Lancement au chargement de la page
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Style d'entrée
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.5s ease';
+
+(function() {
+    // Vérifier si on vient du dashboard
+    if (sessionStorage.getItem('znk_dashboard_return') === 'true') {
+        // Créer le bouton retour
+        const returnButton = document.createElement('button');
+        returnButton.innerHTML = '← Dashboard';
+        returnButton.onclick = function() {
+            window.location.href = 'ZNKStudiosDash.html';
+        };
+        
+        // Styles du bouton
+        returnButton.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(45deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 999999;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        `;
+        
+        // Effets hover
+        returnButton.onmouseover = function() {
+            this.style.transform = 'scale(1.05)';
+            this.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.4)';
+        };
+        
+        returnButton.onmouseout = function() {
+            this.style.transform = 'scale(1)';
+            this.style.boxShadow = '0 4px 15px rgba(37, 99, 235, 0.3)';
+        };
+        
+        // Ajouter au DOM quand la page est prête
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                document.body.appendChild(returnButton);
+            });
+        } else {
+            document.body.appendChild(returnButton);
+        }
+        
+        console.log('🔙 Bouton retour Dashboard ajouté');
+    }
+})();
+    </script>
+ </script>
+      <script src="../../znk-auto-nav.js"></script>
+    <script src="../../module-mapping.js"></script>
+</body>
+</html>

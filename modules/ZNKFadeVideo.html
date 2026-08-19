@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNKFadeVideo</title>
+<style>
+  :root{
+    --bg:#c0c0c0;
+    --panel:#606060;
+    --panel-2:#444444;
+    --line:#7a7a7a;
+    --amber:#ff8a1e;
+    --amber-dim:#7a4b17;
+    --green:#7dff9e;
+    --text:#efe6d8;
+    --text-dim:#9a8f7d;
+    --mono: "SF Mono","Consolas","Menlo",monospace;
+    --serif: "Georgia","Iowan Old Style",serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse at top, #606060 0%, var(--bg) 60%);
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:16px;
+    display:block;
+    min-height:100vh;
+    padding:36px 24px;
+  }
+
+  .rig{
+    width:100%;
+    max-width:1220px;
+    margin:0 auto;
+    background:linear-gradient(180deg,#606060,#171410);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
+    overflow:hidden;
+  }
+
+  .rig-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:26px 34px 20px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  }
+  .rig-head .brand{
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:32px;
+    letter-spacing:0.5px;
+    color:var(--text);
+  }
+  .rig-head .brand b{
+    font-style:normal;
+    color:var(--amber);
+    font-weight:700;
+  }
+  .rig-head .tag{
+    font-size:13px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+
+  .body{
+    display:grid;
+    grid-template-columns: 1fr 220px;
+    gap:0;
+  }
+  @media (max-width:860px){
+    .body{grid-template-columns:1fr;}
+    .dual-screens{flex-direction:column !important;}
+    .fader-col{
+      border-left:none !important;
+      border-top:1px solid var(--line);
+      flex-direction:row !important;
+      padding:18px 24px !important;
+      align-items:center;
+      justify-content:space-around !important;
+    }
+    .fblock{flex-direction:row !important; align-items:center; gap:14px !important;}
+    .fader-track-wrap{height:44px !important; width:100% !important;}
+    .fader-track-wrap input[type=range]{
+      writing-mode: horizontal-tb !important;
+      width:100% !important;
+      height:38px !important;
+      transform:none !important;
+    }
+  }
+  @media (max-width:520px){
+    .rig-head .brand{font-size:24px;}
+    .screen{height:170px;}
+    .preview-screen{height:220px;}
+  }
+
+  /* ---- Screen / video area ---- */
+  .screen-col{
+    padding:30px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  .dual-screens{
+    display:flex;
+    gap:18px;
+  }
+  .slot{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .slot-label{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+  .slot-label b{color:var(--amber);}
+  .slot-label .dur{font-variant-numeric:tabular-nums;}
+
+  .screen{
+    position:relative;
+    background:#000;
+    border-radius:8px;
+    overflow:hidden;
+    height:210px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #000;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .screen video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:none;
+  }
+  .dropzone{
+    text-align:center;
+    color:var(--text-dim);
+    padding:14px;
+    cursor:pointer;
+  }
+  .dropzone .icon{
+    font-size:40px;
+    margin-bottom:10px;
+    color:var(--amber-dim);
+  }
+  .dropzone .main-txt{
+    font-size:15px;
+    color:var(--text);
+    margin-bottom:5px;
+  }
+  .dropzone .sub-txt{
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  .dropzone.drag-over{color:var(--amber);}
+  .dropzone.drag-over .icon{color:var(--amber);}
+  input[type=file]{display:none;}
+
+  /* ---- Preview (aperçu du fondu) ---- */
+  .preview-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .preview-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .preview-head .title{
+    font-size:13px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+  .preview-screen{
+    position:relative;
+    background:#000;
+    border-radius:8px;
+    overflow:hidden;
+    height:280px;
+    border:1px solid #000;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .preview-screen video{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+  }
+  .preview-empty{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--text-dim);
+    font-size:11px;
+    text-align:center;
+    padding:20px;
+  }
+  .preview-btn{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:14px;
+    padding:10px 18px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:border-color .15s, color .15s;
+  }
+  .preview-btn:hover{border-color:var(--amber); color:var(--amber);}
+  .preview-btn:disabled{color:var(--text-dim); cursor:not-allowed; border-color:var(--line);}
+
+  .fade-progress{
+    height:4px;
+    background:var(--line);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .fade-progress .fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--amber-dim), var(--amber));
+    transition:width .05s linear;
+  }
+
+  .presets{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .presets button{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:var(--mono);
+    font-size:14px;
+    padding:8px 14px;
+    border-radius:5px;
+    cursor:pointer;
+    transition: all .15s;
+  }
+  .presets button:hover{color:var(--text); border-color:var(--amber-dim);}
+  .presets button.active{
+    color:var(--bg);
+    background:var(--amber);
+    border-color:var(--amber);
+    font-weight:bold;
+  }
+  .presets-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .presets-row .grp{display:flex; flex-direction:column; gap:5px;}
+  .presets-row .grp-lbl{font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim);}
+
+  .hint{
+    font-size:12px;
+    color:var(--text-dim);
+    letter-spacing:0.5px;
+    line-height:1.6;
+  }
+  .hint kbd{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-bottom-width:2px;
+    padding:2px 6px;
+    border-radius:3px;
+    color:var(--text);
+    font-size:12px;
+  }
+
+  /* ---- Fader column ---- */
+  .fader-col{
+    border-left:1px solid var(--line);
+    background:linear-gradient(180deg, #191510, #14110d);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    gap:28px;
+    padding:30px 0 24px;
+  }
+
+  .fblock{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+
+  .fader-readout{text-align:center;}
+  .fader-readout .val{
+    font-size:26px;
+    color:var(--amber);
+    font-weight:bold;
+    text-shadow:0 0 12px rgba(255,138,30,0.35);
+    font-variant-numeric: tabular-nums;
+  }
+  .fader-readout .lbl{
+    font-size:11px;
+    letter-spacing:2px;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    margin-top:3px;
+  }
+
+  .fader-track-wrap{
+    position:relative;
+    width:80px;
+    height:220px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  input[type=range].vfader{
+    -webkit-appearance:none;
+    appearance:none;
+    width:220px;
+    height:44px;
+    background:transparent;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    transform: rotate(180deg);
+    cursor:ns-resize;
+    position:relative;
+    z-index:2;
+  }
+  input[type=range].vfader::-webkit-slider-runnable-track{
+    width:8px;
+    background:linear-gradient(180deg,#000,#2a251d);
+    border-radius:4px;
+    border:1px solid #050403;
+  }
+  input[type=range].vfader::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:44px;
+    height:19px;
+    border-radius:4px;
+    background:linear-gradient(180deg,#3a342b,#1c1712);
+    border:1px solid #4a423490;
+    border-top:1px solid #6b5f4c;
+    box-shadow:0 2px 6px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.03);
+    margin-left:-18px;
+    position:relative;
+  }
+  input[type=range].vfader::-webkit-slider-thumb:hover{border-color: var(--amber-dim);}
+  input[type=range].vfader::-moz-range-track{
+    width:8px;
+    background:linear-gradient(180deg,#000,#2a251d);
+    border-radius:4px;
+    border:1px solid #050403;
+  }
+  input[type=range].vfader::-moz-range-thumb{
+    width:44px;
+    height:19px;
+    border-radius:4px;
+    background:linear-gradient(180deg,#3a342b,#1c1712);
+    border:1px solid #4a423490;
+    cursor:ns-resize;
+  }
+  #intFader::-webkit-slider-runnable-track{background:linear-gradient(180deg,#000,#241d13);}
+
+  .reset-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:6px 11px;
+    border-radius:5px;
+    cursor:pointer;
+  }
+  .reset-btn:hover{color:var(--amber); border-color:var(--amber-dim);}
+
+  .fdivider{width:70%; height:1px; background:var(--line);}
+
+  .footer-strip{
+    padding:14px 34px;
+    border-top:1px solid var(--line);
+    font-size:11px;
+    color:var(--text-dim);
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  /* ---- Export ---- */
+  .export-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .export-btn{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    background:linear-gradient(180deg, var(--amber), #d96f10);
+    border:1px solid #a85c0e;
+    color:#1a1006;
+    font-family:var(--mono);
+    font-weight:bold;
+    font-size:14px;
+    letter-spacing:0.5px;
+    padding:11px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .export-btn:hover{ filter:brightness(1.08); }
+  .export-btn:active{ transform:scale(0.97); }
+  .export-btn:disabled{
+    background:var(--panel-2);
+    color:var(--text-dim);
+    border-color:var(--line);
+    cursor:not-allowed;
+  }
+  .export-note{
+    font-size:9px;
+    color:var(--text-dim);
+    letter-spacing:0.5px;
+  }
+
+  .export-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(6,5,4,0.86);
+    backdrop-filter: blur(2px);
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    color:var(--text);
+    z-index:5;
+    text-align:center;
+    padding:14px;
+  }
+  .export-overlay.active{ display:flex; }
+  .export-overlay .rec-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:#ff4d4d;
+    box-shadow:0 0 8px #ff4d4d;
+    animation: blink 1s infinite;
+    display:inline-block;
+    margin-right:6px;
+  }
+  @keyframes blink{ 50%{ opacity:0.25; } }
+  .export-overlay .lbl{
+    font-size:11px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+  }
+  .export-overlay .bar-wrap{
+    width:70%;
+    max-width:320px;
+    height:6px;
+    background:var(--panel-2);
+    border-radius:3px;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .export-overlay .bar-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--amber-dim), var(--amber));
+    transition:width .15s linear;
+  }
+  .export-overlay .pct{
+    font-size:20px;
+    color:var(--amber);
+    font-variant-numeric: tabular-nums;
+  }
+  .export-overlay .cancel-export{
+    margin-top:4px;
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:5px 10px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .export-overlay .cancel-export:hover{ color:#ff8080; border-color:#ff8080; }
+</style>
+</head>
+<body>
+
+<div class="rig">
+  <div class="rig-head">
+    <div class="brand"><b>ZNK</b>FadeVideo</div>
+    <div class="tag">Fondu enchaîné — deux vidéos — lecture locale</div>
+  </div>
+
+  <div class="body">
+    <div class="screen-col">
+
+      <div class="dual-screens">
+        <div class="slot">
+          <div class="slot-label"><b>Vidéo A</b><span class="dur" id="durA">--:--</span></div>
+          <div class="screen" id="screenA">
+            <div class="dropzone" id="dropzoneA">
+              <div class="icon">▶</div>
+              <div class="main-txt">Déposez la 1ʳᵉ vidéo, ou cliquez</div>
+              <div class="sub-txt">MP4, WebM, MOV… — 100% local</div>
+            </div>
+            <video id="videoA" playsinline muted></video>
+          </div>
+          <input type="file" id="fileInputA" accept="video/*">
+        </div>
+
+        <div class="slot">
+          <div class="slot-label"><b>Vidéo B</b><span class="dur" id="durB">--:--</span></div>
+          <div class="screen" id="screenB">
+            <div class="dropzone" id="dropzoneB">
+              <div class="icon">▶</div>
+              <div class="main-txt">Déposez la 2ᵉ vidéo, ou cliquez</div>
+              <div class="sub-txt">MP4, WebM, MOV… — 100% local</div>
+            </div>
+            <video id="videoB" playsinline muted></video>
+          </div>
+          <input type="file" id="fileInputB" accept="video/*">
+        </div>
+      </div>
+
+      <div class="preview-wrap">
+        <div class="preview-head">
+          <div class="title">Aperçu du fondu (fin de A → début de B)</div>
+          <button class="preview-btn" id="previewBtn" disabled>▶ Jouer l'aperçu</button>
+        </div>
+        <div class="preview-screen" id="previewScreen">
+          <div class="preview-empty" id="previewEmpty">Chargez les deux vidéos pour prévisualiser le fondu</div>
+          <video id="previewA" playsinline style="opacity:1;"></video>
+          <video id="previewB" playsinline style="opacity:0;"></video>
+
+          <div class="export-overlay" id="exportOverlay">
+            <div class="lbl"><span class="rec-dot"></span>Export en cours</div>
+            <div class="pct" id="exportPct">0%</div>
+            <div class="bar-wrap"><div class="bar-fill" id="exportBar"></div></div>
+            <div class="export-note" id="exportEta">estimation…</div>
+            <button class="cancel-export" id="cancelExport">Annuler</button>
+          </div>
+        </div>
+        <div class="fade-progress"><div class="fill" id="previewFill"></div></div>
+      </div>
+
+      <div class="presets-row">
+        <div class="grp">
+          <div class="grp-lbl">Longueur rapide</div>
+          <div class="presets" id="durPresets"></div>
+        </div>
+        <div class="grp">
+          <div class="grp-lbl">Intensité rapide</div>
+          <div class="presets" id="intPresets"></div>
+        </div>
+      </div>
+
+      <div class="export-row">
+        <button class="export-btn" id="exportBtn" disabled>⬇ Exporter le mix</button>
+        <span class="export-note" id="exportSupportNote"></span>
+      </div>
+
+      <div class="hint">
+        <kbd>Espace</kbd> jouer l'aperçu &nbsp; — &nbsp; l'intensité règle la courbe du fondu : douce (transition progressive) à marquée (transition plus nette et rapide)
+      </div>
+    </div>
+
+    <div class="fader-col">
+      <div class="fblock">
+        <div class="fader-readout">
+          <div class="val" id="durVal">1.50s</div>
+          <div class="lbl">longueur</div>
+        </div>
+        <div class="fader-track-wrap">
+          <input type="range" class="vfader" id="durFader" min="0.2" max="6" step="0.1" value="1.5">
+        </div>
+        <button class="reset-btn" id="resetDur">Reset 1.50s</button>
+      </div>
+
+      <div class="fdivider"></div>
+
+      <div class="fblock">
+        <div class="fader-readout">
+          <div class="val" id="intVal">50%</div>
+          <div class="lbl">intensité</div>
+        </div>
+        <div class="fader-track-wrap">
+          <input type="range" class="vfader" id="intFader" min="0" max="100" step="1" value="50">
+        </div>
+        <button class="reset-btn" id="resetInt">Reset 50%</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-strip">
+    <span>Longueur 0.2s—6s · Intensité 0—100%</span>
+    <span id="statusTxt">en attente de deux vidéos</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const videoA = document.getElementById('videoA');
+  const videoB = document.getElementById('videoB');
+  const dropzoneA = document.getElementById('dropzoneA');
+  const dropzoneB = document.getElementById('dropzoneB');
+  const screenA = document.getElementById('screenA');
+  const screenB = document.getElementById('screenB');
+  const fileInputA = document.getElementById('fileInputA');
+  const fileInputB = document.getElementById('fileInputB');
+  const durA = document.getElementById('durA');
+  const durB = document.getElementById('durB');
+
+  const durFader = document.getElementById('durFader');
+  const intFader = document.getElementById('intFader');
+  const durVal = document.getElementById('durVal');
+  const intVal = document.getElementById('intVal');
+  const resetDur = document.getElementById('resetDur');
+  const resetInt = document.getElementById('resetInt');
+
+  const previewBtn = document.getElementById('previewBtn');
+  const previewScreen = document.getElementById('previewScreen');
+  const previewEmpty = document.getElementById('previewEmpty');
+  const previewA = document.getElementById('previewA');
+  const previewB = document.getElementById('previewB');
+  const previewFill = document.getElementById('previewFill');
+
+  const durPresetsWrap = document.getElementById('durPresets');
+  const intPresetsWrap = document.getElementById('intPresets');
+  const statusTxt = document.getElementById('statusTxt');
+  const exportBtn = document.getElementById('exportBtn');
+
+  const DUR_PRESETS = [0.3, 0.5, 1, 1.5, 2, 3, 5];
+  const INT_PRESETS = [{v:15,l:'Doux'},{v:50,l:'Normal'},{v:85,l:'Fort'}];
+
+  DUR_PRESETS.forEach(p=>{
+    const b = document.createElement('button');
+    b.textContent = p + 's';
+    b.dataset.val = p;
+    b.addEventListener('click', ()=> setDur(p));
+    durPresetsWrap.appendChild(b);
+  });
+  INT_PRESETS.forEach(p=>{
+    const b = document.createElement('button');
+    b.textContent = p.l;
+    b.dataset.val = p.v;
+    b.addEventListener('click', ()=> setInt(p.v));
+    intPresetsWrap.appendChild(b);
+  });
+
+  function fmtTime(s){
+    if(!isFinite(s)) return '--:--';
+    const m = Math.floor(s/60).toString().padStart(2,'0');
+    const sec = Math.floor(s%60).toString().padStart(2,'0');
+    return m+':'+sec;
+  }
+
+  // Intensité -> exposant de la courbe de mélange (utilisé à l'identique
+  // dans l'aperçu ci-dessous ET dans l'export ffmpeg, pour que ce qu'on
+  // voit soit fidèle à ce qu'on exporte).
+  // 0%  -> k=0.25 (fondu très doux, progressif)
+  // 50% -> k=1    (fondu linéaire classique)
+  // 100%-> k=4    (fondu plus marqué / net)
+  function intensityToK(i){
+    return Math.pow(4, (i-50)/50);
+  }
+
+  function setDur(v){
+    v = Math.min(6, Math.max(0.2, Math.round(v*10)/10));
+    durFader.value = v;
+    durVal.textContent = v.toFixed(2) + 's';
+    resetDur.textContent = 'Reset 1.50s';
+    [...durPresetsWrap.children].forEach(b=>{
+      b.classList.toggle('active', Math.abs(parseFloat(b.dataset.val)-v) < 0.001);
+    });
+    checkFadeFits();
+  }
+
+  function setInt(v){
+    v = Math.min(100, Math.max(0, Math.round(v)));
+    intFader.value = v;
+    intVal.textContent = v + '%';
+    [...intPresetsWrap.children].forEach(b=>{
+      b.classList.toggle('active', Math.abs(parseFloat(b.dataset.val)-v) < 0.001);
+    });
+  }
+
+  function checkFadeFits(){
+    if(!videoA.duration || !videoB.duration) return;
+    const maxFade = Math.max(0.1, Math.min(videoA.duration, videoB.duration) - 0.05);
+    if(parseFloat(durFader.value) > maxFade){
+      statusTxt.textContent = 'longueur du fondu réduite à ' + maxFade.toFixed(2) + 's (vidéo trop courte)';
+    } else if(videoA.duration && videoB.duration){
+      statusTxt.textContent = 'prêt — A ' + fmtTime(videoA.duration) + ' · B ' + fmtTime(videoB.duration);
+    }
+  }
+
+  function bothLoaded(){
+    return !!(window.__znkFileA && window.__znkFileB &&
+      isFinite(videoA.duration) && videoA.duration > 0 &&
+      isFinite(videoB.duration) && videoB.duration > 0);
+  }
+
+  function refreshReadyState(){
+    const ready = bothLoaded();
+    previewBtn.disabled = !ready;
+    exportBtn.disabled = !ready;
+    previewEmpty.style.display = ready ? 'none' : 'flex';
+    if(ready) checkFadeFits();
+  }
+
+  function loadFile(which, file){
+    if(!file || !file.type.startsWith('video/')) return;
+    const isA = which === 'A';
+    const video = isA ? videoA : videoB;
+    const dropzone = isA ? dropzoneA : dropzoneB;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.style.display = 'block';
+    dropzone.style.display = 'none';
+    video.load();
+
+    window['__znkFile'+which] = file;
+    window['__znkNativePath'+which] = null;
+    if(window.electronAPI && typeof window.electronAPI.getPathForFile === 'function'){
+      try{
+        const p = window.electronAPI.getPathForFile(file);
+        if(p) window['__znkNativePath'+which] = p;
+      } catch(e){ /* repli ffmpeg.wasm */ }
+    }
+
+    video.addEventListener('loadedmetadata', ()=>{
+      if(!isFinite(video.duration) || video.duration <= 0){
+        // Bug connu (Chrome) : certains conteneurs (webm/mkv sans durée
+        // dans l'en-tête) renvoient Infinity/NaN tant qu'on n'a pas
+        // "forcé" un seek en fin de fichier. Sans cette correction, le
+        // calcul de l'offset du fondu à l'export devient invalide.
+        const fixDuration = ()=>{
+          video.currentTime = Number.MAX_SAFE_INTEGER;
+          video.addEventListener('timeupdate', function onTU(){
+            video.removeEventListener('timeupdate', onTU);
+            video.currentTime = 0;
+            (isA ? durA : durB).textContent = fmtTime(video.duration);
+            refreshReadyState();
+          }, {once:true});
+        };
+        fixDuration();
+      } else {
+        (isA ? durA : durB).textContent = fmtTime(video.duration);
+      }
+      refreshReadyState();
+    }, {once:true});
+
+    statusTxt.textContent = 'vidéo ' + which + ' chargée : ' + file.name;
+  }
+
+  [['A',dropzoneA,fileInputA,screenA],['B',dropzoneB,fileInputB,screenB]].forEach(([which,dz,input,screen])=>{
+    dz.addEventListener('click', ()=> input.click());
+    input.addEventListener('change', e=> loadFile(which, e.target.files[0]));
+    ['dragover','dragenter'].forEach(evt=>{
+      screen.addEventListener(evt, e=>{ e.preventDefault(); dz.classList.add('drag-over'); });
+    });
+    ['dragleave','dragend'].forEach(evt=>{
+      screen.addEventListener(evt, ()=> dz.classList.remove('drag-over'));
+    });
+    screen.addEventListener('drop', e=>{
+      e.preventDefault();
+      dz.classList.remove('drag-over');
+      loadFile(which, e.dataTransfer.files[0]);
+    });
+  });
+
+  durFader.addEventListener('input', ()=> setDur(parseFloat(durFader.value)));
+  intFader.addEventListener('input', ()=> setInt(parseFloat(intFader.value)));
+  resetDur.addEventListener('click', ()=> setDur(1.5));
+  resetInt.addEventListener('click', ()=> setInt(50));
+
+  // ---- Aperçu du fondu : deux <video> superposées, fondu opacité + volume
+  // piloté par la même courbe (exposant K) que celle envoyée à ffmpeg.
+  let previewing = false;
+  function playPreview(){
+    if(!bothLoaded() || previewing) return;
+    previewing = true;
+    previewBtn.disabled = true;
+    previewBtn.textContent = '⏳ Aperçu…';
+
+    const maxFade = Math.max(0.1, Math.min(videoA.duration, videoB.duration) - 0.05);
+    const fadeDur = Math.min(parseFloat(durFader.value), maxFade);
+    const k = intensityToK(parseFloat(intFader.value));
+    const startA = Math.max(0, videoA.duration - fadeDur);
+
+    previewA.src = videoA.src;
+    previewB.src = videoB.src;
+    previewA.muted = false;
+    previewB.muted = false;
+    previewA.style.opacity = 1;
+    previewB.style.opacity = 0;
+    previewA.volume = 1;
+    previewB.volume = 0;
+    previewFill.style.width = '0%';
+
+    const ready = (v, t)=> new Promise(res=>{
+      const go = ()=>{ v.currentTime = t; res(); };
+      if(v.readyState >= 1) go();
+      else v.addEventListener('loadedmetadata', go, {once:true});
+    });
+
+    Promise.all([ready(previewA, startA), ready(previewB, 0)]).then(()=>{
+      previewA.play().catch(()=>{});
+      previewB.play().catch(()=>{});
+      const t0 = performance.now();
+      function tick(){
+        const elapsed = (performance.now()-t0)/1000;
+        const t = Math.min(1, elapsed/fadeDur);
+        const eased = Math.pow(t, k);
+        previewA.style.opacity = 1-eased;
+        previewB.style.opacity = eased;
+        previewA.volume = Math.max(0, Math.min(1, 1-eased));
+        previewB.volume = Math.max(0, Math.min(1, eased));
+        previewFill.style.width = (t*100).toFixed(1) + '%';
+        if(t < 1){
+          requestAnimationFrame(tick);
+        } else {
+          setTimeout(()=>{
+            previewA.pause();
+            previewB.pause();
+            previewing = false;
+            previewBtn.disabled = false;
+            previewBtn.textContent = '▶ Jouer l\'aperçu';
+          }, 900);
+        }
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+  previewBtn.addEventListener('click', playPreview);
+
+  document.addEventListener('keydown', e=>{
+    if(e.code === 'Space' && !previewBtn.disabled){
+      e.preventDefault();
+      previewBtn.click();
+    }
+  });
+
+  setDur(1.5);
+  setInt(50);
+  window.__znkIntensityToK = intensityToK;
+})();
+</script>
+
+<script type="module">
+/* ---------------- Export MP4 : ffmpeg natif (Electron) ou ffmpeg.wasm (navigateur) ---------------- */
+let FFmpeg, toBlobURL, fetchFile;
+async function loadWasmDeps(){
+  if(FFmpeg) return;
+  const mod1 = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
+  const mod2 = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js');
+  FFmpeg = mod1.FFmpeg;
+  toBlobURL = mod2.toBlobURL;
+  fetchFile = mod2.fetchFile;
+}
+
+const videoA = document.getElementById('videoA');
+const videoB = document.getElementById('videoB');
+const durFader = document.getElementById('durFader');
+const intFader = document.getElementById('intFader');
+const previewBtn = document.getElementById('previewBtn');
+const statusTxt = document.getElementById('statusTxt');
+const exportBtn = document.getElementById('exportBtn');
+const exportOverlay = document.getElementById('exportOverlay');
+const exportPct = document.getElementById('exportPct');
+const exportBar = document.getElementById('exportBar');
+const exportEta = document.getElementById('exportEta');
+const exportSupportNote = document.getElementById('exportSupportNote');
+const cancelExport = document.getElementById('cancelExport');
+
+let ffmpeg = null;
+let ffmpegLoadingPromise = null;
+let exporting = false;
+let lastLogs = [];
+
+// Comme pour ZNKVitesseVideo : si l'app tourne dans le shell Electron ZNK
+// avec l'API preload adéquate, on tente le natif ; sinon repli ffmpeg.wasm.
+const isElectronNative = !!(window.electronAPI && typeof window.electronAPI.fadeVideos === 'function');
+
+const FFMPEG_CACHE_NAME = 'znk-ffmpeg-core-v1';
+const CORE_JS_URL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js';
+const CORE_WASM_URL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm';
+
+async function getCachedBlobURL(url, mime){
+  await loadWasmDeps();
+  if('caches' in window){
+    try{
+      const cache = await caches.open(FFMPEG_CACHE_NAME);
+      let response = await cache.match(url);
+      if(!response){
+        response = await fetch(url);
+        if(response.ok) await cache.put(url, response.clone());
+      }
+      const blob = await response.blob();
+      return URL.createObjectURL(new Blob([blob], {type: mime}));
+    } catch(e){
+      return await toBlobURL(url, mime);
+    }
+  }
+  return await toBlobURL(url, mime);
+}
+
+async function isFfmpegCached(){
+  if(!('caches' in window)) return false;
+  try{
+    const cache = await caches.open(FFMPEG_CACHE_NAME);
+    const hit = await cache.match(CORE_WASM_URL);
+    return !!hit;
+  } catch(e){ return false; }
+}
+
+if(isElectronNative){
+  exportSupportNote.textContent = 'Sortie .mp4 — ffmpeg natif de l\'app ZNK, hors ligne dès maintenant';
+} else {
+  isFfmpegCached().then(cached=>{
+    exportSupportNote.textContent = cached
+      ? "Moteur d'export déjà en cache — fonctionne hors ligne"
+      : 'Sortie .mp4 — moteur ffmpeg.wasm mis en cache au premier export (~30 Mo, une seule fois), puis hors ligne';
+  });
+}
+
+async function ensureFFmpeg(){
+  if(ffmpeg) return ffmpeg;
+  if(ffmpegLoadingPromise) return ffmpegLoadingPromise;
+  ffmpegLoadingPromise = (async ()=>{
+    await loadWasmDeps();
+    const instance = new FFmpeg();
+    instance.on('log', ({message})=>{
+      lastLogs.push(message);
+      if(lastLogs.length > 60) lastLogs.shift();
+    });
+    instance.on('progress', ({progress})=>{
+      if(!exporting) return;
+      const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
+      exportPct.textContent = pct + '%';
+      exportBar.style.width = pct + '%';
+    });
+    await instance.load({
+      coreURL: await getCachedBlobURL(CORE_JS_URL, 'text/javascript'),
+      wasmURL: await getCachedBlobURL(CORE_WASM_URL, 'application/wasm'),
+    });
+    ffmpeg = instance;
+    return instance;
+  })();
+  return ffmpegLoadingPromise;
+}
+
+function lockControls(locked){
+  durFader.disabled = locked;
+  intFader.disabled = locked;
+  previewBtn.disabled = locked || exportBtn.disabled;
+  exportBtn.disabled = locked;
+}
+
+function computeFadePlan(){
+  const maxFade = Math.max(0.1, Math.min(videoA.duration, videoB.duration) - 0.05);
+  const fadeDuration = Math.min(parseFloat(durFader.value), maxFade);
+  const offset = Math.max(0, videoA.duration - fadeDuration);
+  const k = window.__znkIntensityToK(parseFloat(intFader.value));
+  const W = videoA.videoWidth || videoB.videoWidth || 1280;
+  const H = videoA.videoHeight || videoB.videoHeight || 720;
+  const FPS = 30;
+  return {fadeDuration, offset, k, W, H, FPS};
+}
+
+// Fondu enchaîné classique (dissolve), quelle que soit l'intensité —
+// cohérent avec l'aperçu (qui ne fait jamais de passage par le noir/blanc).
+// L'intensité influe uniquement sur la courbe/durée, pas sur le type de
+// transition, pour éviter un flash qui ne correspond pas à ce que montre
+// l'aperçu.
+function transitionForIntensity(i){
+  return 'fade';
+}
+
+function buildFilterComplex({fadeDuration, offset, W, H, FPS}, intensity, withAudio){
+  const norm =
+    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps=${FPS}[v0];`+
+    `[1:v]scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps=${FPS}[v1];`;
+  const transition = transitionForIntensity(intensity);
+  const xfade = `[v0][v1]xfade=transition=${transition}:duration=${fadeDuration.toFixed(3)}:offset=${offset.toFixed(3)}[vout]`;
+  if(!withAudio) return norm + xfade;
+  const audio = `;[0:a][1:a]acrossfade=d=${fadeDuration.toFixed(3)}:curve1=tri:curve2=tri[aout]`;
+  return norm + xfade + audio;
+}
+
+async function startExportNative(){
+  const pathA = window.__znkNativePathA;
+  const pathB = window.__znkNativePathB;
+  const fileA = window.__znkFileA;
+  const fileB = window.__znkFileB;
+  if(!pathA || !pathB || !fileA || !fileB || exporting) return;
+  exporting = true;
+  lockControls(true);
+
+  const plan = computeFadePlan();
+  exportPct.textContent = '0%';
+  exportBar.style.width = '0%';
+  exportEta.textContent = 'encodage en cours (ffmpeg natif)…';
+  exportOverlay.classList.add('active');
+
+  let unsubscribe = null;
+  try{
+    if(window.electronAPI.onFadeExportProgress){
+      unsubscribe = window.electronAPI.onFadeExportProgress(data=>{
+        if(!exporting) return;
+        const pct = Math.max(0, Math.min(100, Math.round(data.progress || 0)));
+        exportPct.textContent = pct + '%';
+        exportBar.style.width = pct + '%';
+      });
+    }
+
+    const result = await window.electronAPI.fadeVideos({
+      filePathA: pathA,
+      filePathB: pathB,
+      fileNameA: fileA.name,
+      fileNameB: fileB.name,
+      fadeDuration: plan.fadeDuration,
+      intensity: parseFloat(intFader.value),
+      curveExponent: plan.k
+    });
+
+    if(!result || !result.success){
+      throw new Error((result && result.error) || 'export natif échoué');
+    }
+
+    exportPct.textContent = '100%';
+    exportBar.style.width = '100%';
+    statusTxt.textContent = 'export MP4 terminé — ' + result.outputFileName;
+    exportEta.textContent = 'enregistré : ' + result.outputFileName;
+    if(window.electronAPI.openOutputFolder){
+      window.electronAPI.openOutputFolder().catch(()=>{});
+    }
+  } catch(e){
+    console.error('[ZNKFadeVideo export natif]', e);
+    exportEta.textContent = "échec de l'export — voir la console";
+    statusTxt.textContent = 'erreur export';
+  } finally {
+    if(unsubscribe) unsubscribe();
+    setTimeout(()=> exportOverlay.classList.remove('active'), 800);
+    exporting = false;
+    lockControls(false);
+  }
+}
+
+async function startExportWasm(){
+  const fileA = window.__znkFileA;
+  const fileB = window.__znkFileB;
+  if(!fileA || !fileB || exporting) return;
+  exporting = true;
+  lockControls(true);
+
+  exportPct.textContent = '0%';
+  exportBar.style.width = '0%';
+  exportEta.textContent = 'chargement du moteur ffmpeg…';
+  exportOverlay.classList.add('active');
+
+  let inputAPath = null, inputBPath = null;
+  const outputPath = 'output.mp4';
+  const plan = computeFadePlan();
+
+  // Le chargement du moteur (~30 Mo la première fois) ne déclenche pas
+  // d'évènement 'progress' — sans ça l'écran reste figé sur "0%" sans
+  // qu'on sache s'il travaille encore ou s'il est bloqué. On affiche donc
+  // le temps écoulé, et on abandonne proprement après 90s au lieu de
+  // rester bloqué indéfiniment si le réseau ne répond pas.
+  const loadStart = performance.now();
+  const loadTicker = setInterval(()=>{
+    if(!exporting) return;
+    const s = Math.round((performance.now()-loadStart)/1000);
+    if(s > 0) exportEta.textContent = `chargement du moteur ffmpeg… (${s}s — ~30 Mo au 1er lancement, patientez)`;
+  }, 1000);
+
+  function withTimeout(promise, ms, label){
+    return new Promise((resolve, reject)=>{
+      const t = setTimeout(()=> reject(new Error(label + ' — délai dépassé (' + (ms/1000) + 's). Vérifiez la connexion internet (le moteur se télécharge depuis unpkg.com).')), ms);
+      promise.then(v=>{ clearTimeout(t); resolve(v); }, e=>{ clearTimeout(t); reject(e); });
+    });
+  }
+
+  try{
+    const ff = await withTimeout(ensureFFmpeg(), 90000, 'chargement du moteur ffmpeg');
+    clearInterval(loadTicker);
+    exportEta.textContent = 'encodage en cours…';
+    lastLogs = [];
+
+    const extA = (fileA.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g,'') || 'mp4';
+    const extB = (fileB.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g,'') || 'mp4';
+    inputAPath = 'inputA_' + Date.now() + '.' + extA;
+    inputBPath = 'inputB_' + Date.now() + '.' + extB;
+
+    await ff.writeFile(inputAPath, await fetchFile(fileA));
+    await ff.writeFile(inputBPath, await fetchFile(fileB));
+
+    // ffmpeg.exec() ne rejette pas forcément la promesse quand la commande
+    // échoue en interne (il peut simplement renvoyer un code non nul) : on
+    // vérifie donc explicitement le retour ET la présence réelle du fichier
+    // de sortie avant de considérer que ça a marché.
+    async function tryEncode(withAudio){
+      lastLogs = [];
+      await ff.deleteFile(outputPath).catch(()=>{});
+      const args = withAudio
+        ? ['-i', inputAPath, '-i', inputBPath,
+           '-filter_complex', buildFilterComplex(plan, parseFloat(intFader.value), true),
+           '-map', '[vout]', '-map', '[aout]',
+           '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p',
+           '-movflags', '+faststart',
+           '-c:a', 'aac', outputPath]
+        : ['-i', inputAPath, '-i', inputBPath,
+           '-filter_complex', buildFilterComplex(plan, parseFloat(intFader.value), false),
+           '-map', '[vout]',
+           '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p',
+           '-movflags', '+faststart',
+           '-an', outputPath];
+      const ret = await ff.exec(args);
+      if(ret !== 0 && ret !== undefined){
+        throw new Error('ffmpeg code ' + ret + ' — ' + lastLogs.slice(-3).join(' | '));
+      }
+      // vérifie que le fichier existe bel et bien et n'est pas vide
+      const data = await ff.readFile(outputPath);
+      if(!data || !data.length){
+        throw new Error('sortie vide — ' + lastLogs.slice(-3).join(' | '));
+      }
+      return data;
+    }
+
+    let data;
+    try{
+      data = await tryEncode(true);
+    } catch(errAudio){
+      console.warn('[ZNKFadeVideo] tentative avec audio échouée, repli sans audio :', errAudio, lastLogs.join('\n'));
+      try{
+        data = await tryEncode(false);
+      } catch(errNoAudio){
+        console.error('[ZNKFadeVideo] logs ffmpeg complets :', lastLogs.join('\n'));
+        throw new Error("échec ffmpeg (avec et sans audio) : " + errNoAudio.message);
+      }
+    }
+
+    const blob = new Blob([data.buffer], {type:'video/mp4'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ZNKFadeVideo_' + plan.fadeDuration.toFixed(2) + 's_' + Math.round(parseFloat(intFader.value)) + 'pct.mp4';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 4000);
+
+    exportPct.textContent = '100%';
+    exportBar.style.width = '100%';
+    statusTxt.textContent = 'export MP4 terminé — fondu ' + plan.fadeDuration.toFixed(2) + 's';
+  } catch(e){
+    console.error('[ZNKFadeVideo export]', e, lastLogs.join('\n'));
+    const msg = (e && e.message) ? e.message : String(e);
+    exportEta.textContent = "échec : " + msg.slice(0, 160);
+    statusTxt.textContent = 'erreur export — voir la console (F12) pour le détail ffmpeg';
+  } finally {
+    clearInterval(loadTicker);
+    try{
+      if(ffmpeg && inputAPath) await ffmpeg.deleteFile(inputAPath).catch(()=>{});
+      if(ffmpeg && inputBPath) await ffmpeg.deleteFile(inputBPath).catch(()=>{});
+      if(ffmpeg) await ffmpeg.deleteFile(outputPath).catch(()=>{});
+    }catch(e){}
+    setTimeout(()=> exportOverlay.classList.remove('active'), 500);
+    exporting = false;
+    lockControls(false);
+  }
+}
+
+function startExport(){
+  if(isElectronNative && window.__znkNativePathA && window.__znkNativePathB){
+    return startExportNative();
+  }
+  return startExportWasm();
+}
+
+function cancelExportFn(){
+  if(!exporting) return;
+  try{
+    if(ffmpeg){
+      ffmpeg.terminate();
+      ffmpeg = null;
+      ffmpegLoadingPromise = null;
+    }
+  } catch(e){}
+  exporting = false;
+  exportOverlay.classList.remove('active');
+  lockControls(false);
+  statusTxt.textContent = 'export annulé';
+}
+
+exportBtn.addEventListener('click', startExport);
+cancelExport.addEventListener('click', cancelExportFn);
+</script>
+</body>
+</html>

@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK Icon Maker - Générateur ICNS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 25% 25%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 75% 75%, rgba(0, 153, 204, 0.1) 0%, transparent 50%);
+            animation: backgroundPulse 8s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes backgroundPulse {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.7; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 30, 60, 0.8);
+            border-radius: 20px;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.4);
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px 30px;
+            border-bottom: 2px solid #00ffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+            animation: logoGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes logoGlow {
+            0% { text-shadow: 0 0 20px rgba(0, 255, 255, 0.8); }
+            100% { text-shadow: 0 0 30px rgba(0, 255, 255, 1), 0 0 40px rgba(0, 255, 255, 0.5); }
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+
+        .subtitle {
+            color: #ccc;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .version {
+            background: linear-gradient(45deg, #00ffff, #0099cc);
+            color: #000;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .main-content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            min-height: 600px;
+        }
+
+        .upload-section {
+            background: rgba(0, 50, 100, 0.3);
+            border-radius: 15px;
+            border: 2px solid #00ffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            animation: rotate 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .upload-content {
+            position: relative;
+            z-index: 1;
+            padding: 40px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drop-zone {
+            flex: 1;
+            border: 3px dashed rgba(0, 255, 255, 0.5);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone:hover {
+            border-color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .drop-zone.dragover {
+            border-color: #ffffff;
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+            transform: scale(1.05);
+        }
+
+        .drop-zone-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .drop-zone-text {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone-title {
+            font-size: 20px;
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .drop-zone-subtitle {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .upload-button {
+            background: linear-gradient(45deg, #00ffff, #0099cc);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .upload-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+        }
+
+        .settings-section {
+            background: rgba(0, 30, 60, 0.6);
+            border-radius: 15px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-title {
+            font-size: 20px;
+            color: #00ffff;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .format-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .format-card {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .format-card:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .format-card.active {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+        }
+
+        .format-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .format-name {
+            font-weight: bold;
+            color: #00ffff;
+            margin-bottom: 5px;
+        }
+
+        .format-size {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .quality-selector {
+            margin-bottom: 25px;
+        }
+
+        .quality-label {
+            color: #00ffff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .quality-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .quality-option {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .quality-option:hover {
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        .quality-option.active {
+            background: #00ffff;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .generate-section {
+            margin-top: auto;
+        }
+
+        .generate-button {
+            width: 100%;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: #fff;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .generate-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px rgba(40, 167, 69, 0.6);
+        }
+
+        .generate-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff, #0099cc);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        .preview-section {
+            grid-column: 1 / -1;
+            background: rgba(0, 30, 60, 0.6);
+            border-radius: 15px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            padding: 25px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .preview-title {
+            font-size: 20px;
+            color: #00ffff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .preview-card {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .preview-card:hover {
+            border-color: #00ffff;
+            transform: scale(1.05);
+        }
+
+        .preview-image {
+            width: 100px;
+            height: 100px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .preview-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-info {
+            color: #00ffff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .preview-size {
+            color: #ccc;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .download-button {
+            background: linear-gradient(45deg, #00ffff, #0099cc);
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .download-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .download-all-button {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: #fff;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .download-all-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(40, 167, 69, 0.6);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 30, 60, 0.95);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 15px 20px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            color: #fff;
+            font-size: 14px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-color: #28a745;
+            color: #28a745;
+        }
+
+        .notification.error {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+        .notification.info {
+            border-color: #ffc107;
+            color: #ffc107;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .format-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quality-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .upload-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+
+    <button id="sendToHostBtn" class="upload-button" style="display:none; position:fixed; bottom:20px; right:20px; z-index:2000; background:linear-gradient(45deg,#10b981,#34d399); box-shadow:0 0 25px rgba(16,185,129,0.5);" onclick="sendIconToHost()">
+        📤 Utiliser cette icône
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">🎨</div>
+                <div>
+                    <div class="logo-text">ZNK Icon Maker</div>
+                    <div class="subtitle">Générateur d'icônes ICNS professionnel</div>
+                </div>
+            </div>
+            <div class="version">v2.0 Pro</div>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <div class="upload-content">
+                    <div class="drop-zone" id="dropZone">
+                        <input type="file" class="file-input" id="fileInput" accept="image/*">
+                        <div class="drop-zone-icon">📁</div>
+                        <div class="drop-zone-text">
+                            <div class="drop-zone-title">Glissez votre image ici</div>
+                            <div class="drop-zone-subtitle">
+                                Formats acceptés: PNG, JPG, JPEG, SVG<br>
+                                Résolution recommandée: 1024x1024px minimum
+                            </div>
+                        </div>
+                        <button class="upload-button" onclick="document.getElementById('fileInput').click()">
+                            📤 Sélectionner un fichier
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-title">
+                    <span>⚙️</span>
+                    Configuration des icônes
+                </div>
+
+                <div class="format-grid">
+                    <div class="format-card active" data-size="16">
+                        <span class="format-icon">🔍</span>
+                        <div class="format-name">Small</div>
+                        <div class="format-size">16x16px</div>
+                    </div>
+                    <div class="format-card active" data-size="32">
+                        <span class="format-icon">📱</span>
+                        <div class="format-name">Medium</div>
+                        <div class="format-size">32x32px</div>
+                    </div>
+                    <div class="format-card active" data-size="128">
+                        <span class="format-icon">🖥️</span>
+                        <div class="format-name">Large</div>
+                        <div class="format-size">128x128px</div>
+                    </div>
+                    <div class="format-card active" data-size="512">
+                        <span class="format-icon">🖼️</span>
+                        <div class="format-name">Extra Large</div>
+                        <div class="format-size">512x512px</div>
+                    </div>
+                </div>
+
+                <div class="quality-selector">
+                    <label class="quality-label">Qualité de génération</label>
+                    <div class="quality-options">
+                        <div class="quality-option" data-quality="standard">Standard</div>
+                        <div class="quality-option active" data-quality="high">Haute</div>
+                        <div class="quality-option" data-quality="ultra">Ultra</div>
+                    </div>
+                </div>
+
+                <div class="generate-section">
+                    <button class="generate-button" id="generateButton" disabled>
+                        🚀 Générer les icônes ICNS
+                    </button>
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-section" id="previewSection">
+                <div class="preview-title">
+                    <span>👁️</span>
+                    Aperçu des icônes générées
+                </div>
+                <div class="preview-grid" id="previewGrid">
+                    <!-- Les aperçus seront générés ici -->
+                </div>
+                <button class="download-all-button" id="downloadAllButton">
+                    💾 Télécharger le fichier ICNS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let selectedFile = null;
+        let selectedFormats = [16, 32, 128, 512];
+        let selectedQuality = 'high';
+        let generatedIcons = [];
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+
+        // Pont vers Ma Radio : si ouvert dans l'iframe de maRadio.html
+        // (?embed=maradio), l'icône créée peut être renvoyée directement
+        // au hub parent via postMessage, sans passer par un téléchargement.
+        const embedTarget = new URLSearchParams(window.location.search).get('embed');
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            showNotification('🎨 ZNK Icon Maker initialisé', 'success');
+
+            if (embedTarget === 'maradio') {
+                document.getElementById('sendToHostBtn').style.display = 'block';
+            }
+        });
+
+        // Envoie l'icône (générée en priorité, sinon l'image source) au
+        // parent (maRadio.html) via postMessage, pour l'appliquer directement
+        // sur le morceau en cours d'édition.
+        async function sendIconToHost() {
+            if (window.parent === window) {
+                showNotification('⚠️ Cette fonction n\'est disponible que depuis Ma Radio', 'error');
+                return;
+            }
+
+            let dataUrl = null;
+
+            if (generatedIcons && generatedIcons.length) {
+                const best = generatedIcons.slice().sort((a, b) => b.size - a.size)[0];
+                dataUrl = best.data;
+            } else if (selectedFile) {
+                try {
+                    dataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(selectedFile);
+                    });
+                } catch (e) {
+                    console.error('sendIconToHost read error:', e);
+                }
+            }
+
+            if (!dataUrl) {
+                showNotification('❌ Choisis d\'abord une image', 'error');
+                return;
+            }
+
+            window.parent.postMessage({ type: 'znk-icon-maker:icon-selected', dataUrl: dataUrl }, '*');
+            showNotification('📤 Icône envoyée vers Ma Radio', 'success');
+        }
+
+        // Système de notification
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialisation des event listeners
+        function initializeEventListeners() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const generateButton = document.getElementById('generateButton');
+            const formatCards = document.querySelectorAll('.format-card');
+            const qualityOptions = document.querySelectorAll('.quality-option');
+
+            // Drag & Drop
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragenter', handleDragEnter);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+
+            // File input
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Generate button
+            generateButton.addEventListener('click', generateIcons);
+
+            // Format selection
+            formatCards.forEach(card => {
+                card.addEventListener('click', () => toggleFormat(card));
+            });
+
+            // Quality selection
+            qualityOptions.forEach(option => {
+                option.addEventListener('click', () => selectQuality(option));
+            });
+        }
+
+        // Gestion du drag & drop
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                document.getElementById('dropZone').classList.remove('dragover');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        // Traitement du fichier
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showNotification('❌ Veuillez sélectionner un fichier image valide', 'error');
+                return;
+            }
+
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                showNotification('❌ Fichier trop volumineux (max 10MB)', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            updateDropZone(file);
+            document.getElementById('generateButton').disabled = false;
+            showNotification(`✅ Image "${file.name}" chargée avec succès`, 'success');
+        }
+
+        function updateDropZone(file) {
+            const dropZone = document.getElementById('dropZone');
+            dropZone.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                    <div style="color: #00ffff; font-weight: bold; margin-bottom: 10px;">${file.name}</div>
+                    <div style="color: #ccc; font-size: 14px; margin-bottom: 15px;">
+                        Taille: ${(file.size / 1024 / 1024).toFixed(2)} MB<br>
+                        Type: ${file.type}
+                    </div>
+                    <button class="upload-button" onclick="document.getElementById('fileInput').click(); document.getElementById('fileInput').value = '';">
+                        🔄 Changer d'image
+                    </button>
+                </div>
+            `;
+        }
+
+        // Gestion des formats
+        function toggleFormat(card) {
+            const size = parseInt(card.dataset.size);
+            card.classList.toggle('active');
+            
+            if (card.classList.contains('active')) {
+                if (!selectedFormats.includes(size)) {
+                    selectedFormats.push(size);
+                }
+            } else {
+                selectedFormats = selectedFormats.filter(s => s !== size);
+            }
+            
+            selectedFormats.sort((a, b) => a - b);
+            showNotification(`📐 Formats sélectionnés: ${selectedFormats.join(', ')}px`, 'info');
+        }
+
+        // Gestion de la qualité
+        function selectQuality(option) {
+            document.querySelectorAll('.quality-option').forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+            selectedQuality = option.dataset.quality;
+            showNotification(`🎯 Qualité sélectionnée: ${selectedQuality}`, 'info');
+        }
+
+        // Génération des icônes
+        async function generateIcons() {
+            if (!selectedFile || selectedFormats.length === 0) {
+                showNotification('❌ Veuillez sélectionner une image et au moins un format', 'error');
+                return;
+            }
+
+            const generateButton = document.getElementById('generateButton');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+
+            generateButton.disabled = true;
+            generateButton.textContent = '⏳ Génération en cours...';
+            progressBar.style.display = 'block';
+            generatedIcons = [];
+
+            try {
+                // Charger l'image
+                const img = await loadImage(selectedFile);
+                showNotification('🖼️ Image chargée, génération des icônes...', 'info');
+
+                // Générer chaque format
+                for (let i = 0; i < selectedFormats.length; i++) {
+                    const size = selectedFormats[i];
+                    const progress = ((i + 1) / selectedFormats.length) * 100;
+                    
+                    progressFill.style.width = `${progress}%`;
+                    
+                    const iconData = await generateSingleIcon(img, size);
+                    generatedIcons.push({
+                        size: size,
+                        data: iconData,
+                        blob: await canvasToBlob(iconData)
+                    });
+                    
+                    await new Promise(resolve => setTimeout(resolve, 200)); // Animation
+                }
+
+                // Afficher les aperçus
+                displayPreviews();
+                document.getElementById('previewSection').style.display = 'block';
+                
+                showNotification('✅ Toutes les icônes ont été générées avec succès!', 'success');
+                
+            } catch (error) {
+                console.error('Erreur lors de la génération:', error);
+                showNotification('❌ Erreur lors de la génération des icônes', 'error');
+            } finally {
+                generateButton.disabled = false;
+                generateButton.textContent = '🚀 Générer les icônes ICNS';
+                progressBar.style.display = 'none';
+                progressFill.style.width = '0%';
+            }
+        }
+
+        // Charger une image
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // Générer une icône de taille spécifique
+        async function generateSingleIcon(img, size) {
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Configuration de la qualité
+            const qualitySettings = {
+                standard: { imageSmoothingQuality: 'low' },
+                high: { imageSmoothingQuality: 'high' },
+                ultra: { imageSmoothingQuality: 'high', filter: true }
+            };
+            
+            const settings = qualitySettings[selectedQuality];
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = settings.imageSmoothingQuality;
+            
+            // Effacer le canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Calculer les dimensions pour maintenir le ratio
+            const sourceRatio = img.width / img.height;
+            let drawWidth = size;
+            let drawHeight = size;
+            let drawX = 0;
+            let drawY = 0;
+            
+            if (sourceRatio > 1) {
+                drawHeight = size / sourceRatio;
+                drawY = (size - drawHeight) / 2;
+            } else if (sourceRatio < 1) {
+                drawWidth = size * sourceRatio;
+                drawX = (size - drawWidth) / 2;
+            }
+            
+            // Dessiner l'image
+            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+            
+            // Appliquer des filtres pour la qualité ultra
+            if (settings.filter && size >= 128) {
+                // Amélioration subtile pour les grandes tailles
+                const imageData = ctx.getImageData(0, 0, size, size);
+                const data = imageData.data;
+                
+                // Légère amélioration du contraste
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i] = Math.min(255, data[i] * 1.05);     // Rouge
+                    data[i + 1] = Math.min(255, data[i + 1] * 1.05); // Vert
+                    data[i + 2] = Math.min(255, data[i + 2] * 1.05); // Bleu
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+            }
+            
+            return canvas.toDataURL('image/png');
+        }
+
+        // Convertir canvas en blob
+        function canvasToBlob(dataUrl) {
+            return new Promise((resolve) => {
+                canvas.toBlob(resolve, 'image/png');
+            });
+        }
+
+        // Afficher les aperçus
+        function displayPreviews() {
+            const previewGrid = document.getElementById('previewGrid');
+            previewGrid.innerHTML = '';
+            
+            generatedIcons.forEach((icon, index) => {
+                const previewCard = document.createElement('div');
+                previewCard.className = 'preview-card';
+                
+                previewCard.innerHTML = `
+                    <div class="preview-image">
+                        <img src="${icon.data}" alt="Icône ${icon.size}px" />
+                    </div>
+                    <div class="preview-info">${icon.size}x${icon.size}px</div>
+                    <div class="preview-size">${getFileSizeFromBlob(icon.blob)}</div>
+                    <button class="download-button" onclick="downloadSingleIcon(${index})">
+                        💾 Télécharger PNG
+                    </button>
+                `;
+                
+                previewGrid.appendChild(previewCard);
+            });
+            
+            // Configuration du bouton de téléchargement global
+            document.getElementById('downloadAllButton').onclick = downloadICNSFile;
+        }
+
+        // Calculer la taille approximative du fichier
+        function getFileSizeFromBlob(blob) {
+            const size = blob.size;
+            if (size < 1024) return size + ' B';
+            if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+            return (size / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Télécharger une icône individuelle
+        function downloadSingleIcon(index) {
+            const icon = generatedIcons[index];
+            const link = document.createElement('a');
+            link.download = `icon_${icon.size}x${icon.size}.png`;
+            link.href = icon.data;
+            link.click();
+            showNotification(`💾 Icône ${icon.size}px téléchargée`, 'success');
+        }
+
+        // Télécharger le fichier ICNS complet
+        async function downloadICNSFile() {
+            if (generatedIcons.length === 0) {
+                showNotification('❌ Aucune icône générée', 'error');
+                return;
+            }
+
+            try {
+                showNotification('🔧 Création du fichier ICNS...', 'info');
+                
+                // Créer le fichier ICNS
+                const icnsData = await createICNSFile();
+                
+                // Télécharger le fichier
+                const blob = new Blob([icnsData], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                
+                const fileName = selectedFile.name.replace(/\.[^/.]+$/, "") + '.icns';
+                link.download = fileName;
+                link.href = url;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                showNotification(`✅ Fichier ICNS "${fileName}" téléchargé avec succès!`, 'success');
+                
+            } catch (error) {
+                console.error('Erreur création ICNS:', error);
+                showNotification('❌ Erreur lors de la création du fichier ICNS', 'error');
+            }
+        }
+
+        // Créer le fichier ICNS
+        async function createICNSFile() {
+            // Structure ICNS simplifiée
+            const icnsHeader = new Uint8Array([0x69, 0x63, 0x6E, 0x73]); // 'icns'
+            let totalSize = 8; // Header + taille
+            const iconEntries = [];
+            
+            // Mapping des tailles aux types ICNS
+            const icnsTypes = {
+                16: [0x69, 0x63, 0x31, 0x36], // 'ic16'
+                32: [0x69, 0x63, 0x33, 0x32], // 'ic32'
+                128: [0x69, 0x74, 0x33, 0x32], // 'it32'
+                512: [0x69, 0x63, 0x31, 0x30]  // 'ic10'
+            };
+            
+            // Créer les entrées pour chaque icône
+            for (const icon of generatedIcons) {
+                const pngData = await iconToPngBytes(icon.data);
+                const typeBytes = icnsTypes[icon.size] || [0x69, 0x63, 0x78, 0x78];
+                const entrySize = 8 + pngData.length;
+                
+                // Créer l'entrée
+                const entry = new Uint8Array(entrySize);
+                entry.set(typeBytes, 0);
+                
+                // Taille de l'entrée (big-endian)
+                const sizeBytes = new ArrayBuffer(4);
+                new DataView(sizeBytes).setUint32(0, entrySize, false);
+                entry.set(new Uint8Array(sizeBytes), 4);
+                
+                // Données PNG
+                entry.set(pngData, 8);
+                
+                iconEntries.push(entry);
+                totalSize += entrySize;
+            }
+            
+            // Assembler le fichier ICNS
+            const icnsFile = new Uint8Array(totalSize);
+            let offset = 0;
+            
+            // Header 'icns'
+            icnsFile.set(icnsHeader, offset);
+            offset += 4;
+            
+            // Taille totale (big-endian)
+            const totalSizeBytes = new ArrayBuffer(4);
+            new DataView(totalSizeBytes).setUint32(0, totalSize, false);
+            icnsFile.set(new Uint8Array(totalSizeBytes), offset);
+            offset += 4;
+            
+            // Ajouter toutes les entrées d'icônes
+            for (const entry of iconEntries) {
+                icnsFile.set(entry, offset);
+                offset += entry.length;
+            }
+            
+            return icnsFile;
+        }
+
+        // Convertir dataURL en bytes PNG
+        async function iconToPngBytes(dataUrl) {
+            const response = await fetch(dataUrl);
+            const blob = await response.blob();
+            const arrayBuffer = await blob.arrayBuffer();
+            return new Uint8Array(arrayBuffer);
+        }
+
+        // Fonctions utilitaires pour les événements
+        window.addEventListener('paste', function(e) {
+            const items = e.clipboardData?.items;
+            if (items) {
+                for (let item of items) {
+                    if (item.type.startsWith('image/')) {
+                        const file = item.getAsFile();
+                        if (file) {
+                            handleFile(file);
+                            showNotification('📋 Image collée depuis le presse-papier', 'success');
+                        }
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Raccourcis clavier
+        window.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'o': // Ctrl+O pour ouvrir
+                        e.preventDefault();
+                        document.getElementById('fileInput').click();
+                        break;
+                    case 's': // Ctrl+S pour sauvegarder
+                        e.preventDefault();
+                        if (generatedIcons.length > 0) {
+                            downloadICNSFile();
+                        }
+                        break;
+                    case 'g': // Ctrl+G pour générer
+                        e.preventDefault();
+                        if (!document.getElementById('generateButton').disabled) {
+                            generateIcons();
+                        }
+                        break;
+                }
+            }
+        });
+
+        // Reset de l'interface
+        function resetInterface() {
+            selectedFile = null;
+            generatedIcons = [];
+            document.getElementById('generateButton').disabled = true;
+            document.getElementById('previewSection').style.display = 'none';
+            
+            // Reset de la drop zone
+            const dropZone = document.getElementById('dropZone');
+            dropZone.innerHTML = `
+                <input type="file" class="file-input" id="fileInput" accept="image/*">
+                <div class="drop-zone-icon">📁</div>
+                <div class="drop-zone-text">
+                    <div class="drop-zone-title">Glissez votre image ici</div>
+                    <div class="drop-zone-subtitle">
+                        Formats acceptés: PNG, JPG, JPEG, SVG<br>
+                        Résolution recommandée: 1024x1024px minimum
+                    </div>
+                </div>
+                <button class="upload-button" onclick="document.getElementById('fileInput').click()">
+                    📤 Sélectionner un fichier
+                </button>
+            `;
+            
+            // Réattacher les event listeners
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            
+            showNotification('🔄 Interface réinitialisée', 'info');
+        }
+
+        // Fonction d'export des paramètres
+        function exportSettings() {
+            const settings = {
+                formats: selectedFormats,
+                quality: selectedQuality,
+                version: '2.0',
+                timestamp: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(settings, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'znk_icon_maker_settings.json';
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('📤 Paramètres exportés', 'success');
+        }
+
+        // Validation avancée des images
+        function validateImage(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function() {
+                    const minSize = 32;
+                    const maxSize = 4096;
+                    const recommendedSize = 1024;
+                    
+                    if (this.width < minSize || this.height < minSize) {
+                        reject(`Image trop petite. Minimum ${minSize}x${minSize}px requis.`);
+                        return;
+                    }
+                    
+                    if (this.width > maxSize || this.height > maxSize) {
+                        reject(`Image trop grande. Maximum ${maxSize}x${maxSize}px autorisé.`);
+                        return;
+                    }
+                    
+                    if (this.width < recommendedSize || this.height < recommendedSize) {
+                        showNotification(`⚠️ Résolution faible détectée. ${recommendedSize}x${recommendedSize}px recommandé pour une qualité optimale.`, 'info');
+                    }
+                    
+                    if (this.width !== this.height) {
+                        showNotification('⚠️ Image non carrée détectée. L\'image sera redimensionnée pour s\'adapter au format carré des icônes.', 'info');
+                    }
+                    
+                    resolve(true);
+                };
+                img.onerror = () => reject('Impossible de charger l\'image.');
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // Amélioration de la fonction handleFile avec validation
+        async function handleFileImproved(file) {
+            if (!file.type.startsWith('image/')) {
+                showNotification('❌ Veuillez sélectionner un fichier image valide', 'error');
+                return;
+            }
+
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                showNotification('❌ Fichier trop volumineux (max 10MB)', 'error');
+                return;
+            }
+
+            try {
+                await validateImage(file);
+                selectedFile = file;
+                updateDropZone(file);
+                document.getElementById('generateButton').disabled = false;
+                showNotification(`✅ Image "${file.name}" chargée avec succès`, 'success');
+            } catch (error) {
+                showNotification(`❌ ${error}`, 'error');
+            }
+        }
+
+        // Remplacer la fonction handleFile originale
+        function handleFile(file) {
+            handleFileImproved(file);
+        }
+
+        // Informations sur l'application
+        console.log('%c🎨 ZNK Icon Maker v2.0 Pro', 'color: #00ffff; font-size: 16px; font-weight: bold;');
+        console.log('Générateur d\'icônes ICNS professionnel');
+        console.log('Raccourcis disponibles:');
+        console.log('• Ctrl+O: Ouvrir un fichier');
+        console.log('• Ctrl+G: Générer les icônes');
+        console.log('• Ctrl+S: Télécharger ICNS');
+        console.log('• Coller: Coller une image depuis le presse-papier');
+    </script>
+ </script>
+      <script src="../../znk-auto-nav.js"></script>
+    <script src="../../module-mapping.js"></script>
+</body>
+</html>

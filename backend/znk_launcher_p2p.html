@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK System Launcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .launcher-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .znk-logo {
+            font-size: 4em;
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .launcher-title {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .quick-start {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+            border: 2px solid #8b5cf6;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .quick-start h2 {
+            color: #8b5cf6;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .quick-start-btn {
+            background: linear-gradient(45deg, #8b5cf6, #ec4899);
+            border: none;
+            padding: 20px 40px;
+            border-radius: 15px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.4);
+            margin: 10px;
+        }
+
+        .quick-start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6);
+        }
+
+        .terminal-output {
+            background: #000;
+            border: 1px solid #8b5cf6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .terminal-output.active {
+            display: block;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .service-card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .service-card.online {
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .service-card.offline {
+            border-color: #ff4444;
+        }
+
+        .service-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .service-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .service-port {
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 15px;
+        }
+
+        .service-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #00ff88;
+        }
+
+        .status-dot.offline {
+            background: #ff4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .launch-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #00ff88, #0088ff);
+            border: none;
+            padding: 15px;
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .launch-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.6);
+        }
+
+        .launch-btn:disabled {
+            background: #333;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .global-status {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .p2p-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .status-display {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .status-line {
+            margin-bottom: 8px;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .success { color: #00ff88; }
+        .error { color: #ff4444; }
+        .warning { color: #ffa726; }
+        .info { color: #4ecdc4; }
+
+        .control-panel {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .control-btn {
+            background: #333;
+            border: 1px solid #666;
+            padding: 12px 24px;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .control-btn:hover {
+            background: #444;
+            border-color: #00ff88;
+            transform: translateY(-2px);
+        }
+
+        .instructions {
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid #00ff88;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .instructions h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+        }
+
+        .code-block {
+            background: #000;
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+            overflow-x: auto;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff88;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="launcher-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="znk-logo">🚀 ZNK</div>
+            <div class="launcher-title">System Launcher v5.0</div>
+            <div style="color: #888;">Lancez tous vos services en un clic</div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="quick-start">
+            <h2>⚡ Démarrage Rapide</h2>
+            <p style="color: #888; margin-bottom: 20px;">
+                Cliquez pour lancer automatiquement tous les services
+            </p>
+            
+            <button class="quick-start-btn" onclick="launcher.startAllServices()">
+                🚀 DÉMARRER TOUS LES SERVICES
+            </button>
+            
+            <button class="quick-start-btn" onclick="launcher.stopAllServices()" 
+                    style="background: linear-gradient(45deg, #ff4444, #cc0000);">
+                🛑 ARRÊTER TOUS LES SERVICES
+            </button>
+
+            <div class="terminal-output" id="terminalOutput"></div>
+        </div>
+
+        <!-- Global Status -->
+        <div class="global-status">
+            <h2 style="margin-bottom: 20px; color: #00ff88;">📊 État du Système</h2>
+            
+            <div class="p2p-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="onlineServices">0</div>
+                    <div class="stat-label">Services en ligne</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalServices">3</div>
+                    <div class="stat-label">Services totaux</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="publications">0</div>
+                    <div class="stat-label">Publications</div>
+                </div>
+            </div>
+
+            <div class="status-display" id="statusDisplay">
+                <div class="status-line info">🚀 ZNK System Launcher v5.0</div>
+                <div class="status-line info">💡 Cliquez sur "DÉMARRER TOUS LES SERVICES" pour commencer</div>
+            </div>
+
+            <div class="control-panel">
+                <button class="control-btn" onclick="launcher.checkAll()">
+                    🔄 Vérifier tout
+                </button>
+                <button class="control-btn" onclick="launcher.showInstructions()">
+                    📖 Instructions
+                </button>
+                <button class="control-btn" onclick="launcher.openLogs()">
+                    📋 Voir les logs
+                </button>
+            </div>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="services-grid" id="servicesGrid"></div>
+
+        <!-- Instructions (hidden) -->
+        <div class="instructions" id="instructions" style="display: none;">
+            <h3>📖 Instructions de démarrage manuel</h3>
+            
+            <p style="margin-bottom: 15px; color: #ccc;">
+                Si le démarrage automatique ne fonctionne pas, lancez manuellement dans le terminal :
+            </p>
+
+            <div class="code-block">
+# Rendre les scripts exécutables (une seule fois)
+chmod +x start_all_services.sh stop_all_services.sh
+
+# Démarrer tous les services
+./start_all_services.sh
+
+# Ou manuellement :
+cd backend && python server.py &
+cd frontend && python -m http.server 8000 &
+            </div>
+
+            <p style="margin-top: 15px; color: #ffa726;">
+                ⚠️ Sur Windows, utilisez Git Bash ou WSL pour exécuter les scripts .sh
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const SERVICES_CONFIG = {
+            backend: {
+                name: 'Backend API',
+                icon: '⚙️',
+                port: 5000,
+                url: 'http://localhost:5000',
+                description: 'API Flask avec compression P2P',
+                endpoint: '/ZNK - Système Unifié IA.html'
+            },
+            frontend: {
+                name: 'Frontend Dashboard',
+                icon: '🎨',
+                port: 8000,
+                url: 'http://localhost:8000',
+                description: 'Interface utilisateur',
+                endpoint: '/index.html'
+            },
+            p2p: {
+                name: 'Réseau P2P',
+                icon: '🌐',
+                port: 9876,
+                url: 'http://localhost:9876',
+                description: 'Protocole de partage décentralisé',
+                endpoint: '/znk_p2p_protocol.py'
+            }
+        };
+
+        class ZNKLauncher {
+            constructor(config) {
+                this.services = config;
+                this.statuses = {};
+                this.checkInterval = null;
+                this.stats = { publications: 0 };
+                this.init();
+            }
+
+            init() {
+                this.log('🚀 ZNK System Launcher v5.0', 'success');
+                this.renderServices();
+                this.updateStats();
+                setTimeout(() => this.checkAll(), 1000);
+                this.checkInterval = setInterval(() => this.checkAll(true), 10000);
+            }
+
+            renderServices() {
+                const grid = document.getElementById('servicesGrid');
+                grid.innerHTML = '';
+
+                Object.entries(this.services).forEach(([key, service]) => {
+                    const card = document.createElement('div');
+                    card.className = 'service-card offline';
+                    card.id = `service-${key}`;
+                    
+                    card.innerHTML = `
+                        <div class="service-icon">${service.icon}</div>
+                        <div class="service-name">${service.name}</div>
+                        <div class="service-port">:${service.port}</div>
+                        <div class="service-status">
+                            <div class="status-dot offline" id="dot-${key}"></div>
+                            <span id="status-${key}">Hors ligne</span>
+                        </div>
+                        <div style="color:#888;font-size:0.9em;margin-bottom:20px;">${service.description}</div>
+                        <button class="launch-btn" id="btn-${key}" onclick="launcher.launchService('${key}')" disabled>
+                            🚀 Ouvrir
+                        </button>
+                    `;
+                    
+                    grid.appendChild(card);
+                });
+            }
+
+            async checkAll(silent = false) {
+                if (!silent) {
+                    this.log('🔍 Vérification de tous les services...', 'info');
+                }
+
+                for (const key of Object.keys(this.services)) {
+                    await this.checkService(key, silent);
+                }
+
+                this.updateStats();
+            }
+
+            async checkService(key, silent = false) {
+                const service = this.services[key];
+                
+                try {
+                    const controller = new AbortController();
+                    setTimeout(() => controller.abort(), 3000);
+                    
+                    await fetch(service.url + service.endpoint, {
+                        method: 'HEAD',
+                        signal: controller.signal,
+                        mode: 'no-cors'
+                    });
+                    
+                    this.setServiceStatus(key, true, silent);
+                    
+                    if (key === 'backend') {
+                        this.fetchBackendStats();
+                    }
+                    
+                } catch (error) {
+                    this.setServiceStatus(key, false, silent);
+                }
+            }
+
+            async fetchBackendStats() {
+                try {
+                    const response = await fetch('http://localhost:5000/api/stats');
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.stats.publications = data.total_publications || 0;
+                    }
+                } catch (error) {
+                    // Ignore
+                }
+            }
+
+            setServiceStatus(key, online, silent) {
+                this.statuses[key] = online;
+                
+                const card = document.getElementById(`service-${key}`);
+                const dot = document.getElementById(`dot-${key}`);
+                const status = document.getElementById(`status-${key}`);
+                const btn = document.getElementById(`btn-${key}`);
+
+                if (online) {
+                    card.classList.remove('offline');
+                    card.classList.add('online');
+                    dot.classList.remove('offline');
+                    dot.classList.add('online');
+                    status.textContent = 'En ligne ✓';
+                    btn.disabled = false;
+                    
+                    if (!silent) {
+                        this.log(`✅ ${this.services[key].name} en ligne`, 'success');
+                    }
+                } else {
+                    card.classList.add('offline');
+                    card.classList.remove('online');
+                    dot.classList.add('offline');
+                    dot.classList.remove('online');
+                    status.textContent = 'Hors ligne';
+                    btn.disabled = true;
+                }
+            }
+
+            updateStats() {
+                const online = Object.values(this.statuses).filter(s => s).length;
+                document.getElementById('onlineServices').textContent = online;
+                document.getElementById('publications').textContent = this.stats.publications;
+            }
+
+            async startAllServices() {
+                this.log('🚀 Démarrage de tous les services...', 'info');
+                
+                const terminal = document.getElementById('terminalOutput');
+                terminal.classList.add('active');
+                terminal.innerHTML = '<div class="info">⏳ Lancement en cours...</div>';
+                
+                this.log('⚠️ Veuillez lancer le script dans un terminal:', 'warning');
+                this.log('./start_all_services.sh', 'info');
+                
+                terminal.innerHTML += '<div class="warning">💡 Ouvrez un terminal et exécutez:</div>';
+                terminal.innerHTML += '<div class="success">./start_all_services.sh</div>';
+                terminal.innerHTML += '<div class="info">Les services vont démarrer en arrière-plan</div>';
+                
+                // Vérifier après 5 secondes
+                setTimeout(() => {
+                    this.checkAll();
+                    terminal.innerHTML += '<div class="info">🔍 Vérification des services...</div>';
+                }, 5000);
+            }
+
+            stopAllServices() {
+                this.log('🛑 Arrêt de tous les services...', 'warning');
+                
+                const terminal = document.getElementById('terminalOutput');
+                terminal.classList.add('active');
+                terminal.innerHTML = '<div class="warning">⏳ Arrêt en cours...</div>';
+                
+                this.log('💡 Exécutez dans le terminal:', 'warning');
+                this.log('./stop_all_services.sh', 'info');
+                
+                terminal.innerHTML += '<div class="warning">💡 Ouvrez un terminal et exécutez:</div>';
+                terminal.innerHTML += '<div class="error">./stop_all_services.sh</div>';
+            }
+
+            launchService(key) {
+                const service = this.services[key];
+                this.log(`🚀 Ouverture de ${service.name}...`, 'success');
+                
+                if (key === 'frontend') {
+                    window.location.href = service.url + service.endpoint;
+                } else {
+                    window.open(service.url, '_blank');
+                }
+            }
+
+            showInstructions() {
+                const inst = document.getElementById('instructions');
+                inst.style.display = inst.style.display === 'none' ? 'block' : 'none';
+            }
+
+            openLogs() {
+                this.log('📋 Consultez les logs dans le dossier logs/', 'info');
+                alert('📋 Logs disponibles:\n\n• logs/backend.log\n• logs/frontend.log\n• logs/p2p.log\n\nUtilisez: tail -f logs/backend.log');
+            }
+
+            log(message, type = 'info') {
+                const display = document.getElementById('statusDisplay');
+                const line = document.createElement('div');
+                line.className = `status-line ${type}`;
+                const timestamp = new Date().toLocaleTimeString();
+                line.innerHTML = `[${timestamp}] ${message}`;
+                display.appendChild(line);
+                display.scrollTop = display.scrollHeight;
+
+                const lines = display.querySelectorAll('.status-line');
+                if (lines.length > 100) lines[0].remove();
+            }
+        }
+
+        let launcher;
+        document.addEventListener('DOMContentLoaded', () => {
+            launcher = new ZNKLauncher(SERVICES_CONFIG);
+        });
+    </script>
+</body>
+</html>

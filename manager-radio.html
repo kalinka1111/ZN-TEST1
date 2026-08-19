@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZNK Radio - Publier (Admin)</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --bg-primary: #07201c;
+        --bg-secondary: #0f3a30;
+        --bg-tertiary: #14453a;
+        --accent: #10b981;
+        --accent-hover: #34d399;
+        --text-primary: #ffffff;
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
+        --border: #1d6b56;
+        --success: #10b981;
+        --warning: #d29d00;
+        --error: #d54375;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #07201c 0%, #0f3a30 100%);
+        color: var(--text-primary);
+        min-height: 100vh;
+        padding: 30px 20px 80px;
+    }
+
+    .container { max-width: 880px; margin: 0 auto; }
+
+    .header { text-align: center; margin-bottom: 24px; }
+    .header h1 { color: var(--accent-hover); font-size: 1.6rem; margin-bottom: 6px; }
+    .header p { color: var(--text-secondary); font-size: 13px; }
+    #modeBadge { display: inline-block; margin-top: 10px; padding: 4px 12px; border-radius: 12px; font-size: 12px; background: var(--bg-tertiary); border: 1px solid var(--border); }
+
+    .card {
+        background: rgba(0,0,0,0.35);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px;
+        margin-bottom: 20px;
+    }
+    .card h2 { font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+    /* Émission : nom / description / cover */
+    .emission-form { display: grid; grid-template-columns: 140px 1fr; gap: 20px; }
+    .cover-picker {
+        width: 140px; height: 140px; border-radius: 14px; cursor: pointer;
+        border: 2px dashed var(--border); background: var(--bg-tertiary);
+        display: flex; align-items: center; justify-content: center; flex-direction: column;
+        gap: 6px; color: var(--text-muted); font-size: 12px; text-align: center;
+        background-size: cover; background-position: center; position: relative; overflow: hidden;
+    }
+    .cover-picker:hover { border-color: var(--accent); }
+    .cover-picker .icon { font-size: 30px; }
+    .cover-picker.has-image .icon, .cover-picker.has-image .label { display: none; }
+    .cover-picker .change-hint {
+        position: absolute; bottom: 0; left: 0; right: 0; padding: 4px;
+        background: rgba(0,0,0,0.65); font-size: 10px; opacity: 0; transition: opacity .2s;
+    }
+    .cover-picker.has-image:hover .change-hint { opacity: 1; }
+    .cover-hint { width: 140px; margin-top: 6px; font-size: 10px; line-height: 1.3; color: var(--text-muted); text-align: center; }
+
+    .form-fields { display: flex; flex-direction: column; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .form-input, .form-textarea {
+        padding: 10px 12px; background: var(--bg-tertiary); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; font-family: inherit;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--accent-hover); }
+    .form-textarea { resize: vertical; min-height: 50px; }
+
+    /* Drop zone pistes */
+    .drop-zone {
+        border: 3px dashed rgba(255,255,255,0.25); border-radius: 12px; padding: 34px 20px;
+        text-align: center; cursor: pointer; transition: all .2s;
+    }
+    .drop-zone:hover, .drop-zone.dragover { background: rgba(255,255,255,0.04); }
+    .drop-zone .big { font-size: 40px; }
+    .drop-zone .hint { opacity: .7; margin-top: 8px; font-size: 12px; }
+
+    .files-list { margin-top: 14px; }
+    .file-item {
+        padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,0.05);
+        margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+    }
+    .file-item .track-num { width: 22px; text-align: center; color: var(--text-muted); font-size: 12px; }
+    .file-item .fields { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .file-item input { padding: 6px 8px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 12px; }
+    .file-item .meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .file-item .status-pill { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.08); white-space: nowrap; }
+    .file-item .status-pill.done { background: rgba(16,185,129,0.25); color: var(--success); }
+    .file-item .status-pill.error { background: rgba(213,67,117,0.25); color: var(--error); }
+    .file-item .remove-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; }
+
+    .publish-btn {
+        width: 100%; padding: 16px; border: none; border-radius: 12px; color: #fff;
+        font-weight: 700; font-size: 15px; cursor: pointer; transition: all .2s;
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .publish-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .publish-btn:not(:disabled):hover { transform: translateY(-2px); }
+
+    .notification {
+        position: fixed; bottom: 20px; right: 20px; padding: 14px 18px; border-radius: 10px;
+        background: var(--bg-tertiary); border: 1px solid var(--border); font-size: 13px;
+        transform: translateX(140%); transition: transform .3s; z-index: 999;
+    }
+    .notification.show { transform: translateX(0); }
+    .notification.error { border-color: var(--error); }
+    .notification.success { border-color: var(--success); }
+
+    input[type="file"] { display: none; }
+
+    .emission-row {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+        background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;
+        border: 2px solid transparent; transition: all .15s;
+    }
+    .emission-row:hover { background: rgba(255,255,255,0.08); }
+    .emission-row.active { border-color: var(--accent); background: rgba(16,185,129,0.12); }
+    .emission-row .thumb { width: 36px; height: 36px; border-radius: 8px; background: var(--bg-tertiary); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .emission-row .name { flex: 1; font-size: 13px; font-weight: 600; }
+    .emission-row .count { font-size: 11px; color: var(--text-muted); }
+    .emission-row .del-btn { background: none; border: none; color: var(--error); cursor: pointer; font-size: 15px; padding: 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🎙 ZNK Radio — Publier (Admin)</h1>
+        <p>Espace admin : plusieurs émissions possibles, y compris l'émission officielle ZNK.</p>
+        <div id="modeBadge">Chargement…</div>
+    </div>
+
+    <div class="card" id="adminEmissionsPanel">
+        <h2>📚 Mes émissions <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(un compte admin peut en publier plusieurs)</span></h2>
+        <div id="officialEmissionRow" style="margin-bottom:12px;"></div>
+        <div style="border-top:1px solid var(--border);margin-bottom:12px;"></div>
+        <div id="adminEmissionsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+        <button class="publish-btn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);" onclick="startNewEmission()">➕ Nouvelle émission</button>
+    </div>
+
+    <div class="card">
+        <h2>📻 Mon émission</h2>
+        <div class="emission-form">
+            <div>
+                <div class="cover-picker" id="coverPicker">
+                    <div class="icon">🖼️</div>
+                    <div class="label">Choisir<br>une image</div>
+                    <div class="change-hint">Changer l'image</div>
+                </div>
+                <div class="cover-hint">Carrée de préférence · JPG/PNG · redimensionnée auto en 500×500</div>
+            </div>
+            <div class="form-fields">
+                <div class="form-group">
+                    <label class="form-label">Nom de l'émission / artiste</label>
+                    <input class="form-input" id="emissionName" placeholder="Ex: Les nuits de Zaza" maxlength="60">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description (optionnel)</label>
+                    <textarea class="form-textarea" id="emissionDescription" placeholder="Quelques mots sur ton émission…" maxlength="240"></textarea>
+                </div>
+            </div>
+        </div>
+        <input type="file" id="coverInput" accept="image/*">
+    </div>
+
+    <div class="card">
+        <h2>🎵 Mes musiques</h2>
+        <div class="drop-zone" id="dropZone">
+            <div class="big">🎧</div>
+            <div>Glisse tes mp3 ici, ou clique pour choisir</div>
+            <div class="hint">Formats acceptés : mp3, wav, m4a, aac, flac, ogg</div>
+        </div>
+        <input type="file" id="hiddenFileInput" accept="audio/*" multiple>
+        <div class="files-list" id="filesList"></div>
+    </div>
+
+    <button class="publish-btn" id="publishBtn" onclick="publishEmission()" disabled>
+        🚀 Publier mon émission
+    </button>
+
+    <button class="publish-btn" id="syncVpsBtn" onclick="syncToVps()" style="display:none; margin-top:10px; background:linear-gradient(135deg,#2563eb,#3b82f6);">
+        ☁️ Synchroniser vers le VPS
+    </button>
+</div>
+
+<div id="notification" class="notification"></div>
+
+<script>
+(function () {
+    // ---------- Pont Electron ----------
+    const api = window.electronAPI || null;
+    const isElectron = !!api;
+
+    // ---------- Compte courant ----------
+    // Cette page est réservée aux comptes admin (plusieurs émissions
+    // possibles, dont l'émission officielle 'radiobyznk'). La page utilisateur
+    // (1 seule émission) vit dans user-publish-radio.html.
+    // ⚠️ Pas de vérification stricte de rôle ici : l'accès à ce fichier doit
+    // être réservé côté menu/navigation (voir openAdminPublish() dans
+    // radio.html) plutôt que re-décidé ici. Si un contrôle serveur/Electron
+    // est nécessaire, ajoute-le dans preload.js / radioSaveEmission.
+    // ⚠️ Détection basée sur la convention znk_account documentée pour
+    // l'écosystème ZNK. Si le nom exact des champs diffère dans ton système
+    // de compte réel, ajuste getCurrentAccount() ci-dessous.
+    function getCurrentAccount() {
+        try {
+            const raw = localStorage.getItem('znk_account');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        try {
+            const raw = sessionStorage.getItem('znk_userData');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        try {
+            const raw = localStorage.getItem('znkUserData');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return null;
+    }
+
+    function getStableUserId(account) {
+        // idZNK est l'identifiant réel du compte dans l'écosystème ZNK.
+        if (account && (account.idZNK || account.id || account.userId || account.username)) {
+            return String(account.idZNK || account.id || account.userId || account.username);
+        }
+        // Repli : identifiant stable généré une fois et conservé en local,
+        // pour qu'un même appareil retrouve toujours SA même émission même
+        // sans système de compte connecté.
+        let uid = localStorage.getItem('znk_radio_local_uid');
+        if (!uid) {
+            uid = 'local_' + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem('znk_radio_local_uid', uid);
+        }
+        return uid;
+    }
+
+    const account = getCurrentAccount();
+    const role = 'admin';
+    const userId = getStableUserId(account);
+    // Admin : peut avoir plusieurs émissions → l'id courant change selon celle
+    // qu'il choisit d'éditer ou de créer (voir startNewEmission/editEmission).
+    let currentEmissionId = null;
+
+    document.getElementById('modeBadge').textContent =
+        (isElectron ? '⚡ Electron connecté' : '🌐 Mode navigateur') +
+        ' — Compte : Admin (plusieurs émissions possibles 📻)';
+
+    // ---------- État ----------
+    let coverImageDataUrl = null; // base64, stocké directement dans le JSON de l'émission
+    let tracks = []; // { id, name, size, path, title, artist, status: pending|persisting|done|error, url }
+
+    function manifestPath() {
+        return './persistent-audios/znk-audio-manifest.json';
+    }
+
+    async function fetchAllEmissions() {
+        try {
+            const res = await fetch(manifestPath());
+            if (!res.ok) return [];
+            const json = await res.json();
+            return Array.isArray(json.emissions) ? json.emissions : [];
+        } catch (e) {
+            console.warn('Aucun manifest existant à charger (normal au premier lancement):', e.message);
+            return [];
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('emissionName').value = '';
+        document.getElementById('emissionDescription').value = '';
+        coverImageDataUrl = null;
+        coverPicker.style.backgroundImage = '';
+        coverPicker.classList.remove('has-image');
+        tracks = [];
+        renderFilesList();
+        updatePublishState();
+    }
+
+    function loadEmissionIntoForm(mine) {
+        if (!mine) { resetForm(); return; }
+        document.getElementById('emissionName').value = mine.name || '';
+        document.getElementById('emissionDescription').value = mine.description || '';
+        coverImageDataUrl = null;
+        coverPicker.style.backgroundImage = '';
+        coverPicker.classList.remove('has-image');
+        if (mine.coverImage) {
+            coverImageDataUrl = mine.coverImage;
+            applyCoverPreview();
+        }
+        tracks = (mine.tracks || []).map((t, i) => ({
+            id: t.id || `existing_${i}`,
+            name: t.filename || t.title || `Piste ${i + 1}`,
+            size: 0,
+            path: null, // déjà persistée, pas de fichier source local à re-uploader
+            title: t.title || '',
+            artist: t.artist || '',
+            status: 'done',
+            url: t.url || null,
+            existing: true
+        }));
+        renderFilesList();
+        updatePublishState();
+    }
+
+    // ---------- Chargement initial ----------
+    async function initAdmin() {
+        const list = await fetchAllEmissions();
+        const officialEm = list.find(e => e.id === 'radiobyznk');
+        // On affiche TOUTES les émissions non-officielles du manifest admin,
+        // pas seulement celles du userId courant : ce manifest n'est de
+        // toute façon accessible qu'aux comptes admin, et un admin doit
+        // pouvoir retrouver/supprimer une émission de test créée lors d'une
+        // session précédente (userId différent, compte non reconnu, etc.)
+        // même si elle n'appartient pas à SA session actuelle.
+        const mine = list.filter(e => e.id !== 'radiobyznk');
+        renderPinnedOfficialRow(officialEm);
+        renderAdminEmissionsList(mine);
+        if (currentEmissionId === 'radiobyznk') {
+            loadEmissionIntoForm(officialEm);
+        } else if (mine.length > 0 && currentEmissionId === null) {
+            // Au tout premier chargement seulement : on ouvre la première de
+            // la liste pour ne pas laisser le formulaire vide alors qu'il y a
+            // déjà du contenu publié. Après ça, currentEmissionId n'est plus
+            // jamais null tant qu'on n'a pas explicitement cliqué "Nouvelle
+            // émission", donc on ne revient pas dessus après une suppression.
+            editEmission(mine[0].id, mine);
+        } else if (currentEmissionId && !mine.some(e => e.id === currentEmissionId)) {
+            // L'émission actuellement ouverte vient d'être supprimée : on
+            // repart sur un formulaire vide plutôt que de ré-ouvrir la
+            // première de la liste (qui pourrait surprendre l'admin).
+            currentEmissionId = null;
+            resetForm();
+        } else if (currentEmissionId) {
+            editEmission(currentEmissionId, mine);
+        } else {
+            resetForm();
+        }
+    }
+
+    // "ZNK — Officiel" (id réservé 'radiobyznk') : une seule émission
+    // partagée, toujours affichée en premier dans radio.html, éditable par
+    // n'importe quel compte admin (pas rattachée à un seul userId).
+    function renderPinnedOfficialRow(officialEm) {
+        const container = document.getElementById('officialEmissionRow');
+        const thumbStyle = officialEm && officialEm.coverImage ? `background-image:url('${officialEm.coverImage}')` : '';
+        const trackCount = officialEm ? (officialEm.tracks || []).length : 0;
+        const row = document.createElement('div');
+        row.className = 'emission-row' + (currentEmissionId === 'radiobyznk' ? ' active' : '');
+        row.innerHTML = `
+            <div class="thumb" style="${thumbStyle}">${officialEm && officialEm.coverImage ? '' : '🌟'}</div>
+            <div class="name">🌟 ZNK — Officiel <span style="font-weight:400;color:var(--text-muted);">(toujours en premier)</span></div>
+            <div class="count">${trackCount} piste(s)</div>
+        `;
+        row.addEventListener('click', () => editOfficialEmission(officialEm));
+        container.innerHTML = '';
+        container.appendChild(row);
+    }
+
+    window.editOfficialEmission = function editOfficialEmission(officialEm) {
+        currentEmissionId = 'radiobyznk';
+        loadEmissionIntoForm(officialEm);
+        document.querySelectorAll('.emission-row').forEach(r => r.classList.remove('active'));
+        initAdmin(); // ré-affiche les listes avec le bon highlight actif
+    };
+
+    function renderAdminEmissionsList(mine) {
+        const container = document.getElementById('adminEmissionsList');
+        if (mine.length === 0) {
+            container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Aucune émission publiée pour l\'instant.</div>';
+            return;
+        }
+        container.innerHTML = '';
+        mine.forEach(em => {
+            const row = document.createElement('div');
+            row.className = 'emission-row' + (em.id === currentEmissionId ? ' active' : '');
+            const thumbStyle = em.coverImage ? `background-image:url('${em.coverImage}')` : '';
+            row.innerHTML = `
+                <div class="thumb" style="${thumbStyle}">${em.coverImage ? '' : '📻'}</div>
+                <div class="name">${(em.name || 'Sans nom').replace(/</g, '&lt;')}</div>
+                <div class="count">${(em.tracks || []).length} piste(s)</div>
+                <button class="del-btn" title="Supprimer">🗑️</button>
+            `;
+            row.addEventListener('click', () => editEmission(em.id, mine));
+            row.querySelector('.del-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (!confirm(`Supprimer l'émission "${em.name}" ? Cette action est définitive.`)) return;
+                try {
+                    const result = await api.radioDeleteEmission(role, em.id);
+                    if (!result || !result.success) throw new Error((result && result.error) || 'échec suppression');
+                    showNotification('Émission supprimée', false);
+                    await initAdmin();
+                } catch (err) {
+                    showNotification('Erreur suppression : ' + err.message, true);
+                }
+            });
+            container.appendChild(row);
+        });
+    }
+
+    window.editEmission = function editEmission(id, knownList) {
+        currentEmissionId = id;
+        const list = knownList || [];
+        const found = list.find(e => e.id === id);
+        loadEmissionIntoForm(found);
+        // ré-appliquer le highlight actif sur la liste
+        document.querySelectorAll('.emission-row').forEach(r => r.classList.remove('active'));
+        renderAdminEmissionsList(list);
+    };
+
+    window.startNewEmission = function startNewEmission() {
+        currentEmissionId = null;
+        resetForm();
+        document.querySelectorAll('.emission-row').forEach(r => r.classList.remove('active'));
+        showNotification('Nouvelle émission — remplis le formulaire puis publie', false);
+    };
+
+    initAdmin();
+
+    // ---------- Image de couverture ----------
+    const coverPicker = document.getElementById('coverPicker');
+    const coverInput = document.getElementById('coverInput');
+
+    // Taille cible de la cover : on redimensionne toujours côté client avant
+    // de la stocker en base64 dans le manifest, pour éviter des JSON énormes
+    // si l'admin upload une photo de 4000×3000 sortie d'un téléphone.
+    const COVER_MAX_SIZE = 500; // px, image carrée (crop centré si besoin)
+    const COVER_JPEG_QUALITY = 0.85;
+
+    coverPicker.addEventListener('click', () => coverInput.click());
+    coverInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            showNotification('Ce fichier n\'est pas une image', true);
+            return;
+        }
+        resizeImageToDataUrl(file, COVER_MAX_SIZE, COVER_JPEG_QUALITY)
+            .then((dataUrl) => {
+                coverImageDataUrl = dataUrl;
+                applyCoverPreview();
+            })
+            .catch((err) => {
+                console.error('resizeImageToDataUrl error:', err);
+                showNotification('Impossible de traiter cette image', true);
+            });
+    });
+
+    // Redimensionne (et recadre en carré, centré) une image uploadée avant
+    // de la convertir en data URL — évite de stocker des photos énormes
+    // telles quelles dans le manifest JSON.
+    function resizeImageToDataUrl(file, maxSize, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const side = Math.min(img.width, img.height);
+                        const sx = (img.width - side) / 2;
+                        const sy = (img.height - side) / 2;
+                        const targetSide = Math.min(maxSize, side);
+                        const canvas = document.createElement('canvas');
+                        canvas.width = targetSide;
+                        canvas.height = targetSide;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, sx, sy, side, side, 0, 0, targetSide, targetSide);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    } catch (err) { reject(err); }
+                };
+                img.onerror = () => reject(new Error('Image illisible'));
+                img.src = reader.result;
+            };
+            reader.onerror = () => reject(new Error('Lecture du fichier impossible'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function applyCoverPreview() {
+        coverPicker.style.backgroundImage = `url('${coverImageDataUrl}')`;
+        coverPicker.classList.add('has-image');
+    }
+
+    // ---------- Sélection des pistes ----------
+    const dropZone = document.getElementById('dropZone');
+    const hiddenInput = document.getElementById('hiddenFileInput');
+    const filesListEl = document.getElementById('filesList');
+
+    dropZone.addEventListener('click', () => {
+        if (isElectron && api.selectAudioFiles) {
+            api.selectAudioFiles().then(result => {
+                if (!result || result.canceled) return;
+                const files = result.files || result;
+                if (Array.isArray(files) && files.length) handleFiles(files);
+                else hiddenInput.click();
+            }).catch(() => hiddenInput.click());
+        } else {
+            hiddenInput.click();
+        }
+    });
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const dtFiles = Array.from(e.dataTransfer.files || []);
+        if (dtFiles.length === 0) { showNotification('Aucun fichier détecté', true); return; }
+        handleFiles(dtFiles);
+    });
+
+    hiddenInput.addEventListener('change', (e) => {
+        handleFiles(Array.from(e.target.files || []));
+        hiddenInput.value = '';
+    });
+
+    function handleFiles(items) {
+        const now = Date.now();
+        const audioExt = /\.(mp3|wav|m4a|aac|flac|ogg)$/i;
+
+        items.forEach((it, i) => {
+            let f = { id: `file_${now}_${i}`, name: '', size: 0, path: null, title: '', artist: '', status: 'pending' };
+
+            if (typeof it === 'string') {
+                f.path = it;
+                f.name = it.split(/[\\/]/).pop();
+            } else if (it && it.name) {
+                f.name = it.name;
+                f.size = it.size || 0;
+                // File.path n'existe plus depuis Electron 32+ : passer par
+                // webUtils.getPathForFile (exposé côté preload sous
+                // api.getPathForFile), sinon le fichier ne pourra jamais être
+                // persisté (même bug déjà rencontré côté vidéo).
+                if (api && typeof api.getPathForFile === 'function') {
+                    try { f.path = api.getPathForFile(it) || null; }
+                    catch (e) { f.path = it.path || null; }
+                } else {
+                    f.path = it.path || null;
+                }
+            } else {
+                return;
+            }
+
+            if (!audioExt.test(f.name)) {
+                showNotification(`Ignoré (pas un fichier audio) : ${f.name}`, true);
+                return;
+            }
+            if (!f.path) {
+                f.status = 'error';
+                showNotification(`Chemin introuvable pour ${f.name} — réessaie via le bouton plutôt que le glisser-déposer`, true);
+            }
+
+            f.title = f.name.replace(/\.(mp3|wav|m4a|aac|flac|ogg)$/i, '');
+            f.artist = (document.getElementById('emissionName').value || '').trim();
+            tracks.push(f);
+        });
+
+        renderFilesList();
+        updatePublishState();
+    }
+
+    function renderFilesList() {
+        filesListEl.innerHTML = '';
+        tracks.forEach((f, idx) => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
+                <div class="track-num">${idx + 1}</div>
+                <div class="fields">
+                    <input type="text" value="${escapeAttr(f.title)}" placeholder="Titre" data-field="title" />
+                    <input type="text" value="${escapeAttr(f.artist)}" placeholder="Artiste" data-field="artist" />
+                </div>
+                <span class="status-pill ${f.status}">${statusLabel(f.status)}</span>
+                <button class="remove-btn" title="Retirer">✕</button>
+            `;
+            item.querySelector('[data-field="title"]').addEventListener('input', (e) => { f.title = e.target.value; });
+            item.querySelector('[data-field="artist"]').addEventListener('input', (e) => { f.artist = e.target.value; });
+            item.querySelector('.remove-btn').addEventListener('click', () => {
+                tracks = tracks.filter(t => t.id !== f.id);
+                renderFilesList();
+                updatePublishState();
+            });
+            filesListEl.appendChild(item);
+        });
+    }
+
+    function statusLabel(status) {
+        return { pending: 'En attente', persisting: 'Envoi…', done: '✓ Prêt', error: '✗ Erreur' }[status] || status;
+    }
+
+    function escapeAttr(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
+    function updatePublishState() {
+        const name = document.getElementById('emissionName').value.trim();
+        const hasValidTrack = tracks.some(t => t.status !== 'error');
+        document.getElementById('publishBtn').disabled = !(name && tracks.length > 0 && hasValidTrack);
+
+        // Le VPS n'héberge que le catalogue officiel radiobyznk — les autres
+        // émissions admin restent locales à cette machine, comme celles des
+        // membres. Le bouton n'apparaît donc que sur radiobyznk, une fois
+        // qu'elle a déjà été publiée localement au moins une fois.
+        document.getElementById('syncVpsBtn').style.display =
+            (currentEmissionId === 'radiobyznk') ? 'block' : 'none';
+    }
+    document.getElementById('emissionName').addEventListener('input', updatePublishState);
+
+    // ---------- Persistance d'une piste (mp3 natif, pas de conversion) ----------
+    async function persistTrack(f) {
+        if (f.existing) return; // déjà persistée lors d'une publication précédente
+        if (!isElectron || !api.makeAudioPersistent) {
+            f.status = 'error';
+            return;
+        }
+        f.status = 'persisting';
+        renderFilesList();
+        try {
+            const result = await api.makeAudioPersistent({ sourcePath: f.path, audioId: f.id });
+            if (!result || !result.success) throw new Error((result && result.error) || 'échec makeAudioPersistent');
+            f.url = result.url;
+            f.status = 'done';
+        } catch (e) {
+            console.error('persistTrack error:', f.name, e);
+            f.status = 'error';
+        }
+        renderFilesList();
+    }
+
+    // ---------- Publication ----------
+    window.publishEmission = async function publishEmission() {
+        const btn = document.getElementById('publishBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Publication en cours…';
+
+        try {
+            // 1) Persister toutes les pistes pas encore faites
+            for (const f of tracks) {
+                if (f.status !== 'done') await persistTrack(f);
+            }
+
+            const validTracks = tracks.filter(f => f.status === 'done' && f.url);
+            if (validTracks.length === 0) {
+                showNotification('Aucune piste valide à publier', true);
+                btn.disabled = false;
+                btn.textContent = '🚀 Publier mon émission';
+                return;
+            }
+
+            // Si l'admin crée une NOUVELLE émission, currentEmissionId est
+            // encore null à ce stade (voir startNewEmission) : on génère un
+            // id unique maintenant. Pour un utilisateur normal, l'id est
+            // toujours fixe (1 seule émission possible).
+            if (!currentEmissionId) {
+                currentEmissionId = `admin_${userId}_${Date.now()}`;
+            }
+
+            const emission = {
+                id: currentEmissionId,
+                userId: userId,
+                name: document.getElementById('emissionName').value.trim(),
+                description: document.getElementById('emissionDescription').value.trim(),
+                coverImage: coverImageDataUrl || null,
+                // Seule l'émission réservée 'radiobyznk' est réellement
+                // officielle ; une émission admin "classique" (créée via
+                // "➕ Nouvelle émission") ne doit pas l'être, même si elle
+                // vit dans le même manifest admin.
+                isOfficial: currentEmissionId === 'radiobyznk',
+                createdAt: new Date().toISOString(),
+                tracks: validTracks.map(f => ({
+                    id: f.id,
+                    title: f.title || f.name,
+                    artist: f.artist || '',
+                    url: f.url,
+                    filename: f.name,
+                    duration: '0:00'
+                }))
+            };
+
+            if (!isElectron || !api.radioSaveEmission) {
+                throw new Error('electronAPI.radioSaveEmission indisponible — vérifie que preload.js est bien à jour.');
+            }
+
+            const result = await api.radioSaveEmission(role, emission);
+            if (!result || !result.success) throw new Error((result && result.error) || 'échec radio:save-emission');
+
+            showNotification(`Émission publiée ! (${result.count} émission(s) au total dans ce manifest)`, false);
+            await initAdmin();
+        } catch (e) {
+            console.error('publishEmission error:', e);
+            showNotification('Erreur : ' + e.message, true);
+        }
+
+        btn.disabled = false;
+        btn.textContent = '🚀 Publier mon émission';
+        updatePublishState();
+    };
+
+    // ---------- Sync catalogue officiel -> VPS ----------
+    // Séparée du bouton "Publier" du dessus, volontairement : la publication
+    // locale (radioSaveEmission) est gratuite et immédiate ; la sync VPS fait
+    // un aller-retour réseau (et occupe de la bande passante VPS), donc reste
+    // une action manuelle plutôt qu'automatique à chaque publication locale.
+    window.syncToVps = async function syncToVps() {
+        if (currentEmissionId !== 'radiobyznk') return;
+
+        const btn = document.getElementById('syncVpsBtn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '⏳ Synchronisation…';
+
+        try {
+            const validTracks = tracks.filter(f => f.status === 'done' && f.url);
+            if (validTracks.length === 0) {
+                throw new Error('Publie d\'abord localement (bouton du dessus) avant de synchroniser vers le VPS');
+            }
+
+            const emission = {
+                id: 'radiobyznk',
+                name: document.getElementById('emissionName').value.trim(),
+                description: document.getElementById('emissionDescription').value.trim(),
+                coverImage: coverImageDataUrl || null,
+                tracks: validTracks.map(f => ({
+                    id: f.id,
+                    title: f.title || f.name,
+                    artist: f.artist || '',
+                    url: f.url,
+                    // Nom d'origine (sans le préfixe d'id ajouté par
+                    // makeAudioPersistent) : c'est celui-ci qu'on veut voir
+                    // réapparaître dans le manifest membre après un pull.
+                    originalFilename: f.name,
+                    duration: '0:00'
+                }))
+            };
+
+            if (!isElectron || !api.pushOfficialRadioCatalog) {
+                throw new Error('electronAPI.pushOfficialRadioCatalog indisponible — vérifie que preload.js est bien à jour.');
+            }
+
+            const result = await api.pushOfficialRadioCatalog(emission);
+            if (!result || !result.success) {
+                throw new Error(result && result.offline
+                    ? 'VPS injoignable — vérifie ta connexion et réessaie plus tard.'
+                    : ((result && result.error) || 'échec de la synchronisation VPS'));
+            }
+
+            showNotification('Catalogue officiel synchronisé vers le VPS ☁️✅', false);
+        } catch (e) {
+            console.error('syncToVps error:', e);
+            showNotification('Erreur sync VPS : ' + e.message, true);
+        }
+
+        btn.disabled = false;
+        btn.textContent = originalText;
+    };
+
+    // ---------- Notifications ----------
+    let notifTimeout = null;
+    function showNotification(msg, isError) {
+        const el = document.getElementById('notification');
+        el.textContent = msg;
+        el.className = 'notification show ' + (isError ? 'error' : 'success');
+        clearTimeout(notifTimeout);
+        notifTimeout = setTimeout(() => el.classList.remove('show'), 4000);
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+{
+  "name": "znk-app",
+  "version": "1.0.0",
+  "description": "ZNK - Système de gestion intelligent avec authentification",
+  "main": "main.js",
+  "author": "ZNK ZazaNoah",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win --x64",
+    "analyze-size": "node scripts/diagnose-size.js",
+    "export-seed-lessons": "node scripts/export-lessons-seed.js",
+    "postinstall": "node scripts/setup_ffmpeg_script.js"
+  },
+  "devDependencies": {
+    "electron": "^32.3.3",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "asar": true,
+    "compression": "maximum",
+    "appId": "com.znk.app",
+    "productName": "ZNK",
+    "copyright": "Copyright © 2025 ZNK",
+    "directories": {
+      "output": "desktop/",
+      "buildResources": "assets"
+    },
+    "files": [
+      "**/*",
+      "assets/videos/**/*",
+      "!**/*.md",
+      "!**/*.log",
+      "!.git*",
+      "!.gitignore",
+      "!.env*",
+      "!.DS_Store",
+      "!modules-admin/**/*",
+      "!modules-etudes/creer-lecon-admin.html",
+      "!scripts/**/*",
+      "!dist/**/*",
+      "!builds/**/*",
+      "!desktop/**/*",
+      "!*.sh",
+      "!*.backup",
+      "!test-*.js",
+      "!node_modules/.cache/**/*",
+      "!node_modules/**/test/**/*",
+      "!node_modules/**/tests/**/*",
+      "!node_modules/**/*.md",
+      "!node_modules/**/README*",
+      "!node_modules/**/.bin/**/*",
+      "!node_modules/**/docs/**/*",
+      "!node_modules/**/examples/**/*",
+      "!node_modules/**/*.map",
+      "!node_modules/**/LICENSE*",
+      "!node_modules/**/*.d.ts",
+      "!node_modules/electron/**/*",
+      "!node_modules/electron-builder/**/*",
+      "!converted-videos/**/*",
+      "!znkAudio/**/*"
+    ],
+  "extraResources": [
+  {
+    "from": "bin/",
+    "to": "bin/",
+    "filter": ["**/*"]
+  },
+  {
+    "from": "models/",
+    "to": "models/",
+    "filter": ["**/*"]
+  },
+  {
+    "from": "persistent-audios/",
+    "to": "persistent-audios/",
+    "filter": ["**/*"]
+  },
+  {
+    "from": "assets/seed-manifests/",
+    "to": "seed-manifests/",
+    "filter": ["**/*"]
+  },
+  {
+    "from": "assets/videos-seed/",
+    "to": "videos-seed/",
+    "filter": ["**/*"]
+  },
+  {
+    "from": "assets/audio-seed/",
+    "to": "audio-seed/",
+    "filter": ["**/*"]
+  },
+  {
+    "from": "assets/materials-seed/",
+    "to": "materials-seed/",
+    "filter": ["**/*"]
+  },
+  {
+    "from": "assets/sounds/",
+    "to": "sounds/",
+    "filter": ["**/*"]
+  }
+],
+    "asarUnpack": [
+      "bin/**/*",
+      "node_modules/**/*.node",
+      "assets/videos/**/*"
+    ],
+    "afterSign": "afterSign.js",
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "extendInfo": {
+        "NSCameraUsageDescription": "ZNK a besoin d'accéder à la caméra pour les appels vidéo WhatsZNK.",
+        "NSMicrophoneUsageDescription": "ZNK a besoin d'accéder au micro pour les appels et messages vocaux WhatsZNK."
+      }
+    }
+  },
+  "dependencies": {
+    "fs-extra": "^11.3.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "lucide-react": "^0.263.1",
+    "chokidar": "^3.5.3",
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "cors": "^2.8.5",
+    "three": "^0.158.0",
+    "electron-store": "^8.1.0",
+    "fluent-ffmpeg": "^2.1.2"
+  }
+}

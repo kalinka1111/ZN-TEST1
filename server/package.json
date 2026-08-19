@@ -1,0 +1,22 @@
+{
+  "name": "znk-system",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "electron": "electron .",
+    "dashboard": "electron . --port=3000 --app=dashboard",
+    "accueil": "electron . --port=3000 --app=accueil",
+    "studios": "electron . --port=3000 --app=studios",
+    "whatsznk": "electron . --port=3001 --app=whatsznk",
+    "camera": "electron . --port=3000 --app=camera",
+    "actv": "electron . --port=3000 --app=actv",
+    "archives": "electron . --port=3000 --app=archives",
+    "zaza": "electron . --port=5000 --app=zaza"
+  },
+
+ "author": "Zaza Noah Karmarasta (ZNK)",
+  "license": "MIT",
+ "devDependencies": {
+    "electron": "^28.3.3"
+  }
+}

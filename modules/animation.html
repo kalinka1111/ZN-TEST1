@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>ZNK Animation Studio Pro - Rigging Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root { 
+            --primary: #6366f1; 
+            --accent: #fbbf24; 
+            --bg: #0a0a0f; 
+            --panel: #161625; 
+            --border: #2d2d3f;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bone: #ec4899;
+        }
+        
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: var(--bg); 
+            color: white; 
+            overflow: hidden; 
+        }
+        
+        .main-layout { 
+            display: grid; 
+            grid-template-columns: 300px 1fr; 
+            grid-template-rows: 70px 1fr 240px; 
+            height: 100vh; 
+            gap: 0;
+        }
+        
+        header { 
+            grid-column: 1 / span 2; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
+            display: flex; 
+            align-items: center; 
+            padding: 0 30px; 
+            border-bottom: 2px solid var(--border); 
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        
+        h1 { 
+            font-size: 18px; 
+            margin: 0; 
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        h1 .highlight { 
+            color: var(--accent); 
+            font-weight: 800;
+        }
+        
+        #timecode { 
+            font-family: 'Courier New', monospace; 
+            color: var(--accent); 
+            font-size: 24px; 
+            font-weight: bold;
+            background: rgba(251, 191, 36, 0.1);
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        
+        .sidebar { 
+            background: var(--panel); 
+            padding: 25px; 
+            border-right: 1px solid var(--border); 
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        .sidebar::-webkit-scrollbar { width: 8px; }
+        .sidebar::-webkit-scrollbar-track { background: #0a0a0f; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        
+        .viewport { 
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        #canvas-container { 
+            width: 100%; 
+            height: 100%; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .timeline-container { 
+            grid-column: 1 / span 2; 
+            background: linear-gradient(180deg, #0f0f1a 0%, #0a0a12 100%);
+            border-top: 2px solid var(--border); 
+            display: flex; 
+            flex-direction: column;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+        }
+        
+        .timeline-header { 
+            height: 50px; 
+            border-bottom: 1px solid var(--border); 
+            display: flex; 
+            align-items: center; 
+            padding: 0 25px; 
+            gap: 15px;
+            background: rgba(22, 22, 37, 0.5);
+        }
+        
+        .timeline-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px 25px;
+            gap: 10px;
+        }
+        
+        .timeline-track { 
+            position: relative; 
+            background: #1a1a2e; 
+            height: 60px;
+            border-radius: 8px; 
+            overflow: visible;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+        }
+        
+        .timeline-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+        
+        .timeline-tick {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .timeline-tick.major {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .playhead { 
+            position: absolute; 
+            top: -5px; 
+            bottom: -5px; 
+            width: 3px; 
+            background: var(--accent); 
+            z-index: 10; 
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+            border-radius: 2px;
+        }
+        
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid var(--accent);
+        }
+        
+        .keyframe { 
+            position: absolute; 
+            top: 50%; 
+            transform: translate(-50%, -50%) rotate(45deg); 
+            width: 14px; 
+            height: 14px; 
+            background: var(--accent); 
+            border: 2px solid white; 
+            cursor: pointer;
+            z-index: 5;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        
+        .keyframe:hover {
+            transform: translate(-50%, -50%) rotate(45deg) scale(1.3);
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.6);
+        }
+        
+        .keyframe.selected {
+            background: var(--primary);
+            border-color: var(--accent);
+            transform: translate(-50%, -50%) rotate(45deg) scale(1.2);
+        }
+        
+        .section-label { 
+            display: block; 
+            font-size: 10px; 
+            color: #64748b; 
+            margin: 20px 0 10px 0; 
+            text-transform: uppercase; 
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .btn { 
+            background: #2d2d3f; 
+            color: white; 
+            border: none; 
+            padding: 10px 16px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: 600;
+            width: 100%; 
+            margin-bottom: 8px; 
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn:hover { 
+            background: #3d3d5f; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn.active { 
+            background: var(--primary); 
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn.record { 
+            background: var(--danger);
+            animation: pulse 2s infinite;
+        }
+        
+        .btn.record:hover {
+            background: #dc2626;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        
+        .btn.success { 
+            background: var(--success); 
+        }
+        
+        .btn.success:hover {
+            background: #059669;
+        }
+        
+        .btn.bone-mode {
+            background: var(--bone);
+        }
+        
+        .btn.bone-mode:hover {
+            background: #db2777;
+        }
+        
+        .tool-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            margin-bottom: 15px; 
+        }
+        
+        .slider-group { 
+            margin: 15px 0; 
+        }
+        
+        .slider-label { 
+            font-size: 11px; 
+            color: #94a3b8; 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .slider-value {
+            color: var(--accent);
+            font-weight: 700;
+        }
+        
+        input[type="range"] { 
+            width: 100%; 
+            height: 6px;
+            accent-color: var(--primary); 
+            cursor: pointer;
+            background: #1a1a2e;
+            border-radius: 3px;
+        }
+        
+        input[type="file"] {
+            padding: 12px;
+            background: #2d2d3f;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 11px;
+        }
+        
+        input[type="file"]:hover {
+            border-color: var(--primary);
+            background: #3d3d5f;
+        }
+        
+        .frame-display {
+            font-family: 'Courier New', monospace;
+            color: #94a3b8;
+            font-size: 13px;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        
+        .frame-display span {
+            color: var(--accent);
+            font-weight: bold;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #64748b;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.recording {
+            background: var(--danger);
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .export-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .info-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.5;
+            margin-top: 15px;
+        }
+        
+        .play-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .play-btn {
+            width: 80px;
+            font-size: 16px;
+        }
+        
+        /* Bone System Styles */
+        .bone-joint {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--bone);
+            border: 3px solid white;
+            border-radius: 50%;
+            cursor: move;
+            z-index: 1000;
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.8);
+            transition: all 0.2s;
+        }
+        
+        .bone-joint:hover {
+            transform: scale(1.3);
+            box-shadow: 0 0 25px rgba(236, 72, 153, 1);
+        }
+        
+        .bone-joint.selected {
+            background: #fbbf24;
+            border-color: var(--bone);
+            transform: scale(1.4);
+        }
+        
+        .bone-connection {
+            position: absolute;
+            height: 4px;
+            background: linear-gradient(90deg, var(--bone), rgba(236, 72, 153, 0.5));
+            transform-origin: left center;
+            pointer-events: none;
+            z-index: 999;
+            box-shadow: 0 0 8px rgba(236, 72, 153, 0.5);
+        }
+        
+        .bone-list {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #0a0a0f;
+            border-radius: 6px;
+            padding: 8px;
+            margin-top: 10px;
+        }
+        
+        .bone-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            margin: 4px 0;
+            background: #1a1a2e;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .bone-item:hover {
+            background: #2d2d3f;
+        }
+        
+        .bone-item.selected {
+            background: var(--bone);
+            color: white;
+        }
+        
+        .bone-item .delete-btn {
+            background: var(--danger);
+            border: none;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        
+        .mode-indicator {
+            position: absolute;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(236, 72, 153, 0.95);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            pointer-events: none;
+            display: none;
+        }
+        
+        .mode-indicator.active {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-layout">
+    <header>
+        <div class="logo-section">
+            <div class="logo-icon">🎬</div>
+            <h1>ZNK <span class="highlight">ANIMATION STUDIO</span> PRO</h1>
+        </div>
+        <div id="timecode">00:00:00</div>
+        <button class="btn success" style="width: auto; padding: 10px 24px;" onclick="exportAnimation()">🎥 EXPORTER MP4</button>
+    </header>
+
+    <aside class="sidebar">
+        <label class="section-label">📁 Source Image</label>
+        <input type="file" id="upload" accept="image/*">
+        
+        <label class="section-label">🎭 Mode de Travail</label>
+        <button class="btn" id="toggleModeBtn" onclick="toggleMode()">
+            🦴 ACTIVER MODE SQUELETTE
+        </button>
+        
+        <div id="sculptPanel">
+            <label class="section-label">🎨 Outils Sculpt</label>
+            <div class="tool-grid">
+                <button class="btn active tool-btn" onclick="setTool('drag', this)">✋ Étirer</button>
+                <button class="btn tool-btn" onclick="setTool('smooth', this)">🌊 Lisser</button>
+                <button class="btn tool-btn" onclick="setTool('inflate', this)">🌋 Gonfler</button>
+                <button class="btn tool-btn" onclick="setTool('deflate', this)">🕳️ Creuser</button>
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label">
+                    <span>Taille Pinceau</span>
+                    <span class="slider-value" id="v-size">120</span>
+                </div>
+                <input type="range" id="brushSize" min="20" max="400" value="120">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label">
+                    <span>Force</span>
+                    <span class="slider-value" id="v-int">0.8</span>
+                </div>
+                <input type="range" id="intensity" min="0.1" max="3" step="0.1" value="0.8">
+            </div>
+        </div>
+        
+        <div id="bonePanel" style="display: none;">
+            <label class="section-label">🦴 Contrôles Squelette</label>
+            <button class="btn bone-mode" onclick="addBone()">➕ AJOUTER OS</button>
+            <button class="btn" onclick="clearBones()">🗑️ Effacer Tous</button>
+            
+            <div class="slider-group">
+                <div class="slider-label">
+                    <span>Rayon d'Influence</span>
+                    <span class="slider-value" id="v-influence">150</span>
+                </div>
+                <input type="range" id="boneInfluence" min="50" max="400" value="150">
+            </div>
+            
+            <div class="bone-list" id="boneList">
+                <div style="text-align: center; color: #64748b; font-size: 11px; padding: 20px;">
+                    Aucun os créé<br>Cliquez sur "Ajouter OS"
+                </div>
+            </div>
+        </div>
+
+        <label class="section-label">⏱️ Animation</label>
+        <button class="btn record" onclick="addKeyframe()">
+            <span class="status-indicator recording"></span>
+            AJOUTER KEYFRAME
+        </button>
+        <button class="btn" onclick="deleteSelectedKeyframe()">🗑️ Supprimer Keyframe</button>
+        <button class="btn" onclick="clearAllKeyframes()">🔄 Tout Effacer</button>
+        
+        <div class="export-section">
+            <button class="btn" onclick="resetDeformation()">↩️ Réinitialiser Mesh</button>
+        </div>
+        
+        <div class="info-box" id="infoBox">
+            💡 <strong>Mode Sculpture:</strong> Déformez l'image avec les pinceaux, ajoutez des keyframes pour animer.
+        </div>
+    </aside>
+
+    <main class="viewport">
+        <div id="canvas-container"></div>
+        <div class="mode-indicator" id="modeIndicator">
+            🦴 MODE SQUELETTE ACTIVÉ - Cliquez pour placer des os
+        </div>
+    </main>
+
+    <footer class="timeline-container">
+        <div class="timeline-header">
+            <div class="play-controls">
+                <button class="btn play-btn" onclick="togglePlay()" id="playBtn">▶️</button>
+                <button class="btn" style="width: 60px;" onclick="stopAnimation()">⏹️</button>
+            </div>
+            <div class="frame-display" id="frameDisplay">Frame: <span>0</span> / <span>120</span></div>
+            <div class="slider-group" style="flex: 1; margin: 0; max-width: 200px;">
+                <div class="slider-label">
+                    <span>FPS</span>
+                    <span class="slider-value" id="v-fps">30</span>
+                </div>
+                <input type="range" id="fpsSlider" min="12" max="60" value="30">
+            </div>
+            <div class="slider-group" style="flex: 1; margin: 0; max-width: 200px;">
+                <div class="slider-label">
+                    <span>Durée (frames)</span>
+                    <span class="slider-value" id="v-duration">120</span>
+                </div>
+                <input type="range" id="durationSlider" min="30" max="300" step="10" value="120">
+            </div>
+        </div>
+        
+        <div class="timeline-content">
+            <div class="timeline-track" id="track" onclick="seekTimeline(event)">
+                <div class="timeline-grid" id="timelineGrid"></div>
+                <div class="playhead" id="playhead" style="left: 0%;"></div>
+                <div id="keyframes-wrapper"></div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    // Three.js Scene
+    let scene, camera, renderer, mesh, texture, geometry, material;
+    let raycaster = new THREE.Raycaster();
+    let mouse = new THREE.Vector2();
+    let isMouseDown = false;
+    let currentTool = 'drag';
+    let brushSize = 120;
+    let intensity = 0.8;
+    let originalImageAspect = 1;
+    let selectedKeyframeIndex = -1;
+
+    // Animation State
+    let anim = {
+        isPlaying: false,
+        currentFrame: 0,
+        totalFrames: 120,
+        fps: 30,
+        keyframes: [],
+        lastFrameTime: 0
+    };
+
+    // Bone Rigging System
+    let boneMode = false;
+    let bones = []; // { id, x, y, canvasX, canvasY, influence, parent }
+    let boneConnections = [];
+    let selectedBone = null;
+    let draggingBone = null;
+    let boneIdCounter = 0;
+    let boneInfluenceRadius = 150;
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.OrthographicCamera(
+            -window.innerWidth/2, 
+            window.innerWidth/2, 
+            window.innerHeight/2, 
+            -window.innerHeight/2, 
+            1, 
+            1000
+        );
+        camera.position.z = 500;
+
+        renderer = new THREE.WebGLRenderer({ 
+            antialias: true, 
+            alpha: true, 
+            preserveDrawingBuffer: true 
+        });
+        renderer.setSize(window.innerWidth - 300, window.innerHeight - 310);
+        renderer.setClearColor(0x000000, 0);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        window.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('resize', onWindowResize);
+
+        document.getElementById('brushSize').oninput = (e) => {
+            brushSize = e.target.value;
+            document.getElementById('v-size').innerText = brushSize;
+        };
+        
+        document.getElementById('intensity').oninput = (e) => {
+            intensity = e.target.value;
+            document.getElementById('v-int').innerText = intensity;
+        };
+        
+        document.getElementById('boneInfluence').oninput = (e) => {
+            boneInfluenceRadius = e.target.value;
+            document.getElementById('v-influence').innerText = boneInfluenceRadius;
+        };
+        
+        document.getElementById('fpsSlider').oninput = (e) => {
+            anim.fps = e.target.value;
+            document.getElementById('v-fps').innerText = anim.fps;
+        };
+        
+        document.getElementById('durationSlider').oninput = (e) => {
+            anim.totalFrames = parseInt(e.target.value);
+            document.getElementById('v-duration').innerText = anim.totalFrames;
+            updateFrameDisplay();
+            renderTimeline();
+        };
+
+        document.getElementById('upload').onchange = loadImage;
+
+        renderTimeline();
+        animate();
+    }
+
+    function loadImage(e) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                originalImageAspect = img.width / img.height;
+                setupImageMesh(img);
+                
+                anim.currentFrame = 0;
+                anim.keyframes = [];
+                selectedKeyframeIndex = -1;
+                bones = [];
+                boneConnections = [];
+                renderBones();
+                renderTimeline();
+                updateFrameDisplay();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    }
+
+    function setupImageMesh(img) {
+        if(mesh) {
+            scene.remove(mesh);
+            if(geometry) geometry.dispose();
+            if(material) material.dispose();
+        }
+
+        texture = new THREE.Texture(img);
+        texture.needsUpdate = true;
+
+        const viewportHeight = window.innerHeight - 310;
+        let h = viewportHeight * 0.7;
+        let w = h * originalImageAspect;
+
+        geometry = new THREE.PlaneGeometry(w, h, 150, 150);
+        material = new THREE.MeshBasicMaterial({ 
+            map: texture, 
+            transparent: true, 
+            side: THREE.DoubleSide 
+        });
+        
+        mesh = new THREE.Mesh(geometry, material);
+        geometry.userData.origPos = geometry.attributes.position.array.slice();
+        scene.add(mesh);
+    }
+
+    function onMouseDown(e) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        
+        if (boneMode && e.target === renderer.domElement) {
+            const canvasX = e.clientX;
+            const canvasY = e.clientY;
+            
+            // Check if clicking existing bone
+            let clicked = null;
+            bones.forEach(b => {
+                const dist = Math.hypot(canvasX - b.canvasX, canvasY - b.canvasY);
+                if (dist < 15) clicked = b;
+            });
+            
+            if (clicked) {
+                draggingBone = clicked;
+                selectedBone = clicked;
+                renderBoneList();
+            }
+        } else {
+            isMouseDown = true;
+        }
+    }
+
+    function onMouseUp() {
+        isMouseDown = false;
+        draggingBone = null;
+    }
+
+    function onMouseMove(event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        if (draggingBone) {
+            draggingBone.canvasX = event.clientX;
+            draggingBone.canvasY = event.clientY;
+            
+            // Update mesh position
+            const mx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            const my = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            const vec = new THREE.Vector3(mx, my, 0);
+            vec.unproject(camera);
+            draggingBone.x = vec.x;
+            draggingBone.y = vec.y;
+            
+            applyBoneDeformation();
+            renderBones();
+        } else if (isMouseDown && mesh && event.target === renderer.domElement && !boneMode) {
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(mesh);
+            if (intersects.length > 0) {
+                applyDeformation(intersects[0].point);
+            }
+        }
+    }
+
+    function onWindowResize() {
+        const w = window.innerWidth - 300;
+        const h = window.innerHeight - 310;
+        
+        camera.left = -w / 2;
+        camera.right = w / 2;
+        camera.top = h / 2;
+        camera.bottom = -h / 2;
+        camera.updateProjectionMatrix();
+        
+        renderer.setSize(w, h);
+        renderBones();
+    }
+
+    function setTool(tool, btn) {
+        currentTool = tool;
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // ===== MODE TOGGLE =====
+    function toggleMode() {
+        boneMode = !boneMode;
+        const btn = document.getElementById('toggleModeBtn');
+        const indicator = document.getElementById('modeIndicator');
+        const sculptPanel = document.getElementById('sculptPanel');
+        const bonePanel = document.getElementById('bonePanel');
+        const infoBox = document.getElementById('infoBox');
+        
+        if (boneMode) {
+            btn.textContent = '🎨 RETOUR MODE SCULPT';
+            btn.classList.add('bone-mode');
+            indicator.classList.add('active');
+            sculptPanel.style.display = 'none';
+            bonePanel.style.display = 'block';
+            infoBox.innerHTML = '💡 <strong>Mode Squelette:</strong> Placez des os et déplacez-les pour déformer l\'image. Ajoutez des keyframes pour animer.';
+        } else {
+            btn.textContent = '🦴 ACTIVER MODE SQUELETTE';
+            btn.classList.remove('bone-mode');
+            indicator.classList.remove('active');
+            sculptPanel.style.display = 'block';
+            bonePanel.style.display = 'none';
+            infoBox.innerHTML = '💡 <strong>Mode Sculpture:</strong> Déformez l\'image avec les pinceaux, ajoutez des keyframes pour animer.';
+        }
+    }
+
+    // ===== BONE SYSTEM =====
+    function addBone() {
+        if (!mesh) {
+            alert('⚠️ Chargez d\'abord une image!');
+            return;
+        }
+        
+        const rect = renderer.domElement.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Random offset for visibility
+        const offsetX = (Math.random() - 0.5) * 100;
+        const offsetY = (Math.random() - 0.5) * 100;
+        
+        const bone = {
+            id: boneIdCounter++,
+            canvasX: centerX + offsetX,
+            canvasY: centerY + offsetY,
+            x: offsetX * 2,
+            y: -offsetY * 2,
+            influence: boneInfluenceRadius,
+            origX: offsetX * 2,
+            origY: -offsetY * 2
+        };
+        
+        bones.push(bone);
+        selectedBone = bone;
+        renderBones();
+        renderBoneList();
+    }
+
+    function clearBones() {
+        if (bones.length === 0) return;
+        if (confirm('🗑️ Supprimer tous les os?')) {
+            bones = [];
+            selectedBone = null;
+            resetDeformation();
+            renderBones();
+            renderBoneList();
+        }
+    }
+
+    function deleteBone(id) {
+        bones = bones.filter(b => b.id !== id);
+        if (selectedBone && selectedBone.id === id) selectedBone = null;
+        applyBoneDeformation();
+        renderBones();
+        renderBoneList();
+    }
+
+    function selectBone(id) {
+        selectedBone = bones.find(b => b.id === id);
+        renderBones();
+        renderBoneList();
+    }
+
+    function renderBones() {
+        // Clear existing bone visuals
+        document.querySelectorAll('.bone-joint, .bone-connection').forEach(el => el.remove());
+        
+        if (!mesh) return;
+        
+        const rect = renderer.domElement.getBoundingClientRect();
+        
+        bones.forEach(bone => {
+            const joint = document.createElement('div');
+            joint.className = 'bone-joint';
+            if (selectedBone && selectedBone.id === bone.id) {
+                joint.classList.add('selected');
+            }
+            joint.style.left = (bone.canvasX - 8) + 'px';
+            joint.style.top = (bone.canvasY - 8) + 'px';
+            joint.title = `Os #${bone.id}`;
+            document.body.appendChild(joint);
+        });
+    }
+
+    function renderBoneList() {
+        const list = document.getElementById('boneList');
+        
+        if (bones.length === 0) {
+            list.innerHTML = '<div style="text-align: center; color: #64748b; font-size: 11px; padding: 20px;">Aucun os créé<br>Cliquez sur "Ajouter OS"</div>';
+            return;
+        }
+        
+        list.innerHTML = bones.map(b => `
+            <div class="bone-item ${selectedBone && selectedBone.id === b.id ? 'selected' : ''}" 
+                 onclick="selectBone(${b.id})">
+                <span>🦴 Os #${b.id}</span>
+                <button class="delete-btn" onclick="event.stopPropagation(); deleteBone(${b.id})">✕</button>
+            </div>
+        `).join('');
+    }
+
+    function applyBoneDeformation() {
+        if (!geometry || bones.length === 0) return;
+        
+        const pos = geometry.attributes.position.array;
+        const orig = geometry.userData.origPos;
+        
+        // Reset to original
+        for (let i = 0; i < pos.length; i++) {
+            pos[i] = orig[i];
+        }
+        
+        // Apply each bone's influence
+        bones.forEach(bone => {
+            const dx = bone.x - bone.origX;
+            const dy = bone.y - bone.origY;
+            
+            for (let i = 0; i < pos.length; i += 3) {
+                const vx = orig[i];
+                const vy = orig[i + 1];
+                const dist = Math.hypot(vx - bone.origX, vy - bone.origY);
+                
+                if (dist < bone.influence) {
+                    const falloff = Math.pow(1 - dist / bone.influence, 2);
+                    pos[i] += dx * falloff;
+                    pos[i + 1] += dy * falloff;
+                }
+            }
+        });
+        
+        geometry.attributes.position.needsUpdate = true;
+    }
+
+    function applyDeformation(point) {
+        if (!geometry) return;
+        
+        const pos = geometry.attributes.position.array;
+        const localPoint = mesh.worldToLocal(point.clone());
+        const i_val = parseFloat(intensity);
+
+        for (let i = 0; i < pos.length; i += 3) {
+            const vx = pos[i];
+            const vy = pos[i + 1];
+            const dx = vx - localPoint.x;
+            const dy = vy - localPoint.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < brushSize) {
+                const falloff = Math.pow(1 - dist / brushSize, 2);
+                const force = falloff * i_val * 5;
+                
+                if (currentTool === 'drag') {
+                    pos[i] += mouse.x * force * 2;
+                    pos[i + 1] += mouse.y * force * 2;
+                } 
+                else if (currentTool === 'inflate') {
+                    const angle = Math.atan2(dy, dx);
+                    pos[i] += Math.cos(angle) * force;
+                    pos[i + 1] += Math.sin(angle) * force;
+                }
+                else if (currentTool === 'deflate') {
+                    const angle = Math.atan2(dy, dx);
+                    pos[i] -= Math.cos(angle) * force;
+                    pos[i + 1] -= Math.sin(angle) * force;
+                }
+                else if (currentTool === 'smooth') {
+                    const ox = geometry.userData.origPos[i];
+                    const oy = geometry.userData.origPos[i + 1];
+                    pos[i] += (ox - pos[i]) * 0.15;
+                    pos[i + 1] += (oy - pos[i + 1]) * 0.15;
+                }
+            }
+        }
+        geometry.attributes.position.needsUpdate = true;
+    }
+
+    function resetDeformation() {
+        if (!geometry) return;
+        const pos = geometry.attributes.position.array;
+        const orig = geometry.userData.origPos;
+        for (let i = 0; i < pos.length; i++) {
+            pos[i] = orig[i];
+        }
+        
+        // Reset bone positions
+        bones.forEach(bone => {
+            bone.x = bone.origX;
+            bone.y = bone.origY;
+            const rect = renderer.domElement.getBoundingClientRect();
+            bone.canvasX = rect.left + rect.width / 2 + bone.origX / 2;
+            bone.canvasY = rect.top + rect.height / 2 - bone.origY / 2;
+        });
+        
+        geometry.attributes.position.needsUpdate = true;
+        renderBones();
+    }
+
+    // ===== KEYFRAME SYSTEM =====
+    function addKeyframe() {
+        if (!geometry) {
+            alert('⚠️ Chargez d\'abord une image!');
+            return;
+        }
+        
+        const posSnapshot = new Float32Array(geometry.attributes.position.array);
+        const boneSnapshot = JSON.parse(JSON.stringify(bones)); // Deep clone
+        
+        const existingIdx = anim.keyframes.findIndex(k => k.frame === anim.currentFrame);
+        
+        if (existingIdx !== -1) {
+            anim.keyframes[existingIdx].positions = posSnapshot;
+            anim.keyframes[existingIdx].bones = boneSnapshot;
+        } else {
+            anim.keyframes.push({ 
+                frame: anim.currentFrame, 
+                positions: posSnapshot,
+                bones: boneSnapshot
+            });
+        }
+        
+        anim.keyframes.sort((a, b) => a.frame - b.frame);
+        renderTimeline();
+    }
+
+    function deleteSelectedKeyframe() {
+        if (selectedKeyframeIndex >= 0 && selectedKeyframeIndex < anim.keyframes.length) {
+            anim.keyframes.splice(selectedKeyframeIndex, 1);
+            selectedKeyframeIndex = -1;
+            renderTimeline();
+            updateToFrame(anim.currentFrame);
+        }
+    }
+
+    function clearAllKeyframes() {
+        if (confirm('🗑️ Supprimer toutes les keyframes?')) {
+            anim.keyframes = [];
+            selectedKeyframeIndex = -1;
+            renderTimeline();
+        }
+    }
+
+    function renderTimeline() {
+        const wrapper = document.getElementById('keyframes-wrapper');
+        wrapper.innerHTML = '';
+        
+        const grid = document.getElementById('timelineGrid');
+        grid.innerHTML = '';
+        
+        const tickCount = 20;
+        for (let i = 0; i <= tickCount; i++) {
+            const tick = document.createElement('div');
+            tick.className = 'timeline-tick' + (i % 5 === 0 ? ' major' : '');
+            tick.style.left = (i / tickCount * 100) + '%';
+            grid.appendChild(tick);
+        }
+        
+        anim.keyframes.forEach((k, idx) => {
+            const div = document.createElement('div');
+            div.className = 'keyframe';
+            if (idx === selectedKeyframeIndex) {
+                div.classList.add('selected');
+            }
+            div.style.left = (k.frame / anim.totalFrames * 100) + '%';
+            div.title = `Frame ${k.frame}`;
+            
+            div.onclick = (e) => {
+                e.stopPropagation();
+                selectedKeyframeIndex = idx;
+                anim.currentFrame = k.frame;
+                updateToFrame(k.frame);
+                renderTimeline();
+            };
+            
+            wrapper.appendChild(div);
+        });
+    }
+
+    function seekTimeline(e) {
+        if (e.target.classList.contains('keyframe')) return;
+        
+        const rect = document.getElementById('track').getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        anim.currentFrame = Math.round((x / rect.width) * anim.totalFrames);
+        anim.currentFrame = Math.max(0, Math.min(anim.currentFrame, anim.totalFrames));
+        updateToFrame(anim.currentFrame);
+    }
+
+    function updateToFrame(frame) {
+        if (!geometry || anim.keyframes.length === 0) {
+            updateFrameDisplay();
+            updatePlayhead();
+            return;
+        }
+        
+        let prev = anim.keyframes[0];
+        let next = anim.keyframes[anim.keyframes.length - 1];
+        
+        for (let k of anim.keyframes) {
+            if (k.frame <= frame) prev = k;
+            if (k.frame >= frame) {
+                next = k;
+                break;
+            }
+        }
+
+        const pos = geometry.attributes.position.array;
+        
+        if (prev.frame === next.frame) {
+            pos.set(prev.positions);
+            if (prev.bones) {
+                bones = JSON.parse(JSON.stringify(prev.bones));
+            }
+        } else {
+            const t = (frame - prev.frame) / (next.frame - prev.frame);
+            const smoothT = t * t * (3 - 2 * t);
+            
+            for (let i = 0; i < pos.length; i++) {
+                pos[i] = prev.positions[i] + (next.positions[i] - prev.positions[i]) * smoothT;
+            }
+            
+            // Interpolate bones
+            if (prev.bones && next.bones && prev.bones.length === next.bones.length) {
+                bones = prev.bones.map((pb, idx) => {
+                    const nb = next.bones[idx];
+                    return {
+                        ...pb,
+                        x: pb.x + (nb.x - pb.x) * smoothT,
+                        y: pb.y + (nb.y - pb.y) * smoothT,
+                        canvasX: pb.canvasX + (nb.canvasX - pb.canvasX) * smoothT,
+                        canvasY: pb.canvasY + (nb.canvasY - pb.canvasY) * smoothT
+                    };
+                });
+            }
+        }
+        
+        geometry.attributes.position.needsUpdate = true;
+        renderBones();
+        updateFrameDisplay();
+        updatePlayhead();
+    }
+
+    function updateFrameDisplay() {
+        const display = document.getElementById('frameDisplay');
+        const spans = display.querySelectorAll('span');
+        spans[0].textContent = anim.currentFrame;
+        spans[1].textContent = anim.totalFrames;
+        
+        const totalSeconds = anim.currentFrame / anim.fps;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        
+        document.getElementById('timecode').textContent = 
+            String(hours).padStart(2, '0') + ':' +
+            String(minutes).padStart(2, '0') + ':' +
+            String(seconds).padStart(2, '0');
+    }
+
+    function updatePlayhead() {
+        const playhead = document.getElementById('playhead');
+        playhead.style.left = (anim.currentFrame / anim.totalFrames * 100) + '%';
+    }
+
+    function togglePlay() {
+        anim.isPlaying = !anim.isPlaying;
+        const btn = document.getElementById('playBtn');
+        btn.textContent = anim.isPlaying ? '⏸️' : '▶️';
+        
+        if (anim.isPlaying) {
+            anim.lastFrameTime = performance.now();
+        }
+    }
+
+    function stopAnimation() {
+        anim.isPlaying = false;
+        anim.currentFrame = 0;
+        document.getElementById('playBtn').textContent = '▶️';
+        updateToFrame(0);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        if (anim.isPlaying && anim.keyframes.length > 0) {
+            const now = performance.now();
+            const delta = now - anim.lastFrameTime;
+            const frameDuration = 1000 / anim.fps;
+            
+            if (delta >= frameDuration) {
+                anim.currentFrame++;
+                
+                if (anim.currentFrame >= anim.totalFrames) {
+                    anim.currentFrame = 0;
+                }
+                
+                updateToFrame(anim.currentFrame);
+                anim.lastFrameTime = now - (delta % frameDuration);
+            }
+        }
+        
+        renderer.render(scene, camera);
+    }
+
+    async function exportAnimation() {
+        if (!mesh || anim.keyframes.length < 2) {
+            alert('⚠️ Vous devez avoir au moins 2 keyframes pour exporter une animation!');
+            return;
+        }
+        
+        const wasPlaying = anim.isPlaying;
+        if (wasPlaying) togglePlay();
+        
+        const originalFrame = anim.currentFrame;
+        const frames = [];
+        
+        const exportBtn = document.querySelector('header button.success');
+        const originalText = exportBtn.textContent;
+        
+        try {
+            for (let f = 0; f < anim.totalFrames; f++) {
+                exportBtn.textContent = `🎬 Rendu ${f + 1}/${anim.totalFrames}...`;
+                
+                updateToFrame(f);
+                renderer.render(scene, camera);
+                
+                const dataURL = renderer.domElement.toDataURL('image/png');
+                frames.push(dataURL);
+                
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+            
+            exportBtn.textContent = '📦 Création du package...';
+            
+            // Create downloadable frames package
+            const frameData = frames.map((data, i) => ({
+                frame: i,
+                data: data
+            }));
+            
+            const exportData = JSON.stringify({
+                metadata: {
+                    totalFrames: anim.totalFrames,
+                    fps: anim.fps,
+                    duration: (anim.totalFrames / anim.fps).toFixed(2),
+                    resolution: `${renderer.domElement.width}x${renderer.domElement.height}`,
+                    exportDate: new Date().toISOString()
+                },
+                frames: frameData
+            });
+            
+            const blob = new Blob([exportData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ZNK-Animation-${Date.now()}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            
+            exportBtn.textContent = '✅ Export réussi!';
+            setTimeout(() => {
+                exportBtn.textContent = originalText;
+            }, 2000);
+            
+            alert(`✅ Animation exportée avec succès!\n\n📁 ${anim.totalFrames} frames PNG\n🎬 FPS: ${anim.fps}\n⏱️ Durée: ${(anim.totalFrames / anim.fps).toFixed(2)}s\n\n💡 Utilisez FFmpeg pour convertir:\nffmpeg -framerate ${anim.fps} -i frame_%04d.png -c:v libx264 -pix_fmt yuv420p output.mp4`);
+            
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('❌ Erreur lors de l\'export: ' + error.message);
+            exportBtn.textContent = originalText;
+        }
+        
+        updateToFrame(originalFrame);
+        if (wasPlaying) togglePlay();
+    }
+
+    init();
+</script>
+
+</body>
+</html>

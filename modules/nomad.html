@@ -1,0 +1,2268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNK Nomad Bank</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 320px;
+            height: 100%;
+            max-height: 680px;
+            background: #000;
+            border-radius: 30px;
+            padding: 6px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dynamic-island {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 24px;
+            background: #000;
+            border-radius: 15px;
+            z-index: 100;
+        }
+
+        .status-bar {
+            height: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-bar::after {
+            content: '●';
+            color: #4caf50;
+            font-size: 6px;
+            position: absolute;
+            right: 35px;
+            top: 12px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Pages principales */
+        .page {
+            display: none;
+            padding: 12px;
+            height: calc(100% - 100px);
+            overflow-y: auto;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Page d'accueil */
+        .home-header {
+            text-align: center;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 150, 200, 0.1));
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .znk-logo {
+            font-size: 22px;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 4px;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .user-greeting {
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .znk-id {
+            font-size: 10px;
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 3px 6px;
+            border-radius: 6px;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #00d4ff 0%, #0ea5e9 50%, #0284c7 100%);
+            border-radius: 15px;
+            padding: 18px;
+            margin-bottom: 15px;
+            color: #fff;
+            box-shadow: 0 12px 30px rgba(0, 212, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -40%;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .balance-amount {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+        }
+
+        .balance-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .card-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-info > div {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .connected-accounts {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .connected-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #00d4ff;
+        }
+
+        .account-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .account-item:last-child {
+            border-bottom: none;
+        }
+
+        .account-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            margin-right: 8px;
+            font-size: 12px;
+        }
+
+        .revolut { background: #0075eb; }
+        .orange { background: #ff7900; }
+
+        .account-item > div:first-child {
+            display: flex;
+            align-items: center;
+        }
+
+        .account-item > div:first-child > div > div:first-child {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .account-item > div:first-child > div > div:last-child {
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        .account-item > div:last-child {
+            color: #4caf50;
+            font-size: 10px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #fff;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .action-label {
+            font-size: 9px;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+
+        /* Page Cartes */
+        .card-list {
+            space-y: 12px;
+        }
+
+        .znk-card {
+            background: linear-gradient(135deg, #00d4ff 0%, #0ea5e9 50%, #0284c7 100%);
+            border-radius: 15px;
+            padding: 18px;
+            margin-bottom: 12px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .card-type {
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .card-chip {
+            width: 28px;
+            height: 22px;
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            border-radius: 3px;
+        }
+
+        .card-number {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            opacity: 0.9;
+        }
+
+        /* Page Statistiques */
+        .stats-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stats-period {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 6px;
+            display: inline-flex;
+            margin-bottom: 15px;
+        }
+
+        .period-btn {
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+
+        .period-btn.active {
+            background: #00d4ff;
+            color: #000;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 4px;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        .transactions-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 12px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-title {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .transaction-date {
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        .transaction-amount {
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .positive { color: #4caf50; }
+        .negative { color: #f44336; }
+
+        /* Page Profil */
+        .profile-header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 150, 200, 0.1));
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 12px;
+        }
+
+        .profile-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .profile-id {
+            font-size: 12px;
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .copyright-status {
+            background: linear-gradient(135deg, #4caf50, #8bc34a);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 12px 0;
+            text-align: center;
+        }
+
+        .copyright-status > div:first-child {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .copyright-status > div:last-child {
+            font-size: 10px;
+        }
+
+        .profile-sections {
+            space-y: 12px;
+        }
+
+        .profile-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle {
+            width: 40px;
+            height: 22px;
+            background: #333;
+            border-radius: 11px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle.active {
+            background: #00d4ff;
+        }
+
+        .toggle::before {
+            content: '';
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+
+        .toggle.active::before {
+            transform: translateX(18px);
+        }
+
+        /* Navigation */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 65px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px 24px 0 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 6px;
+            border-radius: 10px;
+        }
+
+        .nav-item.active {
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .nav-item:hover {
+            color: #00d4ff;
+            transform: translateY(-1px);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+        }
+
+        .nav-label {
+            font-size: 9px;
+            font-weight: 500;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 280px;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .modal-content > div:nth-child(2) {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .modal-btn {
+            background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin: 8px 4px;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .modal-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* Formulaire de paiement */
+        .pay-form {
+            text-align: left;
+        }
+
+        .pay-form label {
+            display: block;
+            font-size: 10px;
+            color: #aaa;
+            margin: 10px 0 4px;
+        }
+
+        .pay-form input,
+        .pay-form select {
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .pay-form input:focus,
+        .pay-form select:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        .pay-form input::placeholder {
+            color: #777;
+        }
+
+        .pay-form select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 3000;
+            animation: slideIn 0.3s ease forwards;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            font-size: 12px;
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #4caf50, #8bc34a);
+            color: white;
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #f44336, #e57373);
+            color: white;
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+            color: #000;
+        }
+
+        /* Services spéciaux */
+        .whatsznk-status {
+            background: linear-gradient(135deg, rgba(37, 211, 102, 0.1), rgba(37, 211, 102, 0.05));
+            border: 1px solid rgba(37, 211, 102, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .whatsapp-icon {
+            width: 35px;
+            height: 35px;
+            background: #25d366;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+        }
+
+        .service-status {
+            flex: 1;
+        }
+
+        .service-number {
+            font-weight: 600;
+            color: #25d366;
+            margin-bottom: 2px;
+            font-size: 12px;
+        }
+
+        .service-info {
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        .whatsznk-status > div:last-child {
+            color: #25d366;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media screen and (max-height: 600px) {
+            .phone-container {
+                max-height: 90vh;
+                max-width: 280px;
+            }
+            
+            .quick-actions {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .action-label {
+                font-size: 8px;
+            }
+        }
+
+        @media screen and (min-height: 800px) {
+            .phone-container {
+                max-height: 750px;
+                max-width: 350px;
+            }
+        }
+
+        /* Scrollbar personnalisée */
+        .page::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .page::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .page::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 2px;
+        }
+
+        .page::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.8);
+        }
+
+        /* Modal responsive content */
+        .modal-content div {
+            text-align: left;
+            margin: 10px 0;
+        }
+
+        .modal-content div div {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .modal-content div div strong {
+            color: #00d4ff;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Performance optimisée */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="phone-screen">
+            <div class="dynamic-island"></div>
+            
+            <div class="status-bar">
+                <span id="currentTime">9:41</span>
+                <span>🔋 <span id="batteryLevel">85%</span></span>
+            </div>
+
+            <!-- Page Accueil -->
+            <div class="page active" id="home">
+                <div class="home-header animate-in">
+                    <div class="znk-logo">ZNK Nomad</div>
+                    <div class="user-info">
+                        <div class="user-greeting">Bonjour, <span id="userName">Avatar User</span></div>
+                        <div class="znk-id">ID: <span id="userZnkId">ZNK-2024-001</span></div>
+                    </div>
+                </div>
+
+                <div class="balance-card animate-in" style="animation-delay: 0.2s;">
+                    <div class="balance-amount"><span id="mainBalance">24799.50</span> €</div>
+                    <div class="balance-label">Euros disponibles</div>
+                    <div class="card-info">
+                        <div>
+                            <div>Commission ZNK: 5%</div>
+                            <div>Soutien projets: 1%</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div>**** 1337</div>
+                            <div>12/29</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connected-accounts animate-in" style="animation-delay: 0.4s;">
+                    <div class="connected-title">Comptes connectés</div>
+                    <div class="account-item">
+                        <div>
+                            <div class="account-logo revolut">R</div>
+                            <div>
+                                <div>Revolut</div>
+                                <div>**** 4532</div>
+                            </div>
+                        </div>
+                        <div>Connecté</div>
+                    </div>
+                    <div class="account-item">
+                        <div>
+                            <div class="account-logo orange">O</div>
+                            <div>
+                                <div>Orange Money</div>
+                                <div>+237 6XX XXX XXX</div>
+                            </div>
+                        </div>
+                        <div>Connecté</div>
+                    </div>
+                </div>
+
+                <div class="quick-actions animate-in" style="animation-delay: 0.6s;">
+                    <div class="action-btn" onclick="openService('payer')">
+                        <div class="action-icon">💸</div>
+                        <div class="action-label">Payer</div>
+                    </div>
+                    <div class="action-btn" onclick="openService('concerts')">
+                        <div class="action-icon">🎵</div>
+                        <div class="action-label">Concerts</div>
+                    </div>
+                    <div class="action-btn" onclick="openService('whatsznk')">
+                        <div class="action-icon">💬</div>
+                        <div class="action-label">WhatsZNK</div>
+                    </div>
+                    <div class="action-btn" onclick="openService('artistes')">
+                        <div class="action-icon">🎨</div>
+                        <div class="action-label">Artistes</div>
+                    </div>
+                    <div class="action-btn" onclick="openService('oeuvres')">
+                        <div class="action-icon">🖼️</div>
+                        <div class="action-label">Œuvres</div>
+                    </div>
+                    <div class="action-btn" onclick="openService('copyrights')">
+                        <div class="action-icon">©</div>
+                        <div class="action-label">Copyrights</div>
+                    </div>
+                    <div class="action-btn" onclick="openService('studios')">
+                        <div class="action-icon">🎬</div>
+                        <div class="action-label">Studios</div>
+                    </div>
+                    <div class="action-btn" onclick="openService('modem')">
+                        <div class="action-icon">📡</div>
+                        <div class="action-label">Modem</div>
+                    </div>
+                    <div class="action-btn" onclick="openService('investir')">
+                        <div class="action-icon">💰</div>
+                        <div class="action-label">Investir</div>
+                    </div>
+                    <div class="action-btn" onclick="openService('rib')">
+                        <div class="action-icon">🏦</div>
+                        <div class="action-label">RIB</div>
+                    </div>
+                </div>
+
+                <div class="whatsznk-status animate-in" style="animation-delay: 0.8s;">
+                    <div class="whatsapp-icon">📱</div>
+                    <div class="service-status">
+                        <div class="service-number">ZNK +237-690-XX-XX</div>
+                        <div class="service-info"><span id="conversationsLeft">30</span> conversations restantes</div>
+                    </div>
+                    <div onclick="upgradeWhatsZNK()">
+                        Upgrade
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Cartes -->
+            <div class="page" id="cards">
+                <div class="section-title" style="margin-bottom: 20px; text-align: center; font-size: 18px;">Mes Cartes</div>
+                
+                <div class="card-list">
+                    <div class="znk-card animate-in">
+                        <div class="card-header">
+                            <div class="card-type">ZNK CARD PREMIUM</div>
+                            <div class="card-chip"></div>
+                        </div>
+                        <div class="card-number">**** **** **** 1337</div>
+                        <div class="card-footer">
+                            <div>AVATAR USER</div>
+                            <div>12/29</div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; margin-bottom: 12px;">
+                        <div class="section-title">Limites & Paramètres</div>
+                        <div class="setting-item">
+                            <span>Limite quotidienne</span>
+                            <span>1,000 €</span>
+                        </div>
+                        <div class="setting-item">
+                            <span>Limite mensuelle</span>
+                            <span>25,000 €</span>
+                        </div>
+                        <div class="setting-item">
+                            <span>Paiements sans contact</span>
+                            <div class="toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>Notifications</span>
+                            <div class="toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                    </div>
+
+                    <button class="modal-btn" style="width: 100%; margin-top: 10px;" onclick="showNotification('Nouvelle carte commandée!', 'success')">
+                        Commander nouvelle carte
+                    </button>
+                </div>
+            </div>
+
+            <!-- Page Statistiques -->
+            <div class="page" id="stats">
+                <div class="stats-header">
+                    <div class="section-title" style="font-size: 18px; margin-bottom: 15px;">Statistiques</div>
+                    <div class="stats-period">
+                        <button class="period-btn active" onclick="changePeriod(this, 'semaine')">7J</button>
+                        <button class="period-btn" onclick="changePeriod(this, 'mois')">1M</button>
+                        <button class="period-btn" onclick="changePeriod(this, 'annee')">1A</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid animate-in">
+                    <div class="stat-card">
+                        <div class="stat-value" id="revenus">324.80</div>
+                        <div class="stat-label">Revenus (€)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="depenses">77.30</div>
+                        <div class="stat-label">Dépenses (€)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="copyrights">23</div>
+                        <div class="stat-label">Copyrights</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="investissements">156.50</div>
+                        <div class="stat-label">Investissements (€)</div>
+                    </div>
+                </div>
+
+                <div class="transactions-list animate-in" style="animation-delay: 0.2s;">
+                    <div class="section-title" style="margin-bottom: 12px;">Dernières Transactions</div>
+                    <div id="transactionsList">
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <div class="transaction-title">Vente Œuvre #234</div>
+                                <div class="transaction-date">Aujourd'hui, 14:32</div>
+                            </div>
+                            <div class="transaction-amount positive">+50.00 €</div>
+                        </div>
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <div class="transaction-title">Commission ZNK (5%)</div>
+                                <div class="transaction-date">Aujourd'hui, 14:32</div>
+                            </div>
+                            <div class="transaction-amount negative">-2.50 €</div>
+                        </div>
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <div class="transaction-title">Upgrade WhatsZNK</div>
+                                <div class="transaction-date">Hier, 16:45</div>
+                            </div>
+                            <div class="transaction-amount negative">-2.00 €</div>
+                        </div>
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <div class="transaction-title">Concert ZNK Live</div>
+                                <div class="transaction-date">Hier, 10:20</div>
+                            </div>
+                            <div class="transaction-amount negative">-50.00 €</div>
+                        </div>
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <div class="transaction-title">Copyright Revenue</div>
+                                <div class="transaction-date">2 jours</div>
+                            </div>
+                            <div class="transaction-amount positive">+25.30 €</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Profil -->
+            <div class="page" id="profile">
+                <div class="profile-header animate-in">
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-name" id="profileName">Avatar User</div>
+                    <div class="profile-id">ID ZNK: <span id="profileZnkId">ZNK-2024-001</span></div>
+                    <div class="copyright-status">
+                        <div>🛡️ Protection Copyright Active</div>
+                        <div>Toutes vos créations sont automatiquement protégées par ©ZNKsystem</div>
+                    </div>
+                </div>
+
+                <div class="profile-sections">
+                    <div class="profile-section animate-in" style="animation-delay: 0.2s;">
+                        <div class="section-title">Informations Personnelles</div>
+                        <div class="setting-item">
+                            <span>Nom complet</span>
+                            <span style="color: #aaa; cursor: pointer;" onclick="editProfile('name')">Avatar User ✏️</span>
+                        </div>
+                        <div class="setting-item">
+                            <span>Email</span>
+                            <span style="color: #aaa; cursor: pointer;" onclick="editProfile('email')">user@znk.com ✏️</span>
+                        </div>
+                        <div class="setting-item">
+                            <span>Téléphone</span>
+                            <span style="color: #aaa; cursor: pointer;" onclick="editProfile('phone')">+237 6XX XXX XXX ✏️</span>
+                        </div>
+                        <div class="setting-item">
+                            <span>Pays</span>
+                            <span style="color: #aaa;">🇨🇲 Cameroun</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-section animate-in" style="animation-delay: 0.4s;">
+                        <div class="section-title">Sécurité</div>
+                        <div class="setting-item">
+                            <span>Authentification 2FA</span>
+                            <div class="toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>Notifications push</span>
+                            <div class="toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>Biométrie</span>
+                            <div class="toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>Changer PIN</span>
+                            <span style="color: #00d4ff; cursor: pointer;" onclick="changePin()">Modifier ></span>
+                        </div>
+                    </div>
+
+                    <div class="profile-section animate-in" style="animation-delay: 0.6s;">
+                        <div class="section-title">Abonnements</div>
+                        <div class="setting-item">
+                            <div>
+                                <div>WhatsZNK Premium</div>
+                                <div style="font-size: 10px; color: #aaa;">150 conversations/mois</div>
+                            </div>
+                            <span style="color: #4caf50; font-size: 10px;">Actif</span>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div>Forfait Modem Multi</div>
+                                <div style="font-size: 10px; color: #aaa;">10€/mois - Connexions multiples</div>
+                            </div>
+                            <span style="color: #f44336; font-size: 10px; cursor: pointer;" onclick="subscribeModem()">Souscrire</span>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div>Studios ZNK Illimité</div>
+                                <div style="font-size: 10px; color: #aaa;">Accès complet aux studios</div>
+                            </div>
+                            <span style="color: #00d4ff; font-size: 10px; cursor: pointer;" onclick="upgradeStudios()">Upgrade</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-section animate-in" style="animation-delay: 0.8s;">
+                        <div class="section-title">Support & Aide</div>
+                        <div class="setting-item" onclick="contactSupport()">
+                            <span>Contacter le support</span>
+                            <span style="color: #666;">></span>
+                        </div>
+                        <div class="setting-item" onclick="openFAQ()">
+                            <span>FAQ</span>
+                            <span style="color: #666;">></span>
+                        </div>
+                        <div class="setting-item" onclick="reportBug()">
+                            <span>Signaler un bug</span>
+                            <span style="color: #666;">></span>
+                        </div>
+                        <div class="setting-item" onclick="logout()">
+                            <span style="color: #f44336;">Déconnexion</span>
+                            <span style="color: #f44336;">↗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="bottom-nav">
+                <div class="nav-item active" onclick="switchPage('home')">
+                    <div class="nav-icon">🏠</div>
+                    <div class="nav-label">Accueil</div>
+                </div>
+                <div class="nav-item" onclick="switchPage('cards')">
+                    <div class="nav-icon">💳</div>
+                    <div class="nav-label">Cartes</div>
+                </div>
+                <div class="nav-item" onclick="switchPage('stats')">
+                    <div class="nav-icon">📊</div>
+                    <div class="nav-label">Stats</div>
+                </div>
+                <div class="nav-item" onclick="switchPage('profile')">
+                    <div class="nav-icon">⚙️</div>
+                    <div class="nav-label">Profil</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="serviceModal">
+        <div class="modal-content">
+            <h3 id="modalTitle"></h3>
+            <div id="modalContent"></div>
+            <div style="margin-top: 15px;">
+                <button class="modal-btn" onclick="closeModal()">Fermer</button>
+                <button class="modal-btn secondary" id="actionBtn" style="display: none;" onclick="performAction()">Action</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let userData = {
+            balance: 24799.50,
+            name: 'Avatar User',
+            znkId: 'ZNK-2024-001',
+            conversationsLeft: 30,
+            studiosUsed: 15,
+            copyrights: 23,
+            revenus: 32479.80,
+            depenses: 777.30,
+            investissements: 15672.50
+        };
+
+        let currentAction = null;
+
+        // Initialisation
+        window.addEventListener('load', () => {
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Animation au chargement
+            setTimeout(() => {
+                document.querySelectorAll('.animate-in').forEach((element, index) => {
+                    element.style.animationDelay = (index * 0.1) + 's';
+                });
+            }, 100);
+
+            // Simulation de mises à jour en temps réel
+            setInterval(simulateRealTimeUpdates, 45000);
+        });
+
+        // Mise à jour de l'heure
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('currentTime').textContent = time;
+            
+            // Simulation batterie
+            const battery = 85 - Math.floor((now.getTime() / 100000) % 10);
+            document.getElementById('batteryLevel').textContent = Math.max(battery, 20) + '%';
+        }
+
+        // Navigation entre pages
+        function switchPage(pageId) {
+            // Cacher toutes les pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Désactiver tous les nav items
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active');
+            });
+            
+            // Afficher la page sélectionnée
+            document.getElementById(pageId).classList.add('active');
+            
+            // Activer le nav item correspondant
+            event.target.closest('.nav-item').classList.add('active');
+            
+            showNotification(`Page ${getPageTitle(pageId)} sélectionnée`, 'info');
+        }
+
+        function getPageTitle(pageId) {
+            const titles = {
+                'home': 'Accueil',
+                'cards': 'Cartes',
+                'stats': 'Statistiques',
+                'profile': 'Profil'
+            };
+            return titles[pageId] || pageId;
+        }
+
+        // Services ZNK
+        function openService(service) {
+            const serviceData = getServiceData(service);
+            showModal(serviceData.title, serviceData.content, serviceData.action);
+        }
+
+        function getServiceData(service) {
+            const services = {
+                'payer': {
+                    title: 'Envoyer un paiement',
+                    content: `
+                        <div class="pay-form">
+                            <label>Destinataire (nom, IBAN, téléphone ou ID ZNK)</label>
+                            <input type="text" id="payRecipient" placeholder="Ex: Steve Jobs, +237 6XX XXX XXX...">
+
+                            <label>Montant (€)</label>
+                            <input type="number" id="payAmount" min="0.01" step="0.01" placeholder="0.00">
+
+                            <label>Motif (optionnel)</label>
+                            <input type="text" id="payMotif" placeholder="Ex: Loyer, prestation, cadeau...">
+
+                            <label>Moyen de paiement</label>
+                            <select id="payMethod">
+                                <option value="znk">Solde ZNK Nomad</option>
+                                <option value="revolut">Revolut **** 4532</option>
+                                <option value="orange">Orange Money +237 6XX XXX XXX</option>
+                            </select>
+
+                            <div style="font-size: 10px; color: #aaa; margin-top: 10px;">
+                                💰 Commission ZNK : 1% · Solde disponible : <span id="payAvailableBalance">${userData.balance.toFixed(2)}</span> €
+                            </div>
+                        </div>
+                    `,
+                    action: 'confirmPayment'
+                },
+                'concerts': {
+                    title: 'Concerts ZNK',
+                    content: `
+                        <p>Accès aux concerts et événements ZNK</p>
+                        <div>
+                            <strong>🎵 Prochains événements :</strong><br>
+                            • ZNK Live Experience - 50 €<br>
+                            • Festival Digital Art - 80 €<br>
+                            • Showcase Nouveaux Artistes - 30 €<br>
+                            • Concert Privé VIP - 150 €<br><br>
+                            <strong>💰 Commission ZNK :</strong> 5%<br>
+                            <strong>🤝 Soutien projets :</strong> 1%
+                        </div>
+                        <p>Paiement direct avec votre carte ZNK</p>
+                    `,
+                    action: null
+                },
+                'whatsznk': {
+                    title: 'WhatsZNK',
+                    content: `
+                        <p>Gestion de votre abonnement WhatsZNK</p>
+                        <div>
+                            <strong>📱 Plan actuel :</strong> ${userData.conversationsLeft > 30 ? 'Premium' : 'Gratuit'}<br>
+                            <strong>💬 Conversations restantes :</strong> ${userData.conversationsLeft}/${userData.conversationsLeft > 30 ? '150' : '30'}<br>
+                            <strong>📞 Numéro ZNK :</strong> +237-690-XX-XX<br><br>
+                            ${userData.conversationsLeft <= 30 ? '<strong>⬆️ Upgrade disponible :</strong><br>• 150 conversations - 2 €' : '<strong>✅ Vous avez le plan Premium!</strong>'}
+                        </div>
+                    `,
+                    action: userData.conversationsLeft <= 30 ? 'upgradeWhatsZNK' : null
+                },
+                'artistes': {
+                    title: 'Prestations Artistes',
+                    content: `
+                        <p>Paiement des prestations d'artistes ZNK</p>
+                        <div>
+                            <strong>🎨 Services disponibles :</strong><br>
+                            • Création logo - 20 €<br>
+                            • Mix audio professionnel - 35 €<br>
+                            • Design graphique - 25 €<br>
+                            • Production vidéo - 80 €<br>
+                            • Composition musicale - 60 €<br>
+                            • Animation 3D - 120 €<br><br>
+                            <strong>💰 Commission ZNK :</strong> 5%<br>
+                            <strong>🤝 Soutien projets :</strong> 1%
+                        </div>
+                        <p>Tous les artistes sont vérifiés et protégés par copyright</p>
+                    `,
+                    action: null
+                },
+                'oeuvres': {
+                    title: 'Marketplace Œuvres',
+                    content: `
+                        <p>Achat d'œuvres dans l'écosystème ZNK</p>
+                        <div>
+                            <strong>🖼️ Marketplace :</strong><br>
+                            • NFT Artwork - 15-200 €<br>
+                            • Musique exclusive - 5-50 €<br>
+                            • Designs premium - 10-75 €<br>
+                            • Vidéos créatives - 25-150 €<br>
+                            • Codes sources - 30-100 €<br><br>
+                            <strong>🛡️ Garantie :</strong> Copyright protégé<br>
+                            <strong>💰 Commission :</strong> 5% + 1% soutien
+                        </div>
+                        <p>Toutes vos acquisitions sont authentifiées et protégées</p>
+                    `,
+                    action: null
+                },
+                'copyrights': {
+                    title: 'Copyrights & Revenus',
+                    content: `
+                        <p>Bilan de vos protections et revenus copyright</p>
+                        <div>
+                            <strong>📊 Ce mois :</strong><br>
+                            • Revenus bruts: 247995.40 €<br>
+                            • Commission ZNK: -9.32 €<br>
+                            • Soutien projets: -1.86 €<br>
+                            • <strong>Net reçu: 175.22 €</strong><br><br>
+                            <strong>🛡️ Protections actives :</strong> ${userData.copyrights}<br>
+                            <strong>🎨 Œuvres publiées :</strong> 12<br>
+                            <strong>📈 Ventes ce mois :</strong> 8
+                        </div>
+                        <p>©ZNKsystem - Protection automatique active</p>
+                    `,
+                    action: null
+                },
+                'studios': {
+                    title: 'Studios ZNK',
+                    content: `
+                        <p>Accès aux studios de création ZNK</p>
+                        <div>
+                            <strong>🏭 Utilisation :</strong> ${userData.studiosUsed}/100 créations<br><br>
+                            <strong>🎬 Studios disponibles :</strong><br>
+                            • Studio Audio Pro 🎵<br>
+                            • Studio Vidéo 4K 📹<br>
+                            • Studio Design Graphique 🎨<br>
+                            • Studio 3D/VR 🥽<br>
+                            • Studio Animation 🎭<br>
+                            • Studio Podcast 🎙️<br><br>
+                            <strong>⭐ Statut :</strong> Utilisateur Standard<br>
+                            <strong>💎 Artistes sélectionnés :</strong> Accès illimité
+                        </div>
+                    `,
+                    action: 'upgradeStudios'
+                },
+                'modem': {
+                    title: 'Forfait Modem Multi',
+                    content: `
+                        <p>Forfait pour connexions multiples</p>
+                        <div>
+                            <strong>📡 Forfait Modem Multi :</strong><br>
+                            • Prix: 10€/mois (20 €)<br>
+                            • Connexions simultanées: Illimitées<br>
+                            • Bande passante: Prioritaire<br>
+                            • Support technique: 24/7<br>
+                            • Partage sécurisé: Inclus<br><br>
+                            <strong>📊 Statut actuel :</strong> Non souscrit<br>
+                            <strong>🔗 Connexions actuelles :</strong> 1/1
+                        </div>
+                        <p>Idéal pour les créateurs et équipes</p>
+                    `,
+                    action: 'subscribeModem'
+                },
+                'investir': {
+                    title: 'Investissements ZNK',
+                    content: `
+                        <p>Opportunités d'investissement dans l'écosystème ZNK</p>
+                        <div>
+                            <strong>💰 Portefeuille actuel :</strong> ${userData.investissements} €<br><br>
+                            <strong>📈 Opportunités :</strong><br>
+                            • ZNK Token (ZNKT) - Rendement: 8%/an<br>
+                            • Fonds Artistes - Rendement: 12%/an<br>
+                            • Immobilier Digital - Rendement: 6%/an<br>
+                            • Startups ZNK - Rendement: 15%/an<br><br>
+                            <strong>🎯 Investissement minimum :</strong> 10 €<br>
+                            <strong>🔒 Sécurité :</strong> Garantie ZNK
+                        </div>
+                        <p>Diversifiez vos revenus dans l'écosystème ZNK</p>
+                    `,
+                    action: null
+                },
+                'rib': {
+                    title: 'RIB - Relevé d\'Identité Bancaire',
+                    content: `
+                        <p>Justificatif de votre compte ZNK Nomad Bank</p>
+                        <div>
+                            <strong>🏦 Banque :</strong> ${getRIBData().bankName}<br>
+                            <strong>🏢 Agence :</strong> ${getRIBData().agence}<br>
+                            <strong>👤 Titulaire :</strong> ${getRIBData().titulaire}<br>
+                            <strong>🆔 ID ZNK :</strong> ${getRIBData().znkId}<br>
+                            <strong>💳 IBAN :</strong> ${getRIBData().iban}<br>
+                            <strong>🔢 BIC / SWIFT :</strong> ${getRIBData().bic}<br>
+                            <strong>💶 Devise :</strong> EUR<br>
+                            <strong>📅 Émis le :</strong> ${getRIBData().date}<br>
+                        </div>
+                        <p style="font-size: 10px; color: #aaa;">Document généré localement dans votre écosystème ZNK hors ligne. Utilisez le bouton ci-dessous pour le télécharger en image.</p>
+                    `,
+                    action: 'downloadRIB'
+                }
+            };
+            return services[service] || { title: 'Service', content: 'Service non disponible', action: null };
+        }
+
+        // Modal management
+        function showModal(title, content, action) {
+            const modal = document.getElementById('serviceModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            const actionBtn = document.getElementById('actionBtn');
+            
+            modalTitle.textContent = title;
+            modalContent.innerHTML = content;
+            
+            if (action) {
+                actionBtn.style.display = 'inline-block';
+                actionBtn.textContent = getActionText(action);
+                currentAction = action;
+            } else {
+                actionBtn.style.display = 'none';
+                currentAction = null;
+            }
+            
+            modal.style.display = 'flex';
+            
+            setTimeout(() => {
+                modal.querySelector('.modal-content').style.animation = 'slideIn 0.4s ease forwards';
+            }, 10);
+        }
+
+        function getActionText(action) {
+            const actions = {
+                'upgradeWhatsZNK': 'Upgrade Premium (2 €)',
+                'upgradeStudios': 'Passer Illimité (50 €)',
+                'subscribeModem': 'Souscrire (20 €)',
+                'downloadRIB': '⬇️ Télécharger le RIB',
+                'confirmPayment': '💸 Envoyer le paiement',
+                'downloadReceipt': '⬇️ Télécharger le reçu',
+            };
+            return actions[action] || 'Action';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('serviceModal');
+            modal.style.display = 'none';
+            currentAction = null;
+        }
+
+        function performAction() {
+            if (!currentAction) return;
+            
+            switch (currentAction) {
+                case 'upgradeWhatsZNK':
+                    upgradeWhatsZNK();
+                    break;
+                case 'upgradeStudios':
+                    upgradeStudios();
+                    break;
+                case 'subscribeModem':
+                    subscribeModem();
+                    break;
+                case 'downloadRIB':
+                    downloadRIB();
+                    return; // On garde le modal ouvert pour laisser voir le RIB après téléchargement
+                case 'confirmPayment':
+                    confirmPayment();
+                    return; // confirmPayment gère elle-même l'état du modal (erreur ou reçu)
+                case 'downloadReceipt':
+                    downloadReceipt();
+                    return; // On garde le reçu affiché après téléchargement
+            }
+            
+            closeModal();
+        }
+
+        // ===== Paiement =====
+        function confirmPayment() {
+            const recipientEl = document.getElementById('payRecipient');
+            const amountEl = document.getElementById('payAmount');
+            const motifEl = document.getElementById('payMotif');
+            const methodEl = document.getElementById('payMethod');
+
+            const recipient = recipientEl ? recipientEl.value.trim() : '';
+            const amount = amountEl ? parseFloat(amountEl.value) : NaN;
+            const motif = motifEl ? motifEl.value.trim() : '';
+            const method = methodEl ? methodEl.value : 'znk';
+
+            if (!recipient) {
+                showNotification('Veuillez indiquer un destinataire', 'error');
+                return;
+            }
+            if (!amount || amount <= 0) {
+                showNotification('Montant invalide', 'error');
+                return;
+            }
+
+            const commission = +(amount * 0.01).toFixed(2);
+            const total = +(amount + commission).toFixed(2);
+
+            if (method === 'znk' && userData.balance < total) {
+                showNotification('Solde ZNK insuffisant', 'error');
+                return;
+            }
+
+            if (method === 'znk') {
+                userData.balance -= total;
+                userData.depenses += total;
+                updateDisplay();
+            }
+
+            const methodLabels = {
+                znk: 'Solde ZNK Nomad',
+                revolut: 'Revolut **** 4532',
+                orange: 'Orange Money'
+            };
+
+            const receipt = {
+                recipient: recipient,
+                amount: amount,
+                motif: motif,
+                method: method,
+                methodLabel: methodLabels[method] || method,
+                commission: commission,
+                total: total,
+                date: new Date(),
+                ref: 'ZNK' + Date.now().toString().slice(-8)
+            };
+            userData.lastReceipt = receipt;
+
+            addTransaction(`Paiement à ${recipient}${motif ? ' - ' + motif : ''}`, -amount);
+            showNotification(`Paiement de ${amount.toFixed(2)} € envoyé`, 'success');
+            vibrate(80);
+
+            showPaymentReceipt(receipt);
+        }
+
+        function showPaymentReceipt(receipt) {
+            const modalContent = document.getElementById('modalContent');
+            const actionBtn = document.getElementById('actionBtn');
+
+            modalContent.innerHTML = `
+                <p>✅ Paiement envoyé avec succès</p>
+                <div>
+                    <strong>👤 Destinataire :</strong> ${receipt.recipient}<br>
+                    <strong>💶 Montant :</strong> ${receipt.amount.toFixed(2)} €<br>
+                    <strong>💰 Commission ZNK (1%) :</strong> ${receipt.commission.toFixed(2)} €<br>
+                    <strong>🏦 Moyen :</strong> ${receipt.methodLabel}<br>
+                    ${receipt.motif ? `<strong>📝 Motif :</strong> ${receipt.motif}<br>` : ''}
+                    <strong>🔖 Référence :</strong> ${receipt.ref}<br>
+                    <strong>📅 Date :</strong> ${receipt.date.toLocaleString('fr-FR')}
+                </div>
+            `;
+
+            actionBtn.style.display = 'inline-block';
+            actionBtn.textContent = getActionText('downloadReceipt');
+            currentAction = 'downloadReceipt';
+        }
+
+        function downloadReceipt() {
+            const receipt = userData.lastReceipt;
+            if (!receipt) {
+                showNotification('Aucun reçu à télécharger', 'error');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 900;
+            canvas.height = 560;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createLinearGradient(0, 0, 900, 560);
+            grad.addColorStop(0, '#0f0f0f');
+            grad.addColorStop(0.5, '#1a1a2e');
+            grad.addColorStop(1, '#16213e');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 900, 560);
+
+            ctx.fillStyle = '#00d4ff';
+            ctx.fillRect(0, 0, 900, 8);
+
+            ctx.fillStyle = '#00d4ff';
+            ctx.font = 'bold 30px sans-serif';
+            ctx.fillText('ZNK NOMAD BANK', 40, 70);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px sans-serif';
+            ctx.fillText('Reçu de paiement', 40, 100);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.beginPath();
+            ctx.moveTo(40, 122);
+            ctx.lineTo(860, 122);
+            ctx.stroke();
+
+            const fields = [
+                ['Référence', receipt.ref],
+                ['Destinataire', receipt.recipient],
+                ['Montant', receipt.amount.toFixed(2) + ' €'],
+                ['Commission ZNK (1%)', receipt.commission.toFixed(2) + ' €'],
+                ['Total débité', receipt.total.toFixed(2) + ' €'],
+                ['Moyen de paiement', receipt.methodLabel],
+                ['Motif', receipt.motif || '—'],
+                ['Date', receipt.date.toLocaleString('fr-FR')]
+            ];
+
+            let y = 168;
+            fields.forEach(([label, value]) => {
+                ctx.fillStyle = '#aaaaaa';
+                ctx.font = '14px sans-serif';
+                ctx.fillText(label, 40, y);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 17px monospace';
+                ctx.fillText(String(value), 320, y);
+
+                y += 42;
+            });
+
+            ctx.fillStyle = '#666666';
+            ctx.font = '11px sans-serif';
+            ctx.fillText("Reçu généré automatiquement par l'écosystème ZNK hors ligne — conservez-le comme justificatif.", 40, 520);
+
+            canvas.toBlob(function (blob) {
+                if (!blob) {
+                    showNotification('Erreur lors de la génération du reçu', 'error');
+                    return;
+                }
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Recu_ZNK_${receipt.ref}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                showNotification('Reçu téléchargé avec succès', 'success');
+                vibrate(60);
+            }, 'image/png');
+        }
+
+        // ===== RIB - Relevé d'Identité Bancaire =====
+        // Génère (une seule fois, puis met en cache) un IBAN/BIC fictif
+        // déterministe pour le compte ZNK Nomad Bank de l'utilisateur.
+        function getRIBData() {
+            if (!userData.rib) {
+                userData.rib = buildRIBData();
+            }
+            return userData.rib;
+        }
+
+        function buildRIBData() {
+            const seed = userData.znkId || 'ZNK-0000';
+            let hash = 0;
+            for (let i = 0; i < seed.length; i++) {
+                hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+            }
+            const bankBranch = '1000500001'; // Code banque + code agence ZNK (fictif)
+            const accountNo = String(hash).padStart(11, '0').slice(-11);
+            const key = String(hash % 97).padStart(2, '0');
+            const check = String((hash % 89) + 10).padStart(2, '0');
+            const rawIban = `CM${check}${bankBranch}${accountNo}${key}`;
+            const iban = rawIban.replace(/(.{4})/g, '$1 ').trim();
+
+            return {
+                titulaire: userData.name,
+                znkId: userData.znkId,
+                iban: iban,
+                bic: 'ZNKNCMYA',
+                bankName: 'ZNK NOMAD BANK',
+                agence: 'Yaoundé - Cameroun (Hors ligne)',
+                date: new Date().toLocaleDateString('fr-FR')
+            };
+        }
+
+        // Génère une image PNG du RIB et déclenche son téléchargement
+        function downloadRIB() {
+            const rib = getRIBData();
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 900;
+            canvas.height = 540;
+            const ctx = canvas.getContext('2d');
+
+            // Fond dégradé (même identité visuelle que l'app)
+            const grad = ctx.createLinearGradient(0, 0, 900, 540);
+            grad.addColorStop(0, '#0f0f0f');
+            grad.addColorStop(0.5, '#1a1a2e');
+            grad.addColorStop(1, '#16213e');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 900, 540);
+
+            // Bandeau supérieur
+            ctx.fillStyle = '#00d4ff';
+            ctx.fillRect(0, 0, 900, 8);
+
+            // Titres
+            ctx.fillStyle = '#00d4ff';
+            ctx.font = 'bold 30px sans-serif';
+            ctx.fillText('ZNK NOMAD BANK', 40, 70);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px sans-serif';
+            ctx.fillText("Relevé d'Identité Bancaire (RIB)", 40, 100);
+
+            // Ligne de séparation
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.beginPath();
+            ctx.moveTo(40, 122);
+            ctx.lineTo(860, 122);
+            ctx.stroke();
+
+            // Champs du RIB
+            const fields = [
+                ['Titulaire du compte', rib.titulaire],
+                ['ID ZNK', rib.znkId],
+                ['IBAN', rib.iban],
+                ['BIC / SWIFT', rib.bic],
+                ['Banque', rib.bankName],
+                ['Agence', rib.agence],
+                ['Devise', 'EUR'],
+                ["Date d'émission", rib.date]
+            ];
+
+            let y = 168;
+            fields.forEach(([label, value]) => {
+                ctx.fillStyle = '#aaaaaa';
+                ctx.font = '14px sans-serif';
+                ctx.fillText(label, 40, y);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 17px monospace';
+                ctx.fillText(String(value), 320, y);
+
+                y += 42;
+            });
+
+            // Mention légale / offline
+            ctx.fillStyle = '#666666';
+            ctx.font = '11px sans-serif';
+            ctx.fillText("Document généré automatiquement par l'écosystème ZNK hors ligne — usage interne / justificatif de compte.", 40, 500);
+            ctx.fillText('Ce document ne constitue pas un RIB bancaire officiel émis par un établissement agréé.', 40, 516);
+
+            canvas.toBlob(function (blob) {
+                if (!blob) {
+                    showNotification("Erreur lors de la génération du RIB", 'error');
+                    return;
+                }
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `RIB_ZNK_${rib.znkId}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                showNotification('RIB téléchargé avec succès', 'success');
+                vibrate(60);
+            }, 'image/png');
+        }
+
+        // Actions spécifiques
+        function upgradeWhatsZNK() {
+            if (userData.balance >= 2) {
+                userData.balance -= 2;
+                userData.conversationsLeft = 150;
+                updateDisplay();
+                showNotification('WhatsZNK Premium activé!', 'success');
+                addTransaction('Upgrade WhatsZNK Premium', -2.00);
+            } else {
+                showNotification('Solde insuffisant', 'error');
+            }
+        }
+
+        function upgradeStudios() {
+            if (userData.balance >= 50) {
+                userData.balance -= 50;
+                userData.studiosUsed = 'Illimité';
+                updateDisplay();
+                showNotification('Studios ZNK Illimité activé!', 'success');
+                addTransaction('Upgrade Studios Illimité', -50.00);
+            } else {
+                showNotification('Solde insuffisant (50 € requis)', 'error');
+            }
+        }
+
+        function subscribeModem() {
+            if (userData.balance >= 20) {
+                userData.balance -= 20;
+                updateDisplay();
+                showNotification('Forfait Modem Multi activé!', 'success');
+                addTransaction('Abonnement Modem Multi', -20.00);
+            } else {
+                showNotification('Solde insuffisant (20 € requis)', 'error');
+            }
+        }
+
+        // Fonctions profil
+        function editProfile(field) {
+            const newValue = prompt(`Modifier ${field}:`);
+            if (newValue && newValue.trim()) {
+                if (field === 'name') {
+                    userData.name = newValue;
+                    document.getElementById('userName').textContent = newValue;
+                    document.getElementById('profileName').textContent = newValue;
+                }
+                showNotification('Profil mis à jour', 'success');
+            }
+        }
+
+        function toggleSetting(toggle) {
+            toggle.classList.toggle('active');
+            const isActive = toggle.classList.contains('active');
+            showNotification(`Paramètre ${isActive ? 'activé' : 'désactivé'}`, 'info');
+        }
+
+        function changePin() {
+            showNotification('Changement de PIN - Fonctionnalité en développement', 'info');
+        }
+
+        function contactSupport() {
+            showNotification('Support contacté - Réponse sous 24h', 'success');
+        }
+
+        function openFAQ() {
+            showNotification('FAQ - Section en construction', 'info');
+        }
+
+        function reportBug() {
+            showNotification('Bug signalé - Merci pour votre retour!', 'success');
+        }
+
+        function logout() {
+            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                showNotification('Déconnexion...', 'info');
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        }
+
+        // Statistiques
+        function changePeriod(btn, period) {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Simulation de mise à jour des stats selon la période
+            const multipliers = {
+                'semaine': 0.2,
+                'mois': 1,
+                'annee': 12
+            };
+            
+            const mult = multipliers[period];
+            document.getElementById('revenus').textContent = (userData.revenus * mult).toFixed(2);
+            document.getElementById('depenses').textContent = (userData.depenses * mult).toFixed(2);
+            document.getElementById('investissements').textContent = (userData.investissements * mult).toFixed(2);
+            
+            showNotification(`Période ${period === 'semaine' ? '7 jours' : period === 'mois' ? '1 mois' : '1 an'} sélectionnée`, 'info');
+        }
+
+        // Mise à jour de l'affichage
+        function updateDisplay() {
+            document.getElementById('mainBalance').textContent = userData.balance.toFixed(2);
+            document.getElementById('conversationsLeft').textContent = userData.conversationsLeft;
+        }
+
+        // Notifications
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // Gestion des transactions
+        let transactions = [];
+
+        function addTransaction(title, amount) {
+            const transaction = {
+                title: title,
+                amount: amount,
+                date: new Date(),
+                id: Date.now()
+            };
+            
+            transactions.unshift(transaction);
+            if (transactions.length > 10) {
+                transactions = transactions.slice(0, 10);
+            }
+            
+            updateTransactionsList();
+        }
+
+        function updateTransactionsList() {
+            const list = document.getElementById('transactionsList');
+            if (transactions.length === 0) return;
+            
+            list.innerHTML = transactions.map(t => `
+                <div class="transaction-item">
+                    <div class="transaction-info">
+                        <div class="transaction-title">${t.title}</div>
+                        <div class="transaction-date">${formatDate(t.date)}</div>
+                    </div>
+                    <div class="transaction-amount ${t.amount > 0 ? 'positive' : 'negative'}">
+                        ${t.amount > 0 ? '+' : ''}${t.amount.toFixed(2)} €
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDate(date) {
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'À l\'instant';
+            if (diff < 3600000) return Math.floor(diff / 60000) + ' min';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+            return Math.floor(diff / 86400000) + ' jours';
+        }
+
+        // Simulation mises à jour temps réel
+        function simulateRealTimeUpdates() {
+            // Simulation revenus copyright aléatoires
+            if (Math.random() < 0.3) {
+                const earnings = Math.random() * 15 + 2;
+                userData.balance += earnings;
+                userData.revenus += earnings;
+                updateDisplay();
+                addTransaction('Revenus Copyright', earnings);
+                showNotification(`+${earnings.toFixed(2)} € - Revenus copyright`, 'success');
+            }
+            
+            // Simulation commissions ZNK
+            if (Math.random() < 0.2) {
+                const commission = Math.random() * 5 + 1;
+                userData.balance -= commission;
+                userData.depenses += commission;
+                updateDisplay();
+                addTransaction('Commission ZNK (5%)', -commission);
+            }
+        }
+
+        // Gestionnaire de clicks pour fermer modal
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('serviceModal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Gestionnaire de double-tap sur la carte pour actualiser
+        let lastTap = 0;
+        document.addEventListener('touchend', function(e) {
+            if (e.target.closest('.balance-card')) {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 500 && tapLength > 0) {
+                    showNotification('Données actualisées', 'success');
+                    updateDisplay();
+                }
+                lastTap = currentTime;
+            }
+        });
+
+        // Animation de chargement des éléments
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                }
+            });
+        }, observerOptions);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.stat-card, .transaction-item, .profile-section').forEach(el => {
+                observer.observe(el);
+            });
+        });
+
+        // Initialisation des données au chargement
+        setTimeout(() => {
+            updateDisplay();
+            updateTransactionsList();
+        }, 100);
+
+        // Prévention du zoom sur mobile
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('gesturechange', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('gestureend', function(e) {
+            e.preventDefault();
+        });
+
+        // Amélioration de la navigation tactile
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.closest('.action-btn, .nav-item, .modal-btn')) {
+                e.target.closest('.action-btn, .nav-item, .modal-btn').style.transform = 'scale(0.95)';
+            }
+        });
+
+        document.addEventListener('touchend', function(e) {
+            if (e.target.closest('.action-btn, .nav-item, .modal-btn')) {
+                setTimeout(() => {
+                    e.target.closest('.action-btn, .nav-item, .modal-btn').style.transform = '';
+                }, 100);
+            }
+        });
+
+        // Gestion du clavier virtuel sur mobile
+        let initialViewportHeight = window.innerHeight;
+        
+        window.addEventListener('resize', function() {
+            const currentViewportHeight = window.innerHeight;
+            const phoneContainer = document.querySelector('.phone-container');
+            
+            if (currentViewportHeight < initialViewportHeight * 0.75) {
+                // Clavier probablement ouvert
+                phoneContainer.style.height = '90vh';
+            } else {
+                // Clavier fermé
+                phoneContainer.style.height = '100%';
+            }
+        });
+
+        // Optimisation des performances
+        let animationFrame;
+        function throttledUpdate() {
+            if (animationFrame) return;
+            animationFrame = requestAnimationFrame(() => {
+                updateDisplay();
+                animationFrame = null;
+            });
+        }
+
+        // Gestion de l'état hors ligne
+        window.addEventListener('online', () => {
+            showNotification('Connexion rétablie', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            showNotification('Mode hors ligne', 'info');
+        });
+
+        // Sauvegarde automatique des données utilisateur
+        function saveUserData() {
+            try {
+                // Note: localStorage n'est pas disponible dans cet environnement
+                // Simulation de sauvegarde
+                console.log('Données utilisateur sauvegardées');
+            } catch (e) {
+                console.log('Sauvegarde en mémoire uniquement');
+            }
+        }
+
+        // Sauvegarde périodique
+        setInterval(saveUserData, 30000);
+
+        // Détection de l'orientation
+        window.addEventListener('orientationchange', function() {
+            setTimeout(() => {
+                // Recalculer les dimensions après changement d'orientation
+                const phoneContainer = document.querySelector('.phone-container');
+                if (window.orientation === 90 || window.orientation === -90) {
+                    // Mode paysage
+                    phoneContainer.style.maxWidth = '90vw';
+                    phoneContainer.style.maxHeight = '70vh';
+                } else {
+                    // Mode portrait
+                    phoneContainer.style.maxWidth = '320px';
+                    phoneContainer.style.maxHeight = '680px';
+                }
+            }, 100);
+        });
+
+        // Fonction de debug pour les développeurs
+        window.znkDebug = {
+            userData: userData,
+            transactions: transactions,
+            resetBalance: () => {
+                userData.balance = 1000;
+                updateDisplay();
+                showNotification('Balance réinitialisée', 'info');
+            },
+            addRandomTransaction: () => {
+                const amount = (Math.random() - 0.5) * 100;
+                addTransaction('Transaction Debug', amount);
+                userData.balance += amount;
+                updateDisplay();
+            }
+        };
+
+        // Easter egg - Konami Code
+        let konamiCode = [];
+        const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight'];
+        
+        document.addEventListener('keydown', function(e) {
+            konamiCode.push(e.code);
+            konamiCode = konamiCode.slice(-8);
+            
+            if (konamiCode.join(',') === konamiSequence.join(',')) {
+                userData.balance += 1000;
+                updateDisplay();
+                showNotification('🎉 Bonus secret activé! +1000 €', 'success');
+                konamiCode = [];
+            }
+        });
+
+        // Amélioration de l'accessibilité
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+            
+            if (e.key === 'Tab') {
+                // Améliorer la navigation au clavier
+                document.querySelector('.nav-item.active').focus();
+            }
+        });
+
+        // Animation du logo ZNK
+        setInterval(() => {
+            const logo = document.querySelector('.znk-logo');
+            if (logo && Math.random() < 0.1) {
+                logo.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    logo.style.transform = '';
+                }, 200);
+            }
+        }, 5000);
+
+        // Feedback haptique simulé
+        function vibrate(duration = 50) {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(duration);
+            }
+        }
+
+        // Ajouter vibration aux actions importantes
+        const originalUpgradeWhatsZNK = upgradeWhatsZNK;
+        upgradeWhatsZNK = function() {
+            vibrate(100);
+            return originalUpgradeWhatsZNK.call(this);
+        };
+
+        // Gestion intelligente de la batterie
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(battery => {
+                function updateBatteryInfo() {
+                    const level = Math.floor(battery.level * 100);
+                    document.getElementById('batteryLevel').textContent = level + '%';
+                    
+                    if (level < 20) {
+                        document.getElementById('batteryLevel').style.color = '#f44336';
+                    } else if (level < 50) {
+                        document.getElementById('batteryLevel').style.color = '#ff9800';
+                    } else {
+                        document.getElementById('batteryLevel').style.color = '#4caf50';
+                    }
+                }
+                
+                battery.addEventListener('levelchange', updateBatteryInfo);
+                updateBatteryInfo();
+            });
+        }
+    </script>
+</body>
+</html>
