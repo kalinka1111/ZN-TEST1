@@ -79,6 +79,13 @@ jobs:
       - name: Build Windows (.exe)
         run: npm run build:win -- --publish=never
 
+      - name: Retire les espaces du nom de fichier (évite mismatch avec GitHub Releases)
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path desktop -Filter *.exe | Select-Object -First 1
+          $newName = $exe.Name -replace ' ', '-'
+          Rename-Item -Path $exe.FullName -NewName $newName
+
       - name: Upload le résultat (artifact temporaire)
         uses: actions/upload-artifact@v4
         with:
@@ -120,8 +127,8 @@ jobs:
 
       - name: Prépare les fichiers latest.json (auto-update)
         run: |
-          DMG_FILE=$(basename $(ls dist/*.dmg))
-          EXE_FILE=$(basename $(ls dist/*.exe))
+          DMG_FILE=$(basename "$(ls dist/*.dmg)")
+          EXE_FILE=$(basename "$(ls dist/*.exe)")
           DMG_SIZE=$(stat -c%s "dist/$DMG_FILE")
           EXE_SIZE=$(stat -c%s "dist/$EXE_FILE")
           VERSION="${{ steps.version.outputs.version }}"
