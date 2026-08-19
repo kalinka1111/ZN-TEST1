@@ -70,11 +70,6 @@
     "filter": ["**/*"]
   },
   {
-    "from": "models/",
-    "to": "models/",
-    "filter": ["**/*"]
-  },
-  {
     "from": "persistent-audios/",
     "to": "persistent-audios/",
     "filter": ["**/*"]

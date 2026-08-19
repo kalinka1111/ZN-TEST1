@@ -479,24 +479,11 @@
             .btn-ctrl { width: 40px; height: 40px; font-size: 16px; }
         }
 
-        /* Effets */
-        .particle { 
-            position: fixed; 
-            pointer-events: none; 
-            z-index: 9999; 
-            animation: fly 2s ease-out forwards;
-        }
-        
-        @keyframes fly { 
-            0% { transform: translateY(0) scale(1); opacity: 1; } 
-            100% { transform: translateY(-300px) rotate(360deg) scale(0); opacity: 0; } 
-        }
-        
         @keyframes pop { 
             from { opacity: 0; transform: scale(0.9); } 
             to { opacity: 1; transform: scale(1); } 
         }
-        
+
         /* Loading */
         .loading {
             position: fixed;
@@ -561,6 +548,74 @@
             50% { opacity: 0.5; }
         }
 
+        /* --- APPELS VIDÉO --- */
+        .btn-call {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: #0b2e13;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-call.hangup {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+            color: #2e0b0b;
+        }
+        .btn-call:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .incoming-call-banner {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid rgba(74, 222, 128, 0.4);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: none;
+            align-items: center;
+            gap: 16px;
+            z-index: 300;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .incoming-call-banner.show { display: flex; }
+        .incoming-call-banner .caller-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .incoming-call-banner button {
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .btn-accept { background: #4ade80; }
+        .btn-reject { background: #f87171; }
+
+        .call-status-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 10, 10, 0.9);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 300;
+            display: none;
+        }
+        .call-status-toast.show { display: block; }
+
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -597,8 +652,22 @@
                     <span id="statusText">Déconnecté</span>
                 </div>
             </div>
+            <button class="btn-call" id="callActionBtn" onclick="onCallButtonClick()" disabled>📞 Appeler</button>
             <div class="room-id" id="roomDisplay">Room: -</div>
         </div>
+
+        <!-- Bandeau appel entrant -->
+        <div class="incoming-call-banner" id="incomingCallBanner">
+            <div>
+                <div class="caller-name" id="incomingCallerName">—</div>
+                <div style="font-size:11px; color:#9ca3af;">Appel vidéo entrant</div>
+            </div>
+            <button class="btn-accept" onclick="acceptIncomingCall()" title="Accepter">✅</button>
+            <button class="btn-reject" onclick="rejectIncomingCall()" title="Refuser">❌</button>
+        </div>
+
+        <!-- Toast statut d'appel -->
+        <div class="call-status-toast" id="callStatusToast"></div>
 
         <!-- Multi-selector -->
         <div class="multi-selector">
@@ -640,13 +709,6 @@
 
         <!-- Keyboard -->
         <div class="kb-area">
-            <div class="kb-row">
-                <div class="key key-ia" onclick="action('❤️', 'heart')">❤️</div>
-                <div class="key key-ia" onclick="action('💭', 'sparkle')">💭</div>
-                <div class="key" onclick="action('🌸', 'flower')">🌸</div>
-                <div class="key" onclick="action('🌈', 'rainbow')">🌈</div>
-                <div id="ph-horiz" style="display:flex; gap:6px;"></div>
-            </div>
             <div class="kb-row" style="margin-bottom:0;">
                 <div class="key" style="flex:1; max-width: 280px;" onclick="addChar(' ')">ESPACE</div>
                 <div class="key" onclick="backspace()">⌫</div>
@@ -755,10 +817,19 @@ async function znkFetch(url, options = {}) {
 
 // ==================== CONFIGURATION ====================
 const CONFIG = {
-    serverUrl: 'ws://localhost:3001', // Signalisation vidéo WebRTC - non branché pour l'instant
+    serverUrl: 'ws://localhost:3001', // Non utilisé — signaling WebRTC fait en HTTP polling via ZNK_BACKEND_URL (voir plus bas)
     roomId: 'room_' + Date.now().toString(36),
     userId: myIdZNK || ('anon_' + Math.random().toString(36).substr(2, 9))
 };
+
+// Serveurs ICE : STUN publics suffisent si les deux users sont sur des réseaux ouverts.
+// Sur NAT strict / 4G, un serveur TURN est nécessaire — décommenter une fois coturn
+// installé sur le VPS (voir doc de déploiement).
+const ICE_SERVERS = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' }
+    // , { urls: 'turn:vps.znk.systems:3478', username: 'znk', credential: 'CHANGEME' }
+];
 
 // ==================== STATE ====================
 let whatsznk = null;
@@ -767,6 +838,17 @@ let micEnabled = true;
 let localStream = null;
 let currentContactId = null; // idZNK du contact actuellement affiché dans le chat
 let conversationsCache = { inbox: [], sent: [] };
+
+// --- État appel vidéo ---
+let peerConnection = null;
+let currentCallId = null;
+let callRole = null;           // 'caller' | 'callee'
+let remoteContactId = null;    // idZNK du correspondant de l'appel en cours
+let iceSinceIndex = 0;         // curseur de polling des candidats ICE distants
+let incomingCallPollTimer = null;
+let callPollTimer = null;
+let icePollTimer = null;
+let pendingIncomingCall = null; // { call_id, from, offer } en attente d'accept/reject
 
 // ==================== DOM ELEMENTS ====================
 const chat = document.getElementById('chatFlow');
@@ -824,13 +906,11 @@ async function init() {
             await refreshConversation();
             setInterval(loadContacts, 10000);       // qui est joignable en ce moment
             setInterval(refreshConversation, 5000);  // nouveaux messages
+            startIncomingCallPolling();              // appels vidéo entrants
         } else {
             console.warn('⚠️ Aucune identité ZNK trouvée — connectez-vous via auth-hub.html');
             loadContacts();
         }
-        
-        // Setup keyboard
-        setupKeyboard();
         
         console.log('✅ WhatsZNK initialisé');
         
@@ -1013,6 +1093,9 @@ function loadImageFilterPrefs() {
 
 function leaveCall() {
     if(confirm('Voulez-vous vraiment quitter?')) {
+        if (currentCallId) {
+            endCall('window_closed');
+        }
         if(localStream) {
             localStream.getTracks().forEach(track => track.stop());
         }
@@ -1071,27 +1154,42 @@ function selectContact(idZNK) {
     document.querySelectorAll('.contact').forEach(el => el.classList.remove('active'));
     chat.innerHTML = '';
     refreshConversation();
+    updateCallButton();
 }
 
-// ==================== KEYBOARD ====================
-function setupKeyboard() {
-    const ph = document.getElementById('ph-horiz');
-    const demoIcons = ['🌟','💎','🔥','🚀','🛸','💾','🎸','📸'];
-    
-    demoIcons.forEach(icon => {
-        const k = document.createElement('div');
-        k.className = 'key';
-        k.textContent = icon;
-        k.onclick = () => action(icon, 'sparkle');
-        ph.appendChild(k);
-    });
+function updateCallButton() {
+    const btn = document.getElementById('callActionBtn');
+    if (!btn) return;
+    if (currentCallId) {
+        btn.textContent = '📴 Raccrocher';
+        btn.classList.add('hangup');
+        btn.disabled = false;
+    } else {
+        btn.textContent = '📞 Appeler';
+        btn.classList.remove('hangup');
+        btn.disabled = !currentContactId;
+    }
 }
 
-function action(emoji, type) {
-    input.value += emoji;
-    launchEffect(type);
-    if(emoji === '❤️' || emoji === '💭') triggerZNKia(emoji);
-    input.focus();
+function onCallButtonClick() {
+    if (currentCallId) {
+        endCall('ended_by_me');
+    } else if (currentContactId) {
+        startCall(currentContactId);
+    }
+}
+
+function showCallToast(text, autoHideMs) {
+    const toast = document.getElementById('callStatusToast');
+    toast.textContent = text;
+    toast.classList.add('show');
+    if (autoHideMs) {
+        setTimeout(() => toast.classList.remove('show'), autoHideMs);
+    }
+}
+
+function hideCallToast() {
+    document.getElementById('callStatusToast').classList.remove('show');
 }
 
 function addChar(c) { 
@@ -1102,22 +1200,6 @@ function addChar(c) {
 function backspace() { 
     input.value = input.value.slice(0, -1); 
     input.focus(); 
-}
-
-// ==================== EFFECTS ====================
-function launchEffect(type) {
-    for(let i=0; i<12; i++) {
-        setTimeout(() => {
-            const p = document.createElement('div');
-            p.className = 'particle';
-            p.style.left = (Math.random() * 100) + 'vw';
-            p.style.top = '70vh';
-            p.style.fontSize = '22px';
-            p.textContent = type === 'heart' ? '❤️' : (type === 'flower' ? '🌸' : '✨');
-            document.body.appendChild(p);
-            setTimeout(() => p.remove(), 2000);
-        }, i * 50);
-    }
 }
 
 // ==================== CHAT ====================
@@ -1192,18 +1274,6 @@ async function refreshConversation() {
     }
 }
 
-function triggerZNKia(type) {
-    setTimeout(() => {
-        const z = document.createElement('div');
-        z.className = 'msg received znkia';
-        z.textContent = type === '❤️' ? 
-            "ZNKia : Un moment spécial ?" : 
-            "ZNKia : Je vous écoute.";
-        chat.appendChild(z);
-        chat.scrollTop = chat.scrollHeight;
-    }, 1000);
-}
-
 // ==================== STATUS ====================
 function updateStatus(connected) {
     if(connected) {
@@ -1213,6 +1283,262 @@ function updateStatus(connected) {
         statusIndicator.classList.remove('connected');
         statusText.textContent = 'Déconnecté';
     }
+}
+
+// ==================== APPELS VIDÉO (WebRTC) ====================
+
+function createPeerConnection(otherPartyId) {
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+    // Envoie chaque piste locale (caméra + micro) au correspondant
+    if (localStream) {
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    }
+
+    // Réception du flux distant -> on l'affiche dans la 2e case de la grille
+    pc.ontrack = (event) => {
+        attachRemoteStream(event.streams[0]);
+    };
+
+    // À chaque candidat ICE découvert localement, on le dépose pour l'autre partie
+    pc.onicecandidate = (event) => {
+        if (event.candidate && currentCallId) {
+            znkFetch(`${ZNK_BACKEND_URL}/api/calls/${currentCallId}/ice`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ candidate: event.candidate })
+            }).catch(() => {});
+        }
+    };
+
+    pc.onconnectionstatechange = () => {
+        if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+            if (currentCallId) {
+                showCallToast('📴 Connexion perdue avec ' + (remoteContactId || 'le contact'), 4000);
+                endCall('connection_lost', /*notifyServer=*/pc.connectionState !== 'closed');
+            }
+        }
+    };
+
+    return pc;
+}
+
+function attachRemoteStream(stream) {
+    if (vGrid.children.length < 2 || !document.getElementById('video-box-2')) {
+        setGrid(2);
+    }
+    const box = document.getElementById('video-box-2');
+    if (!box) return;
+    box.innerHTML = '';
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.autoplay = true;
+    video.playsInline = true;
+    box.appendChild(video);
+    const label = document.createElement('div');
+    label.className = 'video-label';
+    label.textContent = remoteContactId || 'Correspondant';
+    box.appendChild(label);
+}
+
+async function startCall(toIdZNK) {
+    if (currentCallId) return; // déjà en appel
+    try {
+        peerConnection = createPeerConnection(toIdZNK);
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        const response = await znkFetch(`${ZNK_BACKEND_URL}/api/calls/invite`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: toIdZNK, offer: offer })
+        });
+        const data = await response.json();
+        if (!data.call_id) {
+            throw new Error('Pas de call_id reçu');
+        }
+
+        currentCallId = data.call_id;
+        callRole = 'caller';
+        remoteContactId = toIdZNK;
+        iceSinceIndex = 0;
+        stopIncomingCallPolling(); // on ne peut pas recevoir un appel pendant qu'on en passe un
+        updateCallButton();
+        showCallToast('📞 Appel de ' + toIdZNK + '…');
+
+        pollCallStatusAsCaller();
+        startIcePolling();
+    } catch (e) {
+        console.error('❌ Erreur démarrage appel:', e);
+        showCallToast('❌ Impossible de démarrer l\'appel', 3000);
+        cleanupCallLocal();
+    }
+}
+
+function pollCallStatusAsCaller() {
+    if (callPollTimer) clearInterval(callPollTimer);
+    callPollTimer = setInterval(async () => {
+        if (!currentCallId || callRole !== 'caller') return;
+        try {
+            const response = await znkFetch(`${ZNK_BACKEND_URL}/api/calls/${currentCallId}/status`);
+            const data = await response.json();
+            if (data.call_status === 'answered' && data.answer && peerConnection && !peerConnection.currentRemoteDescription) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                showCallToast('✅ En communication avec ' + remoteContactId, 2000);
+            } else if (data.call_status === 'rejected') {
+                showCallToast('📵 ' + remoteContactId + ' a refusé l\'appel', 3000);
+                endCall('rejected', /*notifyServer=*/false);
+            } else if (data.call_status === 'missed') {
+                showCallToast('📵 Pas de réponse', 3000);
+                endCall('missed', /*notifyServer=*/false);
+            } else if (data.call_status === 'ended') {
+                showCallToast('📴 Appel terminé', 2000);
+                endCall('ended_by_peer', /*notifyServer=*/false);
+            }
+        } catch (e) { /* réessaiera au prochain tick */ }
+    }, 2000);
+}
+
+function startIcePolling() {
+    if (icePollTimer) clearInterval(icePollTimer);
+    icePollTimer = setInterval(async () => {
+        if (!currentCallId || !peerConnection) return;
+        try {
+            const response = await znkFetch(`${ZNK_BACKEND_URL}/api/calls/${currentCallId}/ice?since=${iceSinceIndex}`);
+            const data = await response.json();
+            if (data.candidates && data.candidates.length) {
+                for (const c of data.candidates) {
+                    try { await peerConnection.addIceCandidate(c); } catch (e) { /* candidat obsolète, ignore */ }
+                }
+            }
+            if (typeof data.next_since === 'number') {
+                iceSinceIndex = data.next_since;
+            }
+        } catch (e) { /* réessaiera au prochain tick */ }
+    }, 1500);
+}
+
+// --- Réception d'appel ---
+
+function startIncomingCallPolling() {
+    if (incomingCallPollTimer) clearInterval(incomingCallPollTimer);
+    incomingCallPollTimer = setInterval(async () => {
+        if (currentCallId || pendingIncomingCall) return; // déjà en appel ou déjà une invitation affichée
+        try {
+            const response = await znkFetch(`${ZNK_BACKEND_URL}/api/calls/incoming`);
+            const data = await response.json();
+            if (data.incoming) {
+                pendingIncomingCall = data.incoming;
+                showIncomingCallBanner(data.incoming.from);
+            }
+        } catch (e) { /* réessaiera au prochain tick */ }
+    }, 3000);
+}
+
+function stopIncomingCallPolling() {
+    if (incomingCallPollTimer) {
+        clearInterval(incomingCallPollTimer);
+        incomingCallPollTimer = null;
+    }
+}
+
+function showIncomingCallBanner(fromIdZNK) {
+    document.getElementById('incomingCallerName').textContent = fromIdZNK;
+    document.getElementById('incomingCallBanner').classList.add('show');
+}
+
+function hideIncomingCallBanner() {
+    document.getElementById('incomingCallBanner').classList.remove('show');
+    pendingIncomingCall = null;
+}
+
+async function acceptIncomingCall() {
+    if (!pendingIncomingCall) return;
+    const { call_id, from, offer } = pendingIncomingCall;
+    hideIncomingCallBanner();
+    stopIncomingCallPolling();
+
+    try {
+        peerConnection = createPeerConnection(from);
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        await znkFetch(`${ZNK_BACKEND_URL}/api/calls/${call_id}/answer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answer: answer })
+        });
+
+        currentCallId = call_id;
+        callRole = 'callee';
+        remoteContactId = from;
+        iceSinceIndex = 0;
+        updateCallButton();
+        showCallToast('✅ En communication avec ' + from, 2000);
+
+        startIcePolling();
+        pollCallStatusAsCallee();
+    } catch (e) {
+        console.error('❌ Erreur acceptation appel:', e);
+        showCallToast('❌ Impossible d\'accepter l\'appel', 3000);
+        cleanupCallLocal();
+        startIncomingCallPolling();
+    }
+}
+
+async function rejectIncomingCall() {
+    if (!pendingIncomingCall) return;
+    const { call_id } = pendingIncomingCall;
+    hideIncomingCallBanner();
+    try {
+        await znkFetch(`${ZNK_BACKEND_URL}/api/calls/${call_id}/reject`, { method: 'POST' });
+    } catch (e) { /* ignore */ }
+}
+
+function pollCallStatusAsCallee() {
+    if (callPollTimer) clearInterval(callPollTimer);
+    callPollTimer = setInterval(async () => {
+        if (!currentCallId || callRole !== 'callee') return;
+        try {
+            const response = await znkFetch(`${ZNK_BACKEND_URL}/api/calls/${currentCallId}/status`);
+            const data = await response.json();
+            if (data.call_status === 'ended') {
+                showCallToast('📴 Appel terminé', 2000);
+                endCall('ended_by_peer', /*notifyServer=*/false);
+            }
+        } catch (e) { /* réessaiera au prochain tick */ }
+    }, 2000);
+}
+
+// --- Fin d'appel ---
+
+async function endCall(reason, notifyServer) {
+    if (notifyServer === undefined) notifyServer = true;
+    const callId = currentCallId;
+    cleanupCallLocal();
+    if (callId && notifyServer) {
+        try {
+            await znkFetch(`${ZNK_BACKEND_URL}/api/calls/${callId}/hangup`, { method: 'POST' });
+        } catch (e) { /* ignore */ }
+    }
+    startIncomingCallPolling();
+}
+
+function cleanupCallLocal() {
+    if (callPollTimer) { clearInterval(callPollTimer); callPollTimer = null; }
+    if (icePollTimer) { clearInterval(icePollTimer); icePollTimer = null; }
+    if (peerConnection) {
+        try { peerConnection.close(); } catch (e) { /* ignore */ }
+        peerConnection = null;
+    }
+    currentCallId = null;
+    callRole = null;
+    remoteContactId = null;
+    iceSinceIndex = 0;
+    setGrid(1); // retire la case vidéo du correspondant, ne garde que la nôtre
+    updateCallButton();
+    setTimeout(hideCallToast, 1500);
 }
 
 // ==================== CAMERA CORE INTEGRATION ====================
@@ -1233,7 +1559,11 @@ window.WhatsZNK = {
     toggleCamera,
     toggleMicrophone,
     sendMessage,
-    leaveCall
+    leaveCall,
+    startCall,
+    endCall,
+    acceptIncomingCall,
+    rejectIncomingCall
 };
 </script>
 </body>

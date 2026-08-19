@@ -16,6 +16,7 @@ import requests
 import re
 from functools import wraps
 from datetime import datetime, timedelta
+import threading
 
 # Pont vers le démon P2P (découverte + transport local, voir znk_p2p_protocol.py)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -430,6 +431,212 @@ def get_peers():
         return err
     peers = [{'id_znk': pid, 'ip': ip, 'port': port} for pid, (ip, port) in znk_node.peers.items()]
     return jsonify({'status': 'success', 'peers': peers})
+
+# ============================================================================
+# ROUTES - SIGNALING APPELS VIDÉO (WebRTC)
+# ============================================================================
+# Le VPS ne relaie JAMAIS le flux audio/vidéo (ça resterait du P2P direct entre
+# les deux devices, via STUN/TURN) — il sert uniquement de "boîte aux lettres"
+# pour échanger l'offer/answer SDP et les candidats ICE, sur le même principe
+# de polling HTTP que la messagerie texte ci-dessus (pas de WebSocket).
+#
+# Cycle de vie d'un appel :
+#   1. Appelant  -> POST /api/calls/invite            (offer SDP)
+#   2. Appelé    -> GET  /api/calls/incoming           (poll ~2-3s en fond)
+#   3. Appelé    -> POST /api/calls/<id>/answer         (answer SDP) ou /reject
+#   4. Appelant  -> GET  /api/calls/<id>/status         (poll jusqu'à 'answered')
+#   5. Les deux  -> POST /api/calls/<id>/ice             (à chaque candidat trouvé)
+#   6. Les deux  -> GET  /api/calls/<id>/ice?since=N     (poll ~1.5s pendant l'appel)
+#   7. L'un des deux -> POST /api/calls/<id>/hangup
+
+CALL_RINGING_TIMEOUT_SECONDS = 45   # au-delà, un appel non décroché est considéré manqué
+CALL_SESSION_TTL_SECONDS = 3600     # ménage des vieilles sessions terminées
+
+call_lock = threading.Lock()
+call_sessions = {}     # call_id -> {caller, callee, offer, answer, ice_caller[], ice_callee[], status, created_at}
+incoming_calls = {}    # id_znk (callee) -> call_id de l'appel en attente de réponse
+
+def _cleanup_calls_locked():
+    """Purge les sessions expirées. À appeler avec call_lock déjà acquis."""
+    maintenant = datetime.now()
+    for cid, s in list(call_sessions.items()):
+        age = (maintenant - s['created_at']).total_seconds()
+        if s['status'] == 'ringing' and age > CALL_RINGING_TIMEOUT_SECONDS:
+            s['status'] = 'missed'
+            incoming_calls.pop(s['callee'], None)
+        elif s['status'] in ('ended', 'rejected', 'missed') and age > CALL_SESSION_TTL_SECONDS:
+            del call_sessions[cid]
+
+
+@app.route('/api/calls/invite', methods=['POST'])
+@require_api_key
+def call_invite():
+    """L'appelant démarre un appel : envoie son offer SDP au destinataire (par idZNK)."""
+    caller = request.id_znk_authentifie
+    data = request.get_json() or {}
+    callee = data.get('to')
+    offer = data.get('offer')
+
+    if not callee or not offer:
+        return jsonify({'status': 'error', 'message': 'Destinataire ou offer manquant'}), 400
+
+    call_id = uuid.uuid4().hex
+    with call_lock:
+        _cleanup_calls_locked()
+        call_sessions[call_id] = {
+            'caller': caller,
+            'callee': callee,
+            'offer': offer,
+            'answer': None,
+            'ice_caller': [],
+            'ice_callee': [],
+            'status': 'ringing',
+            'created_at': datetime.now()
+        }
+        incoming_calls[callee] = call_id
+
+    return jsonify({'status': 'success', 'call_id': call_id}), 201
+
+
+@app.route('/api/calls/incoming', methods=['GET'])
+@require_api_key
+def call_incoming():
+    """Poll côté appelé : y a-t-il un appel entrant en attente pour moi ?"""
+    my_id = request.id_znk_authentifie
+    with call_lock:
+        _cleanup_calls_locked()
+        call_id = incoming_calls.get(my_id)
+        if not call_id or call_id not in call_sessions:
+            return jsonify({'status': 'success', 'incoming': None})
+        s = call_sessions[call_id]
+        if s['status'] != 'ringing':
+            incoming_calls.pop(my_id, None)
+            return jsonify({'status': 'success', 'incoming': None})
+        return jsonify({'status': 'success', 'incoming': {
+            'call_id': call_id, 'from': s['caller'], 'offer': s['offer']
+        }})
+
+
+def _get_call_or_404(call_id):
+    s = call_sessions.get(call_id)
+    if not s:
+        return None, (jsonify({'status': 'error', 'message': 'Appel introuvable ou expiré'}), 404)
+    return s, None
+
+
+@app.route('/api/calls/<call_id>/answer', methods=['POST'])
+@require_api_key
+def call_answer(call_id):
+    """L'appelé accepte l'appel et renvoie son answer SDP."""
+    my_id = request.id_znk_authentifie
+    data = request.get_json() or {}
+    answer = data.get('answer')
+    if not answer:
+        return jsonify({'status': 'error', 'message': 'answer manquant'}), 400
+
+    with call_lock:
+        s, err = _get_call_or_404(call_id)
+        if err:
+            return err
+        if s['callee'] != my_id:
+            return jsonify({'status': 'error', 'message': 'Non autorisé pour cet appel'}), 403
+        s['answer'] = answer
+        s['status'] = 'answered'
+        incoming_calls.pop(my_id, None)
+
+    return jsonify({'status': 'success'})
+
+
+@app.route('/api/calls/<call_id>/reject', methods=['POST'])
+@require_api_key
+def call_reject(call_id):
+    """L'appelé refuse l'appel."""
+    my_id = request.id_znk_authentifie
+    with call_lock:
+        s, err = _get_call_or_404(call_id)
+        if err:
+            return err
+        if s['callee'] != my_id:
+            return jsonify({'status': 'error', 'message': 'Non autorisé pour cet appel'}), 403
+        s['status'] = 'rejected'
+        incoming_calls.pop(my_id, None)
+    return jsonify({'status': 'success'})
+
+
+@app.route('/api/calls/<call_id>/hangup', methods=['POST'])
+@require_api_key
+def call_hangup(call_id):
+    """L'une ou l'autre partie raccroche/annule l'appel."""
+    my_id = request.id_znk_authentifie
+    with call_lock:
+        s, err = _get_call_or_404(call_id)
+        if err:
+            return err
+        if my_id not in (s['caller'], s['callee']):
+            return jsonify({'status': 'error', 'message': 'Non autorisé pour cet appel'}), 403
+        s['status'] = 'ended'
+        incoming_calls.pop(s['callee'], None)
+    return jsonify({'status': 'success'})
+
+
+@app.route('/api/calls/<call_id>/status', methods=['GET'])
+@require_api_key
+def call_status(call_id):
+    """Poll côté appelant (et appelé) : où en est l'appel (ringing/answered/rejected/ended/missed) ?"""
+    my_id = request.id_znk_authentifie
+    with call_lock:
+        _cleanup_calls_locked()
+        s, err = _get_call_or_404(call_id)
+        if err:
+            return err
+        if my_id not in (s['caller'], s['callee']):
+            return jsonify({'status': 'error', 'message': 'Non autorisé pour cet appel'}), 403
+        return jsonify({'status': 'success', 'call_status': s['status'],
+                         'answer': s['answer'] if my_id == s['caller'] else None})
+
+
+@app.route('/api/calls/<call_id>/ice', methods=['POST'])
+@require_api_key
+def call_ice_post(call_id):
+    """Dépose un candidat ICE découvert localement, pour l'autre partie de l'appel."""
+    my_id = request.id_znk_authentifie
+    data = request.get_json() or {}
+    candidate = data.get('candidate')
+    if not candidate:
+        return jsonify({'status': 'error', 'message': 'candidate manquant'}), 400
+
+    with call_lock:
+        s, err = _get_call_or_404(call_id)
+        if err:
+            return err
+        if my_id == s['caller']:
+            s['ice_caller'].append(candidate)
+        elif my_id == s['callee']:
+            s['ice_callee'].append(candidate)
+        else:
+            return jsonify({'status': 'error', 'message': 'Non autorisé pour cet appel'}), 403
+    return jsonify({'status': 'success'})
+
+
+@app.route('/api/calls/<call_id>/ice', methods=['GET'])
+@require_api_key
+def call_ice_get(call_id):
+    """Récupère les nouveaux candidats ICE de l'AUTRE partie, à partir de l'index `since`."""
+    my_id = request.id_znk_authentifie
+    since = request.args.get('since', 0, type=int)
+
+    with call_lock:
+        s, err = _get_call_or_404(call_id)
+        if err:
+            return err
+        if my_id == s['caller']:
+            candidates = s['ice_callee']
+        elif my_id == s['callee']:
+            candidates = s['ice_caller']
+        else:
+            return jsonify({'status': 'error', 'message': 'Non autorisé pour cet appel'}), 403
+        nouveaux = candidates[since:]
+        return jsonify({'status': 'success', 'candidates': nouveaux, 'next_since': len(candidates)})
 
 # ============================================================================
 # ROUTES - IA (ZNKOMia <-> Ollama)

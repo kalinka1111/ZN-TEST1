@@ -432,12 +432,115 @@ function getP2PBinPath() {
     return getBinPath(name);
 }
 
-// Modèle GGML (ex: ggml-small.bin) livré via extraResources sous un dossier
-// "models/" séparé, au même niveau que "bin/" (process.resourcesPath/models
-// en build packagé). Un seul fichier, partagé par mac et win.
+// Modèle GGML (ex: ggml-small.bin) — plus embarqué dans l'installateur
+// (l'ancien extraResources faisait dépasser la limite de 2 Go des
+// installateurs Windows/NSIS). Téléchargé à la demande dans userData/models/
+// depuis R2, puis réutilisé à chaque lancement suivant (mis en cache).
 function getModelPath(filename) {
-    if (app.isPackaged) return path.join(process.resourcesPath, 'models', filename);
-    return path.join(__dirname, 'models', filename);
+    return path.join(app.getPath('userData'), 'models', filename);
+}
+
+// Le modèle est hébergé en 2 morceaux sur R2 (250 Mo chacun, limite du
+// dashboard web Cloudflare) : ggml-small.bin.part-aa et part-ab.
+const ZNK_MODEL_PARTS = [
+    'https://cdn.znk.systems/models/ggml-small.bin.part-aa',
+    'https://cdn.znk.systems/models/ggml-small.bin.part-ab'
+];
+
+function downloadFile(url, destPath, onProgress) {
+    return new Promise((resolve, reject) => {
+        const https = require('https');
+        const file = fs.createWriteStream(destPath);
+
+        https.get(url, (response) => {
+            if (response.statusCode !== 200) {
+                file.close();
+                fs.unlink(destPath, () => {});
+                reject(new Error(`Échec du téléchargement (HTTP ${response.statusCode}) : ${url}`));
+                return;
+            }
+
+            const totalSize = parseInt(response.headers['content-length'] || '0', 10);
+            let downloaded = 0;
+
+            response.on('data', (chunk) => {
+                downloaded += chunk.length;
+                if (onProgress && totalSize > 0) {
+                    onProgress(Math.round((downloaded / totalSize) * 100));
+                }
+            });
+
+            response.pipe(file);
+
+            file.on('finish', () => {
+                file.close(() => resolve(destPath));
+            });
+        }).on('error', (err) => {
+            file.close();
+            fs.unlink(destPath, () => {});
+            reject(err);
+        });
+    });
+}
+
+// Télécharge les morceaux du modèle s'il n'est pas déjà présent en cache
+// local, les recolle en un seul fichier, puis nettoie les morceaux
+// temporaires. Retourne le chemin local une fois le fichier prêt à l'emploi.
+async function ensureModelDownloaded(filename, onProgress) {
+    const destPath = getModelPath(filename);
+
+    if (fs.existsSync(destPath)) {
+        return destPath;
+    }
+
+    await ensureDir(path.dirname(destPath));
+
+    console.log(`⬇️  Téléchargement du modèle ${filename} (${ZNK_MODEL_PARTS.length} morceaux)...`);
+
+    const partPaths = [];
+    for (let i = 0; i < ZNK_MODEL_PARTS.length; i++) {
+        const partPath = `${destPath}.part-${i}`;
+        await downloadFile(ZNK_MODEL_PARTS[i], partPath, (pct) => {
+            if (onProgress) {
+                // Progression globale répartie sur l'ensemble des morceaux
+                const overall = Math.round(((i + pct / 100) / ZNK_MODEL_PARTS.length) * 100);
+                onProgress(overall);
+            }
+        });
+        partPaths.push(partPath);
+        console.log(`✅ Morceau ${i + 1}/${ZNK_MODEL_PARTS.length} téléchargé.`);
+    }
+
+    // Recolle les morceaux dans l'ordre, en streaming (évite de tout
+    // charger en mémoire d'un coup pour un fichier de ~490 Mo).
+    console.log('🔧 Assemblage des morceaux...');
+    const tempPath = `${destPath}.download`;
+    const outStream = fs.createWriteStream(tempPath);
+    for (const partPath of partPaths) {
+        await new Promise((resolve, reject) => {
+            const readStream = fs.createReadStream(partPath);
+            readStream.pipe(outStream, { end: false });
+            readStream.on('end', resolve);
+            readStream.on('error', reject);
+        });
+    }
+    outStream.end();
+    await new Promise((resolve) => outStream.on('finish', resolve));
+
+    // Nettoie les morceaux temporaires
+    for (const partPath of partPaths) {
+        fs.unlink(partPath, () => {});
+    }
+
+    return new Promise((resolve, reject) => {
+        fs.rename(tempPath, destPath, (err) => {
+            if (err) reject(err);
+            else {
+                console.log(`✅ Modèle ${filename} prêt (assemblé depuis ${ZNK_MODEL_PARTS.length} morceaux).`);
+                resolve(destPath);
+            }
+        });
+    });
 }
 
 function getFFmpegPathList() {
@@ -761,10 +864,10 @@ async function runWhisperTranscription(wavPath, { language = 'fr', modelFile = '
     if (!fs.existsSync(whisperBin)) {
         throw new Error(`Binaire whisper-cli introuvable: ${whisperBin}`);
     }
-    const modelPath = getModelPath(modelFile);
-    if (!fs.existsSync(modelPath)) {
-        throw new Error(`Modèle Whisper introuvable: ${modelPath}`);
-    }
+    // Le modèle n'est plus embarqué dans l'installateur (trop volumineux
+    // pour NSIS/Windows) — on le télécharge à la demande, une seule fois,
+    // puis il reste en cache pour tous les usages suivants.
+    const modelPath = await ensureModelDownloaded(modelFile);
 
     const outPrefix = wavPath.replace(/\.wav$/i, '');
     return new Promise((resolve, reject) => {
@@ -1021,69 +1124,6 @@ function broadcastVideoPersisted(payload) {
         });
     } catch (e) {
         console.warn('broadcastVideoPersisted failed', e);
-    }
-}
-
-// ========================================
-// MANIFESTE DES TÉLÉCHARGEMENTS — pour le module archives.html
-// ========================================
-// Chaque fois qu'un module ZNK sauvegarde un fichier via 'save-file' (dialogue
-// natif "Enregistrer"), on garde une trace dans ce manifeste JSON partagé
-// (userData, donc lu par toutes les fenêtres/pages de cette installation) et
-// on prévient en direct toute fenêtre ouverte via l'event 'download-added' —
-// même pattern que broadcastVideoPersisted ci-dessus. Le module archives.html
-// lit ce manifeste au démarrage (list-downloads) et écoute l'event live pour
-// afficher automatiquement les fichiers téléchargés ailleurs dans ZNK, sans
-// que l'utilisateur ait besoin de les réimporter manuellement.
-const ZNK_DOWNLOADS_MANIFEST_FILE = path.join(app.getPath('userData'), 'znk-downloads-manifest.json');
-
-async function readDownloadsManifest() {
-    try {
-        if (!fs.existsSync(ZNK_DOWNLOADS_MANIFEST_FILE)) return [];
-        const raw = await fs.promises.readFile(ZNK_DOWNLOADS_MANIFEST_FILE, 'utf-8');
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-        console.error('readDownloadsManifest error:', error);
-        return [];
-    }
-}
-
-async function writeDownloadsManifest(entries) {
-    await ensureDir(path.dirname(ZNK_DOWNLOADS_MANIFEST_FILE));
-    await fs.promises.writeFile(ZNK_DOWNLOADS_MANIFEST_FILE, JSON.stringify(entries, null, 2), 'utf-8');
-}
-
-function broadcastDownloadAdded(payload) {
-    try {
-        if (mainWindow && mainWindow.webContents) {
-            mainWindow.webContents.send('download-added', payload);
-        }
-        BrowserWindow.getAllWindows().forEach(win => {
-            if (win && win.webContents) win.webContents.send('download-added', payload);
-        });
-    } catch (e) {
-        console.warn('broadcastDownloadAdded failed', e);
-    }
-}
-
-async function recordDownloadEntry({ filePath, size }) {
-    try {
-        const entries = await readDownloadsManifest();
-        const entry = {
-            id: `dl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            name: path.basename(filePath),
-            path: filePath,
-            size: typeof size === 'number' ? size : 0,
-            savedAt: new Date().toISOString()
-        };
-        entries.push(entry);
-        await writeDownloadsManifest(entries);
-        broadcastDownloadAdded(entry);
-        return entry;
-    } catch (error) {
-        console.error('recordDownloadEntry error:', error);
-        return null;
     }
 }
 
@@ -1825,51 +1865,10 @@ ipcMain.handle('save-file', async (event, { defaultPath = 'export.json', data = 
         if (res.canceled || !res.filePath) return { success: false, canceled: true };
         if (Buffer.isBuffer(data)) await fs.promises.writeFile(res.filePath, data);
         else await fs.promises.writeFile(res.filePath, String(data), 'utf8');
-        try {
-            const stats = await fs.promises.stat(res.filePath);
-            await recordDownloadEntry({ filePath: res.filePath, size: stats.size });
-        } catch (manifestErr) {
-            console.warn('recordDownloadEntry (save-file) failed:', manifestErr);
-        }
         return { success: true, path: res.filePath };
     } catch (err) {
         console.error('save-file error', err);
         return { success: false, error: err.message || String(err) };
-    }
-});
-
-// Manifeste des téléchargements — lu par archives.html au démarrage pour
-// afficher tout ce qui a déjà été sauvegardé via 'save-file' ailleurs dans
-// ZNK, même si archives.html n'était pas ouvert au moment du téléchargement.
-ipcMain.handle('list-downloads', async () => {
-    try {
-        const entries = await readDownloadsManifest();
-        return { success: true, entries };
-    } catch (error) {
-        console.error('list-downloads error:', error);
-        return { success: false, entries: [], error: error.message || String(error) };
-    }
-});
-
-ipcMain.handle('remove-download-entry', async (event, { id } = {}) => {
-    try {
-        const entries = await readDownloadsManifest();
-        const filtered = entries.filter(e => e.id !== id);
-        await writeDownloadsManifest(filtered);
-        return { success: true };
-    } catch (error) {
-        console.error('remove-download-entry error:', error);
-        return { success: false, error: error.message || String(error) };
-    }
-});
-
-ipcMain.handle('clear-downloads', async () => {
-    try {
-        await writeDownloadsManifest([]);
-        return { success: true };
-    } catch (error) {
-        console.error('clear-downloads error:', error);
-        return { success: false, error: error.message || String(error) };
     }
 });
 
@@ -3154,31 +3153,6 @@ app.whenReady().then(() => {
         } else {
             callback(false);
         }
-    });
-
-    // Capture TOUS les téléchargements dans le manifeste partagé (archives.html),
-    // quel que soit le mécanisme utilisé par le module : dialogue natif
-    // (saveFile/'save-file'), ou le pattern Blob + <a download> + click()
-    // utilisé par dessin.html, ZNKAnim.html, ZNKFadeVideo.html, ZNKTransitions.html,
-    // ZNKScenario.html, Live.html, music-studio.html, ZNKMouvement.html, etc.
-    // Electron route ces deux mécanismes par le download manager standard de
-    // Chromium, donc 'will-download' les intercepte tous les deux sans avoir
-    // à toucher un seul de ces fichiers — y compris ceux à venir.
-    // ⚠️ Ne fonctionne que si les <webview> des dashboards n'utilisent PAS
-    // d'attribut `partition` personnalisé (sinon elles ont leur propre
-    // session, distincte de session.defaultSession, et cet événement ne se
-    // déclenche pas pour elles). Aucun `partition` trouvé dans main.js au
-    // moment de l'écriture, donc a priori couvert — à vérifier si un module
-    // en <webview> ne remonte pas dans archives.html.
-    session.defaultSession.on('will-download', (event, item) => {
-        item.once('done', (event2, state) => {
-            if (state !== 'completed') return;
-            const filePath = item.getSavePath();
-            const size = item.getReceivedBytes();
-            recordDownloadEntry({ filePath, size }).catch(err => {
-                console.warn('recordDownloadEntry (will-download) failed:', err);
-            });
-        });
     });
 });
 
