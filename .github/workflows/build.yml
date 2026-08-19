@@ -1,5 +1,8 @@
 name: Build ZNK
 
+permissions:
+  contents: write
+
 # Se déclenche automatiquement quand vous poussez un tag de version
 # (ex: git tag v1.0.1 && git push origin v1.0.1)
 # OU manuellement depuis l'onglet "Actions" sur GitHub (bouton "Run workflow")
