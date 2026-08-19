@@ -1,5 +1,8 @@
 name: Build ZNK
 
+permissions:
+  contents: write
+
 # Se déclenche automatiquement quand vous poussez un tag de version
 # (ex: git tag v1.0.1 && git push origin v1.0.1)
 # OU manuellement depuis l'onglet "Actions" sur GitHub (bouton "Run workflow")
@@ -28,14 +31,12 @@ jobs:
 
       - name: Télécharge les morceaux de ressources depuis R2
         run: |
-          curl -L -o znk-resources.partaa https://cdn.znk.systems/znk-resources.partaa
-          curl -L -o znk-resources.partab https://cdn.znk.systems/znk-resources.partab
-          curl -L -o znk-resources.partac https://cdn.znk.systems/znk-resources.partac
-          curl -L -o znk-resources.partad https://cdn.znk.systems/znk-resources.partad
+          curl -L -o znk-resources.part-aa https://cdn.znk.systems/znk-resources.part-aa
+          curl -L -o znk-resources.part-ab https://cdn.znk.systems/znk-resources.part-ab
 
       - name: Recolle les morceaux et extrait
         run: |
-          cat znk-resources.partaa znk-resources.partab znk-resources.partac znk-resources.partad > znk-resources.zip
+          cat znk-resources.part-aa znk-resources.part-ab > znk-resources.zip
           unzip -q znk-resources.zip -d .
 
       - name: Installe les dépendances
@@ -63,15 +64,13 @@ jobs:
 
       - name: Télécharge les morceaux de ressources depuis R2
         run: |
-          curl -L -o znk-resources.partaa https://cdn.znk.systems/znk-resources.partaa
-          curl -L -o znk-resources.partab https://cdn.znk.systems/znk-resources.partab
-          curl -L -o znk-resources.partac https://cdn.znk.systems/znk-resources.partac
-          curl -L -o znk-resources.partad https://cdn.znk.systems/znk-resources.partad
+          curl -L -o znk-resources.part-aa https://cdn.znk.systems/znk-resources.part-aa
+          curl -L -o znk-resources.part-ab https://cdn.znk.systems/znk-resources.part-ab
 
       - name: Recolle les morceaux et extrait
         shell: pwsh
         run: |
-          cmd /c copy /b znk-resources.partaa+znk-resources.partab+znk-resources.partac+znk-resources.partad znk-resources.zip
+          cmd /c copy /b znk-resources.part-aa+znk-resources.part-ab znk-resources.zip
           Expand-Archive -Path znk-resources.zip -DestinationPath . -Force
 
       - name: Installe les dépendances
@@ -79,6 +78,13 @@ jobs:
 
       - name: Build Windows (.exe)
         run: npm run build:win -- --publish=never
+
+      - name: Retire les espaces du nom de fichier (évite mismatch avec GitHub Releases)
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path desktop -Filter *.exe | Select-Object -First 1
+          $newName = $exe.Name -replace ' ', '-'
+          Rename-Item -Path $exe.FullName -NewName $newName
 
       - name: Upload le résultat (artifact temporaire)
         uses: actions/upload-artifact@v4
@@ -118,3 +124,57 @@ jobs:
           name: v${{ steps.version.outputs.version }}
           files: dist/*
           generate_release_notes: true
+
+      - name: Prépare les fichiers latest.json (auto-update)
+        run: |
+          DMG_FILE=$(basename "$(ls dist/*.dmg)")
+          EXE_FILE=$(basename "$(ls dist/*.exe)")
+          DMG_SIZE=$(stat -c%s "dist/$DMG_FILE")
+          EXE_SIZE=$(stat -c%s "dist/$EXE_FILE")
+          VERSION="${{ steps.version.outputs.version }}"
+          REPO="${{ github.repository }}"
+          NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          cat > latest-mac.json << EOF
+          {
+            "version": "$VERSION",
+            "releaseDate": "$NOW",
+            "downloadUrl": "https://github.com/$REPO/releases/download/v$VERSION/$DMG_FILE",
+            "fileSize": $DMG_SIZE,
+            "prerelease": false
+          }
+          EOF
+
+          cat > latest-win.json << EOF
+          {
+            "version": "$VERSION",
+            "releaseDate": "$NOW",
+            "downloadUrl": "https://github.com/$REPO/releases/download/v$VERSION/$EXE_FILE",
+            "fileSize": $EXE_SIZE,
+            "prerelease": false
+          }
+          EOF
+
+      - name: Vérifie la longueur des identifiants R2 (debug, sans exposer les valeurs)
+        env:
+          R2_ACCOUNT_ID_CHECK: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          echo "Longueur R2_ACCOUNT_ID: ${#R2_ACCOUNT_ID_CHECK}"
+          echo "Longueur Access Key ID: ${#AWS_ACCESS_KEY_ID}"
+          echo "Longueur Secret Access Key: ${#AWS_SECRET_ACCESS_KEY}"
+
+      - name: Publie latest.json vers R2 (pour l'auto-update)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          # R2 ne supporte pas le checksum CRC32 que les versions récentes
+          # d'AWS CLI activent par défaut — ça cause un faux "SignatureDoesNotMatch".
+          # Voir : https://developers.cloudflare.com/r2/examples/aws/
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+        run: |
+          aws s3 cp latest-mac.json s3://znk-archives/latest-mac.json --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          aws s3 cp latest-win.json s3://znk-archives/latest-win.json --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
