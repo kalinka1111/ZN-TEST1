@@ -155,6 +155,16 @@ jobs:
           }
           EOF
 
+      - name: Vérifie la longueur des identifiants R2 (debug, sans exposer les valeurs)
+        env:
+          R2_ACCOUNT_ID_CHECK: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          echo "Longueur R2_ACCOUNT_ID: ${#R2_ACCOUNT_ID_CHECK}"
+          echo "Longueur Access Key ID: ${#AWS_ACCESS_KEY_ID}"
+          echo "Longueur Secret Access Key: ${#AWS_SECRET_ACCESS_KEY}"
+
       - name: Publie latest.json vers R2 (pour l'auto-update)
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
