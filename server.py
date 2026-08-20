@@ -639,6 +639,124 @@ def call_ice_get(call_id):
         return jsonify({'status': 'success', 'candidates': nouveaux, 'next_since': len(candidates)})
 
 # ============================================================================
+# ROUTES - RELAIS MESSAGERIE (boîte aux lettres partagée sur le VPS)
+# ============================================================================
+# Contexte : la messagerie WhatsZNK/@echo.znk est normalement du P2P direct
+# (voir znk_p2p_protocol.py) — un message reste sur l'appareil de l'expéditeur
+# jusqu'à ce que le destinataire soit joignable en direct (même réseau local,
+# ou via le registre VPS si les deux ont Internet en même temps).
+#
+# Cas non couvert : le destinataire A n'a JAMAIS Internet, mais croise parfois
+# physiquement d'autres users (B, C...) qui EUX en ont. Cette section permet à
+# N'IMPORTE QUEL expéditeur de déposer un message pour A ici dès qu'il a
+# Internet (même si A ne l'a jamais), et à N'IMPORTE QUEL pair de passage
+# (B, croisé en local par A) de venir le récupérer pour le lui livrer en
+# direct via le protocole P2P existant. Le VPS ne fait ici que stocker en
+# transit — la livraison finale reste toujours du P2P local, jamais du VPS
+# directement vers l'utilisateur final.
+#
+# Cycle :
+#   1. Expéditeur (a du réseau)    -> POST /api/relay/deposit   (dépose pour A)
+#   2. Pair de passage B (croise A, a du réseau) -> GET /api/relay/pull/A (réclame)
+#   3. B livre le message à A en P2P local (znk_p2p_protocol.py s'en charge)
+#   4. B confirme                  -> POST /api/relay/ack        (supprime du VPS)
+#
+# Un message "réclamé" (pull) mais jamais confirmé (ack) redevient disponible
+# après RELAY_CLAIM_TIMEOUT_SECONDS, au cas où B n'ait finalement pas pu
+# livrer A en local (perdu le contact avant la fin de l'échange, etc.).
+
+RELAY_MAILBOX_FILE = os.path.join(DATA_DIR, 'relay_mailbox.json')
+RELAY_CLAIM_TIMEOUT_SECONDS = 300  # 5 min : au-delà, un message réclamé mais jamais confirmé redevient disponible
+relay_lock = threading.Lock()
+
+def _charger_relais():
+    if os.path.exists(RELAY_MAILBOX_FILE):
+        with open(RELAY_MAILBOX_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}  # { id_znk_destinataire: [ {id, from, to, canal, sujet, corps, ..., claimed_by, claimed_at}, ... ] }
+
+def _sauver_relais(boite):
+    with open(RELAY_MAILBOX_FILE, 'w', encoding='utf-8') as f:
+        json.dump(boite, f, indent=2, ensure_ascii=False)
+
+
+@app.route('/api/relay/deposit', methods=['POST'])
+@require_api_key
+def relay_deposit():
+    """Dépose un message pour un destinataire injoignable, en attendant qu'un pair de passage le relaie."""
+    data = request.get_json() or {}
+    destinataire = data.get('to')
+    message = data.get('message')
+    if not destinataire or not message or not message.get('id'):
+        return jsonify({'status': 'error', 'message': 'Destinataire ou message (avec id) manquant'}), 400
+
+    with relay_lock:
+        boite = _charger_relais()
+        file_attente = boite.setdefault(destinataire, [])
+        # Idempotent : si ce message (même id) a déjà été déposé, on ne duplique pas
+        if not any(m['id'] == message['id'] for m in file_attente):
+            message['claimed_by'] = None
+            message['claimed_at'] = None
+            file_attente.append(message)
+            _sauver_relais(boite)
+
+    return jsonify({'status': 'success'}), 201
+
+
+@app.route('/api/relay/pull/<for_user_id>', methods=['GET'])
+@require_api_key
+def relay_pull(for_user_id):
+    """Un pair de passage réclame les messages en attente pour `for_user_id`, qu'il vient de croiser en local."""
+    relayeur = request.id_znk_authentifie
+    maintenant = datetime.now()
+
+    with relay_lock:
+        boite = _charger_relais()
+        file_attente = boite.get(for_user_id, [])
+        a_livrer = []
+        modifie = False
+        for m in file_attente:
+            deja_reclame = m.get('claimed_by') and m.get('claimed_at')
+            expire = True
+            if deja_reclame:
+                claimed_at = datetime.fromisoformat(m['claimed_at'])
+                expire = (maintenant - claimed_at).total_seconds() > RELAY_CLAIM_TIMEOUT_SECONDS
+            if not deja_reclame or expire:
+                m['claimed_by'] = relayeur
+                m['claimed_at'] = maintenant.isoformat()
+                modifie = True
+                a_livrer.append(m)
+        if modifie:
+            _sauver_relais(boite)
+
+    return jsonify({'status': 'success', 'messages': a_livrer})
+
+
+@app.route('/api/relay/ack', methods=['POST'])
+@require_api_key
+def relay_ack():
+    """Confirme la livraison locale réussie d'un ou plusieurs messages relayés — les retire définitivement du VPS."""
+    relayeur = request.id_znk_authentifie
+    data = request.get_json() or {}
+    for_user_id = data.get('for')
+    message_ids = set(data.get('message_ids') or [])
+    if not for_user_id or not message_ids:
+        return jsonify({'status': 'error', 'message': 'for ou message_ids manquant'}), 400
+
+    with relay_lock:
+        boite = _charger_relais()
+        file_attente = boite.get(for_user_id, [])
+        restants = [
+            m for m in file_attente
+            if not (m['id'] in message_ids and m.get('claimed_by') == relayeur)
+        ]
+        if len(restants) != len(file_attente):
+            boite[for_user_id] = restants
+            _sauver_relais(boite)
+
+    return jsonify({'status': 'success'})
+
+# ============================================================================
 # ROUTES - IA (ZNKOMia <-> Ollama)
 # ============================================================================
 # Le dashboard (ZNKOMia.html) n'appelle jamais Ollama en direct : il passe par

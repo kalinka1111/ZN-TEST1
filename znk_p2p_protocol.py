@@ -72,6 +72,7 @@ class ZNKProtocole:
         self.outbox_queue_file = self.messages_dir / 'outbox_queue.json'
         self.inbox: List[Dict] = self._charger_json(self.inbox_file)
         self.outbox_queue: List[Dict] = self._charger_json(self.outbox_queue_file)
+        self._relais_deposes: set = set()  # ids déjà déposés sur le relais VPS (évite de re-poster à chaque boucle)
         
     def definir_classe(self, classe_id: Optional[str]):
         """Change la classe courante (ex: professeur qui bascule de niveau/classe,
@@ -108,6 +109,12 @@ class ZNKProtocole:
             registry_thread = threading.Thread(target=self._sync_registre_vps, daemon=True)
             registry_thread.start()
             print(f"🌐 Synchronisation registre VPS activée: {self.registry_url}")
+
+            # Dépôt opportuniste sur le relais VPS (voir /api/relay/*) — permet
+            # aux destinataires qui n'ont jamais de réseau de recevoir quand
+            # même leurs messages, via un pair de passage qui en aura un jour.
+            relais_thread = threading.Thread(target=self._sync_relais_depot, daemon=True)
+            relais_thread.start()
         elif self.registry_url and requests is None:
             print("⚠️ registry_url fourni mais le module 'requests' n'est pas installé (pip install requests)")
         
@@ -237,6 +244,14 @@ class ZNKProtocole:
 
             # Ce pair vient de réapparaître : on tente de lui livrer les messages en attente
             self._traiter_queue_pour_peer(peer_id)
+
+            # Relais VPS : si on a soi-même du réseau en ce moment, on tente
+            # immédiatement de récupérer et livrer à ce pair tout ce qui
+            # l'attendait ailleurs (déposé par d'autres users pendant qu'il
+            # était injoignable). Ne bloque jamais la connexion en cours —
+            # échoue silencieusement si pas de réseau.
+            if self.registry_url and requests is not None:
+                threading.Thread(target=self._relayer_pour_peer, args=(peer_id,), daemon=True).start()
     
     def _traiter_file_list(self, sock: socket.socket, payload: Dict):
         """Traite une liste de fichiers reçue d'un peer"""
@@ -616,6 +631,11 @@ class ZNKProtocole:
 
     def _traiter_message_texte(self, payload: Dict):
         """Traite un message texte reçu d'un pair : l'ajoute à la boîte de réception locale"""
+        # Anti-doublon : un message peut arriver deux fois (direct + relais VPS
+        # si les deux chemins ont réussi en même temps) — on ignore le doublon.
+        msg_id = payload.get('id')
+        if msg_id and any(m.get('id') == msg_id for m in self.inbox):
+            return
         payload['statut'] = 'recu'
         payload['recu_le'] = time.time()
         self.inbox.insert(0, payload)
@@ -648,6 +668,78 @@ class ZNKProtocole:
         if len(restants) != len(self.outbox_queue):
             self.outbox_queue = restants
             self._sauvegarder_json(self.outbox_queue_file, self.outbox_queue)
+
+    def _relayer_pour_peer(self, peer_id: str):
+        """
+        Relais VPS (voir server.py, section /api/relay/*) : si CE nœud a du
+        réseau en ce moment, il va chercher sur le VPS tout ce qui attendait
+        `peer_id` (déposé par n'importe quel autre user pendant que peer_id
+        était injoignable), puis le lui livre directement en local via la
+        connexion P2P qu'on vient d'établir avec lui.
+
+        Fonctionne sans avoir besoin de savoir "qui a Internet" : chaque nœud
+        tente ce relais pour chaque pair qu'il croise ; ça ne réussit que si
+        CE nœud (celui qui exécute cette méthode) a effectivement du réseau
+        au moment de la rencontre. Si aucun des deux n'a de réseau, ça échoue
+        silencieusement des deux côtés et rien ne se passe (comportement normal).
+        """
+        if not (self.registry_url and requests is not None):
+            return
+        headers = {'X-ZNK-Key': self.api_key, 'Content-Type': 'application/json'}
+        try:
+            resp = requests.get(
+                f"{self.registry_url}/api/relay/pull/{peer_id}",
+                headers=headers, timeout=5
+            )
+            if not resp.ok:
+                return
+            messages = resp.json().get('messages', [])
+            if not messages:
+                return
+
+            livres_ids = []
+            for message in messages:
+                if peer_id in self.peers and self._envoyer_message_a_peer(peer_id, message):
+                    livres_ids.append(message['id'])
+
+            if livres_ids:
+                requests.post(
+                    f"{self.registry_url}/api/relay/ack",
+                    headers=headers,
+                    json={'for': peer_id, 'message_ids': livres_ids},
+                    timeout=5
+                )
+                print(f"📬 {len(livres_ids)} message(s) relayé(s) et livré(s) à {peer_id}")
+        except Exception as e:
+            # Pas de réseau à cet instant, ou VPS injoignable — normal et silencieux
+            pass
+
+    def _sync_relais_depot(self):
+        """
+        Boucle de fond : dépose sur le VPS (voir /api/relay/deposit) tout
+        message de notre outbox_queue encore en attente, dès qu'on a
+        soi-même du réseau — indépendamment de croiser qui que ce soit. Ça
+        permet à un destinataire qui n'a JAMAIS de réseau de recevoir quand
+        même le message, via un pair de passage qui, lui, en aura un jour.
+        """
+        headers = {'X-ZNK-Key': self.api_key, 'Content-Type': 'application/json'}
+        while self.running:
+            try:
+                for message in list(self.outbox_queue):
+                    if message.get('statut') != 'en_attente' or message['id'] in self._relais_deposes:
+                        continue
+                    resp = requests.post(
+                        f"{self.registry_url}/api/relay/deposit",
+                        headers=headers,
+                        json={'to': message['to'], 'message': message},
+                        timeout=5
+                    )
+                    if resp.ok:
+                        self._relais_deposes.add(message['id'])
+            except Exception as e:
+                if self.running:
+                    print(f"⚠️ Erreur dépôt relais VPS: {e}")
+            time.sleep(20)
 
     def lire_boite_reception(self) -> List[Dict]:
         """Retourne les messages reçus (boîte de réception)"""
