@@ -127,7 +127,14 @@ jobs:
 
       - name: Prépare les fichiers latest.json (auto-update)
         run: |
-          DMG_FILE=$(basename "$(ls dist/*.dmg)")
+          # NOTE : depuis l'ajout du support Intel + Apple Silicon, il y a
+          # DEUX .dmg (ex: ZNK-1.2.0-x64.dmg et ZNK-1.2.0-arm64.dmg).
+          # latest-mac.json ne peut pointer que vers un seul fichier à la
+          # fois pour l'auto-update — on prend le x64 (Intel), qui est le
+          # parc actuel de testeurs. Les users Apple Silicon installent
+          # pour l'instant via la page de téléchargement directement ;
+          # à revoir plus tard si besoin d'auto-update séparé par archi.
+          DMG_FILE=$(basename "$(ls dist/*-x64.dmg)")
           EXE_FILE=$(basename "$(ls dist/*.exe)")
           DMG_SIZE=$(stat -c%s "dist/$DMG_FILE")
           EXE_SIZE=$(stat -c%s "dist/$EXE_FILE")
