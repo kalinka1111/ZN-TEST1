@@ -90,6 +90,24 @@ function resolveRegistryUrl() {
     return ZNK_REGISTRY_URL_DEFAULT;
 }
 
+// Même problème et même solution que ZNK_REGISTRY_URL ci-dessus : une app
+// lancée en double-cliquant l'icône (.app packagée) n'hérite d'aucune
+// variable d'environnement de shell (~/.zshrc, export ZNK_API_KEY=...).
+// On persiste donc la clé dans znk-config.json (userData) via
+// set-admin-api-key, à faire une seule fois par device (voir ce handler
+// IPC plus bas). Contrairement à ZNK_REGISTRY_URL, pas de valeur par
+// défaut en dur : une clé API n'a rien à faire codée dans le binaire.
+function resolveApiKey() {
+    if (process.env.ZNK_API_KEY) return process.env.ZNK_API_KEY;
+    const fromFile = readZnkConfigFile().apiKey;
+    if (fromFile) return fromFile;
+    return null;
+}
+if (!process.env.ZNK_API_KEY) {
+    const resolvedKey = resolveApiKey();
+    if (resolvedKey) process.env.ZNK_API_KEY = resolvedKey;
+}
+
 // On fixe process.env.ZNK_REGISTRY_URL dès maintenant (si pas déjà défini)
 // pour que TOUT le reste du code — y compris tout futur spawn de processus
 // enfant qui hérite de process.env — voie la même valeur de façon cohérente,
@@ -2037,6 +2055,23 @@ ipcMain.handle('set-registry-url', (event, url) => {
     return { success: true, registryUrl: trimmed };
 });
 
+// À appeler UNE FOIS par device admin (ex: depuis la console DevTools du
+// dashboard : await window.electronAPI.setAdminApiKey('...')), avec la clé
+// obtenue via POST /api/auth/provision sur le VPS. Persistée dans
+// znk-config.json, donc survit aux relances et à un repackaging de l'app —
+// contrairement à un simple `export ZNK_API_KEY=...` en shell qui ne
+// s'applique pas à une .app lancée depuis le Finder/Dock.
+ipcMain.handle('set-admin-api-key', (event, key) => {
+    if (typeof key !== 'string' || !key.trim()) {
+        return { success: false, message: 'Clé invalide' };
+    }
+    const trimmed = key.trim();
+    const result = writeZnkConfigFile({ apiKey: trimmed });
+    if (!result) return { success: false, message: 'Écriture du fichier de config impossible' };
+    process.env.ZNK_API_KEY = trimmed;
+    return { success: true };
+});
+
 // Cache "à la demande" d'une piste distante (radio user/communauté) après une
 // première lecture réussie — implémente le principe sync-puis-offline côté
 // LECTURE : une fois écoutée une fois (en ligne), une piste redevient
@@ -2192,6 +2227,36 @@ ipcMain.handle('artflow:publish-post', async (event, { post } = {}) => {
         return { success: true, publishedAt: data.publishedAt, post: data.post };
     } catch (error) {
         console.error('artflow:publish-post error:', error);
+        return { success: false, offline: true, error: error.message || String(error) };
+    }
+});
+
+// ----------------------------------------------------------------------------
+// CATALOGUE UNIFIÉ ADMIN (ZNKadminDash > manager-actv, etc.) — même schéma que
+// radio:push-official-catalog / artflow:publish-post ci-dessus. Existe pour
+// les modules chargés en <webview> (manager-actv.html, etc.) : une <webview>
+// Electron est un process de rendu séparé, sans window.parent ni postMessage
+// utilisables vers l'hôte — l'IPC vers ce process principal est le SEUL pont
+// possible. main.js parle au server.py LOCAL (127.0.0.1), qui relaie vers le
+// VPS avec ZNK_API_KEY (voir resolveApiKey plus haut) — main.js manipule la
+// clé pour la persister via set-admin-api-key, mais ne l'envoie jamais
+// lui-même sur le réseau ; seul server.py le fait.
+// ----------------------------------------------------------------------------
+ipcMain.handle('admin-content:publish', async (event, { item } = {}) => {
+    try {
+        if (!item || !item.id) return { success: false, error: 'item invalide (id manquant)' };
+        const res = await fetch(`${getLocalServerBase()}/api/admin-content/${encodeURIComponent(item.id)}/sync-push`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || data.status !== 'success') {
+            return { success: false, offline: !!(data && data.offline), error: (data && data.message) || `HTTP ${res.status}` };
+        }
+        return { success: true, publishedAt: data.publishedAt };
+    } catch (error) {
+        console.error('admin-content:publish error:', error);
         return { success: false, offline: true, error: error.message || String(error) };
     }
 });

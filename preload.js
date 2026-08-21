@@ -97,6 +97,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // push des métadonnées vers le VPS, relayé en local par server.py)
     publishArtflowPost: (options) => ipcRenderer.invoke('artflow:publish-post', options),
     uploadArtflowVideo: (options) => ipcRenderer.invoke('artflow:upload-video', options),
+
+    // Catalogue unifié admin (manager-actv.html, etc. — modules en <webview>)
+    setAdminApiKey: (key) => ipcRenderer.invoke('set-admin-api-key', key),
+    publishAdminContent: (item) => ipcRenderer.invoke('admin-content:publish', { item }),
     // Vidéos "seed" (assets/videos-seed) : contenu figé livré avec l'appli,
     // identique sur toutes les installations — utilisé par creer-lecon-admin.html
     // pour choisir une vidéo déjà présente plutôt que d'en importer une nouvelle.

@@ -924,8 +924,7 @@ function saveACTVVideo(videoData) {
         videos = JSON.parse(savedVideos);
     }
     
-    // Ajouter la nouvelle vidéo
-    videos.push({
+    const nouvelleVideo = {
         id: videoData.id || Date.now(),
         title: videoData.title,
         description: videoData.description,
@@ -933,11 +932,31 @@ function saveACTVVideo(videoData) {
         duration: videoData.duration,
         views: videoData.views || '0',
         date: videoData.date || new Date().toLocaleDateString()
-    });
+    };
+
+    // Ajouter la nouvelle vidéo
+    videos.push(nouvelleVideo);
     
     // Sauvegarder dans localStorage
     localStorage.setItem('actv_published_videos', JSON.stringify(videos));
     console.log('✅ Nouvelle vidéo ACTV sauvegardée');
+
+    // Synchronise vers le VPS — c'est LE vrai chemin de publication vidéo
+    // (le système ZNKAdminPersistence.handleVideoPublish existe en parallèle
+    // mais n'est déclenché que par un postMessage que ce flux n'envoie pas).
+    // window.znkAdminPersistence est exposé plus bas, juste après
+    // l'instanciation de la classe.
+    if (window.znkPersistence && videoData.__fromVPSSync !== true) {
+        window.znkPersistence.pushToVPS({
+            id: String(nouvelleVideo.id),
+            type: 'video',
+            title: nouvelleVideo.title || 'Vidéo sans titre',
+            data: nouvelleVideo,
+            source: 'actv_published_videos',
+            createdAt: new Date().toISOString(),
+            persistent: true
+        });
+    }
     
     // Afficher la nouvelle vidéo
     displaySavedVideos([videoData]);
@@ -1081,7 +1100,7 @@ class ZNKAdminPersistence {
                 localStorage.setItem(backupKey, JSON.stringify(item));
 
                 if (item.type === 'video' && item.data) {
-                    saveACTVVideo(item.data);
+                    saveACTVVideo({ ...item.data, __fromVPSSync: true });
                 } else if (item.type === 'gallery' && item.data) {
                     localStorage.setItem('znk_gallery_manifest', JSON.stringify(item.data));
                 }

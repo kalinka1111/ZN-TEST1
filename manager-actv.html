@@ -696,6 +696,41 @@ ZNK ACTV MANAGER<!DOCTYPE html>
 
     function stripExt(name) { return name.replace(/\.[^/.]+$/, ''); }
 
+    // ---------- Pont vers la persistance VPS (ZNKadminDash.html parent) ----------
+    // Ce module tourne dans une <webview> Electron : c'est un process de rendu
+    // séparé où window.parent === window (aucun nesting), donc ni accès direct
+    // aux objets JS de l'hôte, ni postMessage vers l'hôte ne fonctionnent —
+    // contrairement à une iframe classique. Le seul pont qui traverse cette
+    // frontière est l'IPC vers le process principal (voir main.js,
+    // 'admin-content:publish'), exposé ici via window.electronAPI (même
+    // preload que la fenêtre principale, cf. getPreloadPath()).
+    async function pushEmissionToVPS(emission, target) {
+        try {
+            const api = window.znkApi || window.electronAPI;
+            if (!api || typeof api.publishAdminContent !== 'function') {
+                console.warn('⚠️ window.electronAPI.publishAdminContent indisponible — publication gardée en local uniquement');
+                return;
+            }
+            const result = await api.publishAdminContent({
+                id: emission.id,
+                type: 'video',
+                title: emission.title,
+                data: emission,
+                source: target === 'actv' ? 'znk_actv_emissions' : 'znk_artflow_etudes_emissions',
+                target: target,
+                createdAt: emission.publishedAt,
+                persistent: true
+            });
+            if (result && result.success) {
+                console.log('☁️ Publication synchronisée vers le VPS :', emission.id);
+            } else {
+                console.warn('⚠️ Échec sync VPS :', result && (result.error || 'raison inconnue'));
+            }
+        } catch (e) {
+            console.error('Erreur pont pushEmissionToVPS', e);
+        }
+    }
+
     // ---------- Manifest & publication writers ----------
     function upsertVideoManifest(entry) {
         try {
@@ -741,6 +776,7 @@ ZNK ACTV MANAGER<!DOCTYPE html>
             emissions.push(emission);
             localStorage.setItem('znk_actv_emissions', JSON.stringify(emissions));
         } catch (e) { console.error('Erreur publication ACTV', e); }
+        pushEmissionToVPS(emission, 'actv');
         return emission;
     }
 
@@ -778,6 +814,7 @@ ZNK ACTV MANAGER<!DOCTYPE html>
             emissions.push(emission);
             localStorage.setItem('znk_artflow_etudes_emissions', JSON.stringify(emissions));
         } catch (e) { console.error('Erreur publication ArtFlow Études', e); }
+        pushEmissionToVPS(emission, 'artflow');
         return emission;
     }
 
