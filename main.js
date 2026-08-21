@@ -2861,6 +2861,9 @@ ipcMain.handle('get-platform', () => process.platform);
 ipcMain.handle('get-user-data-path', () => app.getPath('userData'));
 ipcMain.handle('is-dev-mode', () => isDevMode());
 
+console.log('DEBUG isDevMode:', isDevMode(), 
+  '| app.isPackaged:', app.isPackaged, 
+  '| ZNKadminDash existe:', fs.existsSync(path.join(__dirname, 'ZNKadminDash.html')));
 // ========================================
 // SERVEUR IA LOCAL (server.py) — lancement automatique
 // ========================================
@@ -2891,12 +2894,21 @@ function startLocalIaServer() {
     const spawnCmd = hasBundledBin ? bundledServerBin : pythonCmd;
     const spawnArgs = hasBundledBin ? [] : ['server.py'];
 
+    // ⚠️ __dirname pointe à l'intérieur de app.asar en build packagé
+    // (ex: /Applications/ZNK.app/Contents/Resources/app.asar) — ce n'est
+    // pas un vrai dossier sur disque, spawn() y échoue avec ENOTDIR même
+    // si spawnCmd (le binaire empaqueté) est lui bien un fichier réel dans
+    // Resources/bin/. Quand on lance le binaire empaqueté, on utilise donc
+    // son propre dossier réel comme cwd ; __dirname reste correct pour le
+    // fallback python3 server.py (uniquement emprunté en dev, non packagé).
+    const spawnCwd = hasBundledBin ? path.dirname(bundledServerBin) : __dirname;
+
     try {
         // PORT=5001 par défaut car le port 5000 est souvent squatté par
         // AirPlay Receiver sur macOS — doit matcher la constante SERVER
         // dans modules-admin/ZNKOMia.html.
         iaServerProcess = spawn(spawnCmd, spawnArgs, {
-            cwd: __dirname,
+            cwd: spawnCwd,
             windowsHide: true,
             env: { ...process.env, PORT: process.env.ZNK_IA_PORT || '5001' }
         });
