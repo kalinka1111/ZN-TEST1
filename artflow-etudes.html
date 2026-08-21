@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArtFlow - Mes Créations</title>
+    <title>ArtFlow Études</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -303,7 +303,7 @@
         <div class="content-area">
             <div class="central-screen">
                 <div class="connection-status">
-                    <span>🎨 ArtFlow - Mes Créations</span>
+                    <span>🎨 ArtFlow Études</span>
                 </div>
                 <div class="global-volume-control">
                     <button id="globalMuteBtn" onclick="toggleGlobalMute()">🔇</button>
@@ -338,7 +338,7 @@
                 <div class="empty-icon">🎨</div>
                 <div style="font-size: 24px; margin-bottom: 12px;">Aucune publication pour le moment</div>
                 <div style="font-size: 14px; color: #ccc;">
-                    Publiez vos créations depuis artflowUserPublish.html
+                    Publiez vos créations depuis le manager ACTV (destination "ArtFlow Études")
                 </div>
             </div>
         </div>
@@ -426,13 +426,14 @@
             saveGlobalVolumePref();
         }
 
-        // Charger publications USER
+        // Charger les émissions ArtFlow Études publiées depuis manager-actv.html
+        // (même clé/structure que znk_actv_emissions, cf. publishToArtflow()).
         async function loadData() {
-            console.log('🎨 Chargement ArtFlow - Publications User...');
+            console.log('🎨 Chargement ArtFlow Études - Publications...');
             
             let localPubs = [];
             try {
-                const publicationsData = localStorage.getItem('artflow_user_publications');
+                const publicationsData = localStorage.getItem('znk_artflow_etudes_emissions');
                 if (publicationsData) localPubs = JSON.parse(publicationsData);
             } catch (e) {
                 console.error('❌ Erreur publications locales:', e);
@@ -444,7 +445,7 @@
             let remotePubs = [];
             if (ZNK_CLOUD_URL) {
                 try {
-                    const resp = await fetch(znkCloudPath('/api/artflow-posts'));
+                    const resp = await fetch(znkCloudPath('/api/artflow-etudes-posts'));
                     if (resp.ok) {
                         const data = await resp.json();
                         remotePubs = (data.posts || []).map(p => ({ ...p, isRemote: true }));
@@ -556,7 +557,7 @@
             // chercher le post complet seulement maintenant, au clic.
             if (pub.isRemote && !pub.videoUrl) {
                 try {
-                    const resp = await fetch(znkCloudPath(`/api/artflow-posts/${pub.id}`));
+                    const resp = await fetch(znkCloudPath(`/api/artflow-etudes-posts/${pub.id}`));
                     if (resp.ok) {
                         const data = await resp.json();
                         pub = { ...pub, ...data.post };

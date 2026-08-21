@@ -500,7 +500,24 @@
                     <span class="icon-placeholder" data-role="AdminHubCreator">
                         <img src="./icons/AdminHubCreator.svg" alt="AdminHubCreator" onerror="this.outerHTML='<span style=font-size:28px>🖼️</span>'">
                     </span>
-                </div>          
+                </div> 
+                 </nav>
+             <nav class="nav-section">
+                   <div class="nav-link" onclick="loadModule('creer-lecon-admin')" title="creer-lecon-admin">
+                    <span class="icon-placeholder" data-role="creer-lecon-admin">
+                        <img src="./icons/creer-lecon-admin.svg" alt="creer-lecon-admin" onerror="this.outerHTML='<span style=font-size:28px>🦄</span>'">
+                    </span>        
+                </div>
+                <div class="nav-link" onclick="loadModule('terminal-lecons')" title="terminal-lecons">
+                    <span class="icon-placeholder" data-role="terminal-lecons">
+                        <img src="./icons/terminal-lecons.svg" alt="terminal-lecons" onerror="this.outerHTML='<span style=font-size:28px>🦄</span>'">
+                   
+                </div>
+                 <div class="nav-link" onclick="loadModule('import-lecons-interrogations')" title="import-lecons-interrogations">
+                    <span class="icon-placeholder" data-role="import-lecons-interrogations">
+                        <img src="./icons/import-lecons-admin.svg" alt="import-lecons-interrogations" onerror="this.outerHTML='<span style=font-size:28px>🦄</span>'">
+                    </span>  
+                </div>             
             </nav>
             <nav class="nav-section">
                 <div class="nav-link" onclick="loadModule('ZNKOMia')" title="ZZNK OM ia ">
@@ -583,8 +600,7 @@
              'ZNKFadeVideo': { name: 'ZNKFadeVideo', path: './modules/ZNKFadeVideo.html' },
             'ZNKTransitions': { name: 'ZNKTransitions', path: './modules/ZNKTransitions.html' },
             'terminal-lecons': { name: 'terminal-lecons', path: './modules-etudes/terminal-lecons.html' },
-            'import-lecons-interrogations': { name: 'import-lecons-interrogations', path: './modules-etudes/import-lecons-interrogations.html' },
-             'terminal-interrogations': { name: 'terminal-interrogations', path: './modules-etudes/terminal-interrogations.html' },
+            'import-lecons-interrogations': { name: 'import-lecons-interrogations', path: './modules-etudes/import-lecons-interrogations.html' },            
             'AdminHubCreator': { name: 'AdminHubCreator', path: './AdminHubCreator.html' },
             'znksecure': { name: 'znksecure', path: './modules-admin/znksecure.html' },
             'nomad-ZNK': { name: 'nomad-ZNK', path: './modules-admin/nomad-ZNK.html' },
@@ -988,6 +1004,26 @@ window.addEventListener('message', (event) => {
         });
  </script>
 <script>
+// === RÉSOLUTION BACKEND LOCAL (même mécanisme que WhatsZNK.html) ===
+const ZNK_BACKEND_STORAGE_KEY = 'znk_backend_url';
+function znkResolveBackendUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('backend');
+    if (fromUrl) {
+        localStorage.setItem(ZNK_BACKEND_STORAGE_KEY, fromUrl);
+        return fromUrl;
+    }
+    return localStorage.getItem(ZNK_BACKEND_STORAGE_KEY) || 'http://localhost:5001';
+}
+const ZNK_BACKEND_URL = znkResolveBackendUrl();
+if (window.electronAPI && window.electronAPI.getRegistryUrl) {
+    window.electronAPI.getRegistryUrl().then(url => {
+        if (url && localStorage.getItem(ZNK_BACKEND_STORAGE_KEY) !== url) {
+            localStorage.setItem(ZNK_BACKEND_STORAGE_KEY, url);
+        }
+    }).catch(() => {});
+}
+
 // === SYSTÈME DE PERSISTANCE AUTOMATIQUE ===
 
 class ZNKAdminPersistence {
@@ -1022,6 +1058,58 @@ class ZNKAdminPersistence {
         window.addEventListener('message', (event) => {
             this.handleIframeMessage(event);
         });
+
+        // Récupère depuis le VPS tout ce qui a déjà été publié ailleurs
+        // (ou lors d'une install précédente) — rend les publications
+        // persistantes même après une réinstallation propre de l'app.
+        this.syncFromVPS();
+    }
+
+    // === SYNCHRONISATION VPS (persistance au-delà de ce device) ===
+
+    async syncFromVPS() {
+        try {
+            const response = await fetch(`${ZNK_BACKEND_URL}/api/admin-content/sync-pull`);
+            if (!response.ok) return; // VPS injoignable : on garde ce qu'on a déjà en local, silencieusement
+            const result = await response.json();
+            if (result.status !== 'success' || !Array.isArray(result.items)) return;
+
+            for (const item of result.items) {
+                // Ne pas écraser une version locale plus récente au même id
+                const backupKey = `znk_backup_${item.type}_${item.id}`;
+                if (localStorage.getItem(backupKey)) continue;
+                localStorage.setItem(backupKey, JSON.stringify(item));
+
+                if (item.type === 'video' && item.data) {
+                    saveACTVVideo(item.data);
+                } else if (item.type === 'gallery' && item.data) {
+                    localStorage.setItem('znk_gallery_manifest', JSON.stringify(item.data));
+                }
+            }
+            console.log(`✅ ${result.items.length} publication(s) synchronisée(s) depuis le VPS`);
+        } catch (error) {
+            // Hors-ligne ou VPS injoignable : comportement normal, on continue avec le local
+            console.log('ℹ️ Sync VPS non disponible pour le moment (hors-ligne ?)');
+        }
+    }
+
+    async pushToVPS(publication) {
+        try {
+            const response = await fetch(`${ZNK_BACKEND_URL}/api/admin-content/${publication.id}/sync-push`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(publication)
+            });
+            if (response.ok) {
+                console.log('☁️ Publication synchronisée vers le VPS :', publication.id);
+            } else {
+                console.warn('⚠️ Échec sync VPS (statut', response.status, ') — reste en local pour l\'instant');
+            }
+        } catch (error) {
+            // Hors-ligne : la publication reste en local (localStorage / filesystem),
+            // ce n'est pas une erreur bloquante pour l'utilisateur
+            console.log('ℹ️ Pas de réseau — publication gardée en local uniquement');
+        }
     }
 
     // === INTERCEPTEURS ===
@@ -1086,6 +1174,10 @@ class ZNKAdminPersistence {
         // Sauvegarder en localStorage (backup)
         const backupKey = `znk_backup_${publication.type}_${publication.id}`;
         localStorage.setItem(backupKey, JSON.stringify(publication));
+
+        // Synchronise vers le VPS — best-effort, ne bloque jamais l'utilisateur
+        // si hors-ligne (voir pushToVPS : échoue silencieusement dans ce cas)
+        this.pushToVPS(publication);
         
         // Si Electron, sauvegarder dans filesystem
         if (this.isElectron) {
@@ -1160,6 +1252,17 @@ class ZNKAdminPersistence {
 
         // Backup localStorage (utile aussi pour que gallery.html le lise en direct)
         localStorage.setItem('znk_gallery_manifest', JSON.stringify(manifest));
+
+        // Synchronise vers le VPS — même schéma unifié que les autres types
+        this.pushToVPS({
+            id: `znk_gallery_${Date.now()}`,
+            type: 'gallery',
+            title: 'Galerie',
+            data: manifest,
+            source: 'znk_gallery_manifest',
+            createdAt: new Date().toISOString(),
+            persistent: true
+        });
 
         // Sauvegarde fichier si Electron dispo (même pattern que videos/audio)
         if (this.isElectron) {

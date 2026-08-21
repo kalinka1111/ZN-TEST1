@@ -71,9 +71,11 @@ PROFILES_DIR = os.path.join(DATA_DIR, 'profiles')  # profils utilisateurs publi�
 EXPOS_DIR = os.path.join(DATA_DIR, 'expos')  # expositions publiées (expo-manager.html, lues par ZNKExpos.html)
 CARNETS_DIR = os.path.join(DATA_DIR, 'carnets')  # carnets de croquis publiés (elevesArt.html, seuil 10 pages)
 RADIO_DIR = os.path.join(DATA_DIR, 'radio-emissions')  # catalogue radio officiel ZNK (radiobyznk), publié depuis le dash admin
+LESSONS_DIR = os.path.join(DATA_DIR, 'lessons')  # catalogue de leçons officiel ZNK (arts études), publié depuis le dash admin
+ADMIN_CONTENT_DIR = os.path.join(DATA_DIR, 'admin-content')  # catalogue unifié ZNKadminDash : audio/vidéo/image/galerie (voir ZNKAdminPersistence côté client) — les leçons restent dans LESSONS_DIR (routes /api/lessons/* inchangées) mais apparaissent aussi dans /api/admin-content en lecture, fusionnées à la volée
 
 # Créer les dossiers si nécessaire
-for directory in [DATA_DIR, PUBLICATIONS_DIR, SHARED_DIR, BOOKS_DIR, ARTFLOW_DIR, PROFILES_DIR, EXPOS_DIR, CARNETS_DIR, RADIO_DIR]:
+for directory in [DATA_DIR, PUBLICATIONS_DIR, SHARED_DIR, BOOKS_DIR, ARTFLOW_DIR, PROFILES_DIR, EXPOS_DIR, CARNETS_DIR, RADIO_DIR, LESSONS_DIR, ADMIN_CONTENT_DIR]:
     os.makedirs(directory, exist_ok=True)
 
 # ============================================================================
@@ -1614,6 +1616,404 @@ def sync_push_my_radio_track():
 # ============================================================================
 # ROUTES - ARTFLOW (publications visibles par tous, artflow.html)
 # ============================================================================
+
+# ============================================================================
+# ROUTES - LEÇONS (catalogue officiel ZNK arts-études, publié depuis le dash
+# admin, lu par tous les clients ZNK au lancement pour compléter le contenu
+# embarqué au build sans nécessiter de nouvelle release à chaque leçon ajoutée.
+# Même architecture que RADIO ci-dessus : publication protégée par clé API,
+# matériel (images/vidéos) uploadé sur R2 si activé, comme ArtFlow.
+# ============================================================================
+
+@app.route('/api/lessons', methods=['GET'])
+def get_lessons():
+    """Liste allégée des leçons publiées (sans le contenu détaillé) — pour
+    savoir rapidement ce qui a changé avant d'aller chercher le détail.
+    Filtrable par niveau via ?level=maternelle|primaire|college|lycee
+    (les leçons sans niveau précisé sont considérées communes à tous)."""
+    try:
+        level_filter = request.args.get('level')
+        lessons = []
+        for filename in os.listdir(LESSONS_DIR):
+            if not filename.endswith('.json'):
+                continue
+            filepath = os.path.join(LESSONS_DIR, filename)
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    l = json.load(f)
+                if level_filter and l.get('level') and l.get('level') != level_filter:
+                    continue
+                lessons.append({
+                    'id': l.get('id'),
+                    'title': l.get('title'),
+                    'level': l.get('level'),
+                    'section': l.get('section'),
+                    'coverImage': l.get('coverImage'),
+                    'materialsCount': len(l.get('materials') or []),
+                    'publishedAt': l.get('publishedAt')
+                })
+            except Exception:
+                pass
+
+        lessons.sort(key=lambda x: x.get('publishedAt') or '', reverse=True)
+
+        return jsonify({'status': 'success', 'lessons': lessons})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/lessons/<lesson_id>', methods=['GET'])
+def get_lesson(lesson_id):
+    """Leçon complète (matériaux, contenu, quiz éventuel) — pour affichage
+    et mise en cache locale côté client."""
+    try:
+        filepath = os.path.join(LESSONS_DIR, f"{lesson_id}.json")
+        if not os.path.exists(filepath):
+            return jsonify({'status': 'error', 'message': 'Leçon non trouvée'}), 404
+        with open(filepath, 'r', encoding='utf-8') as f:
+            lesson = json.load(f)
+        return jsonify({'status': 'success', 'lesson': lesson})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/lessons/<lesson_id>', methods=['POST'])
+@require_api_key
+def publish_lesson(lesson_id):
+    """VPS uniquement : publie (ou republie) une leçon du catalogue officiel
+    — écrase le fichier existant si l'id est déjà connu, pour que republier
+    mette à jour la même leçon plutôt que d'en créer un doublon. Protégé par
+    clé API : le catalogue officiel n'est modifiable que depuis le dash admin."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'status': 'error', 'message': 'Données manquantes'}), 400
+
+        published_at = datetime.now().isoformat()
+        lesson = {**data, 'id': lesson_id, 'publishedAt': published_at}
+
+        filepath = os.path.join(LESSONS_DIR, f"{lesson_id}.json")
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(lesson, f, indent=2, ensure_ascii=False)
+
+        return jsonify({'status': 'success', 'publishedAt': published_at, 'lesson': lesson}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/lessons/<lesson_id>/upload-material', methods=['POST'])
+@require_api_key
+def upload_lesson_material(lesson_id):
+    """VPS uniquement : upload d'un fichier matériel (image/vidéo/audio) pour
+    une leçon. Part sur Cloudflare R2 si R2_ENABLED — le VPS ne stocke ni ne
+    sert alors plus ces octets, seul R2 encaisse la bande passante (egress
+    gratuit). Sinon, repli sur SHARED_DIR local + /files/<filename>."""
+    if 'file' not in request.files:
+        return jsonify({'status': 'error', 'message': 'Aucun fichier fourni'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'status': 'error', 'message': 'Nom de fichier vide'}), 400
+
+    filename = f"lesson_{lesson_id}_{int(time.time() * 1000)}_{file.filename}"
+
+    if R2_ENABLED:
+        try:
+            url = upload_object_to_r2(file.stream, f"lessons/{filename}", content_type=file.mimetype)
+            return jsonify({
+                'status': 'success',
+                'url': url,
+                'filename': filename,
+                'storage': 'r2'
+            }), 201
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': f'Upload R2 échoué: {e}'}), 502
+
+    filepath = os.path.join(SHARED_DIR, filename)
+    file.save(filepath)
+    return jsonify({
+        'status': 'success',
+        'url': f"/files/{filename}",
+        'filename': filename,
+        'size': os.path.getsize(filepath),
+        'storage': 'local'
+    }), 201
+
+# ----------------------------------------------------------------------------
+# Local uniquement (même principe que /api/radio-emissions/sync-* plus haut) :
+# ce server.py tourne aussi localement sur chaque device (127.0.0.1, lancé par
+# main.js). Ces routes relaient vers le VPS avec ZNK_API_KEY — le renderer et
+# main.js n'ont jamais besoin de connaître ni stocker cette clé.
+# ----------------------------------------------------------------------------
+
+@app.route('/api/lessons/sync-pull', methods=['GET'])
+def sync_pull_lessons():
+    """Va chercher le catalogue complet de leçons (liste + détail de chacune)
+    sur le VPS en un seul aller-retour côté client. Filtrable par niveau via
+    ?level=... (transmis tel quel au VPS)."""
+    registry_url, _api_key, error = _vps_config_ou_erreur()
+    if error:
+        return error
+    try:
+        level = request.args.get('level')
+        params = {'level': level} if level else {}
+        r = requests.get(f"{registry_url}/api/lessons", params=params, timeout=10)
+        r.raise_for_status()
+        liste = r.json().get('lessons', [])
+
+        lessons = []
+        for meta in liste:
+            lid = meta.get('id')
+            if not lid:
+                continue
+            rd = requests.get(f"{registry_url}/api/lessons/{lid}", timeout=15)
+            if rd.ok:
+                lessons.append(rd.json().get('lesson'))
+
+        return jsonify({'status': 'success', 'lessons': lessons})
+    except requests.exceptions.RequestException as e:
+        # VPS injoignable (hors-ligne, etc.) : on ne casse rien, l'app
+        # continue avec ce qui est déjà en cache local/embarqué au build.
+        return jsonify({'status': 'error', 'offline': True, 'message': str(e)}), 502
+
+@app.route('/api/lessons/<lesson_id>/sync-push', methods=['POST'])
+def sync_push_lesson(lesson_id):
+    """Republie une leçon vers le VPS, en ajoutant la clé API de CE device
+    (jamais transmise par le client Electron)."""
+    registry_url, api_key, error = _vps_config_ou_erreur()
+    if error:
+        return error
+    if not api_key:
+        return jsonify({'status': 'error', 'message': 'ZNK_API_KEY non configuré sur ce device'}), 503
+    try:
+        data = request.get_json()
+        r = requests.post(
+            f"{registry_url}/api/lessons/{lesson_id}",
+            json=data,
+            headers={'X-ZNK-Key': api_key},
+            timeout=30
+        )
+        return jsonify(r.json()), r.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({'status': 'error', 'offline': True, 'message': str(e)}), 502
+
+@app.route('/api/lessons/<lesson_id>/upload-material/sync-push', methods=['POST'])
+def sync_push_lesson_material(lesson_id):
+    """Relaie l'upload d'un fichier matériel vers le VPS, en ajoutant la clé
+    API de CE device. multipart/form-data transmis tel quel."""
+    registry_url, api_key, error = _vps_config_ou_erreur()
+    if error:
+        return error
+    if not api_key:
+        return jsonify({'status': 'error', 'message': 'ZNK_API_KEY non configuré sur ce device'}), 503
+    if 'file' not in request.files:
+        return jsonify({'status': 'error', 'message': 'Aucun fichier fourni'}), 400
+    try:
+        file = request.files['file']
+        r = requests.post(
+            f"{registry_url}/api/lessons/{lesson_id}/upload-material",
+            files={'file': (file.filename, file.stream, file.mimetype)},
+            headers={'X-ZNK-Key': api_key},
+            timeout=60
+        )
+        return jsonify(r.json()), r.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({'status': 'error', 'offline': True, 'message': str(e)}), 502
+
+# ============================================================================
+# ROUTES - CONTENU ADMIN UNIFIÉ (audio/vidéo/image/galerie, publié depuis
+# ZNKadminDash — voir la classe ZNKAdminPersistence côté client, qui produit
+# déjà exactement ce schéma : {id, type, title, data, source, createdAt}).
+# Même architecture et mêmes conventions que /api/lessons/* ci-dessus :
+# publication protégée par clé API, matériel uploadé sur R2 si activé, relais
+# local sync-pull/sync-push qui injecte la clé API du device sans jamais
+# l'exposer au renderer.
+#
+# Les leçons restent gérées par /api/lessons/* (routes inchangées, déjà
+# testées) — mais GET /api/admin-content fusionne LESSONS_DIR à la volée
+# dans le catalogue unifié (type='lecon'), sans dupliquer aucun fichier :
+# les leçons déjà publiées apparaissent donc automatiquement ici aussi.
+# ============================================================================
+
+@app.route('/api/admin-content', methods=['GET'])
+def get_admin_content():
+    """Catalogue unifié : audio/vidéo/image/galerie + leçons fusionnées
+    (lues depuis LESSONS_DIR, jamais dupliquées sur disque).
+    Filtrable par type via ?type=video|audio|image|gallery|lecon"""
+    try:
+        type_filter = request.args.get('type')
+        items = []
+
+        for filename in os.listdir(ADMIN_CONTENT_DIR):
+            if not filename.endswith('.json'):
+                continue
+            try:
+                with open(os.path.join(ADMIN_CONTENT_DIR, filename), 'r', encoding='utf-8') as f:
+                    item = json.load(f)
+                items.append(item)
+            except Exception:
+                pass
+
+        # Fusion à la volée des leçons (LESSONS_DIR), taguées type='lecon'
+        if not type_filter or type_filter == 'lecon':
+            for filename in os.listdir(LESSONS_DIR):
+                if not filename.endswith('.json'):
+                    continue
+                try:
+                    with open(os.path.join(LESSONS_DIR, filename), 'r', encoding='utf-8') as f:
+                        lesson = json.load(f)
+                    items.append({
+                        'id': lesson.get('id'),
+                        'type': 'lecon',
+                        'title': lesson.get('title'),
+                        'data': lesson,
+                        'createdAt': lesson.get('publishedAt')
+                    })
+                except Exception:
+                    pass
+
+        if type_filter:
+            items = [i for i in items if i.get('type') == type_filter]
+
+        items.sort(key=lambda x: x.get('createdAt') or '', reverse=True)
+
+        return jsonify({'status': 'success', 'items': items})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/admin-content/<item_id>', methods=['GET'])
+def get_admin_content_item(item_id):
+    """Un élément précis du catalogue unifié (pas les leçons — utiliser
+    /api/lessons/<id> pour celles-ci, qui restent gérées séparément)."""
+    try:
+        filepath = os.path.join(ADMIN_CONTENT_DIR, f"{item_id}.json")
+        if not os.path.exists(filepath):
+            return jsonify({'status': 'error', 'message': 'Élément non trouvé'}), 404
+        with open(filepath, 'r', encoding='utf-8') as f:
+            item = json.load(f)
+        return jsonify({'status': 'success', 'item': item})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/admin-content/<item_id>', methods=['POST'])
+@require_api_key
+def publish_admin_content(item_id):
+    """VPS uniquement : publie (ou republie) un élément — écrase si l'id est
+    déjà connu, pour que republier mette à jour plutôt que dupliquer."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'status': 'error', 'message': 'Données manquantes'}), 400
+
+        created_at = data.get('createdAt') or datetime.now().isoformat()
+        item = {**data, 'id': item_id, 'createdAt': created_at}
+
+        filepath = os.path.join(ADMIN_CONTENT_DIR, f"{item_id}.json")
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(item, f, indent=2, ensure_ascii=False)
+
+        return jsonify({'status': 'success', 'createdAt': created_at, 'item': item}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/admin-content/<item_id>/upload-material', methods=['POST'])
+@require_api_key
+def upload_admin_content_material(item_id):
+    """VPS uniquement : upload d'un fichier (image/vidéo/audio) pour un
+    élément du catalogue unifié. Part sur R2 si R2_ENABLED, sinon repli
+    local SHARED_DIR + /files/<filename> — identique à /api/lessons/*."""
+    if 'file' not in request.files:
+        return jsonify({'status': 'error', 'message': 'Aucun fichier fourni'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'status': 'error', 'message': 'Nom de fichier vide'}), 400
+
+    filename = f"admincontent_{item_id}_{int(time.time() * 1000)}_{file.filename}"
+
+    if R2_ENABLED:
+        try:
+            url = upload_object_to_r2(file.stream, f"admin-content/{filename}", content_type=file.mimetype)
+            return jsonify({'status': 'success', 'url': url, 'filename': filename, 'storage': 'r2'}), 201
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': f'Upload R2 échoué: {e}'}), 502
+
+    filepath = os.path.join(SHARED_DIR, filename)
+    file.save(filepath)
+    return jsonify({
+        'status': 'success',
+        'url': f"/files/{filename}",
+        'filename': filename,
+        'size': os.path.getsize(filepath),
+        'storage': 'local'
+    }), 201
+
+# ----------------------------------------------------------------------------
+# Local uniquement (même principe que /api/lessons/sync-* plus haut) : relais
+# vers le VPS avec ZNK_API_KEY — le renderer et main.js n'ont jamais besoin
+# de connaître ni stocker cette clé.
+# ----------------------------------------------------------------------------
+
+@app.route('/api/admin-content/sync-pull', methods=['GET'])
+def sync_pull_admin_content():
+    """Va chercher le catalogue unifié complet sur le VPS en un aller-retour.
+    Filtrable par type via ?type=... (transmis tel quel au VPS)."""
+    registry_url, _api_key, error = _vps_config_ou_erreur()
+    if error:
+        return error
+    try:
+        type_filter = request.args.get('type')
+        params = {'type': type_filter} if type_filter else {}
+        r = requests.get(f"{registry_url}/api/admin-content", params=params, timeout=10)
+        r.raise_for_status()
+        return jsonify({'status': 'success', 'items': r.json().get('items', [])})
+    except requests.exceptions.RequestException as e:
+        # VPS injoignable : on ne casse rien, le dashboard continue avec ce
+        # qu'il a déjà en local (localStorage / persistent-*)
+        return jsonify({'status': 'error', 'offline': True, 'message': str(e)}), 502
+
+
+@app.route('/api/admin-content/<item_id>/sync-push', methods=['POST'])
+def sync_push_admin_content(item_id):
+    """Republie un élément vers le VPS, en ajoutant la clé API de CE device."""
+    registry_url, api_key, error = _vps_config_ou_erreur()
+    if error:
+        return error
+    if not api_key:
+        return jsonify({'status': 'error', 'message': 'ZNK_API_KEY non configuré sur ce device'}), 503
+    try:
+        data = request.get_json()
+        r = requests.post(
+            f"{registry_url}/api/admin-content/{item_id}",
+            json=data,
+            headers={'X-ZNK-Key': api_key},
+            timeout=30
+        )
+        return jsonify(r.json()), r.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({'status': 'error', 'offline': True, 'message': str(e)}), 502
+
+
+@app.route('/api/admin-content/<item_id>/upload-material/sync-push', methods=['POST'])
+def sync_push_admin_content_material(item_id):
+    """Relaie l'upload d'un fichier matériel vers le VPS, en ajoutant la clé
+    API de CE device. multipart/form-data transmis tel quel."""
+    registry_url, api_key, error = _vps_config_ou_erreur()
+    if error:
+        return error
+    if not api_key:
+        return jsonify({'status': 'error', 'message': 'ZNK_API_KEY non configuré sur ce device'}), 503
+    if 'file' not in request.files:
+        return jsonify({'status': 'error', 'message': 'Aucun fichier fourni'}), 400
+    try:
+        file = request.files['file']
+        r = requests.post(
+            f"{registry_url}/api/admin-content/{item_id}/upload-material",
+            files={'file': (file.filename, file.stream, file.mimetype)},
+            headers={'X-ZNK-Key': api_key},
+            timeout=60
+        )
+        return jsonify(r.json()), r.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({'status': 'error', 'offline': True, 'message': str(e)}), 502
 
 @app.route('/api/artflow-posts', methods=['GET'])
 def get_artflow_posts():

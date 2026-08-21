@@ -190,8 +190,8 @@ ZNK ACTV MANAGER<!DOCTYPE html>
             </div>
             <div class="target-option artflow" id="targetArtflow" onclick="selectTarget('artflow')">
                 <div class="icon">🎨</div>
-                <div class="label">ArtFlow (mon profil)</div>
-                <div class="sub">Mes créations personnelles</div>
+                <div class="label">ArtFlow Études</div>
+                <div class="sub">artflow-etudes.html</div>
             </div>
         </div>
     </div>
@@ -243,7 +243,7 @@ ZNK ACTV MANAGER<!DOCTYPE html>
             </div>
 
             <div class="form-group" id="categoryGroup">
-                <label class="form-label">Catégorie (ACTV)</label>
+                <label class="form-label">Catégorie</label>
                 <select class="form-select" id="fieldCategory">
                     <option value="emission-znk-artistes">Emission ZNK Artistes</option>
                     <option value="emission-znk-actu">Emission ZNK Actualité</option>
@@ -270,7 +270,7 @@ ZNK ACTV MANAGER<!DOCTYPE html>
             </div>
 
             <div class="form-group" id="viewsGroup">
-                <label class="form-label">Vues estimées (ACTV)</label>
+                <label class="form-label">Vues estimées</label>
                 <input type="text" class="form-input" id="fieldViews" placeholder="Ex: 125K">
             </div>
 
@@ -384,13 +384,16 @@ ZNK ACTV MANAGER<!DOCTYPE html>
         document.getElementById('targetArtflow').classList.toggle('selected', target === 'artflow');
 
         const isActv = target === 'actv';
-        document.getElementById('categoryGroup').classList.toggle('field-hidden', !isActv);
-        document.getElementById('viewsGroup').classList.toggle('field-hidden', !isActv);
+        // Les deux destinations (ACTV et ArtFlow Études) utilisent exactement
+        // le même système de publication : catégorie et vues restent visibles
+        // quelle que soit la cible choisie.
+        document.getElementById('categoryGroup').classList.remove('field-hidden');
+        document.getElementById('viewsGroup').classList.remove('field-hidden');
         updateCategoryCustomVisibility();
 
         const btn = document.getElementById('publishBtn');
         btn.classList.toggle('artflow-theme', !isActv);
-        btn.textContent = isActv ? '🚀 Convertir & Publier sur ACTV' : '🚀 Convertir & Publier sur ArtFlow';
+        btn.textContent = isActv ? '🚀 Convertir & Publier sur ACTV' : '🚀 Convertir & Publier sur ArtFlow Études';
     }
     window.selectTarget = selectTarget;
     selectTarget('actv');
@@ -398,7 +401,7 @@ ZNK ACTV MANAGER<!DOCTYPE html>
     // Affiche le champ "nom de la nouvelle émission" seulement si "Autre" est choisi (et cible = ACTV)
     function updateCategoryCustomVisibility() {
         const isCustom = document.getElementById('fieldCategory').value === '__custom__';
-        document.getElementById('categoryCustomGroup').classList.toggle('field-hidden', !(currentTarget === 'actv' && isCustom));
+        document.getElementById('categoryCustomGroup').classList.toggle('field-hidden', !isCustom);
     }
     document.getElementById('fieldCategory').addEventListener('change', updateCategoryCustomVisibility);
 
@@ -581,7 +584,7 @@ ZNK ACTV MANAGER<!DOCTYPE html>
             showNotification('Le titre de l\'émission est requis', true);
             return;
         }
-        if (currentTarget === 'actv' && document.getElementById('fieldCategory').value === '__custom__' && !document.getElementById('fieldCategoryCustom').value.trim()) {
+        if (document.getElementById('fieldCategory').value === '__custom__' && !document.getElementById('fieldCategoryCustom').value.trim()) {
             showNotification('Merci d\'indiquer le nom de la nouvelle émission', true);
             return;
         }
@@ -685,7 +688,7 @@ ZNK ACTV MANAGER<!DOCTYPE html>
 
         isRunning = false;
         publishBtn.disabled = false;
-        publishBtn.textContent = currentTarget === 'actv' ? '🚀 Convertir & Publier sur ACTV' : '🚀 Convertir & Publier sur ArtFlow';
+        publishBtn.textContent = currentTarget === 'actv' ? '🚀 Convertir & Publier sur ACTV' : '🚀 Convertir & Publier sur ArtFlow Études';
 
         showResult(okCount, errCount, lastErrors);
     }
@@ -741,32 +744,41 @@ ZNK ACTV MANAGER<!DOCTYPE html>
         return emission;
     }
 
+    // Copie exacte du système publishToActv, seule la clé de stockage change,
+    // pour publier vers artflow-etudes.html au lieu de actv.html.
     function publishToArtflow({ title, episodes }) {
         const first = episodes[0];
-        const publication = {
-            id: `pub_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        const emission = {
+            id: `emission_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
             title: title,
-            description: document.getElementById('fieldDescription').value,
+            type: getSelectedCategoryValue(),
             duration: document.getElementById('fieldDuration').value || 'N/A',
+            description: document.getElementById('fieldDescription').value,
             views: document.getElementById('fieldViews').value || '0',
             priority: document.getElementById('fieldPriority').value,
             episodeCount: episodes.length,
             videos: episodes,
-            // Champs à plat = épisode 1, gardés pour compatibilité (voir note ci-dessus, artflow.html idem).
+            // Champs à plat = épisode 1, gardés pour compatibilité avec les lecteurs
+            // existants (artflow-etudes.html) qui ne connaissent pas encore le tableau "videos".
+            // ⚠️ Pour afficher tous les épisodes, artflow-etudes.html doit être mis à jour pour lire emission.videos.
             videoId: first.videoId,
             videoUrl: first.videoUrl,
-            thumbnail: first.thumbnail,
+            videoPath: first.videoPath,
             videoFilename: first.videoFilename,
+            videoPersistent: first.videoPersistent,
+            videoConverted: first.videoConverted,
+            thumbnail: first.thumbnail,
+            coverImage: first.coverImage,
             publishedAt: new Date().toISOString(),
             status: 'published'
         };
         try {
-            const raw = localStorage.getItem('artflow_user_publications');
-            const pubs = raw ? JSON.parse(raw) : [];
-            pubs.push(publication);
-            localStorage.setItem('artflow_user_publications', JSON.stringify(pubs));
-        } catch (e) { console.error('Erreur publication ArtFlow', e); }
-        return publication;
+            const raw = localStorage.getItem('znk_artflow_etudes_emissions');
+            const emissions = raw ? JSON.parse(raw) : [];
+            emissions.push(emission);
+            localStorage.setItem('znk_artflow_etudes_emissions', JSON.stringify(emissions));
+        } catch (e) { console.error('Erreur publication ArtFlow Études', e); }
+        return emission;
     }
 
     // ---------- Result screen ----------
@@ -784,8 +796,8 @@ ZNK ACTV MANAGER<!DOCTYPE html>
             box.classList.remove('error');
             title.textContent = '✅ Publication terminée !';
             text.textContent = okCount > 1
-                ? `Émission publiée sur ${currentTarget === 'actv' ? 'ACTV' : 'ArtFlow'} avec ${okCount} épisode(s).`
-                : `Vidéo convertie, rendue persistante et publiée sur ${currentTarget === 'actv' ? 'ACTV' : 'ArtFlow'}.`;
+                ? `Émission publiée sur ${currentTarget === 'actv' ? 'ACTV' : 'ArtFlow Études'} avec ${okCount} épisode(s).`
+                : `Vidéo convertie, rendue persistante et publiée sur ${currentTarget === 'actv' ? 'ACTV' : 'ArtFlow Études'}.`;
         } else if (okCount > 0 && errCount > 0) {
             box.classList.remove('error');
             title.textContent = '⚠️ Publication partielle';
@@ -798,7 +810,7 @@ ZNK ACTV MANAGER<!DOCTYPE html>
     }
 
     function openDestination() {
-        const url = currentTarget === 'actv' ? 'actv.html' : 'artflow.html';
+        const url = currentTarget === 'actv' ? 'actv.html' : 'artflow-etudes.html';
         navigateInDashboard(url);
     }
     window.openDestination = openDestination;

@@ -729,7 +729,7 @@
 
 <script>
 // ==================== IDENTITÉ ZNK RÉELLE ====================
-// Backend configurable : par défaut localhost:5000, mais peut être surchargé
+// Backend configurable : par défaut localhost:5001, mais peut être surchargé
 // via ?backend=http://IP:PORT dans l'URL — utile pour tester depuis un autre
 // device (iPhone, etc.) sur le même réseau Wi-Fi. Mémorisé une fois défini.
 const ZNK_BACKEND_STORAGE_KEY = 'znk_backend_url';
@@ -741,7 +741,7 @@ function znkResolveBackendUrl() {
         localStorage.setItem(ZNK_BACKEND_STORAGE_KEY, fromUrl);
         return fromUrl;
     }
-    return localStorage.getItem(ZNK_BACKEND_STORAGE_KEY) || 'http://localhost:5000';
+    return localStorage.getItem(ZNK_BACKEND_STORAGE_KEY) || 'http://localhost:5001';
 }
 
 const ZNK_BACKEND_URL = znkResolveBackendUrl();
@@ -928,7 +928,7 @@ async function registerIdentity() {
             body: JSON.stringify({ idZNK: myIdZNK })
         });
     } catch (e) {
-        console.warn('⚠️ Backend ZNK injoignable (localhost:5000) - démarrez server.py', e);
+        console.warn('⚠️ Backend ZNK injoignable (localhost:5001) - démarrez server.py', e);
     }
 }
 
@@ -1236,7 +1236,7 @@ async function sendMessage() {
             chat.scrollTop = chat.scrollHeight;
         }
     } catch (e) {
-        console.warn('⚠️ Backend ZNK injoignable (localhost:5000):', e);
+        console.warn('⚠️ Backend ZNK injoignable (localhost:5001):', e);
     }
 }
 
