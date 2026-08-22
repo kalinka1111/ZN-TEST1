@@ -2009,7 +2009,10 @@ def sync_push_admin_content_material(item_id):
             f"{registry_url}/api/admin-content/{item_id}/upload-material",
             files={'file': (file.filename, file.stream, file.mimetype)},
             headers={'X-ZNK-Key': api_key},
-            timeout=60
+            timeout=300  # fichier vidéo réel, potentiellement volumineux/connexion
+                         # lente — 60s (valeur d'origine, alignée sur les push
+                         # JSON légers) causait des TimeoutError en conditions
+                         # réelles (vu le 22 août, upload "Les chatouilles_light.webm")
         )
         return jsonify(r.json()), r.status_code
     except requests.exceptions.RequestException as e:

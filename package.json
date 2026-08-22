@@ -26,7 +26,7 @@
     "productName": "ZNK",
     "copyright": "Copyright © 2025 ZNK",
     "directories": {
-      "output": "desktop/",
+      "output": "/Volumes/ZNKfly/ZNKOffice/ZNK-builds",
       "buildResources": "assets"
     },
     "files": [
@@ -38,6 +38,10 @@
       "!.gitignore",
       "!.env*",
       "!.DS_Store",
+      "!models/**/*",
+      "!znk-resources*",
+      "!build/**/*",
+      "!python-portable/**/*",
       "!modules-admin/**/*",
       "!modules-etudes/creer-lecon-admin.html",
       "!scripts/**/*",
@@ -61,7 +65,14 @@
       "!node_modules/electron/**/*",
       "!node_modules/electron-builder/**/*",
       "!converted-videos/**/*",
-      "!znkAudio/**/*"
+      "!znkAudio/**/*",
+      "!bin/**/*",
+      "!persistent-audios/**/*",
+      "!assets/seed-manifests/**/*",
+      "!assets/videos-seed/**/*",
+      "!assets/audio-seed/**/*",
+      "!assets/materials-seed/**/*",
+      "!assets/sounds/**/*"
     ],
   "extraResources": [
   {
