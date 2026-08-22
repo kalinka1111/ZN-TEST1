@@ -1,6 +1,6 @@
 {
   "name": "znk-app",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "ZNK - Système de gestion intelligent avec authentification",
   "main": "main.js",
   "author": "ZNK ZazaNoah",
@@ -26,7 +26,7 @@
     "productName": "ZNK",
     "copyright": "Copyright © 2025 ZNK",
     "directories": {
-      "output": "/Volumes/ZNKfly/ZNKOffice/ZNK-builds",
+      "output": "desktop/",
       "buildResources": "assets"
     },
     "files": [
