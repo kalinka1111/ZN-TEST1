@@ -944,6 +944,29 @@
         console.warn('⚠️ [ACTV] seed émissions:', e);
     }
 
+    // Pull VPS (fetch-and-persist) — best-effort, jamais bloquant si hors-ligne.
+    // Le VPS fait autorité en cas de conflit d'id ; le contenu déjà présent
+    // localement (seed ou sync précédente) reste disponible si ce pull échoue.
+    try {
+        if (window.electronAPI && window.electronAPI.pullAdminContentVideos) {
+            const pullResult = await window.electronAPI.pullAdminContentVideos();
+            if (pullResult && pullResult.success && Array.isArray(pullResult.emissions)) {
+                const raw = localStorage.getItem('znk_actv_emissions');
+                const existing = raw ? JSON.parse(raw) : [];
+                const byId = new Map(existing.map(e => [e.id || e.videoId, e]));
+                for (const emission of pullResult.emissions) {
+                    byId.set(emission.id, emission);
+                }
+                localStorage.setItem('znk_actv_emissions', JSON.stringify(Array.from(byId.values())));
+                console.log(`☁️ [ACTV] Pull VPS : ${pullResult.emissions.length} émission(s) synchronisée(s)`);
+            } else if (pullResult && !pullResult.success) {
+                console.log('ℹ️ [ACTV] Pull VPS indisponible (hors-ligne ?) — contenu local conservé :', pullResult.error);
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ [ACTV] Pull VPS:', e);
+    }
+
     try {
         // 1. Charger depuis le manifest système si disponible
         let videoManifest = [];

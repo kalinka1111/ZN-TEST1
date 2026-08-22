@@ -711,11 +711,44 @@ ZNK ACTV MANAGER<!DOCTYPE html>
                 console.warn('⚠️ window.electronAPI.publishAdminContent indisponible — publication gardée en local uniquement');
                 return;
             }
+
+            // Jusqu'ici, seules les MÉTADONNÉES partaient vers le VPS —
+            // videoPath est un chemin LOCAL (/Users/.../persistent-videos/xxx.webm)
+            // qui n'a aucun sens sur l'ordinateur d'un membre. On upload donc
+            // maintenant le vrai fichier de chaque épisode vers R2 (via le VPS)
+            // AVANT de publier les métadonnées, pour que le résultat soit
+            // réellement regardable une fois pullé côté membre.
+            const episodesWithRemote = [];
+            for (const ep of (emission.videos || [])) {
+                let videoRemoteUrl = ep.videoRemoteUrl || null;
+                if (!videoRemoteUrl && ep.videoPath && api.uploadAdminContentVideo) {
+                    try {
+                        const uploadResult = await api.uploadAdminContentVideo({ itemId: emission.id, filePath: ep.videoPath });
+                        if (uploadResult && uploadResult.success) {
+                            videoRemoteUrl = uploadResult.url;
+                            console.log('☁️ Vidéo uploadée vers R2 :', ep.videoFilename, '→', videoRemoteUrl);
+                        } else {
+                            console.warn('⚠️ Échec upload vidéo vers R2 :', ep.videoFilename, uploadResult && uploadResult.error);
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ Erreur upload vidéo vers R2 :', ep.videoFilename, e);
+                    }
+                }
+                episodesWithRemote.push({ ...ep, videoRemoteUrl });
+            }
+
+            const emissionForVps = {
+                ...emission,
+                videos: episodesWithRemote,
+                // épisode 1 à plat, même logique de compatibilité que videoUrl/videoPath plus haut
+                videoRemoteUrl: episodesWithRemote[0] ? episodesWithRemote[0].videoRemoteUrl : null
+            };
+
             const result = await api.publishAdminContent({
                 id: emission.id,
                 type: 'video',
                 title: emission.title,
-                data: emission,
+                data: emissionForVps,
                 source: target === 'actv' ? 'znk_actv_emissions' : 'znk_artflow_etudes_emissions',
                 target: target,
                 createdAt: emission.publishedAt,

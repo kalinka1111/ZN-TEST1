@@ -101,6 +101,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Catalogue unifié admin (manager-actv.html, etc. — modules en <webview>)
     setAdminApiKey: (key) => ipcRenderer.invoke('set-admin-api-key', key),
     publishAdminContent: (item) => ipcRenderer.invoke('admin-content:publish', { item }),
+    uploadAdminContentVideo: (payload) => ipcRenderer.invoke('admin-content:upload-video', payload),
+    pullAdminContentVideos: () => ipcRenderer.invoke('admin-content:pull-videos'),
     // Vidéos "seed" (assets/videos-seed) : contenu figé livré avec l'appli,
     // identique sur toutes les installations — utilisé par creer-lecon-admin.html
     // pour choisir une vidéo déjà présente plutôt que d'en importer une nouvelle.

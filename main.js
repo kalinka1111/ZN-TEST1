@@ -2244,6 +2244,70 @@ ipcMain.handle('artflow:publish-post', async (event, { post } = {}) => {
 // clé pour la persister via set-admin-api-key, mais ne l'envoie jamais
 // lui-même sur le réseau ; seul server.py le fait.
 // ----------------------------------------------------------------------------
+// ⚠️ Pull VPS → membre : jusqu'ici seul le sens admin → VPS existait
+// (admin-content:publish / upload-video ci-dessus). Un membre normal n'a
+// PAS de server.py local qui tourne (isDevMode() est false dans une build
+// publique), donc ce pull va DIRECTEMENT au VPS via ZNK_REGISTRY_URL — pas
+// de relais local nécessaire, la lecture est publique côté serveur.
+// Fetch-and-persist : les vidéos manquantes sont téléchargées et écrites
+// dans persistent-videos/, pour survivre à un passage hors-ligne ensuite
+// (voir la note dans la mémoire du projet sur ce point).
+ipcMain.handle('admin-content:pull-videos', async () => {
+    try {
+        const registryUrl = process.env.ZNK_REGISTRY_URL || resolveRegistryUrl();
+        const res = await fetch(`${registryUrl}/api/admin-content?type=video`);
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || data.status !== 'success') {
+            return { success: false, offline: true, error: (data && data.message) || `HTTP ${res.status}` };
+        }
+
+        const persistentVideosFolder = path.join(app.getPath('userData'), 'persistent-videos');
+        fs.mkdirSync(persistentVideosFolder, { recursive: true });
+
+        const pulledEmissions = [];
+        for (const item of (data.items || [])) {
+            const emission = item.data;
+            if (!emission || !Array.isArray(emission.videos)) continue;
+
+            for (const ep of emission.videos) {
+                if (!ep.videoId) continue;
+                const localFileName = ep.videoFilename || `${ep.videoId}.mp4`;
+                const localPath = path.join(persistentVideosFolder, localFileName);
+
+                if (!fs.existsSync(localPath) && ep.videoRemoteUrl) {
+                    try {
+                        const videoRes = await fetch(ep.videoRemoteUrl);
+                        if (videoRes.ok) {
+                            const arrayBuffer = await videoRes.arrayBuffer();
+                            fs.writeFileSync(localPath, Buffer.from(arrayBuffer));
+                            console.log('⬇️ [pull] Vidéo téléchargée depuis R2 :', localFileName);
+                        } else {
+                            console.warn('⚠️ [pull] Téléchargement refusé (HTTP', videoRes.status, ') :', localFileName);
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ [pull] Échec téléchargement vidéo :', localFileName, e.message);
+                    }
+                }
+                if (fs.existsSync(localPath)) {
+                    ep.videoUrl = `file://${localPath}`;
+                    ep.videoPersistent = true;
+                    ep.videoPath = localPath;
+                }
+                // Sinon (pas d'URL distante, ou téléchargement en échec — hors-ligne
+                // par ex.) : on laisse ep.videoUrl/videoPath tels que reçus du VPS,
+                // typiquement inutilisables sur cette machine — mieux vaut publier
+                // l'émission quand même (titre/métadonnées visibles) que la perdre.
+            }
+            pulledEmissions.push(emission);
+        }
+
+        return { success: true, emissions: pulledEmissions };
+    } catch (error) {
+        console.error('admin-content:pull-videos error:', error);
+        return { success: false, offline: true, error: error.message || String(error) };
+    }
+});
+
 ipcMain.handle('admin-content:publish', async (event, { item } = {}) => {
     try {
         if (!item || !item.id) return { success: false, error: 'item invalide (id manquant)' };
@@ -2259,6 +2323,43 @@ ipcMain.handle('admin-content:publish', async (event, { item } = {}) => {
         return { success: true, publishedAt: data.publishedAt };
     } catch (error) {
         console.error('admin-content:publish error:', error);
+        return { success: false, offline: true, error: error.message || String(error) };
+    }
+});
+
+// ⚠️ Jusqu'ici, publier une vidéo (admin-content:publish ci-dessus) ne
+// poussait vers le VPS que les MÉTADONNÉES (titre, structure, videoPath —
+// un chemin LOCAL type /Users/xxx/Library/.../persistent-videos/xxx.webm,
+// sans aucun sens sur l'ordinateur d'un membre). Le fichier vidéo lui-même
+// ne quittait jamais ce Mac. Ce handler comble ce trou : il envoie le vrai
+// fichier au relais local déjà existant côté server.py
+// (/api/admin-content/<id>/upload-material/sync-push), qui l'upload vers
+// R2 et renvoie une vraie URL publique. À appeler AVANT admin-content:publish,
+// pour inclure cette URL dans les métadonnées poussées (voir manager-actv.html).
+ipcMain.handle('admin-content:upload-video', async (event, { itemId, filePath } = {}) => {
+    try {
+        if (!itemId) return { success: false, error: 'itemId manquant' };
+        if (!filePath || !fs.existsSync(filePath)) {
+            return { success: false, error: `Fichier introuvable: ${filePath}` };
+        }
+        const fileBuffer = fs.readFileSync(filePath);
+        const fileName = path.basename(filePath);
+        const mimeType = fileName.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'video/webm';
+
+        const form = new FormData();
+        form.append('file', new Blob([fileBuffer], { type: mimeType }), fileName);
+
+        const res = await fetch(`${getLocalServerBase()}/api/admin-content/${encodeURIComponent(itemId)}/upload-material/sync-push`, {
+            method: 'POST',
+            body: form
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || data.status !== 'success') {
+            return { success: false, offline: !!(data && data.offline), error: (data && data.message) || `HTTP ${res.status}` };
+        }
+        return { success: true, url: data.url, storage: data.storage };
+    } catch (error) {
+        console.error('admin-content:upload-video error:', error);
         return { success: false, offline: true, error: error.message || String(error) };
     }
 });
