@@ -585,7 +585,40 @@
                 </div>
             `;
 
-            setTimeout(() => {
+            // Une <iframe> classique ne reçoit JAMAIS window.electronAPI dans Electron
+            // (le pont contextBridge du preload ne traverse pas les iframes du DOM) —
+            // seule une <webview> avec son PROPRE attribut preload y a droit. Sans ça,
+            // les modules qui ont besoin d'electronAPI (conversion vidéo, publication
+            // VPS, etc.) tombent en "mode navigateur" même à l'intérieur de l'app.
+            // Même pattern que ZNKadminDash.html. Pour un module qui n'a explicitement
+            // pas besoin d'electronAPI (page 100% statique), ajouter
+            // `needsElectronAPI: false` dans sa config MODULES_CONFIG.
+            const needsElectronAPI = moduleConfig.needsElectronAPI !== false;
+
+            setTimeout(async () => {
+                if (needsElectronAPI && window.electronAPI && typeof window.electronAPI.getPreloadPath === 'function') {
+                    try {
+                        const preloadUrl = await window.electronAPI.getPreloadPath();
+                        container.innerHTML = `
+                            <webview
+                                id="moduleIframe"
+                                src="${moduleConfig.path}"
+                                preload="${preloadUrl}"
+                                webpreferences="contextIsolation=yes, nodeIntegration=no"
+                                style="width:100%; height:100%; border:none; border-radius:12px;"
+                                title="${moduleConfig.name}"
+                            ></webview>
+                        `;
+                        const wv = document.getElementById('moduleIframe');
+                        wv.addEventListener('dom-ready', () => console.log('✅ Webview prête:', '${moduleName}'));
+                        wv.addEventListener('did-fail-load', (e) => console.error('❌ Erreur chargement webview:', '${moduleName}', e));
+                        wv.addEventListener('console-message', (e) => console.log(`[webview:${moduleName}]`, e.message));
+                        setActiveModule(moduleName);
+                        return;
+                    } catch (err) {
+                        console.error('❌ Impossible de récupérer le chemin du preload, fallback iframe:', err);
+                    }
+                }
                 container.innerHTML = `
                     <iframe 
                         src="${moduleConfig.path}" 

@@ -1046,11 +1046,8 @@ function createMenu() {
         {
             label: 'ZNK',
             submenu: [
-                { label: 'Accueil', click: () => loadPage('index.html') },
-                { label: 'Studios', click: () => loadPage('ZNKStudiosDash.html') },
-                ...(isDev ? [{ type: 'separator' }, { label: '🔧 Admin Dashboard', click: () => loadPage('ZNKadminDash.html'), accelerator: 'CmdOrCtrl+Shift+A' }, { label: '🔑 Connexion Admin (comptes réels)', click: () => loadPage('modules-admin/auth-hub-admin.html'), accelerator: 'CmdOrCtrl+Shift+L' }] : []),
-                { type: 'separator' },
-                ...(isDev ? [{ label: '🛠️ DevTools', accelerator: 'F12', click: () => { const win = BrowserWindow.getFocusedWindow(); if (win) win.webContents.toggleDevTools(); } }] : []),
+                ...(isDev ? [...(isAdminAuthenticated ? [{ label: '🔧 Admin Dashboard', click: () => loadPage('ZNKadminDash.html') }] : []), { label: '🔑 Connexion Admin (comptes réels)', click: () => loadPage('modules-admin/auth-hub-admin.html'), accelerator: 'CmdOrCtrl+Shift+L' }, { type: 'separator' }] : []),
+                ...(isDev && isAdminAuthenticated ? [{ label: '🛠️ DevTools', accelerator: 'F12', click: () => { const win = BrowserWindow.getFocusedWindow(); if (win) win.webContents.toggleDevTools(); } }, { type: 'separator' }] : []),
                 { role: 'quit', label: 'Quitter' }
             ]
         },
@@ -1065,16 +1062,7 @@ function createMenu() {
                 { role: 'paste', label: 'Coller' },
                 { role: 'selectAll', label: 'Tout sélectionner' }
             ]
-        },
-        {
-            label: 'Navigation',
-            submenu: [
-                { label: 'ZNKarchive', click: () => loadModule('znkarchive') },
-                { label: 'ACTV', click: () => loadModule('actv') },
-                { label: 'WhatsZNK', click: () => loadModule('whatsznk') }
-            ]
-        },
-        { label: 'Aide', submenu: [{ label: 'Documentation' }, { type: 'separator' }, { label: 'À propos' }] }
+        }
     ];
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
@@ -2026,12 +2014,26 @@ const crypto = require('crypto');
 // puis collez le résultat ci-dessous. Ne mettez JAMAIS le code en clair ici.
 const ZNK_ADMIN_KEY_HASH = 'a0a0ccbcd768cb88f2a757ade7ae894043991c5dee364c4fcbf98a29ee91552d';
 
+// ⚠️ Session admin authentifiée pour CETTE fenêtre/process — distincte de
+// isDevMode(). isDevMode() dit seulement "cette build EST une build
+// admin/dev capable de faire tourner server.py" (vrai pour tout testeur qui
+// a cette build, pas seulement pour Enka) ; isAdminAuthenticated dit "la
+// personne devant cette fenêtre a bien tapé le code admin à 6 chiffres".
+// Avant, le menu affichait "🔧 Admin Dashboard" (raccourci direct vers
+// ZNKadminDash.html, sans passer par verify-admin-key) et "🛠️ DevTools" dès
+// que isDevMode() était vrai — donnant l'accès admin/dev à n'importe quel
+// membre lançant cette build. Ces deux entrées sont désormais gatées par
+// isAdminAuthenticated, mis à jour uniquement dans verify-admin-key ci-dessous.
+let isAdminAuthenticated = false;
+
 ipcMain.handle('verify-admin-key', (event, key) => {
     if (!key) return false;
     const inputHash = crypto.createHash('sha256').update(key).digest('hex');
     const isValid = inputHash === ZNK_ADMIN_KEY_HASH;
 
     if (isValid) {
+        isAdminAuthenticated = true;
+        createMenu(); // réaffiche le menu pour révéler Admin Dashboard / DevTools
         const senderWindow = BrowserWindow.fromWebContents(event.sender);
         if (senderWindow) {
             senderWindow.loadFile(path.join(__dirname, 'ZNKadminDash.html'));
